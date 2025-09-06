@@ -1,21 +1,16 @@
-//
-//  ContentView.swift
-//  RuckTracker
-//
-//  Created by Nick on 9/5/25.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var healthManager = HealthManager()
+    @StateObject private var workoutManager = WorkoutManager()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        PhoneMainView()
+            .environmentObject(healthManager)
+            .environmentObject(workoutManager)
+            .onAppear {
+                healthManager.requestAuthorization()
+            }
     }
 }
 

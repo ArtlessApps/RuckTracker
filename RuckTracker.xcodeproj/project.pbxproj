@@ -360,6 +360,8 @@
 			);
 			mainGroup = 121857242E6BE73C00088A62;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1218572E2E6BE73D00088A62 /* Products */;
 			projectDirPath = "";
@@ -613,11 +615,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "RuckTracker Watch App/RuckTracker Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -641,11 +647,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "RuckTracker Watch App/RuckTracker Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -670,11 +680,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -700,11 +714,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
