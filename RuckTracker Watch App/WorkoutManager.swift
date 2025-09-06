@@ -30,6 +30,8 @@ class WorkoutManager: ObservableObject {
     func startWorkout(weight: Double) {
         self.weight = weight
         self.ruckWeight = weight
+        isActive = true
+        isPaused = false
         startTimer()
     }
     
