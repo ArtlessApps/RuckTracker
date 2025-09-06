@@ -624,6 +624,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -656,6 +657,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -689,6 +691,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -723,6 +726,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
