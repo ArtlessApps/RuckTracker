@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @State private var showingWorkoutView = false
     
     var body: some View {
         NavigationView {
@@ -21,15 +22,11 @@ struct PhoneMainView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                // Current Session Info
+                // Current Session Info or Quick Start
                 if workoutManager.isActive {
-                    WorkoutStatsCard()
+                    ActiveWorkoutCard()
                 } else {
-                    // Quick Start Options
-                    VStack(spacing: 15) {
-                        WeightSelectorCard()
-                        StartWorkoutButton()
-                    }
+                    QuickStartCard()
                 }
                 
                 Spacer()
@@ -39,47 +36,90 @@ struct PhoneMainView: View {
             }
             .padding()
             .navigationBarHidden(true)
+            .sheet(isPresented: $showingWorkoutView) {
+                PhoneWorkoutView()
+                    .environmentObject(workoutManager)
+            }
         }
     }
 }
 
-struct WeightSelectorCard: View {
+struct QuickStartCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @State private var showingWorkout = false
     
     var body: some View {
-        VStack(spacing: 15) {
+        VStack(spacing: 20) {
+            // Weight display - less prominent but still visible
             HStack {
-                Image(systemName: "scalemass")
-                    .foregroundColor(.orange)
-                Text("Ruck Weight")
-                    .fontWeight(.medium)
-                Spacer()
-            }
-            
-            HStack {
-                Button("-") {
-                    if workoutManager.ruckWeight > 0 {
-                        workoutManager.ruckWeight -= 5
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ruck Weight")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 4) {
+                        Text("\(Int(workoutManager.ruckWeight))")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("lbs")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
-                .frame(width: 40, height: 40)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(20)
                 
                 Spacer()
                 
-                Text("\(Int(workoutManager.ruckWeight)) lbs")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button("+") {
-                    workoutManager.ruckWeight += 5
+                // Quick adjustment buttons - subtle
+                HStack(spacing: 12) {
+                    Button("-5") {
+                        if workoutManager.ruckWeight >= 5 {
+                            workoutManager.ruckWeight -= 5
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(16)
+                    .font(.caption)
+                    
+                    Button("+5") {
+                        workoutManager.ruckWeight += 5
+                    }
+                    .frame(width: 32, height: 32)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(16)
+                    .font(.caption)
                 }
-                .frame(width: 40, height: 40)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(20)
+                .foregroundColor(.primary)
+            }
+            
+            // Prominent start button
+            Button(action: {
+                showingWorkout = true
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "figure.hiking")
+                        .font(.title2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Start Rucking")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        Text("Best tracking on Apple Watch")
+                            .font(.caption)
+                            .opacity(0.8)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(15)
+            }
+            .sheet(isPresented: $showingWorkout) {
+                PhoneWorkoutView()
+                    .environmentObject(workoutManager)
             }
         }
         .padding()
@@ -88,34 +128,27 @@ struct WeightSelectorCard: View {
     }
 }
 
-struct StartWorkoutButton: View {
-    @EnvironmentObject var workoutManager: WorkoutManager
-    
-    var body: some View {
-        Button(action: {
-            workoutManager.startWorkout()
-        }) {
-            HStack {
-                Image(systemName: "play.fill")
-                Text("Start Rucking")
-                    .fontWeight(.semibold)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.green)
-            .foregroundColor(.white)
-            .cornerRadius(15)
-        }
-    }
-}
-
-struct WorkoutStatsCard: View {
+struct ActiveWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("Active Workout")
-                .font(.headline)
+            HStack {
+                Text("Active Workout")
+                    .font(.headline)
+                
+                Spacer()
+                
+                // Show weight during active workout
+                HStack(spacing: 4) {
+                    Text("\(Int(workoutManager.ruckWeight))")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("lbs")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
             
             HStack(spacing: 30) {
                 VStack {
@@ -164,13 +197,87 @@ struct WorkoutStatsCard: View {
     }
 }
 
+struct PhoneWorkoutView: View {
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 30) {
+                // Use Apple Watch reminder
+                VStack(spacing: 15) {
+                    Image(systemName: "applewatch")
+                        .font(.system(size: 60))
+                        .foregroundColor(.orange)
+                    
+                    Text("Best Experience on Apple Watch")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("For accurate GPS tracking, heart rate monitoring, and calorie calculation, start your workout on Apple Watch.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(15)
+                
+                // Current weight display
+                VStack(spacing: 8) {
+                    Text("Current Weight Setting")
+                        .font(.headline)
+                    
+                    HStack(spacing: 4) {
+                        Text("\(Int(workoutManager.ruckWeight))")
+                            .font(.system(size: 48, weight: .medium, design: .rounded))
+                            .foregroundColor(.green)
+                        Text("LBS")
+                            .font(.title3)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                // Basic phone tracking option
+                VStack(spacing: 15) {
+                    Button("Track on iPhone") {
+                        workoutManager.startWorkout()
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(15)
+                    
+                    Text("Limited accuracy without Apple Watch")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Start Workout")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct RecentWorkoutsCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Recent Workouts")
                 .font(.headline)
             
-            // Placeholder for workout history
             Text("No recent workouts")
                 .foregroundColor(.secondary)
                 .font(.subheadline)

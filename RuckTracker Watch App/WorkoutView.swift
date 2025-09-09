@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct WorkoutView: View {
@@ -194,3 +195,4 @@ struct WorkoutView: View {
     WorkoutView()
         .environmentObject(WorkoutManager())
 }
+
