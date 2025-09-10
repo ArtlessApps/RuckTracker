@@ -46,6 +46,20 @@
 			remoteGlobalIDString = 1218574F2E6BE73F00088A62;
 			remoteInfo = "RuckTracker Watch App";
 		};
+		121857F62E6FF0AB00088A62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 121857252E6BE73C00088A62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 121857E52E6FF0A900088A62;
+			remoteInfo = "RuckTrackerTest Watch App";
+		};
+		121858002E6FF0AB00088A62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 121857252E6BE73C00088A62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 121857E52E6FF0A900088A62;
+			remoteInfo = "RuckTrackerTest Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -69,6 +83,11 @@
 		121857502E6BE73F00088A62 /* RuckTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RuckTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1218575F2E6BE74000088A62 /* RuckTracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RuckTracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		121857692E6BE74000088A62 /* RuckTracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RuckTracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857D02E6FF0A900088A62 /* RuckTrackerTestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RuckTrackerTestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857DA2E6FF0A900088A62 /* RuckTrackerTestUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RuckTrackerTestUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857E62E6FF0A900088A62 /* RuckTrackerTest Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RuckTrackerTest Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857F52E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RuckTrackerTest Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857FF2E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "RuckTrackerTest Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -116,6 +135,36 @@
 			path = "RuckTracker Watch AppUITests";
 			sourceTree = "<group>";
 		};
+		121857C52E6FF0A700088A62 /* RuckTrackerTest */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RuckTrackerTest;
+			sourceTree = "<group>";
+		};
+		121857D32E6FF0A900088A62 /* RuckTrackerTestTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RuckTrackerTestTests;
+			sourceTree = "<group>";
+		};
+		121857DD2E6FF0A900088A62 /* RuckTrackerTestUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RuckTrackerTestUITests;
+			sourceTree = "<group>";
+		};
+		121857EA2E6FF0A900088A62 /* RuckTrackerTest Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RuckTrackerTest Watch App";
+			sourceTree = "<group>";
+		};
+		121857F82E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RuckTrackerTest Watch AppTests";
+			sourceTree = "<group>";
+		};
+		121858022E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RuckTrackerTest Watch AppUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +210,41 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		121857CD2E6FF0A900088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857D72E6FF0A900088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857E32E6FF0A900088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857F22E6FF0AB00088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857FC2E6FF0AB00088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -173,6 +257,12 @@
 				121857542E6BE73F00088A62 /* RuckTracker Watch App */,
 				121857622E6BE74000088A62 /* RuckTracker Watch AppTests */,
 				1218576C2E6BE74000088A62 /* RuckTracker Watch AppUITests */,
+				121857C52E6FF0A700088A62 /* RuckTrackerTest */,
+				121857D32E6FF0A900088A62 /* RuckTrackerTestTests */,
+				121857DD2E6FF0A900088A62 /* RuckTrackerTestUITests */,
+				121857EA2E6FF0A900088A62 /* RuckTrackerTest Watch App */,
+				121857F82E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests */,
+				121858022E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests */,
 				1218572E2E6BE73D00088A62 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -186,6 +276,11 @@
 				121857502E6BE73F00088A62 /* RuckTracker Watch App.app */,
 				1218575F2E6BE74000088A62 /* RuckTracker Watch AppTests.xctest */,
 				121857692E6BE74000088A62 /* RuckTracker Watch AppUITests.xctest */,
+				121857D02E6FF0A900088A62 /* RuckTrackerTestTests.xctest */,
+				121857DA2E6FF0A900088A62 /* RuckTrackerTestUITests.xctest */,
+				121857E62E6FF0A900088A62 /* RuckTrackerTest Watch App.app */,
+				121857F52E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests.xctest */,
+				121857FF2E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -331,6 +426,118 @@
 			productReference = 121857692E6BE74000088A62 /* RuckTracker Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		121857CF2E6FF0A900088A62 /* RuckTrackerTestTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1218580E2E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTestTests" */;
+			buildPhases = (
+				121857CC2E6FF0A900088A62 /* Sources */,
+				121857CD2E6FF0A900088A62 /* Frameworks */,
+				121857CE2E6FF0A900088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				121857D32E6FF0A900088A62 /* RuckTrackerTestTests */,
+			);
+			name = RuckTrackerTestTests;
+			packageProductDependencies = (
+			);
+			productName = RuckTrackerTestTests;
+			productReference = 121857D02E6FF0A900088A62 /* RuckTrackerTestTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		121857D92E6FF0A900088A62 /* RuckTrackerTestUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121858112E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTestUITests" */;
+			buildPhases = (
+				121857D62E6FF0A900088A62 /* Sources */,
+				121857D72E6FF0A900088A62 /* Frameworks */,
+				121857D82E6FF0A900088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				121857DD2E6FF0A900088A62 /* RuckTrackerTestUITests */,
+			);
+			name = RuckTrackerTestUITests;
+			packageProductDependencies = (
+			);
+			productName = RuckTrackerTestUITests;
+			productReference = 121857DA2E6FF0A900088A62 /* RuckTrackerTestUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		121857E52E6FF0A900088A62 /* RuckTrackerTest Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121858072E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch App" */;
+			buildPhases = (
+				121857E22E6FF0A900088A62 /* Sources */,
+				121857E32E6FF0A900088A62 /* Frameworks */,
+				121857E42E6FF0A900088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				121857EA2E6FF0A900088A62 /* RuckTrackerTest Watch App */,
+			);
+			name = "RuckTrackerTest Watch App";
+			packageProductDependencies = (
+			);
+			productName = "RuckTrackerTest Watch App";
+			productReference = 121857E62E6FF0A900088A62 /* RuckTrackerTest Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		121857F42E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121858142E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch AppTests" */;
+			buildPhases = (
+				121857F12E6FF0AB00088A62 /* Sources */,
+				121857F22E6FF0AB00088A62 /* Frameworks */,
+				121857F32E6FF0AB00088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				121857F72E6FF0AB00088A62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				121857F82E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests */,
+			);
+			name = "RuckTrackerTest Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "RuckTrackerTest Watch AppTests";
+			productReference = 121857F52E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		121857FE2E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121858172E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch AppUITests" */;
+			buildPhases = (
+				121857FB2E6FF0AB00088A62 /* Sources */,
+				121857FC2E6FF0AB00088A62 /* Frameworks */,
+				121857FD2E6FF0AB00088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				121858012E6FF0AB00088A62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				121858022E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests */,
+			);
+			name = "RuckTrackerTest Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "RuckTrackerTest Watch AppUITests";
+			productReference = 121857FF2E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -363,6 +570,25 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 1218574F2E6BE73F00088A62;
 					};
+					121857CF2E6FF0A900088A62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 121857C32E6FF0A600088A62;
+					};
+					121857D92E6FF0A900088A62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 121857C32E6FF0A600088A62;
+					};
+					121857E52E6FF0A900088A62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					121857F42E6FF0AB00088A62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 121857E52E6FF0A900088A62;
+					};
+					121857FE2E6FF0AB00088A62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 121857E52E6FF0A900088A62;
+					};
 				};
 			};
 			buildConfigurationList = 121857282E6BE73C00088A62 /* Build configuration list for PBXProject "RuckTracker" */;
@@ -387,6 +613,11 @@
 				1218574F2E6BE73F00088A62 /* RuckTracker Watch App */,
 				1218575E2E6BE74000088A62 /* RuckTracker Watch AppTests */,
 				121857682E6BE74000088A62 /* RuckTracker Watch AppUITests */,
+				121857CF2E6FF0A900088A62 /* RuckTrackerTestTests */,
+				121857D92E6FF0A900088A62 /* RuckTrackerTestUITests */,
+				121857E52E6FF0A900088A62 /* RuckTrackerTest Watch App */,
+				121857F42E6FF0AB00088A62 /* RuckTrackerTest Watch AppTests */,
+				121857FE2E6FF0AB00088A62 /* RuckTrackerTest Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -428,6 +659,41 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		121857672E6BE74000088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857CE2E6FF0A900088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857D82E6FF0A900088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857E42E6FF0A900088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857F32E6FF0AB00088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857FD2E6FF0AB00088A62 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -479,6 +745,41 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		121857CC2E6FF0A900088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857D62E6FF0A900088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857E22E6FF0A900088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857F12E6FF0AB00088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		121857FB2E6FF0AB00088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -506,6 +807,16 @@
 			isa = PBXTargetDependency;
 			target = 1218574F2E6BE73F00088A62 /* RuckTracker Watch App */;
 			targetProxy = 1218576A2E6BE74000088A62 /* PBXContainerItemProxy */;
+		};
+		121857F72E6FF0AB00088A62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 121857E52E6FF0A900088A62 /* RuckTrackerTest Watch App */;
+			targetProxy = 121857F62E6FF0AB00088A62 /* PBXContainerItemProxy */;
+		};
+		121858012E6FF0AB00088A62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 121857E52E6FF0A900088A62 /* RuckTrackerTest Watch App */;
+			targetProxy = 121858002E6FF0AB00088A62 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -697,6 +1008,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KLA3GV43P7;
@@ -719,6 +1031,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -732,6 +1045,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KLA3GV43P7;
@@ -754,6 +1068,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -768,6 +1083,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
@@ -787,6 +1103,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
@@ -806,6 +1123,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
@@ -824,6 +1142,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
@@ -844,6 +1163,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTracker-Watch-AppTests";
@@ -863,6 +1183,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTracker-Watch-AppTests";
@@ -882,6 +1203,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTracker-Watch-AppUITests";
@@ -900,6 +1222,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTracker-Watch-AppUITests";
@@ -909,6 +1232,225 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				TEST_TARGET_NAME = "RuckTracker Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		121858082E6FF0AB00088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTrackerTest;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTrackerTest;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTest.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		121858092E6FF0AB00088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTrackerTest;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTrackerTest;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTest.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		1218580F2E6FF0AB00088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTestTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RuckTrackerTest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RuckTrackerTest";
+			};
+			name = Debug;
+		};
+		121858102E6FF0AB00088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTestTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RuckTrackerTest.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RuckTrackerTest";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		121858122E6FF0AB00088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RuckTrackerTest;
+			};
+			name = Debug;
+		};
+		121858132E6FF0AB00088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTrackerTestUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RuckTrackerTest;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		121858152E6FF0AB00088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTrackerTest-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RuckTrackerTest Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RuckTrackerTest Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		121858162E6FF0AB00088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTrackerTest-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RuckTrackerTest Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RuckTrackerTest Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		121858182E6FF0AB00088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTrackerTest-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "RuckTrackerTest Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		121858192E6FF0AB00088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Artless.RuckTrackerTest-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "RuckTrackerTest Watch App";
 				VALIDATE_PRODUCT = YES;
 				WATCHOS_DEPLOYMENT_TARGET = 11.5;
 			};
@@ -976,6 +1518,51 @@
 			buildConfigurations = (
 				121857842E6BE74000088A62 /* Debug */,
 				121857852E6BE74000088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121858072E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121858082E6FF0AB00088A62 /* Debug */,
+				121858092E6FF0AB00088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1218580E2E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTestTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1218580F2E6FF0AB00088A62 /* Debug */,
+				121858102E6FF0AB00088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121858112E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTestUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121858122E6FF0AB00088A62 /* Debug */,
+				121858132E6FF0AB00088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121858142E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121858152E6FF0AB00088A62 /* Debug */,
+				121858162E6FF0AB00088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121858172E6FF0AB00088A62 /* Build configuration list for PBXNativeTarget "RuckTrackerTest Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121858182E6FF0AB00088A62 /* Debug */,
+				121858192E6FF0AB00088A62 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

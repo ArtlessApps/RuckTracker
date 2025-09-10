@@ -13,7 +13,7 @@ import HealthKit
 class WorkoutManager: ObservableObject {
     // MARK: - Published Properties
     @Published var isActive = false
-    @Published var isPaused = true
+    @Published var isPaused = false
     @Published var ruckWeight: Double = 20.0
     @Published var elapsedTime: TimeInterval = 0
     @Published var distance: Double = 0
@@ -28,7 +28,7 @@ class WorkoutManager: ObservableObject {
     // Workout session data
     private var startDate: Date?
     private var timer: Timer?
-    private let healthStore = HKHealthStore()
+    let healthStore = HKHealthStore()
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -147,7 +147,7 @@ class WorkoutManager: ObservableObject {
         if let startDate = startDate {
             let endDate = Date()
             // Save basic workout data (watch will save the detailed version)
-            saveBasicWorkoutToHealth(startDate: startDate, endDate: endDate)
+            saveWorkoutToHealth(startDate: startDate, endDate: endDate)
         }
         
         print("📱 Phone: Workout ended - \(formattedElapsedTime)")
@@ -187,27 +187,60 @@ class WorkoutManager: ObservableObject {
     }
     
     // MARK: - HealthKit (Basic)
-    private func saveBasicWorkoutToHealth(startDate: Date, endDate: Date) {
-        // Only save if watch isn't handling it
-        let workout = HKWorkout(
-            activityType: .walking,
-            start: startDate,
-            end: endDate,
-            duration: endDate.timeIntervalSince(startDate),
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: calories),
-            totalDistance: HKQuantity(unit: .mile(), doubleValue: distance),
-            metadata: [
-                "RuckWeight": ruckWeight,
-                "AppName": "RuckTracker-Phone",
-                "Terrain": selectedTerrain.rawValue
-            ]
-        )
+    private func saveWorkoutToHealth(startDate: Date, endDate: Date) {
+        // Use HKWorkoutBuilder instead of deprecated initializer
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: HKWorkoutConfiguration(), device: .local())
         
-        healthStore.save(workout) { success, error in
-            if success {
-                print("📱 Basic workout saved to HealthKit from phone")
-            } else {
-                print("📱 Failed to save workout: \(error?.localizedDescription ?? "Unknown error")")
+        builder.beginCollection(withStart: startDate) { [weak self] success, error in
+            guard let self = self, success else {
+                print("❌ Failed to begin workout collection: \(error?.localizedDescription ?? "")")
+                return
+            }
+            
+            // Add distance sample
+            if let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
+                let distanceQuantity = HKQuantity(unit: .mile(), doubleValue: self.distance)
+                let distanceSample = HKQuantitySample(
+                    type: distanceType,
+                    quantity: distanceQuantity,
+                    start: startDate,
+                    end: endDate
+                )
+                builder.add([distanceSample]) { _, _ in }
+            }
+            
+            // Add calorie sample
+            if let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+                let calorieQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: self.calories)
+                let calorieSample = HKQuantitySample(
+                    type: calorieType,
+                    quantity: calorieQuantity,
+                    start: startDate,
+                    end: endDate,
+                    metadata: [
+                        "RuckWeight": self.ruckWeight,
+                        "AppName": "RuckTracker-Phone",
+                        "Terrain": self.selectedTerrain.rawValue,
+                        "AvgPace": self.currentPaceMinutesPerMile ?? 0,
+                        "AvgHeartRate": self.currentHeartRate
+                    ]
+                )
+                builder.add([calorieSample]) { _, _ in }
+            }
+            
+            // End collection and finish workout
+            builder.endCollection(withEnd: endDate) { success, error in
+                if success {
+                    builder.finishWorkout { workout, error in
+                        if let workout = workout {
+                            print("📱 Basic workout saved to HealthKit from phone")
+                        } else {
+                            print("📱 Failed to save workout: \(error?.localizedDescription ?? "Unknown error")")
+                        }
+                    }
+                } else {
+                    print("❌ Failed to end collection: \(error?.localizedDescription ?? "")")
+                }
             }
         }
     }

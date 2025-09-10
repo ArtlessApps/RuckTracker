@@ -12,6 +12,7 @@ struct RuckTracker_Watch_AppApp: App {
                 .environmentObject(workoutManager)
                 .onAppear {
                     healthManager.requestAuthorization()
+                    workoutManager.setHealthManager(healthManager)
                 }
         }
     }
