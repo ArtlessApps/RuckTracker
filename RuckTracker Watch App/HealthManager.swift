@@ -2,23 +2,24 @@ import Foundation
 import HealthKit
 
 class HealthManager: ObservableObject {
-    let healthStore = HKHealthStore() // Made public for WorkoutManager access
+    let healthStore = HKHealthStore()
     @Published var isAuthorized = false
+    @Published var authorizationStatus: HKAuthorizationStatus = .notDetermined
     
     init() {
         checkAuthorizationStatus()
     }
     
     func requestAuthorization() {
-        print("DEBUG: requestAuthorization called")
+        print("🏥 === MODERN WATCH HEALTHKIT AUTHORIZATION ===")
+        print("🏥 Modern watchOS requires SEPARATE permissions from iPhone")
         
         guard HKHealthStore.isHealthDataAvailable() else {
-            print("DEBUG: HealthKit not available")
+            print("❌ HealthKit not available")
             return
         }
         
-        print("DEBUG: HealthKit available, requesting permissions")
-        
+        // In modern watchOS architecture, we MUST request permissions directly
         let typesToRead: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
@@ -31,85 +32,177 @@ class HealthManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
         ]
         
-        print("DEBUG: About to call requestAuthorization")
+        print("🏥 Requesting Watch-specific HealthKit permissions...")
         
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
-            print("DEBUG: Authorization callback - success: \(success), error: \(error?.localizedDescription ?? "none")")
+            print("🏥 Watch permission request completed:")
+            print("   - Success: \(success)")
+            print("   - Error: \(error?.localizedDescription ?? "none")")
             
-            // Check individual permissions
-            if let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) {
-                let heartRateStatus = self?.healthStore.authorizationStatus(for: heartRateType)
-                print("DEBUG: Heart rate auth status after request: \(heartRateStatus?.rawValue ?? -1)")
+            if let error = error {
+                print("❌ Authorization error: \(error.localizedDescription)")
             }
             
-            DispatchQueue.main.async {
-                self?.isAuthorized = success
-                self?.checkAuthorizationStatus() // Refresh status
+            // Check status after request with delays for Watch UI
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self?.checkAuthorizationStatus()
+                
+                // Check again after longer delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self?.checkAuthorizationStatus()
+                    
+                    if !(self?.isAuthorized ?? false) {
+                        print("⚠️ Still not authorized - permission may have been denied")
+                        print("💡 Check: Settings → Privacy & Security → Health → Data Access → RuckTracker")
+                    }
+                }
             }
         }
     }
     
     private func checkAuthorizationStatus() {
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
-            print("DEBUG: Heart rate type unavailable")
+            print("❌ Heart rate type unavailable")
             return
         }
         
         let status = healthStore.authorizationStatus(for: heartRateType)
-        print("DEBUG: checkAuthorizationStatus - Heart rate status: \(status.rawValue)")
+        print("🏥 Watch heart rate permission status: \(status.rawValue)")
         
-        switch status {
-        case .notDetermined:
-            print("DEBUG: Heart rate permission not determined")
-            isAuthorized = false
-        case .sharingDenied:
-            print("DEBUG: Heart rate permission denied")
-            isAuthorized = false
-        case .sharingAuthorized:
-            print("DEBUG: Heart rate permission authorized")
-            isAuthorized = true
-        @unknown default:
-            print("DEBUG: Unknown heart rate permission status")
-            isAuthorized = false
+        DispatchQueue.main.async { [weak self] in
+            self?.authorizationStatus = status
+            
+            switch status {
+            case .notDetermined:
+                print("⚠️ Watch: Permission not determined")
+                self?.isAuthorized = false
+            case .sharingDenied:
+                print("❌ Watch: Permission DENIED")
+                self?.isAuthorized = false
+            case .sharingAuthorized:
+                print("✅ Watch: Permission GRANTED!")
+                self?.isAuthorized = true
+                self?.testHeartRateAccess() // Test immediately when granted
+            @unknown default:
+                print("❓ Watch: Unknown permission status")
+                self?.isAuthorized = false
+            }
         }
     }
     
-    // Force permission request - call this if needed
+    // Test actual heart rate access
+    private func testHeartRateAccess() {
+        print("🧪 Testing actual heart rate data access...")
+        
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            print("❌ Heart rate type unavailable for testing")
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(
+            withStart: Date().addingTimeInterval(-3600),
+            end: Date(),
+            options: .strictStartDate
+        )
+        
+        let query = HKSampleQuery(
+            sampleType: heartRateType,
+            predicate: predicate,
+            limit: 1,
+            sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]
+        ) { query, samples, error in
+            
+            if let error = error {
+                print("❌ Heart rate test query failed: \(error.localizedDescription)")
+            } else {
+                let count = samples?.count ?? 0
+                print("✅ Heart rate test query succeeded - found \(count) recent samples")
+                
+                if count > 0, let latest = samples?.first as? HKQuantitySample {
+                    let heartRate = latest.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
+                    print("💓 Latest heart rate: \(Int(heartRate)) bpm")
+                }
+            }
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    // Force permission request - useful for debugging or retry scenarios
     func forcePermissionRequest() {
-        print("DEBUG: Force permission request called")
+        print("🔄 Force requesting Watch HealthKit permissions...")
         
         let typesToRead: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .heartRate)!
         ]
         
         healthStore.requestAuthorization(toShare: [], read: typesToRead) { [weak self] success, error in
-            print("DEBUG: Force request result - success: \(success), error: \(error?.localizedDescription ?? "none")")
-            DispatchQueue.main.async {
+            print("🏥 Force request result - success: \(success)")
+            if let error = error {
+                print("❌ Force request error: \(error.localizedDescription)")
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 self?.checkAuthorizationStatus()
             }
         }
     }
     
     func saveWorkout(startDate: Date, endDate: Date, calories: Double, distance: Double, weight: Double) {
-        // This function has the deprecated HKWorkout initializer
-        // Should be updated to use HKWorkoutBuilder like in WorkoutManager
-        print("DEBUG: saveWorkout called - consider using WorkoutManager's saveWorkoutToHealth instead")
+        // Use modern HKWorkoutBuilder API (replaces deprecated HKWorkout initializer)
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = .walking
+        configuration.locationType = .outdoor
         
-        let workout = HKWorkout(
-            activityType: .walking,
-            start: startDate,
-            end: endDate,
-            duration: endDate.timeIntervalSince(startDate),
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: calories),
-            totalDistance: HKQuantity(unit: .mile(), doubleValue: distance),
-            metadata: ["RuckWeight": weight]
-        )
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: .local())
         
-        healthStore.save(workout) { success, error in
-            if success {
-                print("Workout saved successfully")
-            } else {
-                print("Error saving workout: \(error?.localizedDescription ?? "Unknown error")")
+        builder.beginCollection(withStart: startDate) { [weak self] success, error in
+            guard success else {
+                print("❌ Failed to begin workout collection: \(error?.localizedDescription ?? "")")
+                return
+            }
+            
+            // Add distance sample
+            if let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
+                let distanceQuantity = HKQuantity(unit: .mile(), doubleValue: distance)
+                let distanceSample = HKQuantitySample(
+                    type: distanceType,
+                    quantity: distanceQuantity,
+                    start: startDate,
+                    end: endDate
+                )
+                builder.add([distanceSample]) { _, _ in }
+            }
+            
+            // Add calorie sample
+            if let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+                let calorieQuantity = HKQuantity(unit: .kilocalorie(), doubleValue: calories)
+                let calorieSample = HKQuantitySample(
+                    type: calorieType,
+                    quantity: calorieQuantity,
+                    start: startDate,
+                    end: endDate,
+                    metadata: [
+                        "RuckWeight": weight,
+                        "AppName": "RuckTracker-Watch"
+                    ]
+                )
+                builder.add([calorieSample]) { _, _ in }
+            }
+            
+            // End collection and finish workout
+            builder.endCollection(withEnd: endDate) { success, error in
+                if success {
+                    builder.finishWorkout { _, error in
+                        if error == nil {
+                            print("✅ Workout saved successfully using modern HKWorkoutBuilder")
+                        } else {
+                            print("❌ Failed to save workout: \(error?.localizedDescription ?? "Unknown error")")
+                        }
+                    }
+                } else {
+                    print("❌ Failed to end collection: \(error?.localizedDescription ?? "")")
+                }
             }
         }
     }

@@ -289,8 +289,8 @@ class WorkoutManager: ObservableObject {
             // End collection and finish workout
             builder.endCollection(withEnd: endDate) { success, error in
                 if success {
-                    builder.finishWorkout { workout, error in
-                        if let workout = workout {
+                    builder.finishWorkout { _, error in
+                        if error == nil {
                             print("✅ Workout saved to HealthKit with enhanced metadata")
                         } else {
                             print("❌ Failed to save workout: \(error?.localizedDescription ?? "Unknown error")")
