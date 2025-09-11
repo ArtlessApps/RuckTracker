@@ -1,5 +1,5 @@
-
 import SwiftUI
+import HealthKit
 
 struct WorkoutView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
@@ -25,7 +25,7 @@ struct WorkoutView: View {
                     Image(systemName: "heart.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.red)
-                    Text("\(Int(workoutManager.heartRate))")
+                    Text(workoutManager.heartRate > 0 ? "\(Int(workoutManager.heartRate))" : "--")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.red)
                 }
@@ -92,6 +92,7 @@ struct WorkoutView: View {
                 }
                 .padding(.horizontal, 20)
                 
+
                 // Timer Display
                 HStack(spacing: 4) {
                     Text(String(format: "%02d", workoutManager.hours))
@@ -173,7 +174,7 @@ struct WorkoutView: View {
     }
     
     // Helper functions to match your existing WorkoutManager
-    private func formatPace() -> String {
+    func formatPace() -> String {
         guard workoutManager.distance > 0 else { return "0:00" }
         let paceInSeconds = workoutManager.elapsedTime / workoutManager.distance
         let minutes = Int(paceInSeconds) / 60
@@ -181,7 +182,7 @@ struct WorkoutView: View {
         return String(format: "%d:%02d", minutes, seconds)
     }
     
-    private func getPaceColor() -> Color {
+    func getPaceColor() -> Color {
         guard workoutManager.distance > 0 else { return .gray }
         let paceInMinutes = (workoutManager.elapsedTime / workoutManager.distance) / 60
         
@@ -195,4 +196,3 @@ struct WorkoutView: View {
     WorkoutView()
         .environmentObject(WorkoutManager())
 }
-

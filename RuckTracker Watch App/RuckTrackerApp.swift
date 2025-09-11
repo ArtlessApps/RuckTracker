@@ -11,8 +11,13 @@ struct RuckTracker_Watch_AppApp: App {
                 .environmentObject(healthManager)
                 .environmentObject(workoutManager)
                 .onAppear {
-                    healthManager.requestAuthorization()
-                    workoutManager.setHealthManager(healthManager)
+                    print("🏥 Watch App launched - requesting HealthKit authorization...")
+                    
+                    // Delay the health request slightly to ensure the UI is ready
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        healthManager.requestAuthorization()
+                        workoutManager.setHealthManager(healthManager)
+                    }
                 }
         }
     }

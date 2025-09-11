@@ -18,7 +18,7 @@ class WorkoutManager: ObservableObject {
     @Published var elapsedTime: TimeInterval = 0
     @Published var distance: Double = 0
     @Published var calories: Double = 0
-    @Published var currentHeartRate: Double = 120
+    @Published var currentHeartRate: Double = 0
     @Published var selectedTerrain: TerrainType = .flat
     
     // Location manager for GPS tracking
@@ -305,36 +305,29 @@ class WorkoutManager: ObservableObject {
     
     // MARK: - Heart Rate Monitoring (Real Sensor Data)
     private func startHeartRateQuery() {
-        print("DEBUG: startHeartRateQuery called")
+        print("🔥 DEBUG: startHeartRateQuery called")
         
         guard let healthManager = healthManager else {
             print("❌ Health manager not available")
             return
         }
+        print("✅ Health manager available")
         
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
             print("❌ Heart rate type not available")
             return
         }
+        print("✅ Heart rate type created")
         
-        // Check authorization status first
-        let authStatus = healthManager.healthStore.authorizationStatus(for: heartRateType)
-        print("💓 Heart rate authorization status: \(authStatus.rawValue)")
-        
-        if authStatus == .notDetermined {
-            print("❌ Heart rate permission not determined - requesting...")
-            healthManager.forcePermissionRequest()
-            return
-        } else if authStatus == .sharingDenied {
-            print("❌ Heart rate permission denied")
-            return
-        }
+        print("🔥 About to create heart rate query...")
         
         let predicate = HKQuery.predicateForSamples(
             withStart: Date(),
             end: nil,
             options: .strictStartDate
         )
+        
+        print("🔥 Creating HKAnchoredObjectQuery...")
         
         heartRateQuery = HKAnchoredObjectQuery(
             type: heartRateType,
@@ -343,8 +336,11 @@ class WorkoutManager: ObservableObject {
             limit: HKObjectQueryNoLimit
         ) { [weak self] query, samples, deletedObjects, anchor, error in
             
+            print("🔥 Heart rate query callback fired!")
+            
             if let error = error {
                 print("❌ Heart rate query error: \(error.localizedDescription)")
+                print("❌ Error code: \((error as NSError).code)")
                 return
             }
             
@@ -359,34 +355,45 @@ class WorkoutManager: ObservableObject {
                 if let latestSample = samples.last {
                     let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
                     let heartRate = latestSample.quantity.doubleValue(for: heartRateUnit)
+                    print("🔥 UPDATING currentHeartRate from \(self?.currentHeartRate ?? 0) to \(heartRate)")
                     self?.currentHeartRate = heartRate
                     print("❤️ Real HR: \(Int(heartRate)) bpm")
+                } else {
+                    print("⚠️ No samples in the array")
                 }
             }
         }
         
         heartRateQuery?.updateHandler = { [weak self] query, samples, deletedObjects, anchor, error in
+            print("🔥 Heart rate UPDATE handler fired!")
+            
             if let error = error {
                 print("❌ Heart rate update error: \(error.localizedDescription)")
                 return
             }
             
-            guard let samples = samples as? [HKQuantitySample] else { return }
+            guard let samples = samples as? [HKQuantitySample] else {
+                print("❌ No update samples")
+                return
+            }
+            
+            print("💓 Update received \(samples.count) heart rate samples")
             
             DispatchQueue.main.async {
                 if let latestSample = samples.last {
                     let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
                     let heartRate = latestSample.quantity.doubleValue(for: heartRateUnit)
+                    print("🔥 UPDATE: currentHeartRate from \(self?.currentHeartRate ?? 0) to \(heartRate)")
                     self?.currentHeartRate = heartRate
                     print("❤️ Updated HR: \(Int(heartRate)) bpm")
                 }
             }
         }
         
+        print("🔥 About to execute heart rate query...")
         healthManager.healthStore.execute(heartRateQuery!)
-        print("✅ Started real heart rate monitoring")
+        print("✅ Heart rate query executed - waiting for callback...")
     }
-    
     private func stopHeartRateQuery() {
         guard let healthManager = healthManager else { return }
         
@@ -436,7 +443,7 @@ class WorkoutManager: ObservableObject {
         calories = 0
         totalCaloriesBurned = 0
         startDate = nil
-        currentHeartRate = 120 // Reset to default until next workout starts
+        currentHeartRate = 0 // Reset to default until next workout starts
     }
     
     // MARK: - Debugging and Validation

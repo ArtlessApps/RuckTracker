@@ -947,8 +947,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
@@ -980,8 +980,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your workout data to Health.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
