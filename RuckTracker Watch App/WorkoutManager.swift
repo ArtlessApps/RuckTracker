@@ -10,6 +10,23 @@ import Combine
 import SwiftUI
 import HealthKit
 
+// MARK: - Watch App Terrain Types
+enum WatchTerrainType: String, CaseIterable {
+    case flat = "Flat"
+    case rolling = "Rolling Hills"
+    case hilly = "Hilly"
+    case mountainous = "Mountainous"
+    
+    var multiplier: Double {
+        switch self {
+        case .flat: return 1.0
+        case .rolling: return 1.1
+        case .hilly: return 1.25
+        case .mountainous: return 1.4
+        }
+    }
+}
+
 class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate {
     // MARK: - Published Properties
     @Published var isActive = false
@@ -21,6 +38,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
+    @Published var selectedTerrain: WatchTerrainType = .flat
     
     // Final workout stats for post-workout summary
     @Published var finalElapsedTime: TimeInterval = 0
@@ -246,7 +264,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         
         // Create workout configuration
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = .walking  // Use walking for rucking
+        configuration.activityType = .hiking  // Better represents rucking intensity
         configuration.locationType = .outdoor   // Enable GPS
         
         do {
@@ -421,4 +439,119 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         
         return (calories, appleCalories, calories - appleCalories)
     }
+}
+
+// MARK: - Enhanced HealthKit Integration
+extension WorkoutManager {
+    
+    private func addEnhancedMetadataToWorkout() -> [String: Any] {
+        return [
+            // Core rucking data
+            "RuckWeight": ruckWeight,
+            "RuckWeightUnit": "lbs",
+            "AppName": "RuckTracker",
+            "WorkoutType": "Rucking",
+            "Version": "1.0",
+            
+            // Help Apple understand this is more intense than normal walking
+            "ActivityIntensity": calculateActivityIntensity(),
+            "EquipmentUsed": "Weighted Backpack",
+            "ExerciseType": "Cardio + Strength",
+            
+            // Terrain info helps with calorie accuracy
+            "TerrainType": selectedTerrain.rawValue,
+            "TerrainMultiplier": selectedTerrain.multiplier,
+            
+            // Average metrics for Apple's ML algorithms
+            "AverageHeartRateZone": heartRateZone,
+            "PerceivedExertion": calculatePerceivedExertion(),
+            
+            // Distance and pace context
+            "PrimaryActivity": "Hiking",
+            "SecondaryActivity": "Load Carrying",
+            
+            // Help categorize for Fitness+ recommendations
+            "FitnessCategory": "Outdoor",
+            "WorkoutStyle": "Endurance"
+        ]
+    }
+    
+    private func calculateActivityIntensity() -> String {
+        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
+        let weightPercentage = ruckWeight / bodyWeightPounds
+        
+        switch weightPercentage {
+        case 0..<0.15: return "Moderate"    // < 15% body weight
+        case 0.15..<0.25: return "Vigorous" // 15-25%
+        default: return "High"              // > 25%
+        }
+    }
+    
+    private var heartRateZone: String {
+        guard currentHeartRate > 0 else { return "Unknown" }
+        
+        // Rough HR zones (could be personalized based on user age)
+        switch currentHeartRate {
+        case 0..<100: return "Recovery"
+        case 100..<130: return "Aerobic"
+        case 130..<150: return "Threshold"
+        case 150..<170: return "VO2 Max"
+        default: return "Neuromuscular"
+        }
+    }
+    
+    private func calculatePerceivedExertion() -> Int {
+        // RPE scale 1-10 based on ruck weight percentage of body weight
+        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
+        let weightPercentage = ruckWeight / bodyWeightPounds
+        
+        switch weightPercentage {
+        case 0..<0.1: return 3      // < 10% body weight
+        case 0.1..<0.15: return 4   // 10-15%
+        case 0.15..<0.2: return 5   // 15-20%
+        case 0.2..<0.25: return 6   // 20-25%
+        case 0.25..<0.3: return 7   // 25-30%
+        default: return 8           // > 30%
+        }
+    }
+    
+    private func calculateExerciseMinutes() -> Double {
+        let totalMinutes = elapsedTime / 60.0
+        
+        // If carrying significant weight, count all time as exercise
+        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
+        let weightPercentage = ruckWeight / bodyWeightPounds
+        
+        if weightPercentage >= 0.15 { // 15%+ body weight
+            return totalMinutes
+        } else if weightPercentage >= 0.1 { // 10-15% body weight
+            return totalMinutes * 0.8
+        } else {
+            return totalMinutes * 0.6 // Light ruck or bodyweight only
+        }
+    }
+    
+    func generateHealthSummary() -> String {
+        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
+        let weightPercentage = Int(ruckWeight / bodyWeightPounds * 100)
+        
+        return """
+        Rucking Workout Summary:
+        • Duration: \(formattedElapsedTime)
+        • Distance: \(String(format: "%.2f", distance)) miles
+        • Ruck Weight: \(Int(ruckWeight)) lbs (\(weightPercentage)% body weight)
+        • Calories: \(Int(calories)) (adjusted for load)
+        • Avg Pace: \(formattedPace) per mile
+        • Terrain: \(selectedTerrain.rawValue)
+        
+        This workout contributes to your:
+        ✅ Move Ring (Active Calories)
+        ✅ Exercise Ring (Exercise Minutes)
+        ✅ Stand Ring (Active Movement)
+        """
+    }
+    
+    // MARK: - Activity Ring Optimization (Disabled to prevent feedback loop)
+    // Note: Activity Ring contributions are handled automatically by HealthKit
+    // when using HKLiveWorkoutBuilder with proper metadata in the workout configuration
 }

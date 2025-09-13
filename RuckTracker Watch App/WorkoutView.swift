@@ -143,23 +143,28 @@ struct WorkoutView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
-                // Stop Button
-                Button(action: {
-                    workoutManager.endWorkout()
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 44, height: 44)
-                        
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                // Stop Button - only visible when workout is in progress
+                if workoutManager.isActive || workoutManager.isPaused {
+                    Button(action: {
+                        workoutManager.endWorkout()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "stop.fill")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .transition(.scale.combined(with: .opacity))
                 }
-                .buttonStyle(PlainButtonStyle())
             }
             .padding(.bottom, 24)
+            .animation(.easeInOut(duration: 0.3), value: workoutManager.isActive)
+            .animation(.easeInOut(duration: 0.3), value: workoutManager.isPaused)
         }
         .background(Color.black)
         .focusable()
