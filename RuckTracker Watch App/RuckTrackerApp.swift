@@ -17,7 +17,7 @@ struct RuckTracker_Watch_AppApp: App {
                     // Set up the connection between managers
                     workoutManager.setHealthManager(healthManager)
                     
-                    // Request permissions
+                    // Request permissions immediately like before
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         healthManager.requestAuthorization()
                     }

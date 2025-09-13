@@ -14,12 +14,19 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     // MARK: - Published Properties
     @Published var isActive = false
     @Published var isPaused = false
+    @Published var showPostWorkoutSummary = false
+    @Published var isHealthKitAuthorized = false
     @Published var ruckWeight: Double = 20.0
     @Published var elapsedTime: TimeInterval = 0
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
-    @Published var selectedTerrain: TerrainType = .flat
+    
+    // Final workout stats for post-workout summary
+    @Published var finalElapsedTime: TimeInterval = 0
+    @Published var finalDistance: Double = 0
+    @Published var finalCalories: Double = 0
+    @Published var finalRuckWeight: Double = 0
     
     // Settings
     private let userSettings = UserSettings.shared
@@ -32,6 +39,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     // Health manager reference
     private var healthManager: HealthManager?
+    
+    // Timer for elapsed time tracking
+    private var workoutTimer: Timer?
+    private var startTime: Date?
+    private var pausedTime: TimeInterval = 0
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -84,6 +96,16 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     func setHealthManager(_ manager: HealthManager) {
         self.healthManager = manager
         self.healthStore = manager.healthStore
+        
+        // Observe authorization changes
+        manager.$isAuthorized
+            .sink { [weak self] isAuthorized in
+                DispatchQueue.main.async {
+                    self?.isHealthKitAuthorized = isAuthorized
+                    print("🏥 WorkoutManager: HealthKit authorization updated to \(isAuthorized)")
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func setupUserSettings() {
@@ -113,8 +135,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         elapsedTime = 0
         distance = 0
         calories = 0
+        pausedTime = 0
+        startTime = Date()
         
         startWorkoutSession()
+        startElapsedTimeTracking()
     }
     
     func togglePause() {
@@ -128,12 +153,24 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     }
     
     func pauseWorkout() {
+        guard !isPaused else { return } // Prevent double pause
+        
+        // Add current elapsed time to paused time before pausing
+        if let startTime = startTime {
+            pausedTime += Date().timeIntervalSince(startTime)
+        }
+        
         isPaused = true
         session?.pause()
         print("⏸️ Workout paused")
     }
     
     func resumeWorkout() {
+        guard isPaused else { return } // Prevent resume when not paused
+        
+        // Reset start time for resumed session
+        startTime = Date()
+        
         isPaused = false
         session?.resume()
         print("▶️ Workout resumed")
@@ -141,25 +178,59 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     func endWorkout() {
         print("🏁 Ending workout...")
+        
+        // Save final stats before resetting
+        finalElapsedTime = elapsedTime
+        finalDistance = distance
+        finalCalories = calories
+        finalRuckWeight = ruckWeight
+        
         isActive = false
         isPaused = true
         
+        // Stop the timer
+        workoutTimer?.invalidate()
+        workoutTimer = nil
+        
         // End the session and builder
         session?.end()
-        builder?.endCollection(withEnd: Date()) { [weak self] success, error in
-            if success {
-                self?.builder?.finishWorkout { workout, error in
-                    if let workout = workout {
-                        print("✅ Workout saved with Apple's calculations")
-                        if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
-                            print("📊 Final stats: \(String(format: "%.2f", distance)) mi, \(Int(self?.calories ?? 0)) cal")
-                        } else {
-                            print("📊 Final stats: \(String(format: "%.2f", self?.distance ?? 0)) mi, \(Int(self?.calories ?? 0)) cal")
+        
+        // Handle the async completion properly
+        if let builder = builder {
+            builder.endCollection(withEnd: Date()) { [weak self] success, error in
+                if success {
+                    builder.finishWorkout { workout, error in
+                        DispatchQueue.main.async {
+                            if let workout = workout {
+                                print("✅ Workout saved with Apple's calculations")
+                                if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
+                                    print("📊 Final stats: \(String(format: "%.2f", distance)) mi, \(Int(self?.finalCalories ?? 0)) cal")
+                                } else {
+                                    print("📊 Final stats: \(String(format: "%.2f", self?.finalDistance ?? 0)) mi, \(Int(self?.finalCalories ?? 0)) cal")
+                                }
+                            } else {
+                                print("❌ Failed to save workout: \(error?.localizedDescription ?? "")")
+                            }
+                            
+                            // Show post-workout summary
+                            print("🎯 Showing post-workout summary")
+                            self?.showPostWorkoutSummary = true
                         }
-                    } else {
-                        print("❌ Failed to save workout: \(error?.localizedDescription ?? "")")
+                    }
+                } else {
+                    print("❌ Failed to end collection: \(error?.localizedDescription ?? "")")
+                    DispatchQueue.main.async {
+                        // Show post-workout summary even if save failed
+                        print("🎯 Showing post-workout summary (despite save failure)")
+                        self?.showPostWorkoutSummary = true
                     }
                 }
+            }
+        } else {
+            // No builder - show summary immediately
+            DispatchQueue.main.async {
+                print("🎯 Showing post-workout summary (no builder)")
+                self.showPostWorkoutSummary = true
             }
         }
         
@@ -198,9 +269,6 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             builder?.beginCollection(withStart: Date()) { [weak self] success, error in
                 if success {
                     print("✅ Started HKLiveWorkoutBuilder - will get Apple's distance/pace calculations")
-                    DispatchQueue.main.async {
-                        self?.startElapsedTimeTracking()
-                    }
                 } else {
                     print("❌ Failed to start builder: \(error?.localizedDescription ?? "")")
                 }
@@ -212,18 +280,24 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     }
     
     private func startElapsedTimeTracking() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+        // Stop any existing timer
+        workoutTimer?.invalidate()
+        
+        workoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self else {
                 timer.invalidate()
                 return
             }
             
             if self.isActive && !self.isPaused {
-                self.elapsedTime = self.builder?.elapsedTime ?? 0
+                if let startTime = self.startTime {
+                    self.elapsedTime = self.pausedTime + Date().timeIntervalSince(startTime)
+                }
             }
             
             if !self.isActive {
                 timer.invalidate()
+                self.workoutTimer = nil
             }
         }
     }
@@ -311,12 +385,32 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         return baseCalories + additionalCalories
     }
     
+    // MARK: - Post-Workout Navigation
+    func dismissPostWorkoutSummary() {
+        print("🔄 Dismissing post-workout summary")
+        showPostWorkoutSummary = false
+        // Reset final stats
+        finalElapsedTime = 0
+        finalDistance = 0
+        finalCalories = 0
+        finalRuckWeight = 0
+    }
+    
     // MARK: - Cleanup
     private func resetWorkout() {
+        // Stop any running timer
+        workoutTimer?.invalidate()
+        workoutTimer = nil
+        
+        // Reset workout data
         elapsedTime = 0
         distance = 0
         calories = 0
         currentHeartRate = 0
+        startTime = nil
+        pausedTime = 0
+        
+        // Clean up HealthKit objects
         session = nil
         builder = nil
     }
