@@ -296,20 +296,20 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         workoutTimer?.invalidate()
         
         workoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self = self else {
+            guard let self else {
                 timer.invalidate()
                 return
             }
             
-            if self.isActive && !self.isPaused {
-                if let startTime = self.startTime {
-                    self.elapsedTime = self.pausedTime + Date().timeIntervalSince(startTime)
+            if isActive && !isPaused {
+                if let startTime = startTime {
+                    elapsedTime = pausedTime + Date().timeIntervalSince(startTime)
                 }
             }
             
-            if !self.isActive {
+            if !isActive {
                 timer.invalidate()
-                self.workoutTimer = nil
+                workoutTimer = nil
             }
         }
     }

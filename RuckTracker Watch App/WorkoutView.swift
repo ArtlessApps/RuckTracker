@@ -194,18 +194,14 @@ struct WorkoutView: View {
             isContinuous: false
         )
         .contextMenu {
-            Button {
+            Button("Settings", systemImage: "gearshape") {
                 showingSettings = true
-            } label: {
-                Label("Settings", systemImage: "gearshape")
             }
             
             if !workoutManager.isActive {
-                Button {
+                Button("Reset Weight", systemImage: "arrow.clockwise") {
                     // Quick reset to default weight
                     workoutManager.ruckWeight = userSettings.defaultRuckWeight
-                } label: {
-                    Label("Reset Weight", systemImage: "arrow.clockwise")
                 }
             }
         }
