@@ -1,429 +1,877 @@
 import SwiftUI
 
-struct PhoneMainView: View {
+struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
-    @State private var showingWorkoutView = false
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @State private var showingSettings = false
+    @State private var showingWorkoutHistory = false
+    @State private var selectedTimeframe: TimeFrame = .month
+    
+    enum TimeFrame: String, CaseIterable {
+        case week = "Week"
+        case month = "Month"
+        case year = "Year"
+    }
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
-                // Header
-                VStack(spacing: 10) {
-                    Image(systemName: "figure.walk.motion")
-                        .font(.system(size: 80))
-                        .foregroundColor(.orange)
-                    
-                    Text("RuckTracker")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    Text("Track your weighted walks")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+            mainScrollView
+                .navigationTitle("RuckTracker")
+                .navigationBarTitleDisplayMode(.large)
+                .toolbar {
+                    settingsToolbarItem
                 }
-                
-                // Current Session Info or Quick Start
-                if workoutManager.isActive {
-                    ActiveWorkoutCard()
-                } else {
-                    QuickStartCard()
-                }
-                
-                Spacer()
-                
-                // History/Stats Preview
-                RecentWorkoutsCard()
-            }
-            .padding()
-            .navigationBarHidden(false)
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.title3)
-                    }
-                }
-            }
-            .sheet(isPresented: $showingWorkoutView) {
-                PhoneWorkoutView()
-                    .environmentObject(workoutManager)
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-            }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .sheet(isPresented: $showingWorkoutHistory) {
+            AllWorkoutsView()
         }
     }
-}
-
-struct QuickStartCard: View {
-    @EnvironmentObject var workoutManager: WorkoutManager
-    @ObservedObject private var userSettings = UserSettings.shared
-    @State private var showingWorkout = false
     
-    var body: some View {
-        VStack(spacing: 20) {
-            // Weight display - less prominent but still visible
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Ruck Weight")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 4) {
-                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                        Text(userSettings.preferredWeightUnit.rawValue)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                // Quick adjustment buttons - subtle
-                HStack(spacing: 12) {
-                    Button("-5") {
-                        if workoutManager.ruckWeight >= 5 {
-                            workoutManager.ruckWeight -= 5
-                        }
-                    }
-                    .frame(width: 32, height: 32)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(16)
-                    .font(.caption)
-                    
-                    Button("+5") {
-                        workoutManager.ruckWeight += 5
-                    }
-                    .frame(width: 32, height: 32)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(16)
-                    .font(.caption)
-                }
-                .foregroundColor(.primary)
+    // MARK: - Computed Views
+    
+    private var mainScrollView: some View {
+        ScrollView {
+            mainContentStack
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+        }
+    }
+    
+    private var mainContentStack: some View {
+        LazyVStack(spacing: 24) {
+            AppleWatchHeroSection()
+            
+            if !workoutDataManager.workouts.isEmpty {
+                QuickStatsDashboard()
+                    .environmentObject(workoutDataManager)
             }
             
-            // Prominent start button
-            Button(action: {
-                showingWorkout = true
-            }) {
-                HStack(spacing: 12) {
-                    Image(systemName: "figure.hiking")
-                        .font(.title2)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Start Rucking")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        Text("Best tracking on Apple Watch")
-                            .font(.caption)
-                            .opacity(0.8)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(15)
+            if workoutDataManager.totalWorkouts >= 3 {
+                ProgressChartsSection(timeframe: $selectedTimeframe)
+                    .environmentObject(workoutDataManager)
             }
-            .sheet(isPresented: $showingWorkout) {
-                PhoneWorkoutView()
+            
+            RecentActivitySection()
+                .environmentObject(workoutDataManager)
+            
+            if workoutDataManager.totalWorkouts >= 5 {
+                TrainingInsightsSection()
+                    .environmentObject(workoutDataManager)
                     .environmentObject(workoutManager)
             }
+            
+            Spacer(minLength: 100)
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(15)
+    }
+    
+    private var settingsToolbarItem: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button {
+                showingSettings = true
+            } label: {
+                Image(systemName: "person.circle")
+                    .font(.title2)
+                    .foregroundColor(.orange)
+            }
+        }
     }
 }
 
-struct ActiveWorkoutCard: View {
+// MARK: - Hero Section
+struct AppleWatchHeroSection: View {
     @EnvironmentObject var workoutManager: WorkoutManager
-    @ObservedObject private var userSettings = UserSettings.shared
     
     var body: some View {
         VStack(spacing: 20) {
-            HStack {
-                Text("Active Workout")
+            appleWatchVisualSection
+            currentStatusSection
+        }
+    }
+    
+    private var appleWatchVisualSection: some View {
+        VStack(spacing: 16) {
+            watchIcon
+            textContent
+        }
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity)
+        .background(heroBackground)
+    }
+    
+    private var watchIcon: some View {
+        Image(systemName: "applewatch.watchface")
+            .font(.system(size: 64))
+            .foregroundColor(.orange)
+            .symbolEffect(.pulse.byLayer, isActive: workoutManager.isActive)
+    }
+    
+    private var textContent: some View {
+        VStack(spacing: 8) {
+            Text("Track on Apple Watch")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text("Get accurate GPS, heart rate, and calorie tracking with your ruck weight automatically calculated.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
+    private var heroBackground: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color.orange.opacity(0.1))
+    }
+    
+    @ViewBuilder
+    private var currentStatusSection: some View {
+        if workoutManager.isActive {
+            ActiveWorkoutStatusCard()
+                .environmentObject(workoutManager)
+        } else {
+            QuickSetupCard()
+                .environmentObject(workoutManager)
+        }
+    }
+}
+
+// MARK: - Active Workout Status
+struct ActiveWorkoutStatusCard: View {
+    @EnvironmentObject var workoutManager: WorkoutManager
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            headerSection
+            statsSection
+        }
+        .padding()
+        .background(cardBackground)
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Active on Apple Watch")
                     .font(.headline)
+                    .foregroundColor(.green)
                 
-                Spacer()
-                
-                // Show weight during active workout
-                HStack(spacing: 4) {
-                    Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    Text(userSettings.preferredWeightUnit.rawValue)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text("Started recently")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
-            HStack(spacing: 30) {
-                VStack {
-                    Text(workoutManager.formattedElapsedTime)
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text("Time")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                VStack {
-                    let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
-                        workoutManager.distance : 
-                        workoutManager.distance / userSettings.preferredDistanceUnit.conversionToMiles
-                    Text(String(format: "%.2f", displayDistance))
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text(userSettings.preferredDistanceUnit.rawValue)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                VStack {
-                    Text("\(Int(workoutManager.calories))")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text("Calories")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+            Spacer()
             
-            HStack(spacing: 20) {
-                Button(workoutManager.isPaused ? "Resume" : "Pause") {
-                    workoutManager.togglePause()
-                }
-                .foregroundColor(workoutManager.isPaused ? .green : .orange)
-                
-                Button("End Workout") {
-                    workoutManager.endWorkout()
-                }
-                .foregroundColor(.red)
-            }
+            Image(systemName: "applewatch.radiowaves.left.and.right")
+                .font(.title2)
+                .foregroundColor(.green)
+                .symbolEffect(.variableColor.iterative, isActive: true)
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(15)
+    }
+    
+    private var statsSection: some View {
+        HStack {
+            StatPill(value: workoutManager.formattedElapsedTime, label: "Time", color: .blue)
+            StatPill(value: String(format: "%.2f", workoutManager.distance), label: "Miles", color: .green)
+            StatPill(value: "\(Int(workoutManager.calories))", label: "Cal", color: .orange)
+        }
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.green.opacity(0.1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 1)
+            )
     }
 }
 
-struct PhoneWorkoutView: View {
+// MARK: - Quick Setup Card
+struct QuickSetupCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @ObservedObject private var userSettings = UserSettings.shared
-    @Environment(\.presentationMode) var presentationMode
+    @State private var showingTips = false
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 30) {
-                // Use Apple Watch reminder
-                VStack(spacing: 15) {
-                    Image(systemName: "applewatch")
-                        .font(.system(size: 60))
-                        .foregroundColor(.orange)
-                    
-                    Text("Best Experience on Apple Watch")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("For accurate GPS tracking, heart rate monitoring, and calorie calculation, start your workout on Apple Watch.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(15)
-                
-                // Current weight display
-                VStack(spacing: 8) {
-                    Text("Current Weight Setting")
-                        .font(.headline)
-                    
-                    HStack(spacing: 4) {
-                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
-                            .font(.system(size: 48, weight: .medium, design: .rounded))
-                            .foregroundColor(.green)
-                        Text(userSettings.preferredWeightUnit.rawValue.uppercased())
-                            .font(.title3)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Basic phone tracking option
-                VStack(spacing: 15) {
-                    Button("Track on iPhone") {
-                        workoutManager.startWorkout()
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
-                    
-                    Text("Limited accuracy without Apple Watch")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Start Workout")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
+        VStack(spacing: 16) {
+            headerRow
+            instructionText
         }
+        .padding()
+        .background(cardBackground)
+        .sheet(isPresented: $showingTips) {
+            RuckingTipsView()
+        }
+    }
+    
+    private var headerRow: some View {
+        HStack {
+            readyToRuckSection
+            Spacer()
+            tipsButton
+        }
+    }
+    
+    private var readyToRuckSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Ready to Ruck")
+                .font(.headline)
+            
+            weightDisplay
+        }
+    }
+    
+    private var weightDisplay: some View {
+        HStack(spacing: 4) {
+            Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
+                .font(.title3)
+                .fontWeight(.semibold)
+            Text(userSettings.preferredWeightUnit.rawValue)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text("loaded")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var tipsButton: some View {
+        Button("Tips") {
+            showingTips = true
+        }
+        .font(.caption)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.gray.opacity(0.2))
+        .cornerRadius(8)
+    }
+    
+    private var instructionText: some View {
+        Text("Open the RuckTracker app on your Apple Watch to start tracking your workout with full GPS and health monitoring.")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.gray.opacity(0.1))
     }
 }
 
-struct RecentWorkoutsCard: View {
+// MARK: - Quick Stats Dashboard
+struct QuickStatsDashboard: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @ObservedObject private var userSettings = UserSettings.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            headerSection
+            statsGrid
+        }
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            Text("Your Progress")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            Text("Last 30 days")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var statsGrid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+            StatCard(
+                title: "Workouts",
+                value: "\(workoutDataManager.recentWorkoutsThisMonth.count)",
+                subtitle: "this month",
+                icon: "figure.hiking",
+                color: .orange
+            )
+            
+            StatCard(
+                title: "Distance",
+                value: String(format: "%.1f", workoutDataManager.totalDistance),
+                subtitle: userSettings.preferredDistanceUnit.rawValue,
+                icon: "location.fill",
+                color: .green
+            )
+            
+            StatCard(
+                title: "Avg Weight",
+                value: String(format: "%.0f", averageRuckWeight),
+                subtitle: userSettings.preferredWeightUnit.rawValue,
+                icon: "backpack.fill",
+                color: .blue
+            )
+            
+            StatCard(
+                title: "Calories",
+                value: String(format: "%.0f", workoutDataManager.totalCalories),
+                subtitle: "burned",
+                icon: "flame.fill",
+                color: .red
+            )
+        }
+    }
+    
+    private var averageRuckWeight: Double {
+        let weights = workoutDataManager.workouts.map { $0.ruckWeight }
+        return weights.isEmpty ? 0 : weights.reduce(0, +) / Double(weights.count)
+    }
+}
+
+// MARK: - Progress Charts Section
+struct ProgressChartsSection: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @Binding var timeframe: ImprovedPhoneMainView.TimeFrame
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            headerWithPicker
+            chartsStack
+        }
+    }
+    
+    private var headerWithPicker: some View {
+        HStack {
+            Text("Trends")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            timeframePicker
+        }
+    }
+    
+    private var timeframePicker: some View {
+        Picker("Timeframe", selection: $timeframe) {
+            ForEach(ImprovedPhoneMainView.TimeFrame.allCases, id: \.self) { frame in
+                Text(frame.rawValue).tag(frame)
+            }
+        }
+        .pickerStyle(SegmentedPickerStyle())
+        .frame(width: 180)
+    }
+    
+    private var chartsStack: some View {
+        VStack(spacing: 20) {
+            distanceChart
+            loadChart
+        }
+    }
+    
+    private var distanceChart: some View {
+        ChartCard(title: "Distance Progress", icon: "chart.line.uptrend.xyaxis") {
+            DistanceChart(timeframe: timeframe)
+                .frame(height: 120)
+        }
+    }
+    
+    private var loadChart: some View {
+        ChartCard(title: "Load Distribution", icon: "chart.pie") {
+            LoadDistributionChart()
+                .frame(height: 120)
+        }
+    }
+}
+
+// MARK: - Recent Activity Section
+struct RecentActivitySection: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @State private var showingAllWorkouts = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            HStack {
-                Text("Recent Workouts")
-                    .font(.headline)
-                
-                Spacer()
-                
-                if !workoutDataManager.recentWorkouts.isEmpty {
-                    Button("View All") {
-                        showingAllWorkouts = true
-                    }
-                    .font(.caption)
-                    .foregroundColor(.blue)
-                }
-            }
-            
-            if workoutDataManager.recentWorkouts.isEmpty {
-                Text("No recent workouts")
-                    .foregroundColor(.secondary)
-                    .font(.subheadline)
-            } else {
-                // Show last 3 workouts
-                ForEach(Array(workoutDataManager.recentWorkouts.prefix(3)), id: \.objectID) { workout in
-                    WorkoutRowView(workout: workout)
-                }
-                
-                // Summary stats
-                if workoutDataManager.totalWorkouts > 0 {
-                    Divider()
-                    
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(workoutDataManager.totalWorkouts)")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                            Text("Total Workouts")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 2) {
-                            let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
-                                workoutDataManager.totalDistance : 
-                                workoutDataManager.totalDistance / userSettings.preferredDistanceUnit.conversionToMiles
-                            Text(String(format: "%.1f", displayDistance))
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                            Text("Total \(userSettings.preferredDistanceUnit.rawValue)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            headerSection
+            contentSection
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(15)
         .sheet(isPresented: $showingAllWorkouts) {
             AllWorkoutsView()
-                .environmentObject(workoutDataManager)
+        }
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            Text("Recent Activity")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            if !workoutDataManager.workouts.isEmpty {
+                viewAllButton
+            }
+        }
+    }
+    
+    private var viewAllButton: some View {
+        Button("View All") {
+            showingAllWorkouts = true
+        }
+        .font(.subheadline)
+        .foregroundColor(.orange)
+    }
+    
+    @ViewBuilder
+    private var contentSection: some View {
+        if workoutDataManager.workouts.isEmpty {
+            EmptyStateView()
+        } else {
+            workoutsList
+        }
+    }
+    
+    private var workoutsList: some View {
+        VStack(spacing: 12) {
+            ForEach(Array(workoutDataManager.recentWorkouts.prefix(3)), id: \.objectID) { workout in
+                CompactWorkoutRow(workout: workout)
+            }
         }
     }
 }
 
-struct WorkoutRowView: View {
+// MARK: - Training Insights Section
+struct TrainingInsightsSection: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Training Insights")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            insightCards
+        }
+    }
+    
+    private var insightCards: some View {
+        VStack(spacing: 12) {
+            InsightCard(
+                icon: "target",
+                title: "Consistency",
+                description: getConsistencyInsight(),
+                color: .blue
+            )
+            
+            InsightCard(
+                icon: "arrow.up.right",
+                title: "Progression",
+                description: getProgressionInsight(),
+                color: .green
+            )
+            
+            InsightCard(
+                icon: "lightbulb",
+                title: "Recommendation",
+                description: getRecommendation(),
+                color: .orange
+            )
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func getConsistencyInsight() -> String {
+        let recentWorkouts = workoutDataManager.recentWorkoutsThisMonth
+        let workoutsPerWeek = Double(recentWorkouts.count) / 4.0
+        
+        if workoutsPerWeek >= 3 {
+            return "Great consistency! You're averaging \(String(format: "%.1f", workoutsPerWeek)) rucks per week."
+        } else if workoutsPerWeek >= 2 {
+            return "Good progress with \(String(format: "%.1f", workoutsPerWeek)) rucks per week. Try for 3+ weekly."
+        } else {
+            return "Aim for 2-3 rucks per week to build endurance and strength."
+        }
+    }
+    
+    private func getProgressionInsight() -> String {
+        let workouts = workoutDataManager.workouts.prefix(10)
+        guard !workouts.isEmpty else { return "Start tracking to see progression insights." }
+        
+        let averageWeight = workouts.map { $0.ruckWeight }.reduce(0, +) / Double(workouts.count)
+        
+        if averageWeight >= 35 {
+            return "Strong load capacity! You're carrying \(String(format: "%.0f", averageWeight))lbs on average."
+        } else if averageWeight >= 25 {
+            return "Building strength with \(String(format: "%.0f", averageWeight))lbs average. Consider gradual increases."
+        } else {
+            return "Great foundation! Gradually increase weight by 5lbs every 2-3 weeks."
+        }
+    }
+    
+    private func getRecommendation() -> String {
+        let bodyWeightKg = userSettings.bodyWeightInKg
+        let bodyWeightLbs = bodyWeightKg * 2.20462
+        let currentWeight = workoutManager.ruckWeight
+        let percentage = (currentWeight / bodyWeightLbs) * 100
+        
+        if percentage < 15 {
+            return "Consider increasing to 15% body weight (\(String(format: "%.0f", bodyWeightLbs * 0.15))lbs) for optimal training."
+        } else if percentage > 25 {
+            return "High load! Ensure adequate recovery between sessions."
+        } else {
+            return "Perfect load range! Focus on increasing distance or pace."
+        }
+    }
+}
+
+// MARK: - Supporting Views
+struct StatPill: View {
+    let value: String
+    let label: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(.caption, design: .rounded))
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            iconRow
+            valueSection
+        }
+        .padding()
+        .background(cardBackground)
+    }
+    
+    private var iconRow: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.title3)
+            
+            Spacer()
+        }
+    }
+    
+    private var valueSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.primary)
+            
+            Text(subtitle)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.gray.opacity(0.08))
+    }
+}
+
+struct ChartCard<Content: View>: View {
+    let title: String
+    let icon: String
+    let content: Content
+    
+    init(title: String, icon: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.icon = icon
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            headerRow
+            content
+        }
+        .padding()
+        .background(cardBackground)
+    }
+    
+    private var headerRow: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.orange)
+                .font(.subheadline)
+            
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            Spacer()
+        }
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.gray.opacity(0.08))
+    }
+}
+
+struct CompactWorkoutRow: View {
     let workout: WorkoutEntity
     @ObservedObject private var userSettings = UserSettings.shared
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(workout.formattedDate)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    // Ruck weight indicator
-                    Text("\(Int(workout.ruckWeight)) lbs")
-                        .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.2))
-                        .cornerRadius(4)
-                }
-                
-                HStack(spacing: 12) {
-                    Text(workout.formattedDuration)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text(workout.formattedDistance(unit: userSettings.preferredDistanceUnit))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("\(Int(workout.calories)) cal")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
+            leftSection
             Spacer()
-            
-            // Pace indicator with color
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(workout.formattedPace)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(Color(workout.paceColor))
-                
-                Text("pace")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
+            rightSection
         }
-        .padding(.vertical, 4)
+        .padding()
+        .background(rowBackground)
+    }
+    
+    private var leftSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            dateAndWeight
+            statsRow
+        }
+    }
+    
+    private var dateAndWeight: some View {
+        HStack(spacing: 8) {
+            Text(workout.date?.formatted(date: .abbreviated, time: .omitted) ?? "")
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            Text("\(Int(workout.ruckWeight))lbs")
+                .font(.caption)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.orange.opacity(0.2))
+                .cornerRadius(4)
+        }
+    }
+    
+    private var statsRow: some View {
+        HStack(spacing: 12) {
+            Label(workout.formattedDuration, systemImage: "clock")
+            Label(workout.formattedDistance(unit: userSettings.preferredDistanceUnit), systemImage: "location")
+            Label("\(Int(workout.calories))", systemImage: "flame")
+        }
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+    
+    private var rightSection: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text(workout.formattedPace)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(Color(workout.paceColor))
+            
+            Text("pace")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var rowBackground: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.gray.opacity(0.05))
     }
 }
 
-#Preview {
-    PhoneMainView()
-        .environmentObject(WorkoutManager())
-        .environmentObject(WorkoutDataManager.shared)
+struct InsightCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            iconSection
+            textSection
+            Spacer()
+        }
+        .padding()
+        .background(cardBackground)
+    }
+    
+    private var iconSection: some View {
+        Image(systemName: icon)
+            .font(.title3)
+            .foregroundColor(color)
+            .frame(width: 24)
+    }
+    
+    private var textSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            Text(description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(color.opacity(0.08))
+    }
+}
+
+struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "figure.walk.motion")
+                .font(.system(size: 48))
+                .foregroundColor(.orange)
+            
+            textContent
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+    }
+    
+    private var textContent: some View {
+        VStack(spacing: 8) {
+            Text("Ready to Start Rucking?")
+                .font(.headline)
+            
+            Text("Open RuckTracker on your Apple Watch to record your first weighted walk and start building your fitness journey.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+// MARK: - Chart Views (Basic implementations)
+struct DistanceChart: View {
+    let timeframe: ImprovedPhoneMainView.TimeFrame
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.orange.opacity(0.1))
+            .overlay(
+                Text("Distance trends chart")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            )
+    }
+}
+
+struct LoadDistributionChart: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.blue.opacity(0.1))
+            .overlay(
+                Text("Load distribution chart")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            )
+    }
+}
+
+// MARK: - Tips View
+struct RuckingTipsView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            List {
+                gettingStartedSection
+                formAndSafetySection
+            }
+            .navigationTitle("Rucking Tips")
+            .toolbar {
+                doneButton
+            }
+        }
+    }
+    
+    private var gettingStartedSection: some View {
+        Section("Getting Started") {
+            TipRow(icon: "figure.walk", title: "Start Light", description: "Begin with 10-15% of your body weight")
+            TipRow(icon: "clock", title: "Build Gradually", description: "Increase weight by 5lbs every 2-3 weeks")
+            TipRow(icon: "heart", title: "Listen to Your Body", description: "Rest if you feel pain or excessive fatigue")
+        }
+    }
+    
+    private var formAndSafetySection: some View {
+        Section("Form & Safety") {
+            TipRow(icon: "figure.stand", title: "Posture", description: "Keep shoulders back, core engaged")
+            TipRow(icon: "shoe", title: "Footwear", description: "Wear supportive, broken-in boots or shoes")
+            TipRow(icon: "drop", title: "Hydration", description: "Bring water, especially for long rucks")
+        }
+    }
+    
+    private var doneButton: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button("Done") {
+                presentationMode.wrappedValue.dismiss()
+            }
+        }
+    }
+}
+
+struct TipRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            iconSection
+            textSection
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private var iconSection: some View {
+        Image(systemName: icon)
+            .font(.title3)
+            .foregroundColor(.orange)
+            .frame(width: 24)
+    }
+    
+    private var textSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            Text(description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
 }
