@@ -13,12 +13,21 @@ class HealthManager: ObservableObject {
     @Published var hasCaloriesPermission = false
     @Published var hasDistancePermission = false
     
+    // Platform detection
+    private var isWatchApp: Bool {
+        #if os(watchOS)
+        return true
+        #else
+        return false
+        #endif
+    }
+    
     init() {
         checkAuthorizationStatus()
     }
     
     func requestAuthorization() {
-        print("🏥 iPhone: Requesting HealthKit authorization")
+        print("🏥 \(platformName): Requesting HealthKit authorization")
         
         // Clear any previous errors
         errorManager.clearError()
@@ -41,17 +50,36 @@ class HealthManager: ObservableObject {
             return
         }
         
-        let typesToRead: Set<HKObjectType> = [
-            heartRateType,
-            caloriesType,
-            distanceType
-        ]
+        // Different permission sets for iPhone vs Watch
+        let typesToRead: Set<HKObjectType>
+        let typesToWrite: Set<HKSampleType>
         
-        let typesToWrite: Set<HKSampleType> = [
-            HKObjectType.workoutType(),
-            caloriesType,
-            distanceType
-        ]
+        if isWatchApp {
+            // Watch can read and write everything
+            typesToRead = [
+                heartRateType,
+                caloriesType,
+                distanceType,
+                HKWorkoutType.workoutType()
+            ]
+            typesToWrite = [
+                HKWorkoutType.workoutType(),
+                caloriesType,
+                distanceType
+            ]
+        } else {
+            // iPhone: Don't request heart rate (it will be denied anyway)
+            typesToRead = [
+                caloriesType,
+                distanceType,
+                HKWorkoutType.workoutType()
+            ]
+            typesToWrite = [
+                HKWorkoutType.workoutType(),
+                caloriesType,
+                distanceType
+            ]
+        }
         
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
             DispatchQueue.main.async {
@@ -66,7 +94,7 @@ class HealthManager: ObservableObject {
                     self?.errorManager.handleError(healthKitError, context: "Authorization Request")
                     self?.isAuthorized = false
                 } else {
-                    print("🏥 iPhone authorization completed successfully")
+                    print("🏥 \(self?.platformName ?? "Unknown") authorization completed successfully")
                     self?.checkAuthorizationStatus()
                 }
             }
@@ -91,29 +119,40 @@ class HealthManager: ObservableObject {
         let distanceStatus = healthStore.authorizationStatus(for: distanceType)
         let workoutStatus = healthStore.authorizationStatus(for: workoutType)
         
-        print("🏥 iPhone Authorization Status:")
-        print("  - Heart Rate: \(heartRateStatus.rawValue)")
-        print("  - Calories: \(caloriesStatus.rawValue)")
-        print("  - Distance: \(distanceStatus.rawValue)")
-        print("  - Workout: \(workoutStatus.rawValue)")
+        print("🏥 \(platformName) Authorization Status:")
+        print("  - Heart Rate: \(heartRateStatus.rawValue) \(heartRateStatus.description)")
+        print("  - Calories: \(caloriesStatus.rawValue) \(caloriesStatus.description)")
+        print("  - Distance: \(distanceStatus.rawValue) \(distanceStatus.description)")
+        print("  - Workout: \(workoutStatus.rawValue) \(workoutStatus.description)")
         
         DispatchQueue.main.async { [weak self] in
-            // Update individual permission status
-            self?.hasHeartRatePermission = heartRateStatus == .sharingAuthorized
-            self?.hasCaloriesPermission = caloriesStatus == .sharingAuthorized
-            self?.hasDistancePermission = distanceStatus == .sharingAuthorized
-            self?.hasWorkoutPermission = workoutStatus == .sharingAuthorized
+            guard let self = self else { return }
             
-            // Check for permission issues
+            // Update individual permission status
+            self.hasHeartRatePermission = heartRateStatus == .sharingAuthorized
+            self.hasCaloriesPermission = caloriesStatus == .sharingAuthorized
+            self.hasDistancePermission = distanceStatus == .sharingAuthorized
+            self.hasWorkoutPermission = workoutStatus == .sharingAuthorized
+            
+            // Handle permission issues (but ignore heart rate denial on iPhone)
             var deniedPermissions: [String] = []
             var notDeterminedPermissions: [String] = []
             
-            if heartRateStatus == .sharingDenied {
-                deniedPermissions.append("Heart Rate")
-            } else if heartRateStatus == .notDetermined {
-                notDeterminedPermissions.append("Heart Rate")
+            // Only check heart rate permissions on Watch
+            if self.isWatchApp {
+                if heartRateStatus == .sharingDenied {
+                    deniedPermissions.append("Heart Rate")
+                } else if heartRateStatus == .notDetermined {
+                    notDeterminedPermissions.append("Heart Rate")
+                }
+            } else {
+                // On iPhone, heart rate denial is expected - don't treat as error
+                if heartRateStatus == .sharingDenied {
+                    print("ℹ️ iPhone: Heart rate access denied (expected - requires Apple Watch)")
+                }
             }
             
+            // Check other permissions
             if caloriesStatus == .sharingDenied {
                 deniedPermissions.append("Active Calories")
             } else if caloriesStatus == .notDetermined {
@@ -132,29 +171,52 @@ class HealthManager: ObservableObject {
                 notDeterminedPermissions.append("Workouts")
             }
             
-            // Handle errors for denied permissions
+            // Clear any existing heart rate errors if we're on iPhone
+            if !self.isWatchApp {
+                self.errorManager.clearError()
+            }
+            
+            // Handle errors for denied permissions (excluding expected iPhone heart rate)
             if !deniedPermissions.isEmpty {
                 let error = HealthKitError.authorizationDenied(dataType: deniedPermissions.joined(separator: ", "))
-                self?.errorManager.handleError(error, context: "Permission Check")
+                self.errorManager.handleError(error, context: "Permission Check")
             }
             
             // Handle not determined permissions
             if !notDeterminedPermissions.isEmpty {
                 let error = HealthKitError.authorizationNotDetermined
-                self?.errorManager.handleError(error, context: "Permission Check")
+                self.errorManager.handleError(error, context: "Permission Check")
             }
             
-            // Consider authorized if we have essential permissions (workout and calories)
-            let hasEssentialPermissions = workoutStatus == .sharingAuthorized && caloriesStatus == .sharingAuthorized
-            self?.isAuthorized = hasEssentialPermissions
+            // Consider authorized if we have essential permissions
+            let hasEssentialPermissions: Bool
+            if self.isWatchApp {
+                // Watch needs workout, calories, and ideally heart rate
+                hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
+                                        caloriesStatus == .sharingAuthorized &&
+                                        heartRateStatus == .sharingAuthorized
+            } else {
+                // iPhone just needs workout and calories (heart rate not available)
+                hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
+                                        caloriesStatus == .sharingAuthorized
+            }
+            
+            self.isAuthorized = hasEssentialPermissions
             
             if !hasEssentialPermissions && deniedPermissions.isEmpty && notDeterminedPermissions.isEmpty {
                 // Unknown authorization failure
                 let error = HealthKitError.authorizationFailed(underlying: nil)
-                self?.errorManager.handleError(error, context: "Permission Check")
+                self.errorManager.handleError(error, context: "Permission Check")
             }
             
-            print("🏥 iPhone: Final authorization status: \(self?.isAuthorized ?? false)")
+            print("🏥 \(self.platformName): Final authorization status: \(self.isAuthorized)")
+            
+            // Log platform-specific status
+            if self.isWatchApp {
+                print("📱 Watch: Full HealthKit integration available")
+            } else {
+                print("📱 iPhone: Limited HealthKit (no heart rate) - use Watch for full tracking")
+            }
         }
     }
     
@@ -222,11 +284,11 @@ class HealthManager: ObservableObject {
                         }
                     } else if success {
                         samplesAdded += 1
-                        print("✅ iPhone: Distance sample added")
+                        print("✅ \(self.platformName): Distance sample added")
                     }
                 }
             } else {
-                print("⚠️ iPhone: Skipping distance sample - no permission or type unavailable")
+                print("⚠️ \(self.platformName): Skipping distance sample - no permission or type unavailable")
             }
             
             // Add calorie sample if we have permission
@@ -240,9 +302,9 @@ class HealthManager: ObservableObject {
                     end: endDate,
                     metadata: [
                         "RuckWeight": weight,
-                        "AppName": "RuckTracker-iPhone",
+                        "AppName": "RuckTracker-\(self.platformName)",
                         "Terrain": "Flat",
-                        "GPS": "Limited"
+                        "GPS": self.isWatchApp ? "Full" : "Limited"
                     ]
                 )
                 
@@ -254,11 +316,11 @@ class HealthManager: ObservableObject {
                         }
                     } else if success {
                         samplesAdded += 1
-                        print("✅ iPhone: Calorie sample added")
+                        print("✅ \(self.platformName): Calorie sample added")
                     }
                 }
             } else {
-                print("⚠️ iPhone: Skipping calorie sample - no permission or type unavailable")
+                print("⚠️ \(self.platformName): Skipping calorie sample - no permission or type unavailable")
             }
             
             // End collection and finish workout
@@ -286,8 +348,8 @@ class HealthManager: ObservableObject {
                             self.errorManager.handleError(healthKitError, context: "Workout Finish")
                         }
                     } else if let workout = workout {
-                        print("✅ iPhone: Workout saved successfully using modern HKWorkoutBuilder")
-                        print("📊 iPhone: Saved workout with ID: \(workout.uuid)")
+                        print("✅ \(self.platformName): Workout saved successfully using modern HKWorkoutBuilder")
+                        print("📊 \(self.platformName): Saved workout with ID: \(workout.uuid)")
                         
                         // Clear any previous save errors
                         DispatchQueue.main.async {
@@ -309,7 +371,7 @@ class HealthManager: ObservableObject {
     /// Retry authorization if previous attempt failed
     func retryAuthorization() {
         if errorManager.retryOperation() {
-            print("🔄 iPhone: Retrying HealthKit authorization...")
+            print("🔄 \(platformName): Retrying HealthKit authorization...")
             requestAuthorization()
         }
     }
@@ -330,13 +392,43 @@ class HealthManager: ObservableObject {
         }
         
         if let currentError = errorManager.currentError {
+            // Don't show heart rate errors on iPhone
+            if !isWatchApp, case .authorizationDenied(let dataType) = currentError, dataType.contains("Heart Rate") {
+                return "HealthKit connected (heart rate requires Apple Watch)"
+            }
             return currentError.localizedDescription
         }
         
         if isAuthorized {
-            return "HealthKit is connected and ready"
+            if isWatchApp {
+                return "HealthKit is connected and ready"
+            } else {
+                return "HealthKit connected (use Apple Watch for heart rate)"
+            }
         }
         
         return "HealthKit permissions needed"
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var platformName: String {
+        return isWatchApp ? "Watch" : "iPhone"
+    }
+}
+
+// MARK: - HKAuthorizationStatus Extension
+extension HKAuthorizationStatus {
+    var description: String {
+        switch self {
+        case .notDetermined:
+            return "(not determined)"
+        case .sharingDenied:
+            return "(denied)"
+        case .sharingAuthorized:
+            return "(authorized)"
+        @unknown default:
+            return "(unknown)"
+        }
     }
 }
