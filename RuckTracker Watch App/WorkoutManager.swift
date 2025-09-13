@@ -2,7 +2,7 @@
 //  WorkoutManager.swift
 //  RuckTracker Watch App
 //
-//  Created by Nick on 9/6/25.
+//  Updated to use HKLiveWorkoutBuilder for Apple's native distance/pace calculations
 //
 
 import Foundation
@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 import HealthKit
 
-class WorkoutManager: ObservableObject {
+class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate {
     // MARK: - Published Properties
     @Published var isActive = false
     @Published var isPaused = false
@@ -21,29 +21,17 @@ class WorkoutManager: ObservableObject {
     @Published var currentHeartRate: Double = 0
     @Published var selectedTerrain: TerrainType = .flat
     
-    // Location manager for GPS tracking
-    @Published var locationManager = LocationManager()
-    
     // Settings
     private let userSettings = UserSettings.shared
     private var cancellables = Set<AnyCancellable>()
     
-    // HealthKit workout session
-    private var workoutSession: HKWorkoutSession?
+    // HealthKit workout session using modern HKLiveWorkoutBuilder
+    private var healthStore = HKHealthStore()
+    private var session: HKWorkoutSession?
+    private var builder: HKLiveWorkoutBuilder?
     
-    // Health manager reference (injected from environment)
+    // Health manager reference
     private var healthManager: HealthManager?
-    
-    // Workout session data
-    private var startDate: Date?
-    private var timer: Timer?
-    
-    // Real-time metrics
-    private var lastCalorieUpdate: Date = Date()
-    private var totalCaloriesBurned: Double = 0
-    
-    // Heart rate monitoring
-    private var heartRateQuery: HKAnchoredObjectQuery?
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -63,9 +51,10 @@ class WorkoutManager: ObservableObject {
         }
     }
     
+    // Apple's calculated pace (much more stable than our GPS calculation)
     var currentPaceMinutesPerMile: Double? {
         guard distance > 0 && elapsedTime > 0 else { return nil }
-        return elapsedTime / (distance * 60) // Convert to minutes per mile
+        return (elapsedTime / 60.0) / distance // minutes per mile from Apple's distance
     }
     
     var formattedPace: String {
@@ -78,7 +67,6 @@ class WorkoutManager: ObservableObject {
     var paceColor: Color {
         guard let pace = currentPaceMinutesPerMile else { return .gray }
         
-        // Good rucking pace is typically 15-20 minutes per mile
         switch pace {
         case 0..<14: return .orange   // Too fast for sustainable rucking
         case 14..<18: return .green   // Good rucking pace
@@ -88,33 +76,19 @@ class WorkoutManager: ObservableObject {
     }
     
     // MARK: - Initialization
-    init() {
-        setupLocationTracking()
+    override init() {
+        super.init()
         setupUserSettings()
     }
     
-    // Method to set health manager reference
     func setHealthManager(_ manager: HealthManager) {
         self.healthManager = manager
-    }
-    
-    private func setupLocationTracking() {
-        // Subscribe to location manager's distance updates
-        locationManager.$distanceTraveled
-            .sink { [weak self] newDistance in
-                self?.distance = newDistance
-                self?.updateCaloriesFromDistance()
-            }
-            .store(in: &cancellables)
-        
-        locationManager.requestLocationPermission()
+        self.healthStore = manager.healthStore
     }
     
     private func setupUserSettings() {
-        // Initialize ruck weight from user settings
         ruckWeight = userSettings.defaultRuckWeightInPounds()
         
-        // Subscribe to settings changes
         userSettings.$defaultRuckWeight
             .sink { [weak self] newWeight in
                 if !(self?.isActive ?? false) {
@@ -130,25 +104,17 @@ class WorkoutManager: ObservableObject {
     }
     
     func startWorkout(weight: Double) {
-        print("DEBUG: startWorkout called with weight \(weight)")
+        print("🏋️ Starting workout with \(weight) lbs")
         guard !isActive else { return }
         
         self.ruckWeight = weight
         isActive = true
         isPaused = false
-        startDate = Date()
         elapsedTime = 0
         distance = 0
         calories = 0
-        totalCaloriesBurned = 0
-        lastCalorieUpdate = Date()
         
-        startTimer()
         startWorkoutSession()
-        startHeartRateQuery()
-        locationManager.startTracking()
-        
-        print("Started workout with \(weight) lbs ruck weight")
     }
     
     func togglePause() {
@@ -163,277 +129,186 @@ class WorkoutManager: ObservableObject {
     
     func pauseWorkout() {
         isPaused = true
-        isActive = false
-        timer?.invalidate()
-        locationManager.pauseTracking()
-        
-        // Update final calories before pausing
-        updateCaloriesFromTime()
-        
-        print("Workout paused at \(formattedElapsedTime)")
+        session?.pause()
+        print("⏸️ Workout paused")
     }
     
     func resumeWorkout() {
         isPaused = false
-        isActive = true
-        lastCalorieUpdate = Date()
-        startTimer()
-        locationManager.resumeTracking()
-        
-        print("Workout resumed")
+        session?.resume()
+        print("▶️ Workout resumed")
     }
     
     func endWorkout() {
+        print("🏁 Ending workout...")
         isActive = false
         isPaused = true
-        timer?.invalidate()
-        locationManager.stopTracking()
-        stopHeartRateQuery()
         
-        // Final calorie calculation
-        updateCaloriesFromTime()
-        
-        if let startDate = startDate {
-            let endDate = Date()
-            saveWorkoutToHealth(startDate: startDate, endDate: endDate)
+        // End the session and builder
+        session?.end()
+        builder?.endCollection(withEnd: Date()) { [weak self] success, error in
+            if success {
+                self?.builder?.finishWorkout { workout, error in
+                    if let workout = workout {
+                        print("✅ Workout saved with Apple's calculations")
+                        if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
+                            print("📊 Final stats: \(String(format: "%.2f", distance)) mi, \(Int(self?.calories ?? 0)) cal")
+                        } else {
+                            print("📊 Final stats: \(String(format: "%.2f", self?.distance ?? 0)) mi, \(Int(self?.calories ?? 0)) cal")
+                        }
+                    } else {
+                        print("❌ Failed to save workout: \(error?.localizedDescription ?? "")")
+                    }
+                }
+            }
         }
-        
-        endWorkoutSession()
-        
-        print("Workout ended: \(formattedElapsedTime), \(String(format: "%.2f", distance)) mi, \(Int(calories)) cal")
         
         resetWorkout()
     }
     
-    // MARK: - Timer and Updates
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self, !self.isPaused else { return }
-            
-            self.elapsedTime += 1
-            
-            // Update calories every 10 seconds
-            if Int(self.elapsedTime) % 10 == 0 {
-                self.updateCaloriesFromTime()
-            }
-        }
-    }
-    
-    // MARK: - HealthKit Integration (Simple Version)
+    // MARK: - HKLiveWorkoutBuilder Integration
     private func startWorkoutSession() {
-        guard HKHealthStore.isHealthDataAvailable(),
-              let healthManager = healthManager else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            print("❌ HealthKit not available")
+            return
+        }
         
+        // Create workout configuration
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = .walking
-        configuration.locationType = .outdoor
+        configuration.activityType = .walking  // Use walking for rucking
+        configuration.locationType = .outdoor   // Enable GPS
         
         do {
-            workoutSession = try HKWorkoutSession(healthStore: healthManager.healthStore, configuration: configuration)
-            workoutSession?.startActivity(with: Date())
-            print("✅ Started HealthKit workout session")
-        } catch {
-            print("❌ Failed to start workout session: \(error)")
-        }
-    }
-    
-    private func endWorkoutSession() {
-        workoutSession?.end()
-        workoutSession = nil
-        print("⏹️ Ended HealthKit workout session")
-    }
-    
-    private func saveWorkoutToHealth(startDate: Date, endDate: Date) {
-        guard let healthManager = healthManager else { return }
-        
-        let builder = HKWorkoutBuilder(healthStore: healthManager.healthStore, configuration: HKWorkoutConfiguration(), device: .local())
-        
-        builder.beginCollection(withStart: startDate) { [weak self] success, error in
-            guard let self = self, success else {
-                print("❌ Failed to begin workout collection: \(error?.localizedDescription ?? "")")
-                return
-            }
+            // Create session and builder
+            session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
+            builder = session?.associatedWorkoutBuilder()
             
-            // Add distance sample
-            if let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
-                let distanceQuantity = HKQuantity(unit: HKUnit.mile(), doubleValue: self.distance)
-                let distanceSample = HKQuantitySample(
-                    type: distanceType,
-                    quantity: distanceQuantity,
-                    start: startDate,
-                    end: endDate
-                )
-                builder.add([distanceSample]) { _, _ in }
-            }
+            // Set delegates
+            session?.delegate = self
+            builder?.delegate = self
             
-            // Add calorie sample
-            if let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
-                let calorieQuantity = HKQuantity(unit: HKUnit.kilocalorie(), doubleValue: self.calories)
-                let calorieSample = HKQuantitySample(
-                    type: calorieType,
-                    quantity: calorieQuantity,
-                    start: startDate,
-                    end: endDate,
-                    metadata: [
-                        "RuckWeight": self.ruckWeight,
-                        "AppName": "RuckTracker",
-                        "GPS": self.locationManager.isTracking ? "Enabled" : "Disabled",
-                        "Terrain": self.selectedTerrain.rawValue,
-                        "AvgPace": self.currentPaceMinutesPerMile ?? 0,
-                        "AvgHeartRate": self.currentHeartRate
-                    ]
-                )
-                builder.add([calorieSample]) { _, _ in }
-            }
+            // Set up data source - this is KEY for getting Apple's calculated distance/pace
+            builder?.dataSource = HKLiveWorkoutDataSource(
+                healthStore: healthStore,
+                workoutConfiguration: configuration
+            )
             
-            // End collection and finish workout
-            builder.endCollection(withEnd: endDate) { success, error in
+            // Start the session
+            session?.startActivity(with: Date())
+            builder?.beginCollection(withStart: Date()) { [weak self] success, error in
                 if success {
-                    builder.finishWorkout { _, error in
-                        if error == nil {
-                            print("✅ Workout saved to HealthKit with enhanced metadata")
-                        } else {
-                            print("❌ Failed to save workout: \(error?.localizedDescription ?? "Unknown error")")
-                        }
+                    print("✅ Started HKLiveWorkoutBuilder - will get Apple's distance/pace calculations")
+                    DispatchQueue.main.async {
+                        self?.startElapsedTimeTracking()
                     }
                 } else {
-                    print("❌ Failed to end collection: \(error?.localizedDescription ?? "")")
+                    print("❌ Failed to start builder: \(error?.localizedDescription ?? "")")
                 }
+            }
+            
+        } catch {
+            print("❌ Failed to create workout session: \(error)")
+        }
+    }
+    
+    private func startElapsedTimeTracking() {
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+            
+            if self.isActive && !self.isPaused {
+                self.elapsedTime = self.builder?.elapsedTime ?? 0
+            }
+            
+            if !self.isActive {
+                timer.invalidate()
             }
         }
     }
     
-    // MARK: - Heart Rate Monitoring (Real Sensor Data)
-    private func startHeartRateQuery() {
-        print("🔥 DEBUG: startHeartRateQuery called")
-        
-        guard let healthManager = healthManager else {
-            print("❌ Health manager not available")
-            return
-        }
-        print("✅ Health manager available")
-        
-        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
-            print("❌ Heart rate type not available")
-            return
-        }
-        print("✅ Heart rate type created")
-        
-        print("🔥 About to create heart rate query...")
-        
-        let predicate = HKQuery.predicateForSamples(
-            withStart: Date(),
-            end: nil,
-            options: .strictStartDate
-        )
-        
-        print("🔥 Creating HKAnchoredObjectQuery...")
-        
-        heartRateQuery = HKAnchoredObjectQuery(
-            type: heartRateType,
-            predicate: predicate,
-            anchor: nil,
-            limit: HKObjectQueryNoLimit
-        ) { [weak self] query, samples, deletedObjects, anchor, error in
-            
-            print("🔥 Heart rate query callback fired!")
-            
-            if let error = error {
-                print("❌ Heart rate query error: \(error.localizedDescription)")
-                print("❌ Error code: \((error as NSError).code)")
-                return
+    // MARK: - HKWorkoutSessionDelegate
+    func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {
+        DispatchQueue.main.async {
+            switch toState {
+            case .running:
+                self.isActive = true
+                self.isPaused = false
+                print("🏃 Workout session running")
+            case .paused:
+                self.isPaused = true
+                print("⏸️ Workout session paused")
+            case .ended:
+                self.isActive = false
+                self.isPaused = true
+                print("🏁 Workout session ended")
+            default:
+                break
             }
+        }
+    }
+    
+    func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
+        print("❌ Workout session failed: \(error.localizedDescription)")
+    }
+    
+    // MARK: - HKLiveWorkoutBuilderDelegate
+    func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder, didCollectDataOf collectedTypes: Set<HKSampleType>) {
+        for type in collectedTypes {
+            guard let quantityType = type as? HKQuantityType else { continue }
             
-            guard let samples = samples as? [HKQuantitySample] else {
-                print("❌ No heart rate samples received")
-                return
-            }
-            
-            print("💓 Received \(samples.count) heart rate samples")
+            let statistics = workoutBuilder.statistics(for: quantityType)
             
             DispatchQueue.main.async {
-                if let latestSample = samples.last {
-                    let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
-                    let heartRate = latestSample.quantity.doubleValue(for: heartRateUnit)
-                    print("🔥 UPDATING currentHeartRate from \(self?.currentHeartRate ?? 0) to \(heartRate)")
-                    self?.currentHeartRate = heartRate
-                    print("❤️ Real HR: \(Int(heartRate)) bpm")
-                } else {
-                    print("⚠️ No samples in the array")
+                switch quantityType {
+                case HKQuantityType.quantityType(forIdentifier: .heartRate):
+                    if let heartRateUnit = statistics?.mostRecentQuantity()?.doubleValue(for: HKUnit.count().unitDivided(by: .minute())) {
+                        self.currentHeartRate = heartRateUnit
+                    }
+                    
+                case HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning):
+                    // This is Apple's calculated distance - much more stable than raw GPS
+                    if let distanceValue = statistics?.sumQuantity()?.doubleValue(for: .mile()) {
+                        self.distance = distanceValue
+                        print("📏 Apple distance: \(String(format: "%.3f", distanceValue)) mi")
+                    }
+                    
+                case HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned):
+                    // Use Apple's calorie calculation as base, then adjust for ruck weight
+                    if let appleCalories = statistics?.sumQuantity()?.doubleValue(for: .kilocalorie()) {
+                        self.calories = self.adjustCaloriesForRuckWeight(baseCalories: appleCalories)
+                        print("🔥 Adjusted calories: \(Int(self.calories)) (Apple: \(Int(appleCalories)))")
+                    }
+                    
+                default:
+                    break
                 }
             }
         }
-        
-        heartRateQuery?.updateHandler = { [weak self] query, samples, deletedObjects, anchor, error in
-            print("🔥 Heart rate UPDATE handler fired!")
-            
-            if let error = error {
-                print("❌ Heart rate update error: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let samples = samples as? [HKQuantitySample] else {
-                print("❌ No update samples")
-                return
-            }
-            
-            print("💓 Update received \(samples.count) heart rate samples")
-            
-            DispatchQueue.main.async {
-                if let latestSample = samples.last {
-                    let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
-                    let heartRate = latestSample.quantity.doubleValue(for: heartRateUnit)
-                    print("🔥 UPDATE: currentHeartRate from \(self?.currentHeartRate ?? 0) to \(heartRate)")
-                    self?.currentHeartRate = heartRate
-                    print("❤️ Updated HR: \(Int(heartRate)) bpm")
-                }
-            }
-        }
-        
-        print("🔥 About to execute heart rate query...")
-        healthManager.healthStore.execute(heartRateQuery!)
-        print("✅ Heart rate query executed - waiting for callback...")
-    }
-    private func stopHeartRateQuery() {
-        guard let healthManager = healthManager else { return }
-        
-        if let query = heartRateQuery {
-            healthManager.healthStore.stop(query)
-            heartRateQuery = nil
-            print("⏹️ Stopped heart rate monitoring")
-        }
     }
     
-    // MARK: - Calorie Calculations
-    private func updateCaloriesFromTime() {
-        let newCalories = CalorieCalculator.calculateRuckingCalories(
-            bodyWeightKg: userSettings.bodyWeightInKg,
-            ruckWeightPounds: ruckWeight,
-            timeMinutes: elapsedTime / 60.0,
-            distanceMiles: distance,
-            terrain: selectedTerrain
-        )
-        
-        // Smooth calorie updates to avoid jumps
-        calories = newCalories
-        
-        // Validate the calculation
-        if !CalorieCalculator.validateCalculation(
-            bodyWeightKg: userSettings.bodyWeightInKg,
-            ruckWeightPounds: ruckWeight,
-            timeMinutes: elapsedTime / 60.0,
-            calculatedCalories: calories
-        ) {
-            print("Warning: Calorie calculation seems unreasonable")
-        }
-        
-        lastCalorieUpdate = Date()
+    func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
+        // Handle workout events (lap, pause, resume, etc.)
     }
     
-    private func updateCaloriesFromDistance() {
-        // Recalculate calories when distance updates (more accurate with GPS data)
-        guard elapsedTime > 0 else { return }
-        updateCaloriesFromTime()
+    // MARK: - Calorie Adjustment for Ruck Weight
+    private func adjustCaloriesForRuckWeight(baseCalories: Double) -> Double {
+        // Apple gives us base walking calories
+        // We add the extra load from ruck weight using our calculation
+        
+        guard ruckWeight > 0 else { return baseCalories }
+        
+        let timeHours = elapsedTime / 3600.0
+        let bodyWeightKg = userSettings.bodyWeightInKg
+        let bodyWeightPounds = bodyWeightKg * 2.20462
+        
+        // Calculate additional calories from ruck weight
+        let loadPercentage = ruckWeight / bodyWeightPounds
+        let additionalCaloriesPerHour = bodyWeightKg * loadPercentage * 6.0 // MET adjustment
+        let additionalCalories = additionalCaloriesPerHour * timeHours
+        
+        return baseCalories + additionalCalories
     }
     
     // MARK: - Cleanup
@@ -441,27 +316,15 @@ class WorkoutManager: ObservableObject {
         elapsedTime = 0
         distance = 0
         calories = 0
-        totalCaloriesBurned = 0
-        startDate = nil
-        currentHeartRate = 0 // Reset to default until next workout starts
+        currentHeartRate = 0
+        session = nil
+        builder = nil
     }
     
-    // MARK: - Debugging and Validation
+    // MARK: - Utility
     func getCalorieComparison() -> (ours: Double, appleEstimate: Double, difference: Double) {
-        return CalorieCalculator.comparisonWithAppleWatch(
-            bodyWeightKg: userSettings.bodyWeightInKg,
-            ruckWeightPounds: ruckWeight,
-            timeMinutes: elapsedTime / 60.0,
-            distanceMiles: distance
-        )
-    }
-    
-    func getCurrentBurnRate() -> Double {
-        return CalorieCalculator.calculateCurrentBurnRate(
-            bodyWeightKg: userSettings.bodyWeightInKg,
-            ruckWeightPounds: ruckWeight,
-            currentPaceMinutesPerMile: currentPaceMinutesPerMile,
-            terrain: selectedTerrain
-        )
+        let appleCalories = builder?.statistics(for: HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!)?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0
+        
+        return (calories, appleCalories, calories - appleCalories)
     }
 }

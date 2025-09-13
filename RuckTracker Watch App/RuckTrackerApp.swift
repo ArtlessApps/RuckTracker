@@ -1,3 +1,4 @@
+// RuckTracker Watch App/RuckTrackerApp.swift
 import SwiftUI
 
 @main
@@ -13,10 +14,12 @@ struct RuckTracker_Watch_AppApp: App {
                 .onAppear {
                     print("🏥 Watch App launched - requesting HealthKit authorization...")
                     
-                    // Delay the health request slightly to ensure the UI is ready
+                    // Set up the connection between managers
+                    workoutManager.setHealthManager(healthManager)
+                    
+                    // Request permissions
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         healthManager.requestAuthorization()
-                        workoutManager.setHealthManager(healthManager)
                     }
                 }
         }

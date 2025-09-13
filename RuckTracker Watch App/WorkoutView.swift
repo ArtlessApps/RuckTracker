@@ -1,3 +1,4 @@
+// WorkoutView.swift - Updated to use Apple's calculations
 import SwiftUI
 import HealthKit
 
@@ -20,23 +21,23 @@ struct WorkoutView: View {
                 
                 Spacer()
                 
-                // Heart Rate
+                // Heart Rate (from Apple's real sensor data)
                 HStack(spacing: 4) {
                     Image(systemName: "heart.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.red)
-                    Text(workoutManager.heartRate > 0 ? "\(Int(workoutManager.heartRate))" : "--")
+                    Text(workoutManager.heartRate > 0 ? "\(Int(workoutManager.heartRate))" : "")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.red)
                 }
                 
                 Spacer()
                 
-                // Pace - using your existing formattedPace property
+                // Pace (from Apple's stable distance calculations)
                 HStack(spacing: 2) {
-                    Text(formatPace())
+                    Text(workoutManager.formattedPace)
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(getPaceColor())
+                        .foregroundColor(workoutManager.paceColor)
                     Text("/MI")
                         .font(.system(size: 10, weight: .regular))
                         .foregroundColor(.gray)
@@ -52,7 +53,7 @@ struct WorkoutView: View {
             VStack(spacing: 16) {
                 // Stats Row
                 HStack {
-                    // Calories
+                    // Calories (Apple's base + our ruck weight adjustment)
                     VStack(spacing: 4) {
                         Text("\(Int(workoutManager.calories))")
                             .font(.system(size: 20, weight: .medium, design: .default))
@@ -79,7 +80,7 @@ struct WorkoutView: View {
                     
                     Spacer()
                     
-                    // Distance
+                    // Distance (from Apple's GPS + motion algorithms)
                     VStack(spacing: 4) {
                         Text(String(format: "%.2f", workoutManager.distance))
                             .font(.system(size: 20, weight: .medium, design: .default))
@@ -92,8 +93,7 @@ struct WorkoutView: View {
                 }
                 .padding(.horizontal, 20)
                 
-
-                // Timer Display
+                // Timer Display (from HKLiveWorkoutBuilder.elapsedTime)
                 HStack(spacing: 4) {
                     Text(String(format: "%02d", workoutManager.hours))
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
@@ -116,7 +116,7 @@ struct WorkoutView: View {
             
             Spacer()
             
-            // Control Buttons - Better sizing
+            // Control Buttons
             HStack(spacing: 24) {
                 // Play/Pause Button
                 Button(action: {
@@ -138,7 +138,7 @@ struct WorkoutView: View {
                         Image(systemName: workoutManager.isActive ? "pause.fill" : "play.fill")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
-                            .offset(x: workoutManager.isActive ? 0 : 1.5) // Slight offset for play icon
+                            .offset(x: workoutManager.isActive ? 0 : 1.5)
                     }
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -171,24 +171,6 @@ struct WorkoutView: View {
             sensitivity: .medium,
             isContinuous: false
         )
-    }
-    
-    // Helper functions to match your existing WorkoutManager
-    func formatPace() -> String {
-        guard workoutManager.distance > 0 else { return "0:00" }
-        let paceInSeconds = workoutManager.elapsedTime / workoutManager.distance
-        let minutes = Int(paceInSeconds) / 60
-        let seconds = Int(paceInSeconds) % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-    
-    func getPaceColor() -> Color {
-        guard workoutManager.distance > 0 else { return .gray }
-        let paceInMinutes = (workoutManager.elapsedTime / workoutManager.distance) / 60
-        
-        if paceInMinutes < 14 { return .orange } // Too fast
-        if paceInMinutes <= 20 { return .green } // Good pace
-        return .red // Too slow
     }
 }
 
