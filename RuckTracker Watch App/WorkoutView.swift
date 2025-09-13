@@ -9,6 +9,9 @@ struct WorkoutView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // HealthKit Error Display (only if there's an error)
+            WorkoutErrorView(workoutErrorManager: workoutManager.errorManager)
+            
             // Top Status Bar
             HStack {
                 // Settings button (always visible but smaller when workout active)

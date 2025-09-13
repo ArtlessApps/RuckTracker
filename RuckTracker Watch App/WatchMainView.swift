@@ -11,6 +11,9 @@ struct WatchMainView: View {
                 if workoutManager.showPostWorkoutSummary {
                     PostWorkoutSummaryView()
                         .environmentObject(workoutManager)
+                        .onAppear {
+                            print("📱 PostWorkoutSummaryView appeared")
+                        }
                 } else {
                     WorkoutView()
                         .environmentObject(workoutManager)

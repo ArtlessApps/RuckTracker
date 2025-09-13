@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var healthManager: HealthManager
     
     @State private var tempBodyWeight: String = ""
     @State private var tempDefaultRuckWeight: String = ""
@@ -106,6 +107,52 @@ struct SettingsView: View {
                         RecommendationRow(title: "Advanced", weight: "20-25% body weight", color: .red)
                         RecommendationRow(title: "Military Standard", weight: "35+ lbs", color: .blue)
                     }
+                }
+                
+                // MARK: - HealthKit Section
+                Section(header: Text("HealthKit Integration"), footer: Text("HealthKit enables workout tracking and integration with the Health app")) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundColor(healthManager.isAuthorized ? .green : .orange)
+                                .font(.system(size: 18))
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("HealthKit Status")
+                                    .font(.headline)
+                                Text(healthManager.getHealthKitStatusMessage())
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        // Permission details
+                        VStack(alignment: .leading, spacing: 6) {
+                            PermissionRow(title: "Workouts", granted: healthManager.hasWorkoutPermission)
+                            PermissionRow(title: "Heart Rate", granted: healthManager.hasHeartRatePermission)
+                            PermissionRow(title: "Active Calories", granted: healthManager.hasCaloriesPermission)
+                            PermissionRow(title: "Distance", granted: healthManager.hasDistancePermission)
+                        }
+                        
+                        if !healthManager.isAuthorized {
+                            Button(action: {
+                                healthManager.requestAuthorization()
+                            }) {
+                                Text("Grant HealthKit Permissions")
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                            }
+                        }
+                        
+                        // Error display
+                        HealthKitStatusBanner()
+                    }
+                    .padding(.vertical, 8)
                 }
                 
                 // MARK: - Actions Section
@@ -225,6 +272,28 @@ struct SettingsView: View {
         // Mark onboarding as completed if this is the first time setting body weight
         if !userSettings.hasCompletedOnboarding {
             userSettings.hasCompletedOnboarding = true
+        }
+    }
+}
+
+struct PermissionRow: View {
+    let title: String
+    let granted: Bool
+    
+    var body: some View {
+        HStack {
+            Image(systemName: granted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundColor(granted ? .green : .red)
+                .font(.system(size: 14))
+            
+            Text(title)
+                .font(.subheadline)
+            
+            Spacer()
+            
+            Text(granted ? "Granted" : "Denied")
+                .font(.caption)
+                .foregroundColor(granted ? .green : .red)
         }
     }
 }

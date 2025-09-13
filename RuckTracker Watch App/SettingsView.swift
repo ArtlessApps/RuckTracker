@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var healthManager: HealthManager
     
     @State private var showingBodyWeightPicker = false
     @State private var showingRuckWeightPicker = false
@@ -55,6 +56,35 @@ struct SettingsView: View {
                 // Units
                 Section("Units") {
                     NavigationLink("Weight & Distance", destination: UnitsSettingsView())
+                }
+                
+                // HealthKit Status
+                Section("HealthKit") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundColor(healthManager.isAuthorized ? .green : .orange)
+                                .font(.system(size: 14))
+                            
+                            Text(healthManager.getHealthKitStatusMessage())
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                        }
+                        
+                        if !healthManager.isAuthorized {
+                            Button("Grant Permissions") {
+                                healthManager.requestAuthorization()
+                            }
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                        }
+                        
+                        // Show error display if there are issues
+                        WatchHealthKitStatusBanner(isMinimal: true)
+                    }
+                    .padding(.vertical, 2)
                 }
                 
                 // Reset

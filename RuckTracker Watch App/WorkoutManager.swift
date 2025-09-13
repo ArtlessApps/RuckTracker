@@ -25,6 +25,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
+    @Published var errorManager = HealthKitErrorManager()
     
     // Final workout stats for post-workout summary
     @Published var finalElapsedTime: TimeInterval = 0
@@ -189,6 +190,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         finalCalories = calories
         finalRuckWeight = ruckWeight
         
+        print("📊 Final stats saved: time=\(finalElapsedTime), distance=\(finalDistance), calories=\(finalCalories)")
+        
         // Stop the timer first
         workoutTimer?.invalidate()
         workoutTimer = nil
@@ -197,66 +200,96 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         isActive = false
         isPaused = true
         
-        // Handle the async completion properly
+        // Save workout locally first to ensure data is not lost
+        saveWorkoutToLocalStorage()
+        
+        // Show summary immediately - don't wait for HealthKit
+        print("🎯 Showing post-workout summary immediately")
+        showPostWorkoutSummary = true
+        print("🎯 showPostWorkoutSummary set to: \(showPostWorkoutSummary)")
+        
+        // Handle the async completion properly (in background)
         if let builder = builder {
+            print("✅ Builder exists, ending collection...")
             // End collection first, then end session
             builder.endCollection(withEnd: Date()) { [weak self] success, error in
-                if success {
-                    builder.finishWorkout { workout, error in
-                        DispatchQueue.main.async {
-                            if let workout = workout {
-                                print("✅ Workout saved with Apple's calculations")
-                                if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
-                                    print("📊 Final stats: \(String(format: "%.2f", distance)) mi, \(Int(self?.finalCalories ?? 0)) cal")
-                                } else {
-                                    print("📊 Final stats: \(String(format: "%.2f", self?.finalDistance ?? 0)) mi, \(Int(self?.finalCalories ?? 0)) cal")
-                                }
-                                
-                                // Save to local CoreData storage as well
-                                self?.saveWorkoutToLocalStorage()
-                            } else {
-                                print("❌ Failed to save workout: \(error?.localizedDescription ?? "")")
-                            }
-                            
-                            // Show post-workout summary
-                            print("🎯 Showing post-workout summary")
-                            self?.showPostWorkoutSummary = true
-                            
-                            // Clean up session after everything is done
-                            self?.session?.end()
-                            self?.resetWorkout()
-                        }
-                    }
-                } else {
-                    print("❌ Failed to end collection: \(error?.localizedDescription ?? "")")
+                guard let self = self else { return }
+                
+                if let error = error {
+                    let healthKitError = HealthKitError.workoutDataCollectionFailed(underlying: error)
                     DispatchQueue.main.async {
-                        // Show post-workout summary even if save failed
-                        print("🎯 Showing post-workout summary (despite save failure)")
-                        self?.showPostWorkoutSummary = true
+                        print("❌ HealthKit collection failed: \(error.localizedDescription)")
+                        self.errorManager.handleError(healthKitError, context: "Workout End Collection")
+                        self.session?.end()
+                        self.resetWorkout()
+                    }
+                    return
+                }
+                
+                guard success else {
+                    let healthKitError = HealthKitError.workoutSaveFailed(underlying: nil)
+                    DispatchQueue.main.async {
+                        print("❌ HealthKit collection unsuccessful")
+                        self.errorManager.handleError(healthKitError, context: "Workout End Collection")
+                        self.session?.end()
+                        self.resetWorkout()
+                    }
+                    return
+                }
+                
+                print("✅ HealthKit collection successful, finishing workout...")
+                builder.finishWorkout { workout, error in
+                    DispatchQueue.main.async {
+                        if let error = error {
+                            print("❌ HealthKit finish failed: \(error.localizedDescription)")
+                            let healthKitError = HealthKitError.workoutSaveFailed(underlying: error)
+                            self.errorManager.handleError(healthKitError, context: "Workout Finish")
+                        } else if let workout = workout {
+                            print("✅ Workout saved to HealthKit with Apple's calculations")
+                            if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
+                                print("📊 HealthKit stats: \(String(format: "%.2f", distance)) mi, \(Int(self.finalCalories)) cal")
+                            }
+                            // Clear any previous save errors
+                            self.errorManager.clearError()
+                        } else {
+                            print("❌ HealthKit finish returned no workout and no error")
+                            let healthKitError = HealthKitError.workoutSaveFailed(underlying: nil)
+                            self.errorManager.handleError(healthKitError, context: "Workout Finish")
+                        }
                         
-                        // Clean up session
-                        self?.session?.end()
-                        self?.resetWorkout()
+                        // Clean up session after everything is done
+                        self.session?.end()
+                        self.resetWorkout()
                     }
                 }
             }
         } else {
-            // No builder - show summary immediately
-            DispatchQueue.main.async {
-                print("🎯 Showing post-workout summary (no builder)")
-                self.showPostWorkoutSummary = true
-                
-                // Clean up session
-                self.session?.end()
-                self.resetWorkout()
-            }
+            // No builder - this shouldn't happen but handle gracefully
+            print("❌ No builder found")
+            let healthKitError = HealthKitError.workoutBuilderCreationFailed(underlying: nil)
+            errorManager.handleError(healthKitError, context: "Workout End")
+            
+            // Clean up session immediately since no HealthKit operations to wait for
+            session?.end()
+            resetWorkout()
         }
     }
     
     // MARK: - HKLiveWorkoutBuilder Integration
     private func startWorkoutSession() {
+        // Clear any previous workout session errors
+        errorManager.clearError()
+        
         guard HKHealthStore.isHealthDataAvailable() else {
-            print("❌ HealthKit not available")
+            let error = HealthKitError.healthDataNotAvailable
+            errorManager.handleError(error, context: "Workout Session Start")
+            return
+        }
+        
+        // Check if we have authorization
+        guard isHealthKitAuthorized else {
+            let error = HealthKitError.insufficientPermissions(requiredTypes: ["Workouts", "Heart Rate", "Calories"])
+            errorManager.handleError(error, context: "Workout Session Start")
             return
         }
         
@@ -270,28 +303,44 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
             builder = session?.associatedWorkoutBuilder()
             
+            // Verify builder creation
+            guard let builder = builder else {
+                let error = HealthKitError.workoutBuilderCreationFailed(underlying: nil)
+                errorManager.handleError(error, context: "Workout Session Start")
+                return
+            }
+            
             // Set delegates
             session?.delegate = self
-            builder?.delegate = self
+            builder.delegate = self
             
             // Set up data source - this is KEY for getting Apple's calculated distance/pace
-            builder?.dataSource = HKLiveWorkoutDataSource(
+            builder.dataSource = HKLiveWorkoutDataSource(
                 healthStore: healthStore,
                 workoutConfiguration: configuration
             )
             
             // Start the session
             session?.startActivity(with: Date())
-            builder?.beginCollection(withStart: Date()) { [weak self] success, error in
-                if success {
-                    print("✅ Started HKLiveWorkoutBuilder - will get Apple's distance/pace calculations")
-                } else {
-                    print("❌ Failed to start builder: \(error?.localizedDescription ?? "")")
+            builder.beginCollection(withStart: Date()) { [weak self] success, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        let healthKitError = HealthKitError.workoutDataCollectionFailed(underlying: error)
+                        self?.errorManager.handleError(healthKitError, context: "Workout Collection Start")
+                    } else if success {
+                        print("✅ Started HKLiveWorkoutBuilder - will get Apple's distance/pace calculations")
+                        // Clear any previous errors on successful start
+                        self?.errorManager.clearError()
+                    } else {
+                        let healthKitError = HealthKitError.workoutBuilderCreationFailed(underlying: nil)
+                        self?.errorManager.handleError(healthKitError, context: "Workout Collection Start")
+                    }
                 }
             }
             
         } catch {
-            print("❌ Failed to create workout session: \(error)")
+            let healthKitError = HealthKitError.workoutSessionCreationFailed(underlying: error)
+            errorManager.handleError(healthKitError, context: "Workout Session Creation")
         }
     }
     
@@ -341,6 +390,15 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
         print("❌ Workout session failed: \(error.localizedDescription)")
+        
+        let healthKitError = HealthKitError.workoutSessionCreationFailed(underlying: error)
+        DispatchQueue.main.async {
+            self.errorManager.handleError(healthKitError, context: "Workout Session")
+            
+            // If the session fails, we should stop the workout gracefully
+            self.isActive = false
+            self.isPaused = true
+        }
     }
     
     // MARK: - HKLiveWorkoutBuilderDelegate
