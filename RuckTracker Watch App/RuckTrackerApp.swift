@@ -6,6 +6,7 @@ struct RuckTracker_Watch_AppApp: App {
     @StateObject private var healthManager = HealthManager()
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
+    @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     
     var body: some Scene {
         WindowGroup {
@@ -18,6 +19,8 @@ struct RuckTracker_Watch_AppApp: App {
                     
                     // Set up the connection between managers
                     workoutManager.setHealthManager(healthManager)
+                    workoutManager.setWatchConnectivityManager(watchConnectivityManager)
+                    watchConnectivityManager.setWorkoutDataManager(workoutDataManager)
                     
                     // Request permissions immediately like before
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

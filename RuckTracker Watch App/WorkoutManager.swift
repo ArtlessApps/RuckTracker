@@ -45,6 +45,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     // Health manager reference
     private var healthManager: HealthManager?
     
+    // WatchConnectivity manager
+    private var watchConnectivityManager: WatchConnectivityManager?
+    
     // Timer for elapsed time tracking
     private var workoutTimer: Timer?
     private var startTime: Date?
@@ -111,6 +114,10 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                 }
             }
             .store(in: &cancellables)
+    }
+    
+    func setWatchConnectivityManager(_ manager: WatchConnectivityManager) {
+        self.watchConnectivityManager = manager
     }
     
     private func setupUserSettings() {
@@ -480,6 +487,26 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         )
         
         print("💾 Watch: Saved workout to local storage")
+        
+        // Send workout to phone via WatchConnectivity
+        sendWorkoutToPhone(startTime: startTime, avgHeartRate: avgHeartRate)
+    }
+    
+    private func sendWorkoutToPhone(startTime: Date, avgHeartRate: Double) {
+        // Create a temporary WorkoutEntity to send to phone
+        let tempWorkout = WorkoutEntity(context: WorkoutDataManager.shared.context)
+        tempWorkout.date = startTime
+        tempWorkout.duration = finalElapsedTime
+        tempWorkout.distance = finalDistance
+        tempWorkout.calories = finalCalories
+        tempWorkout.ruckWeight = finalRuckWeight
+        tempWorkout.heartRate = avgHeartRate
+        
+        // Send to phone
+        watchConnectivityManager?.sendWorkoutToPhone(tempWorkout)
+        
+        // Clean up temporary object
+        WorkoutDataManager.shared.context.delete(tempWorkout)
     }
     
     // MARK: - Post-Workout Navigation

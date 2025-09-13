@@ -3,6 +3,7 @@ import SwiftUI
 struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingSettings = false
     @State private var showingWorkoutHistory = false
     @State private var selectedTimeframe: TimeFrame = .month
@@ -69,12 +70,25 @@ struct ImprovedPhoneMainView: View {
     
     private var settingsToolbarItem: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button {
-                showingSettings = true
-            } label: {
-                Image(systemName: "person.circle")
-                    .font(.title2)
-                    .foregroundColor(.orange)
+            HStack(spacing: 12) {
+                // Sync button
+                Button {
+                    watchConnectivityManager.requestWorkoutsFromWatch()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.title2)
+                        .foregroundColor(watchConnectivityManager.isWatchReachable ? .blue : .gray)
+                }
+                .disabled(!watchConnectivityManager.isWatchReachable)
+                
+                // Settings button
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "person.circle")
+                        .font(.title2)
+                        .foregroundColor(.orange)
+                }
             }
         }
     }
@@ -391,6 +405,7 @@ struct ProgressChartsSection: View {
 // MARK: - Recent Activity Section
 struct RecentActivitySection: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingAllWorkouts = false
     
     var body: some View {
@@ -404,15 +419,47 @@ struct RecentActivitySection: View {
     }
     
     private var headerSection: some View {
-        HStack {
-            Text("Recent Activity")
-                .font(.title3)
-                .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Recent Activity")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                if !workoutDataManager.workouts.isEmpty {
+                    viewAllButton
+                }
+            }
             
-            Spacer()
-            
-            if !workoutDataManager.workouts.isEmpty {
-                viewAllButton
+            // Sync status
+            if let lastSync = watchConnectivityManager.lastSyncDate {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+                    Text("Synced \(lastSync.formatted(.relative(presentation: .named)))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } else if watchConnectivityManager.isWatchReachable {
+                HStack {
+                    Image(systemName: "arrow.clockwise")
+                        .foregroundColor(.blue)
+                        .font(.caption)
+                    Text("Tap sync to get workouts from Apple Watch")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                HStack {
+                    Image(systemName: "applewatch.slash")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                    Text("Apple Watch not connected")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }
