@@ -301,7 +301,9 @@ struct OnboardingBodyWeightPicker: View {
                         .tag(weight)
                 }
             }
-            .pickerStyle(WheelPickerStyle())
+            .pickerStyle(.wheel)
+            .frame(height: 80)
+            .clipped()
             .padding(.top, 16)
             .padding(.bottom, 24)
             
@@ -354,11 +356,13 @@ struct OnboardingRuckWeightPicker: View {
             
             Picker("Ruck Weight", selection: $selectedWeight) {
                 ForEach(weightOptions, id: \.self) { weight in
-                    Text(String(format: "%.0f", weight))
+                    Text(String(format: weightUnit == .pounds ? "%.0f" : "%.1f", weight))
                         .tag(weight)
                 }
             }
-            .pickerStyle(WheelPickerStyle())
+            .pickerStyle(.wheel)
+            .frame(height: 80)
+            .clipped()
             .padding(.top, 16)
             .padding(.bottom, 24)
             
