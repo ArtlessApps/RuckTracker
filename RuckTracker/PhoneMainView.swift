@@ -6,13 +6,6 @@ struct ImprovedPhoneMainView: View {
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingSettings = false
     @State private var showingWorkoutHistory = false
-    @State private var selectedTimeframe: TimeFrame = .month
-    
-    enum TimeFrame: String, CaseIterable {
-        case week = "Week"
-        case month = "Month"
-        case year = "Year"
-    }
     
     var body: some View {
         NavigationView {
@@ -50,10 +43,6 @@ struct ImprovedPhoneMainView: View {
                     .environmentObject(workoutDataManager)
             }
             
-            if workoutDataManager.totalWorkouts >= 3 {
-                ProgressChartsSection(timeframe: $selectedTimeframe)
-                    .environmentObject(workoutDataManager)
-            }
             
             RecentActivitySection()
                 .environmentObject(workoutDataManager)
@@ -346,61 +335,6 @@ struct QuickStatsDashboard: View {
     }
 }
 
-// MARK: - Progress Charts Section
-struct ProgressChartsSection: View {
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @Binding var timeframe: ImprovedPhoneMainView.TimeFrame
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            headerWithPicker
-            chartsStack
-        }
-    }
-    
-    private var headerWithPicker: some View {
-        HStack {
-            Text("Trends")
-                .font(.title3)
-                .fontWeight(.semibold)
-            
-            Spacer()
-            
-            timeframePicker
-        }
-    }
-    
-    private var timeframePicker: some View {
-        Picker("Timeframe", selection: $timeframe) {
-            ForEach(ImprovedPhoneMainView.TimeFrame.allCases, id: \.self) { frame in
-                Text(frame.rawValue).tag(frame)
-            }
-        }
-        .pickerStyle(SegmentedPickerStyle())
-        .frame(width: 180)
-    }
-    
-    private var chartsStack: some View {
-        VStack(spacing: 20) {
-            distanceChart
-            loadChart
-        }
-    }
-    
-    private var distanceChart: some View {
-        ChartCard(title: "Distance Progress", icon: "chart.line.uptrend.xyaxis") {
-            DistanceChart(timeframe: timeframe)
-                .frame(height: 120)
-        }
-    }
-    
-    private var loadChart: some View {
-        ChartCard(title: "Load Distribution", icon: "chart.pie") {
-            LoadDistributionChart()
-                .frame(height: 120)
-        }
-    }
-}
 
 // MARK: - Recent Activity Section
 struct RecentActivitySection: View {
@@ -821,32 +755,6 @@ struct EmptyStateView: View {
     }
 }
 
-// MARK: - Chart Views (Basic implementations)
-struct DistanceChart: View {
-    let timeframe: ImprovedPhoneMainView.TimeFrame
-    
-    var body: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(Color.orange.opacity(0.1))
-            .overlay(
-                Text("Distance trends chart")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            )
-    }
-}
-
-struct LoadDistributionChart: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(Color.blue.opacity(0.1))
-            .overlay(
-                Text("Load distribution chart")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            )
-    }
-}
 
 // MARK: - Tips View
 struct RuckingTipsView: View {
