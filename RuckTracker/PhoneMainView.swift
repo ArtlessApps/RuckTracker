@@ -3,6 +3,7 @@ import SwiftUI
 struct PhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @State private var showingWorkoutView = false
+    @State private var showingSettings = false
     
     var body: some View {
         NavigationView {
@@ -35,10 +36,25 @@ struct PhoneMainView: View {
                 RecentWorkoutsCard()
             }
             .padding()
-            .navigationBarHidden(true)
+            .navigationBarHidden(false)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                    }
+                }
+            }
             .sheet(isPresented: $showingWorkoutView) {
                 PhoneWorkoutView()
                     .environmentObject(workoutManager)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
         }
     }
@@ -46,6 +62,7 @@ struct PhoneMainView: View {
 
 struct QuickStartCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
     @State private var showingWorkout = false
     
     var body: some View {
@@ -58,10 +75,10 @@ struct QuickStartCard: View {
                         .foregroundColor(.secondary)
                     
                     HStack(spacing: 4) {
-                        Text("\(Int(workoutManager.ruckWeight))")
+                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
                             .font(.title2)
                             .fontWeight(.semibold)
-                        Text("lbs")
+                        Text(userSettings.preferredWeightUnit.rawValue)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -130,6 +147,7 @@ struct QuickStartCard: View {
 
 struct ActiveWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
     
     var body: some View {
         VStack(spacing: 20) {
@@ -141,10 +159,10 @@ struct ActiveWorkoutCard: View {
                 
                 // Show weight during active workout
                 HStack(spacing: 4) {
-                    Text("\(Int(workoutManager.ruckWeight))")
+                    Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text("lbs")
+                    Text(userSettings.preferredWeightUnit.rawValue)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -161,10 +179,13 @@ struct ActiveWorkoutCard: View {
                 }
                 
                 VStack {
-                    Text(String(format: "%.2f", workoutManager.distance))
+                    let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
+                        workoutManager.distance : 
+                        workoutManager.distance / userSettings.preferredDistanceUnit.conversionToMiles
+                    Text(String(format: "%.2f", displayDistance))
                         .font(.title)
                         .fontWeight(.bold)
-                    Text("Miles")
+                    Text(userSettings.preferredDistanceUnit.rawValue)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -199,6 +220,7 @@ struct ActiveWorkoutCard: View {
 
 struct PhoneWorkoutView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -230,10 +252,10 @@ struct PhoneWorkoutView: View {
                         .font(.headline)
                     
                     HStack(spacing: 4) {
-                        Text("\(Int(workoutManager.ruckWeight))")
+                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
                             .font(.system(size: 48, weight: .medium, design: .rounded))
                             .foregroundColor(.green)
-                        Text("LBS")
+                        Text(userSettings.preferredWeightUnit.rawValue.uppercased())
                             .font(.title3)
                             .foregroundColor(.secondary)
                     }

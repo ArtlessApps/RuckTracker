@@ -4,19 +4,33 @@ import HealthKit
 
 struct WorkoutView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
+    @State private var showingSettings = false
     
     var body: some View {
         VStack(spacing: 0) {
             // Top Status Bar
             HStack {
-                // Weight
-                HStack(spacing: 2) {
-                    Text("\(Int(workoutManager.ruckWeight))")
-                        .font(.system(size: 18, weight: .medium, design: .default))
-                        .foregroundColor(.white)
-                    Text("LBS")
-                        .font(.system(size: 10, weight: .regular))
-                        .foregroundColor(.gray)
+                // Settings button (only when not active)
+                if !workoutManager.isActive && !workoutManager.isPaused {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } else {
+                    // Weight
+                    HStack(spacing: 2) {
+                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
+                            .font(.system(size: 18, weight: .medium, design: .default))
+                            .foregroundColor(.white)
+                        Text(userSettings.preferredWeightUnit.rawValue.uppercased())
+                            .font(.system(size: 10, weight: .regular))
+                            .foregroundColor(.gray)
+                    }
                 }
                 
                 Spacer()
@@ -38,7 +52,7 @@ struct WorkoutView: View {
                     Text(workoutManager.formattedPace)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(workoutManager.paceColor)
-                    Text("/MI")
+                    Text("/\(userSettings.preferredDistanceUnit.rawValue.uppercased())")
                         .font(.system(size: 10, weight: .regular))
                         .foregroundColor(.gray)
                 }
@@ -82,10 +96,13 @@ struct WorkoutView: View {
                     
                     // Distance (from Apple's GPS + motion algorithms)
                     VStack(spacing: 4) {
-                        Text(String(format: "%.2f", workoutManager.distance))
+                        let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
+                            workoutManager.distance : 
+                            workoutManager.distance / userSettings.preferredDistanceUnit.conversionToMiles
+                        Text(String(format: "%.2f", displayDistance))
                             .font(.system(size: 20, weight: .medium, design: .default))
                             .foregroundColor(.white)
-                        Text("MI")
+                        Text(userSettings.preferredDistanceUnit.rawValue.uppercased())
                             .font(.system(size: 10, weight: .regular))
                             .foregroundColor(.gray)
                             .tracking(1)
@@ -176,6 +193,9 @@ struct WorkoutView: View {
             sensitivity: .medium,
             isContinuous: false
         )
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
     }
 }
 

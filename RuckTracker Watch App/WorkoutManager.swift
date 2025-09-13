@@ -203,18 +203,17 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         finalCalories = calories
         finalRuckWeight = ruckWeight
         
-        isActive = false
-        isPaused = true
-        
-        // Stop the timer
+        // Stop the timer first
         workoutTimer?.invalidate()
         workoutTimer = nil
         
-        // End the session and builder
-        session?.end()
+        // Update UI state immediately
+        isActive = false
+        isPaused = true
         
         // Handle the async completion properly
         if let builder = builder {
+            // End collection first, then end session
             builder.endCollection(withEnd: Date()) { [weak self] success, error in
                 if success {
                     builder.finishWorkout { workout, error in
@@ -233,6 +232,10 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                             // Show post-workout summary
                             print("🎯 Showing post-workout summary")
                             self?.showPostWorkoutSummary = true
+                            
+                            // Clean up session after everything is done
+                            self?.session?.end()
+                            self?.resetWorkout()
                         }
                     }
                 } else {
@@ -241,6 +244,10 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                         // Show post-workout summary even if save failed
                         print("🎯 Showing post-workout summary (despite save failure)")
                         self?.showPostWorkoutSummary = true
+                        
+                        // Clean up session
+                        self?.session?.end()
+                        self?.resetWorkout()
                     }
                 }
             }
@@ -249,10 +256,12 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             DispatchQueue.main.async {
                 print("🎯 Showing post-workout summary (no builder)")
                 self.showPostWorkoutSummary = true
+                
+                // Clean up session
+                self.session?.end()
+                self.resetWorkout()
             }
         }
-        
-        resetWorkout()
     }
     
     // MARK: - HKLiveWorkoutBuilder Integration
@@ -407,6 +416,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     func dismissPostWorkoutSummary() {
         print("🔄 Dismissing post-workout summary")
         showPostWorkoutSummary = false
+        
+        // Reset workout state to clean slate
+        isActive = false
+        isPaused = false
+        
         // Reset final stats
         finalElapsedTime = 0
         finalDistance = 0

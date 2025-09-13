@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PostWorkoutSummaryView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var userSettings = UserSettings.shared
     
     var body: some View {
         ScrollView {
@@ -33,7 +34,12 @@ struct PostWorkoutSummaryView: View {
                     StatRow(
                         icon: "location.fill",
                         label: "Distance",
-                        value: String(format: "%.2f mi", workoutManager.finalDistance),
+                        value: {
+                            let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
+                                workoutManager.finalDistance : 
+                                workoutManager.finalDistance / userSettings.preferredDistanceUnit.conversionToMiles
+                            return String(format: "%.2f %@", displayDistance, userSettings.preferredDistanceUnit.rawValue)
+                        }(),
                         color: .green
                     )
                     
@@ -50,7 +56,7 @@ struct PostWorkoutSummaryView: View {
                         StatRow(
                             icon: "figure.hiking",
                             label: "Ruck Weight",
-                            value: "\(Int(workoutManager.finalRuckWeight)) lbs",
+                            value: "\(String(format: "%.0f", workoutManager.finalRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)",
                             color: .yellow
                         )
                         
@@ -72,7 +78,7 @@ struct PostWorkoutSummaryView: View {
                         StatRow(
                             icon: "speedometer",
                             label: "Avg Pace",
-                            value: String(format: "%d:%02d /mi", minutes, seconds),
+                            value: String(format: "%d:%02d /%@", minutes, seconds, userSettings.preferredDistanceUnit.rawValue),
                             color: .purple
                         )
                     }
@@ -117,9 +123,9 @@ struct PostWorkoutSummaryView: View {
     private var intensityLevel: String {
         guard workoutManager.finalRuckWeight > 0 else { return "Light" }
         
-        // Estimate body weight for intensity calculation
-        let estimatedBodyWeight: Double = 170 // Could be from user settings
-        let weightPercentage = workoutManager.finalRuckWeight / estimatedBodyWeight
+        // Use actual body weight from user settings
+        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
+        let weightPercentage = workoutManager.finalRuckWeight / bodyWeightPounds
         
         switch weightPercentage {
         case 0..<0.15: return "Moderate"
