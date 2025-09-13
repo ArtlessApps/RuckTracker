@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 import HealthKit
+import CoreData
 
 // MARK: - Watch App Types
 // TerrainType enum removed for MVP - using flat terrain only
@@ -210,6 +211,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                                 } else {
                                     print("📊 Final stats: \(String(format: "%.2f", self?.finalDistance ?? 0)) mi, \(Int(self?.finalCalories ?? 0)) cal")
                                 }
+                                
+                                // Save to local CoreData storage as well
+                                self?.saveWorkoutToLocalStorage()
                             } else {
                                 print("❌ Failed to save workout: \(error?.localizedDescription ?? "")")
                             }
@@ -395,6 +399,29 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         let additionalCalories = additionalCaloriesPerHour * timeHours
         
         return baseCalories + additionalCalories
+    }
+    
+    // MARK: - Local Data Storage
+    private func saveWorkoutToLocalStorage() {
+        guard let startTime = startTime else {
+            print("❌ Cannot save workout: no start time")
+            return
+        }
+        
+        // Calculate average heart rate if we have data
+        let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 120.0
+        
+        // Save to CoreData using final stats
+        WorkoutDataManager.shared.saveWorkout(
+            date: startTime,
+            duration: finalElapsedTime,
+            distance: finalDistance,
+            calories: finalCalories,
+            ruckWeight: finalRuckWeight,
+            heartRate: avgHeartRate
+        )
+        
+        print("💾 Watch: Saved workout to local storage")
     }
     
     // MARK: - Post-Workout Navigation

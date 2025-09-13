@@ -5,12 +5,14 @@ import SwiftUI
 struct RuckTracker_Watch_AppApp: App {
     @StateObject private var healthManager = HealthManager()
     @StateObject private var workoutManager = WorkoutManager()
+    @StateObject private var workoutDataManager = WorkoutDataManager.shared
     
     var body: some Scene {
         WindowGroup {
             WatchMainView()
                 .environmentObject(healthManager)
                 .environmentObject(workoutManager)
+                .environmentObject(workoutDataManager)
                 .onAppear {
                     print("🏥 Watch App launched - requesting HealthKit authorization...")
                     

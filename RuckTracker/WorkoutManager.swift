@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 import HealthKit
+import CoreData
 
 class WorkoutManager: ObservableObject {
     // MARK: - Published Properties
@@ -145,8 +146,10 @@ class WorkoutManager: ObservableObject {
         
         if let startDate = startDate {
             let endDate = Date()
-            // Save basic workout data (watch will save the detailed version)
+            
+            // Save to both HealthKit and local CoreData
             saveWorkoutToHealth(startDate: startDate, endDate: endDate)
+            saveWorkoutToLocalStorage(startDate: startDate)
         }
         
         print("📱 Phone: Workout ended - \(formattedElapsedTime)")
@@ -182,6 +185,24 @@ class WorkoutManager: ObservableObject {
         
         // Simulated heart rate
         currentHeartRate = 120 + Double.random(in: -10...30)
+    }
+    
+    // MARK: - Local Data Storage
+    private func saveWorkoutToLocalStorage(startDate: Date) {
+        // Calculate average heart rate (simplified for phone)
+        let avgHeartRate = currentHeartRate
+        
+        // Save to CoreData
+        WorkoutDataManager.shared.saveWorkout(
+            date: startDate,
+            duration: elapsedTime,
+            distance: distance,
+            calories: calories,
+            ruckWeight: ruckWeight,
+            heartRate: avgHeartRate
+        )
+        
+        print("💾 Saved workout to local storage")
     }
     
     // MARK: - HealthKit (Basic)

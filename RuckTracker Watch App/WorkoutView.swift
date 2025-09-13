@@ -193,18 +193,18 @@ struct WorkoutView: View {
             sensitivity: .medium,
             isContinuous: false
         )
-        .contextMenu {
-            Button("Settings", systemImage: "gearshape") {
+        .contextMenu(ContextMenu {
+            Button("Settings") {
                 showingSettings = true
             }
             
             if !workoutManager.isActive {
-                Button("Reset Weight", systemImage: "arrow.clockwise") {
+                Button("Reset Weight") {
                     // Quick reset to default weight
                     workoutManager.ruckWeight = userSettings.defaultRuckWeight
                 }
             }
-        }
+        })
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }

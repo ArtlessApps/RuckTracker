@@ -295,23 +295,135 @@ struct PhoneWorkoutView: View {
 }
 
 struct RecentWorkoutsCard: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @ObservedObject private var userSettings = UserSettings.shared
+    @State private var showingAllWorkouts = false
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Recent Workouts")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 15) {
+            HStack {
+                Text("Recent Workouts")
+                    .font(.headline)
+                
+                Spacer()
+                
+                if !workoutDataManager.recentWorkouts.isEmpty {
+                    Button("View All") {
+                        showingAllWorkouts = true
+                    }
+                    .font(.caption)
+                    .foregroundColor(.blue)
+                }
+            }
             
-            Text("No recent workouts")
-                .foregroundColor(.secondary)
-                .font(.subheadline)
+            if workoutDataManager.recentWorkouts.isEmpty {
+                Text("No recent workouts")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+            } else {
+                // Show last 3 workouts
+                ForEach(Array(workoutDataManager.recentWorkouts.prefix(3)), id: \.objectID) { workout in
+                    WorkoutRowView(workout: workout)
+                }
+                
+                // Summary stats
+                if workoutDataManager.totalWorkouts > 0 {
+                    Divider()
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(workoutDataManager.totalWorkouts)")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                            Text("Total Workouts")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
+                                workoutDataManager.totalDistance : 
+                                workoutDataManager.totalDistance / userSettings.preferredDistanceUnit.conversionToMiles
+                            Text(String(format: "%.1f", displayDistance))
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                            Text("Total \(userSettings.preferredDistanceUnit.rawValue)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color.gray.opacity(0.1))
         .cornerRadius(15)
+        .sheet(isPresented: $showingAllWorkouts) {
+            AllWorkoutsView()
+                .environmentObject(workoutDataManager)
+        }
+    }
+}
+
+struct WorkoutRowView: View {
+    let workout: WorkoutEntity
+    @ObservedObject private var userSettings = UserSettings.shared
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(workout.formattedDate)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    // Ruck weight indicator
+                    Text("\(Int(workout.ruckWeight)) lbs")
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(4)
+                }
+                
+                HStack(spacing: 12) {
+                    Text(workout.formattedDuration)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text(workout.formattedDistance(unit: userSettings.preferredDistanceUnit))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("\(Int(workout.calories)) cal")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            // Pace indicator with color
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(workout.formattedPace)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color(workout.paceColor))
+                
+                Text("pace")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 
 #Preview {
     PhoneMainView()
         .environmentObject(WorkoutManager())
+        .environmentObject(WorkoutDataManager.shared)
 }
