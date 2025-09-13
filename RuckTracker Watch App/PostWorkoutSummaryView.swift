@@ -60,13 +60,6 @@ struct PostWorkoutSummaryView: View {
                             color: .yellow
                         )
                         
-                        // Activity Intensity indicator
-                        StatRow(
-                            icon: "bolt.fill",
-                            label: "Intensity",
-                            value: intensityLevel,
-                            color: intensityColor
-                        )
                     }
                     
                     // Average Pace (if we have distance)
@@ -120,29 +113,6 @@ struct PostWorkoutSummaryView: View {
         }
     }
     
-    private var intensityLevel: String {
-        guard workoutManager.finalRuckWeight > 0 else { return "Light" }
-        
-        // Use actual body weight from user settings
-        let bodyWeightPounds = userSettings.bodyWeightInKg * 2.20462
-        let weightPercentage = workoutManager.finalRuckWeight / bodyWeightPounds
-        
-        switch weightPercentage {
-        case 0..<0.15: return "Moderate"
-        case 0.15..<0.25: return "Vigorous"
-        default: return "High"
-        }
-    }
-    
-    private var intensityColor: Color {
-        switch intensityLevel {
-        case "Light": return .green
-        case "Moderate": return .yellow
-        case "Vigorous": return .orange
-        case "High": return .red
-        default: return .gray
-        }
-    }
 }
 
 struct StatRow: View {
