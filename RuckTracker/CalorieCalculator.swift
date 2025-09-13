@@ -15,8 +15,7 @@ struct CalorieCalculator {
         bodyWeightKg: Double,
         ruckWeightPounds: Double,
         timeMinutes: Double,
-        distanceMiles: Double = 0,
-        terrain: TerrainType = .flat
+        distanceMiles: Double = 0
     ) -> Double {
         
         let timeHours = timeMinutes / 60.0
@@ -27,11 +26,8 @@ struct CalorieCalculator {
         // Additional MET from carrying load
         let loadMET = calculateLoadMET(ruckWeightPounds: ruckWeightPounds, bodyWeightKg: bodyWeightKg)
         
-        // Terrain adjustment
-        let terrainMultiplier = terrain.multiplier
-        
-        // Total MET calculation
-        let totalMET = (baseMET + loadMET) * terrainMultiplier
+        // Total MET calculation (using flat terrain multiplier of 1.0)
+        let totalMET = baseMET + loadMET
         
         // Calories = MET × body weight (kg) × time (hours)
         let calories = totalMET * bodyWeightKg * timeHours
@@ -76,8 +72,7 @@ struct CalorieCalculator {
     static func calculateCurrentBurnRate(
         bodyWeightKg: Double,
         ruckWeightPounds: Double,
-        currentPaceMinutesPerMile: Double?,
-        terrain: TerrainType = .flat
+        currentPaceMinutesPerMile: Double?
     ) -> Double {
         
         let baseMET: Double
@@ -89,7 +84,7 @@ struct CalorieCalculator {
         }
         
         let loadMET = calculateLoadMET(ruckWeightPounds: ruckWeightPounds, bodyWeightKg: bodyWeightKg)
-        let totalMET = (baseMET + loadMET) * terrain.multiplier
+        let totalMET = baseMET + loadMET
         
         // Calories per minute = MET × body weight (kg) / 60
         return totalMET * bodyWeightKg / 60.0
@@ -109,31 +104,7 @@ struct CalorieCalculator {
 }
 
 // MARK: - Supporting Types
-
-enum TerrainType: String, CaseIterable {
-    case flat = "Flat"
-    case rolling = "Rolling Hills"
-    case hilly = "Hilly"
-    case mountainous = "Mountainous"
-    
-    var multiplier: Double {
-        switch self {
-        case .flat: return 1.0
-        case .rolling: return 1.1
-        case .hilly: return 1.25
-        case .mountainous: return 1.4
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .flat: return "minus"
-        case .rolling: return "wave.3.right"
-        case .hilly: return "triangle"
-        case .mountainous: return "mountain.2"
-        }
-    }
-}
+// TerrainType enum removed for MVP - using flat terrain only
 
 // MARK: - Validation and Comparison
 

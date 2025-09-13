@@ -10,22 +10,8 @@ import Combine
 import SwiftUI
 import HealthKit
 
-// MARK: - Watch App Terrain Types
-enum WatchTerrainType: String, CaseIterable {
-    case flat = "Flat"
-    case rolling = "Rolling Hills"
-    case hilly = "Hilly"
-    case mountainous = "Mountainous"
-    
-    var multiplier: Double {
-        switch self {
-        case .flat: return 1.0
-        case .rolling: return 1.1
-        case .hilly: return 1.25
-        case .mountainous: return 1.4
-        }
-    }
-}
+// MARK: - Watch App Types
+// TerrainType enum removed for MVP - using flat terrain only
 
 class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate {
     // MARK: - Published Properties
@@ -38,7 +24,6 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
-    @Published var selectedTerrain: WatchTerrainType = .flat
     
     // Final workout stats for post-workout summary
     @Published var finalElapsedTime: TimeInterval = 0
@@ -472,9 +457,9 @@ extension WorkoutManager {
             "EquipmentUsed": "Weighted Backpack",
             "ExerciseType": "Cardio + Strength",
             
-            // Terrain info helps with calorie accuracy
-            "TerrainType": selectedTerrain.rawValue,
-            "TerrainMultiplier": selectedTerrain.multiplier,
+            // Using flat terrain for MVP
+            "TerrainType": "Flat",
+            "TerrainMultiplier": 1.0,
             
             // Average metrics for Apple's ML algorithms
             "AverageHeartRateZone": heartRateZone,
@@ -556,7 +541,7 @@ extension WorkoutManager {
         • Ruck Weight: \(Int(ruckWeight)) lbs (\(weightPercentage)% body weight)
         • Calories: \(Int(calories)) (adjusted for load)
         • Avg Pace: \(formattedPace) per mile
-        • Terrain: \(selectedTerrain.rawValue)
+        • Terrain: Flat
         
         This workout contributes to your:
         ✅ Move Ring (Active Calories)

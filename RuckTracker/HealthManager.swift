@@ -106,7 +106,7 @@ class HealthManager: ObservableObject {
                     metadata: [
                         "RuckWeight": weight,
                         "AppName": "RuckTracker-iPhone",
-                        "Terrain": "flat",
+                        "Terrain": "Flat",
                         "GPS": "Limited"
                     ]
                 )

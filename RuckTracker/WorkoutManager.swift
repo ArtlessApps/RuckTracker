@@ -19,7 +19,6 @@ class WorkoutManager: ObservableObject {
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 120
-    @Published var selectedTerrain: TerrainType = .flat
     
     // Settings
     private let userSettings = UserSettings.shared
@@ -176,7 +175,6 @@ class WorkoutManager: ObservableObject {
             ruckWeightPounds: ruckWeight,
             timeMinutes: elapsedTime / 60.0,
             distanceMiles: distance,
-            terrain: selectedTerrain
         )
         
         // Simulated distance for phone (watch has real GPS)
@@ -220,7 +218,7 @@ class WorkoutManager: ObservableObject {
                     metadata: [
                         "RuckWeight": self.ruckWeight,
                         "AppName": "RuckTracker-Phone",
-                        "Terrain": self.selectedTerrain.rawValue,
+                        "Terrain": "Flat",
                         "AvgPace": self.currentPaceMinutesPerMile ?? 0,
                         "AvgHeartRate": self.currentHeartRate
                     ]
