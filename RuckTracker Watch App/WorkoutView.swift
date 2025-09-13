@@ -11,26 +11,26 @@ struct WorkoutView: View {
         VStack(spacing: 0) {
             // Top Status Bar
             HStack {
-                // Settings button (only when not active)
-                if !workoutManager.isActive && !workoutManager.isPaused {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                } else {
-                    // Weight
-                    HStack(spacing: 2) {
-                        Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
-                            .font(.system(size: 18, weight: .medium, design: .default))
-                            .foregroundColor(.white)
-                        Text(userSettings.preferredWeightUnit.rawValue.uppercased())
-                            .font(.system(size: 10, weight: .regular))
-                            .foregroundColor(.gray)
-                    }
+                // Settings button (always visible but smaller when workout active)
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: workoutManager.isActive ? 10 : 14, weight: .medium))
+                        .foregroundColor(workoutManager.isActive ? .gray : .orange)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
+                // Weight display (always visible)
+                HStack(spacing: 2) {
+                    Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
+                        .font(.system(size: 18, weight: .medium, design: .default))
+                        .foregroundColor(.white)
+                    Text(userSettings.preferredWeightUnit.rawValue.uppercased())
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundColor(.gray)
                 }
                 
                 Spacer()
@@ -193,6 +193,22 @@ struct WorkoutView: View {
             sensitivity: .medium,
             isContinuous: false
         )
+        .contextMenu {
+            Button {
+                showingSettings = true
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+            
+            if !workoutManager.isActive {
+                Button {
+                    // Quick reset to default weight
+                    workoutManager.ruckWeight = userSettings.defaultRuckWeight
+                } label: {
+                    Label("Reset Weight", systemImage: "arrow.clockwise")
+                }
+            }
+        }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
