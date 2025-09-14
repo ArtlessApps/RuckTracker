@@ -53,6 +53,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     private var startTime: Date?
     private var pausedTime: TimeInterval = 0
     
+    // Immediate timer support - for instant UI feedback
+    private var manualStartTime: Date?        // When user pressed start (immediate)
+    private var healthKitStartTime: Date?     // When HealthKit actually started (delayed)
+    private var isHealthKitReady = false      // Track if HealthKit is ready
+    
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
     var minutes: Int { (Int(elapsedTime) % 3600) / 60 }
@@ -141,6 +146,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         print("🏋️ Starting workout with \(weight) lbs")
         guard !isActive else { return }
         
+        // 1. IMMEDIATE response (no delay)
         self.ruckWeight = weight
         isActive = true
         isPaused = false
@@ -148,10 +154,17 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         distance = 0
         calories = 0
         pausedTime = 0
-        startTime = Date()
+        manualStartTime = Date()           // Start manual timer immediately
+        startTime = manualStartTime        // Use manual start time for consistency
+        isHealthKitReady = false
         
-        startWorkoutSession()
+        // Start UI timer immediately for instant feedback
         startElapsedTimeTracking()
+        
+        // 2. BACKGROUND HealthKit setup (async - can take 2-3 seconds)
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.startWorkoutSession()
+        }
     }
     
     func togglePause() {
@@ -168,8 +181,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         guard !isPaused else { return } // Prevent double pause
         
         // Add current elapsed time to paused time before pausing
-        if let startTime = startTime {
-            pausedTime += Date().timeIntervalSince(startTime)
+        // Use manual start time for consistency with immediate timer
+        if let manualStartTime = manualStartTime {
+            pausedTime += Date().timeIntervalSince(manualStartTime)
         }
         
         isPaused = true
@@ -180,8 +194,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     func resumeWorkout() {
         guard isPaused else { return } // Prevent resume when not paused
         
-        // Reset start time for resumed session
-        startTime = Date()
+        // Reset manual start time for resumed session
+        manualStartTime = Date()
+        startTime = manualStartTime
         
         isPaused = false
         session?.resume()
@@ -362,8 +377,10 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             }
             
             if isActive && !isPaused {
-                if let startTime = startTime {
-                    elapsedTime = pausedTime + Date().timeIntervalSince(startTime)
+                // Use manual start time for immediate UI feedback
+                // This ensures the timer starts instantly when user presses start
+                if let manualStartTime = manualStartTime {
+                    elapsedTime = pausedTime + Date().timeIntervalSince(manualStartTime)
                 }
             }
             
@@ -410,6 +427,15 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     // MARK: - HKLiveWorkoutBuilderDelegate
     func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder, didCollectDataOf collectedTypes: Set<HKSampleType>) {
+        // Mark HealthKit as ready when we start receiving data
+        if !isHealthKitReady {
+            DispatchQueue.main.async {
+                self.isHealthKitReady = true
+                self.healthKitStartTime = Date()
+                print("✅ HealthKit is now ready - data collection started")
+            }
+        }
+        
         for type in collectedTypes {
             guard let quantityType = type as? HKQuantityType else { continue }
             
@@ -538,6 +564,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         currentHeartRate = 0
         startTime = nil
         pausedTime = 0
+        
+        // Reset immediate timer properties
+        manualStartTime = nil
+        healthKitStartTime = nil
+        isHealthKitReady = false
         
         // Clean up HealthKit objects
         session = nil
