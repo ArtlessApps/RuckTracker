@@ -1,0 +1,47 @@
+{
+  "identifier": "premium",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "identifier": "com.artless.rucktracker.premium.monthly",
+      "reference_name": "Premium Monthly",
+      "type": "auto_renewable_subscription",
+      "duration": "P1M",
+      "price": "4.99",
+      "locale": "en_US",
+      "subscription_group_identifier": "premium",
+      "introductory_offer": {
+        "type": "free_trial",
+        "duration": "P7D"
+      }
+    },
+    {
+      "identifier": "com.artless.rucktracker.premium.yearly",
+      "reference_name": "Premium Yearly",
+      "type": "auto_renewable_subscription",
+      "duration": "P1Y",
+      "price": "39.99",
+      "locale": "en_US",
+      "subscription_group_identifier": "premium",
+      "introductory_offer": {
+        "type": "free_trial",
+        "duration": "P7D"
+      }
+    }
+  ],
+  "subscriptionGroups": [
+    {
+      "id": "premium",
+      "localizations": [
+        {
+          "displayName": "Premium",
+          "description": "Unlock all premium features including training programs, advanced analytics, and more."
+        }
+      ],
+      "subscriptions": [
+        "com.artless.rucktracker.premium.monthly",
+        "com.artless.rucktracker.premium.yearly"
+      ]
+    }
+  ]
+}
