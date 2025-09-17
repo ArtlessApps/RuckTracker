@@ -6,6 +6,7 @@ struct RuckTrackerApp: App {
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
+    @StateObject private var supabaseManager = SupabaseManager.shared
     
     var body: some Scene {
         WindowGroup {
@@ -13,6 +14,7 @@ struct RuckTrackerApp: App {
                 .environmentObject(healthManager)
                 .environmentObject(workoutManager)
                 .environmentObject(workoutDataManager)
+                .environmentObject(supabaseManager)
                 .onAppear {
                     // Set up WatchConnectivity manager
                     watchConnectivityManager.setWorkoutDataManager(workoutDataManager)

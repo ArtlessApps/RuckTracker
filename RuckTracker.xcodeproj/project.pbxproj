@@ -124,6 +124,7 @@
 			);
 			name = RuckTracker;
 			packageProductDependencies = (
+				121857812E6BE74000088A62 /* Supabase */,
 			);
 			productName = RuckTracker;
 			productReference = 1218572D2E6BE73D00088A62 /* RuckTracker.app */;
@@ -146,6 +147,7 @@
 			);
 			name = "RuckTracker Watch App";
 			packageProductDependencies = (
+				121857822E6BE74000088A62 /* Supabase */,
 			);
 			productName = "RuckTracker Watch App";
 			productReference = 121857502E6BE73F00088A62 /* RuckTracker Watch App.app */;
@@ -179,6 +181,7 @@
 			mainGroup = 121857242E6BE73C00088A62;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				121857802E6BE74000088A62 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1218572E2E6BE73D00088A62 /* Products */;
@@ -525,6 +528,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		121857802E6BE74000088A62 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		121857812E6BE74000088A62 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 121857802E6BE74000088A62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		121857822E6BE74000088A62 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 121857802E6BE74000088A62 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 121857252E6BE73C00088A62 /* Project object */;
 }
