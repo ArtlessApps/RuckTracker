@@ -3,6 +3,7 @@ import SwiftUI
 struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @EnvironmentObject var premiumManager: PremiumManager  // Add this
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingSettings = false
     @State private var showingWorkoutHistory = false
@@ -22,6 +23,9 @@ struct ImprovedPhoneMainView: View {
         .sheet(isPresented: $showingWorkoutHistory) {
             AllWorkoutsView()
         }
+        .sheet(isPresented: $premiumManager.showingPaywall) {  // Add this
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
     }
     
     // MARK: - Computed Views
@@ -38,20 +42,40 @@ struct ImprovedPhoneMainView: View {
         LazyVStack(spacing: 24) {
             AppleWatchHeroSection()
             
+            // Premium Status Banner - shows subscription status
+            if premiumManager.isPremiumUser {
+                PremiumStatusBanner()
+            } else {
+                FreeTrialBanner()
+            }
+            
             if !workoutDataManager.workouts.isEmpty {
                 QuickStatsDashboard()
                     .environmentObject(workoutDataManager)
             }
             
+            // Premium Training Programs Section
+            PremiumTrainingProgramsSection()
+                .environmentObject(workoutDataManager)
             
             RecentActivitySection()
                 .environmentObject(workoutDataManager)
+            
+            // Premium Analytics - only show if user has data
+            if workoutDataManager.totalWorkouts >= 3 {
+                PremiumAnalyticsSection()
+                    .environmentObject(workoutDataManager)
+            }
             
             if workoutDataManager.totalWorkouts >= 5 {
                 TrainingInsightsSection()
                     .environmentObject(workoutDataManager)
                     .environmentObject(workoutManager)
             }
+            
+            // Export/Sync Premium Features
+            PremiumDataSection()
+                .environmentObject(workoutDataManager)
             
             Spacer(minLength: 100)
         }
@@ -60,6 +84,11 @@ struct ImprovedPhoneMainView: View {
     private var settingsToolbarItem: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: 12) {
+                // Premium badge in toolbar if subscribed
+                if premiumManager.isPremiumUser {
+                    PremiumBadge(size: .small)
+                }
+                
                 // Sync button
                 Button {
                     watchConnectivityManager.requestWorkoutsFromWatch()
@@ -68,15 +97,14 @@ struct ImprovedPhoneMainView: View {
                         .font(.title2)
                         .foregroundColor(watchConnectivityManager.isWatchReachable ? .blue : .gray)
                 }
-                .disabled(!watchConnectivityManager.isWatchReachable)
                 
                 // Settings button
                 Button {
                     showingSettings = true
                 } label: {
-                    Image(systemName: "person.circle")
+                    Image(systemName: "gear")
                         .font(.title2)
-                        .foregroundColor(.orange)
+                        .foregroundColor(.primary)
                 }
             }
         }
@@ -830,3 +858,200 @@ struct TipRow: View {
         }
     }
 }
+
+// MARK: - Premium Status Banner
+struct PremiumStatusBanner: View {
+    @EnvironmentObject var premiumManager: PremiumManager
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "crown.fill")
+                .foregroundColor(.orange)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Premium Active")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                if let expiry = premiumManager.subscriptionExpiryDate,
+                   expiry != Date.distantFuture {
+                    Text("Expires \(expiry.formatted(date: .abbreviated, time: .omitted))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.green.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Free Trial Banner
+struct FreeTrialBanner: View {
+    @EnvironmentObject var premiumManager: PremiumManager
+    
+    var body: some View {
+        Button {
+            premiumManager.showPaywall(context: .featureUpsell)
+        } label: {
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.orange)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Unlock Premium Features")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Text("7-day free trial • Advanced analytics • Training programs")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.orange.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Premium Data Section
+struct PremiumDataSection: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @EnvironmentObject var premiumManager: PremiumManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Data & Export")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                if !premiumManager.isPremiumUser {
+                    PremiumBadge(size: .small)
+                }
+            }
+            
+            VStack(spacing: 12) {
+                // Export Data Feature
+                PremiumFeatureCard(
+                    icon: "square.and.arrow.up",
+                    title: "Export Workouts",
+                    description: "Export to CSV or share with other apps",
+                    feature: .exportData
+                ) {
+                    if premiumManager.checkAccess(to: .exportData, context: .featureUpsell) {
+                        // Handle export - this would show export options
+                        print("Export feature accessed")
+                    }
+                }
+                
+                // Cloud Sync Feature
+                PremiumFeatureCard(
+                    icon: "icloud.and.arrow.up",
+                    title: "Cloud Sync",
+                    description: "Sync data across all your devices",
+                    feature: .cloudSync
+                ) {
+                    if premiumManager.checkAccess(to: .cloudSync, context: .featureUpsell) {
+                        // Handle cloud sync
+                        print("Cloud sync feature accessed")
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Premium Feature Card
+struct PremiumFeatureCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let feature: PremiumFeature
+    let action: () -> Void
+    
+    @EnvironmentObject var premiumManager: PremiumManager
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(.orange)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                
+                Spacer()
+                
+                if premiumManager.requiresPremium(for: feature) {
+                    Image(systemName: "lock.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                premiumManager.requiresPremium(for: feature) ? 
+                                Color.orange.opacity(0.3) : Color.clear, 
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(premiumManager.requiresPremium(for: feature))
+        .overlay {
+            if premiumManager.requiresPremium(for: feature) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.1))
+            }
+        }
+    }
+}
+

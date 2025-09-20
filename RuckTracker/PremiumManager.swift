@@ -390,36 +390,3 @@ struct PremiumStatusView: View {
     }
 }
 
-// MARK: - Free Trial Banner
-
-struct FreeTrialBanner: View {
-    @StateObject private var premiumManager = PremiumManager.shared
-    
-    var body: some View {
-        if premiumManager.isInFreeTrial,
-           let daysRemaining = premiumManager.freeTrialDaysRemaining {
-            HStack {
-                Image(systemName: "clock.fill")
-                    .foregroundColor(.orange)
-                
-                Text("\(daysRemaining) days left in trial")
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                Button("Manage") {
-                    premiumManager.showPaywall(context: .settings)
-                }
-                .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.blue.opacity(0.2))
-                .foregroundColor(.blue)
-                .cornerRadius(6)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.orange.opacity(0.1))
-        }
-    }
-}

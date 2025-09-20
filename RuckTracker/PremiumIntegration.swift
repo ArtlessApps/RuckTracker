@@ -163,9 +163,9 @@ struct UpdatedPhoneMainView: View {
 }
 
 // MARK: - Premium Training Programs Section
-
 struct PremiumTrainingProgramsSection: View {
-    @StateObject private var premiumManager = PremiumManager.shared
+    @EnvironmentObject var premiumManager: PremiumManager
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -176,26 +176,103 @@ struct PremiumTrainingProgramsSection: View {
                 
                 Spacer()
                 
-                PremiumBadge(size: .small)
+                if !premiumManager.isPremiumUser {
+                    PremiumBadge(size: .small)
+                }
             }
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                ProgramCard(
-                    title: "Military Foundation",
-                    description: "8-week program for beginners",
-                    difficulty: "Beginner",
-                    weeks: 8
-                )
-                
-                ProgramCard(
-                    title: "Ranger Challenge",
-                    description: "Advanced 12-week training",
-                    difficulty: "Advanced", 
-                    weeks: 12
-                )
+            if premiumManager.isPremiumUser {
+                // Show actual programs for premium users
+                activeProgramsView
+            } else {
+                // Show locked preview for free users
+                lockedProgramsView
             }
         }
-        .premiumGated(for: .trainingPrograms, context: .programAccess)
+        .onTapGesture {
+            if !premiumManager.isPremiumUser {
+                premiumManager.showPaywall(context: .programAccess)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var activeProgramsView: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+            ProgramCard(
+                title: "Military Foundation",
+                description: "8-week program for beginners",
+                difficulty: "Beginner",
+                weeks: 8,
+                isLocked: false
+            )
+            
+            ProgramCard(
+                title: "Ranger Challenge",
+                description: "Advanced 12-week training",
+                difficulty: "Advanced", 
+                weeks: 12,
+                isLocked: false
+            )
+            
+            ProgramCard(
+                title: "Selection Prep",
+                description: "16-week intensive program",
+                difficulty: "Expert", 
+                weeks: 16,
+                isLocked: false
+            )
+            
+            ProgramCard(
+                title: "Maintenance",
+                description: "Ongoing fitness maintenance",
+                difficulty: "All Levels", 
+                weeks: 0,
+                isLocked: false
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var lockedProgramsView: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+            ProgramCard(
+                title: "Military Foundation",
+                description: "8-week program for beginners",
+                difficulty: "Beginner",
+                weeks: 8,
+                isLocked: true
+            )
+            
+            ProgramCard(
+                title: "Ranger Challenge",
+                description: "Advanced 12-week training",
+                difficulty: "Advanced", 
+                weeks: 12,
+                isLocked: true
+            )
+        }
+        .overlay(
+            // Premium overlay
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.3))
+                .overlay(
+                    VStack(spacing: 8) {
+                        Image(systemName: "crown.fill")
+                            .font(.title)
+                            .foregroundColor(.orange)
+                        
+                        Text("Premium Feature")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                        
+                        Text("Tap to unlock training programs")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                )
+        )
     }
 }
 
@@ -204,6 +281,7 @@ struct ProgramCard: View {
     let description: String
     let difficulty: String
     let weeks: Int
+    let isLocked: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -212,6 +290,7 @@ struct ProgramCard: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                     .lineLimit(2)
+                    .foregroundColor(isLocked ? .secondary : .primary)
                 
                 Text(description)
                     .font(.caption)
@@ -222,29 +301,49 @@ struct ProgramCard: View {
             HStack {
                 Label(difficulty, systemImage: "star.fill")
                     .font(.caption2)
-                    .foregroundColor(.orange)
+                    .foregroundColor(isLocked ? .secondary : .orange)
                 
                 Spacer()
                 
-                Text("\(weeks)w")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                if weeks > 0 {
+                    Text("\(weeks)w")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("Ongoing")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            if isLocked {
+                HStack {
+                    Spacer()
+                    Image(systemName: "lock.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    Spacer()
+                }
             }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.08))
+                .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isLocked ? Color.orange.opacity(0.3) : Color.clear, lineWidth: 1)
+                )
         )
     }
 }
 
 // MARK: - Premium Analytics Section
-
 struct PremiumAnalyticsSection: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @StateObject private var premiumManager = PremiumManager.shared
+    @EnvironmentObject var premiumManager: PremiumManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -255,19 +354,62 @@ struct PremiumAnalyticsSection: View {
                 
                 Spacer()
                 
-                PremiumBadge(size: .small)
-            }
-            
-            if workoutDataManager.workouts.isEmpty {
-                AnalyticsEmptyState()
-            } else {
-                VStack(spacing: 16) {
-                    WeeklyProgressChart()
-                    PerformanceInsightsCard()
+                if !premiumManager.isPremiumUser {
+                    PremiumBadge(size: .small)
                 }
             }
+            
+            if premiumManager.isPremiumUser {
+                if workoutDataManager.workouts.isEmpty {
+                    AnalyticsEmptyState()
+                } else {
+                    activeAnalyticsView
+                }
+            } else {
+                lockedAnalyticsView
+            }
         }
-        .premiumGated(for: .advancedAnalytics, context: .featureUpsell)
+        .onTapGesture {
+            if !premiumManager.isPremiumUser {
+                premiumManager.showPaywall(context: .featureUpsell)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var activeAnalyticsView: some View {
+        VStack(spacing: 16) {
+            WeeklyProgressChart()
+            PerformanceInsightsCard()
+        }
+    }
+    
+    @ViewBuilder
+    private var lockedAnalyticsView: some View {
+        VStack(spacing: 16) {
+            // Show preview charts but disabled
+            WeeklyProgressChart()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.3))
+                        .overlay(
+                            VStack(spacing: 8) {
+                                Image(systemName: "crown.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.orange)
+                                
+                                Text("Premium Analytics")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                
+                                Text("Detailed charts and insights")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        )
+                )
+        }
     }
 }
 
@@ -298,13 +440,18 @@ struct WeeklyProgressChart: View {
                 .font(.subheadline)
                 .fontWeight(.medium)
             
-            // Placeholder chart
+            // Placeholder chart - you could integrate with Charts framework
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color.blue.opacity(0.1))
                 .frame(height: 120)
                 .overlay(
-                    Text("Weekly Distance Chart")
-                        .foregroundColor(.blue)
+                    VStack {
+                        Text("📊")
+                            .font(.title)
+                        Text("Weekly Distance Chart")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 )
         }
         .padding()
@@ -319,8 +466,9 @@ struct PerformanceInsightsCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: "brain.head.profile")
-                    .foregroundColor(.purple)
+                Image(systemName: "lightbulb.fill")
+                    .foregroundColor(.orange)
+                
                 Text("Performance Insights")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -329,20 +477,20 @@ struct PerformanceInsightsCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 InsightRow(
                     icon: "arrow.up.circle.fill",
-                    text: "Your pace has improved 12% this month",
+                    text: "Pace improving by 5% over last month",
                     color: .green
                 )
                 
                 InsightRow(
                     icon: "target",
-                    text: "You're ready to increase ruck weight by 5 lbs",
-                    color: .orange
+                    text: "Recommended: Increase ruck weight by 5lbs",
+                    color: .blue
                 )
                 
                 InsightRow(
-                    icon: "calendar.badge.plus",
-                    text: "Add one more ruck per week for optimal progression",
-                    color: .blue
+                    icon: "calendar",
+                    text: "3 days since last workout - consider scheduling",
+                    color: .orange
                 )
             }
         }
@@ -360,10 +508,10 @@ struct InsightRow: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             Image(systemName: icon)
+                .font(.caption)
                 .foregroundColor(color)
-                .frame(width: 16)
             
             Text(text)
                 .font(.caption)
