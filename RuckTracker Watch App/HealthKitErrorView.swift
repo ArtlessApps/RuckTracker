@@ -56,7 +56,7 @@ struct HealthKitErrorView: View {
                 
                 if !isMinimal {
                     // Recovery suggestion (abbreviated for watch)
-                    if let recoverySuggestion = currentError.recoverySuggestion {
+                    if currentError.recoverySuggestion != nil {
                         Text(getWatchRecoverySuggestion(for: currentError))
                             .font(.caption2)
                             .foregroundColor(.secondary)

@@ -196,7 +196,7 @@ struct WorkoutView: View {
             sensitivity: .medium,
             isContinuous: false
         )
-        .contextMenu(ContextMenu {
+        .contextMenu(menuItems: {
             Button("Settings") {
                 showingSettings = true
             }

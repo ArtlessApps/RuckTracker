@@ -90,3 +90,49 @@ struct UserProgram: Codable, Identifiable {
         case completedAt = "completed_at"
     }
 }
+
+struct WorkoutCompletion: Codable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let userProgramId: UUID
+    let programWorkoutId: UUID
+    let completedAt: Date
+    let actualDistanceMiles: Double
+    let actualWeightLbs: Double
+    let actualDurationMinutes: Int
+    let performanceScore: Double
+    let notes: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case userProgramId = "user_program_id"
+        case programWorkoutId = "program_workout_id"
+        case completedAt = "completed_at"
+        case actualDistanceMiles = "actual_distance_miles"
+        case actualWeightLbs = "actual_weight_lbs"
+        case actualDurationMinutes = "actual_duration_minutes"
+        case performanceScore = "performance_score"
+        case notes
+    }
+}
+
+struct WeightProgression: Codable, Identifiable {
+    let id: UUID
+    let userProgramId: UUID
+    let weekNumber: Int
+    let weightLbs: Double
+    let wasAutoAdjusted: Bool
+    let reason: String?
+    let createdAt: Date
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userProgramId = "user_program_id"
+        case weekNumber = "week_number"
+        case weightLbs = "weight_lbs"
+        case wasAutoAdjusted = "was_auto_adjusted"
+        case reason
+        case createdAt = "created_at"
+    }
+}

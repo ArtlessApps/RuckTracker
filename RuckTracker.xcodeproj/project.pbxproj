@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		121857512E6BE73F00088A62 /* RuckTracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 121857502E6BE73F00088A62 /* RuckTracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		127C861F2E7EF1E900303543 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 121857822E6BE74000088A62 /* Supabase */; };
+		127C86202E7EF1E900303543 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 121857812E6BE74000088A62 /* Supabase */; };
+		127C86742E7EF39300303543 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 127C86732E7EF39200303543 /* Products.storekit */; };
+		127C86752E7EF39300303543 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 127C86732E7EF39200303543 /* Products.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +41,7 @@
 /* Begin PBXFileReference section */
 		1218572D2E6BE73D00088A62 /* RuckTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RuckTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		121857502E6BE73F00088A62 /* RuckTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RuckTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		127C86732E7EF39200303543 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -71,6 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				127C86202E7EF1E900303543 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				127C861F2E7EF1E900303543 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,6 +94,7 @@
 		121857242E6BE73C00088A62 = {
 			isa = PBXGroup;
 			children = (
+				127C86732E7EF39200303543 /* Products.storekit */,
 				1218572F2E6BE73D00088A62 /* RuckTracker */,
 				121857542E6BE73F00088A62 /* RuckTracker Watch App */,
 				1218572E2E6BE73D00088A62 /* Products */,
@@ -199,6 +207,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				127C86752E7EF39300303543 /* Products.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -206,6 +215,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				127C86742E7EF39300303543 /* Products.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

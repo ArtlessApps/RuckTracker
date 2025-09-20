@@ -1,4 +1,6 @@
 // Services/AuthService.swift
+import Foundation
+import SwiftUI
 import Supabase
 
 class AuthService: ObservableObject {

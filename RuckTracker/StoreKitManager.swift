@@ -19,7 +19,7 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // Current subscription info
     @Published var currentSubscription: Product?
-    @Published var subscriptionGroupStatus: RenewalInfo?
+    @Published var subscriptionGroupStatus: Product.SubscriptionInfo.RenewalInfo?
     
     private var updateListenerTask: Task<Void, Error>?
     
@@ -35,7 +35,7 @@ class StoreKitManager: NSObject, ObservableObject {
         super.init()
         
         // Start listening for transaction updates
-        updateListenerTask = listenForTransactions()
+        updateListenerTask = listenForStoreKitTransactions()
         
         Task {
             await loadProducts()
@@ -65,7 +65,7 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Purchase Flow
     
-    func purchase(_ product: Product) async throws -> Transaction? {
+    func purchase(_ product: Product) async throws -> StoreKit.Transaction? {
         isLoading = true
         defer { isLoading = false }
         
@@ -74,7 +74,7 @@ class StoreKitManager: NSObject, ObservableObject {
             
             switch result {
             case .success(let verification):
-                let transaction = try checkVerified(verification)
+                let transaction = try checkVerified(verification) as StoreKit.Transaction
                 
                 // The transaction is verified. Deliver content to the user.
                 await updateCustomerProductStatus()
@@ -108,29 +108,32 @@ class StoreKitManager: NSObject, ObservableObject {
         subscriptionStatus = .loading
         
         do {
-            guard let result = await Transaction.currentEntitlements.first(where: { $0.productID == monthlySubscriptionID || $0.productID == yearlySubscriptionID }) else {
-                subscriptionStatus = .notSubscribed
-                return
-            }
+            for await result in StoreKit.Transaction.currentEntitlements {
+                let transaction = try checkVerified(result)
+                if transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID {
             
-            let transaction = try checkVerified(result)
-            
-            // Check if subscription is active
-            if let expirationDate = transaction.expirationDate {
-                if expirationDate > Date() {
-                    subscriptionStatus = .subscribed(expiry: expirationDate)
+                    // Check if subscription is active
+                    if let expirationDate = transaction.expirationDate {
+                        if expirationDate > Date() {
+                            subscriptionStatus = .subscribed(expiry: expirationDate)
+                            
+                            // Find the current product
+                            currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+                        } else {
+                            subscriptionStatus = .expired
+                        }
+                    } else {
+                        // Non-consumable or active subscription
+                        subscriptionStatus = .subscribed(expiry: Date.distantFuture)
+                    }
                     
-                    // Find the current product
-                    currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
-                } else {
-                    subscriptionStatus = .expired
+                    print("✅ Subscription status updated: \(subscriptionStatus)")
+                    return
                 }
-            } else {
-                // Non-consumable or active subscription
-                subscriptionStatus = .subscribed(expiry: Date.distantFuture)
             }
             
-            print("✅ Subscription status updated: \(subscriptionStatus)")
+            // No active subscription found
+            subscriptionStatus = .notSubscribed
             
         } catch {
             print("❌ Failed to check subscription status: \(error)")
@@ -154,13 +157,13 @@ class StoreKitManager: NSObject, ObservableObject {
         }
     }
     
-    // MARK: - Transaction Updates
+    // MARK: - StoreKit Transaction Updates
     
-    private func listenForTransactions() -> Task<Void, Error> {
+    private func listenForStoreKitTransactions() -> Task<Void, Error> {
         return Task.detached {
-            for await result in Transaction.updates {
+            for await result in StoreKit.Transaction.updates {
                 do {
-                    let transaction = try self.checkVerified(result)
+                    let transaction = try self.checkVerified(result) as StoreKit.Transaction
                     await self.updateCustomerProductStatus()
                     await transaction.finish()
                 } catch {
@@ -179,7 +182,7 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Verification
     
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    private nonisolated func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
             throw StoreError.failedVerification
@@ -235,7 +238,7 @@ class StoreKitManager: NSObject, ObservableObject {
         let savings = monthlyYearlyPrice - yearly.price
         let percentage = (savings / monthlyYearlyPrice) * 100
         
-        return String(format: "%.0f%%", percentage)
+        return String(format: "%.0f%%", NSDecimalNumber(decimal: percentage).doubleValue)
     }
 }
 
@@ -293,7 +296,7 @@ extension StoreKitManager.SubscriptionStatus: Equatable {
 
 extension Product {
     var localizedPrice: String {
-        return priceFormatStyle.format(price)
+        return price.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))
     }
     
     var subscriptionPeriodDescription: String {

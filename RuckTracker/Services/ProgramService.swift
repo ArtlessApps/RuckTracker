@@ -1,36 +1,41 @@
 // Services/ProgramService.swift
-import Supabase
 import Foundation
+import SwiftUI
 import Combine
+import Supabase
 
 class ProgramService: ObservableObject {
-    private let supabase = SupabaseManager.shared.client
+    private var supabaseClient: SupabaseClient? {
+        // Simple direct access for now - replace with your actual config
+        guard let url = URL(string: "postgresql://postgres:[YOUR-PASSWORD]@db.zqxxcuvgwadokkgmcuwr.supabase.co:5432/postgres") else {
+            return nil
+        }
+        let key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxeHhjdXZnd2Fkb2trZ21jdXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5OTI4NTIsImV4cCI6MjA3MzU2ODg1Mn0.vU-gcFzN2YyqDWkihIdMGu_LXp0Y--QSB00Vsr9qm_o"
+        return SupabaseClient(supabaseURL: url, supabaseKey: key)
+    }
     
     @Published var programs: [Program] = []
     @Published var userPrograms: [UserProgram] = []
     @Published var isLoading = false
     
-    // Add these for real-time subscriptions
-    private var subscriptions: Set<AnyCancellable> = []
-    private var realtimeChannel: RealtimeChannel?
+    // Current user ID for testing - replace with proper auth
+    private var mockCurrentUserId: UUID? = UUID()
     
     init() {
-        // Start real-time subscriptions when service is created
-        setupRealtimeSubscriptions()
-    }
-    
-    deinit {
-        // Clean up subscriptions
-        realtimeChannel?.unsubscribe()
+        // Initialize service
     }
     
     // MARK: - Program Discovery
     
     func fetchPrograms() async throws {
+        guard let client = supabaseClient else {
+            throw ProgramError.notAuthenticated
+        }
+        
         isLoading = true
         defer { isLoading = false }
         
-        let response: [Program] = try await supabase
+        let response: [Program] = try await client
             .from("programs")
             .select()
             .order("is_featured", ascending: false)
@@ -44,7 +49,11 @@ class ProgramService: ObservableObject {
     }
     
     func fetchFeaturedPrograms() async throws -> [Program] {
-        let response: [Program] = try await supabase
+        guard let client = supabaseClient else {
+            throw ProgramError.notAuthenticated
+        }
+        
+        let response: [Program] = try await client
             .from("programs")
             .select()
             .eq("is_featured", value: true)
@@ -57,7 +66,8 @@ class ProgramService: ObservableObject {
     // MARK: - Program Enrollment
     
     func enrollInProgram(_ program: Program, startingWeight: Double) async throws {
-        guard let userId = SupabaseManager.shared.currentUser?.id else {
+        guard let client = supabaseClient,
+              let userId = mockCurrentUserId else {
             throw ProgramError.notAuthenticated
         }
         
@@ -72,7 +82,7 @@ class ProgramService: ObservableObject {
             completedAt: nil
         )
         
-        try await supabase
+        try await client
             .from("user_programs")
             .insert(userProgram)
             .execute()
@@ -82,9 +92,10 @@ class ProgramService: ObservableObject {
     }
     
     func fetchUserPrograms() async throws {
-        guard let userId = SupabaseManager.shared.currentUser?.id else { return }
+        guard let client = supabaseClient,
+              let userId = mockCurrentUserId else { return }
         
-        let response: [UserProgram] = try await supabase
+        let response: [UserProgram] = try await client
             .from("user_programs")
             .select()
             .eq("user_id", value: userId.uuidString)
@@ -100,7 +111,11 @@ class ProgramService: ObservableObject {
     // MARK: - Program Content
     
     func fetchProgramWeeks(for programId: UUID) async throws -> [ProgramWeek] {
-        let response: [ProgramWeek] = try await supabase
+        guard let client = supabaseClient else {
+            throw ProgramError.notAuthenticated
+        }
+        
+        let response: [ProgramWeek] = try await client
             .from("program_weeks")
             .select()
             .eq("program_id", value: programId.uuidString)
@@ -112,7 +127,11 @@ class ProgramService: ObservableObject {
     }
     
     func fetchWorkoutsForWeek(_ weekId: UUID) async throws -> [ProgramWorkout] {
-        let response: [ProgramWorkout] = try await supabase
+        guard let client = supabaseClient else {
+            throw ProgramError.notAuthenticated
+        }
+        
+        let response: [ProgramWorkout] = try await client
             .from("program_workouts")
             .select()
             .eq("week_id", value: weekId.uuidString)
@@ -133,7 +152,8 @@ class ProgramService: ObservableObject {
         duration: TimeInterval,
         performanceScore: Double
     ) async throws {
-        guard let userId = SupabaseManager.shared.currentUser?.id else { return }
+        guard let client = supabaseClient,
+              let userId = mockCurrentUserId else { return }
         
         let completion = WorkoutCompletion(
             id: UUID(),
@@ -148,7 +168,7 @@ class ProgramService: ObservableObject {
             notes: nil
         )
         
-        try await supabase
+        try await client
             .from("workout_completions")
             .insert(completion)
             .execute()
@@ -161,6 +181,10 @@ class ProgramService: ObservableObject {
         wasAutoAdjusted: Bool,
         reason: String?
     ) async throws {
+        guard let client = supabaseClient else {
+            throw ProgramError.notAuthenticated
+        }
+        
         let progression = WeightProgression(
             id: UUID(),
             userProgramId: userProgramId,
@@ -171,79 +195,10 @@ class ProgramService: ObservableObject {
             createdAt: Date()
         )
         
-        try await supabase
+        try await client
             .from("weight_progressions")
             .insert(progression)
             .execute()
-    }
-    
-    // MARK: - Real-time Setup
-    
-    private func setupRealtimeSubscriptions() {
-        subscribeToPrograms()
-        
-        // Subscribe to user programs when authenticated
-        SupabaseManager.shared.$isAuthenticated
-            .sink { [weak self] isAuthenticated in
-                if isAuthenticated {
-                    self?.subscribeToUserPrograms()
-                } else {
-                    self?.unsubscribeFromUserPrograms()
-                }
-            }
-            .store(in: &subscriptions)
-    }
-    
-    private func subscribeToPrograms() {
-        // Listen for changes to the programs table
-        realtimeChannel = supabase.realtime.channel("programs-channel")
-        
-        realtimeChannel?
-            .on("postgres_changes", filter: .init(
-                event: "*", 
-                schema: "public", 
-                table: "programs"
-            )) { [weak self] payload in
-                print("Program updated: \(payload)")
-                Task {
-                    try await self?.fetchPrograms()
-                }
-            }
-        
-        realtimeChannel?.subscribe { [weak self] status, error in
-            if let error = error {
-                print("Real-time subscription error: \(error)")
-            } else {
-                print("Real-time subscription status: \(status)")
-            }
-        }
-    }
-    
-    private func subscribeToUserPrograms() {
-        guard let userId = SupabaseManager.shared.currentUser?.id else { return }
-        
-        // Create a separate channel for user-specific data
-        let userChannel = supabase.realtime.channel("user-programs-\(userId)")
-        
-        userChannel
-            .on("postgres_changes", filter: .init(
-                event: "*",
-                schema: "public",
-                table: "user_programs",
-                filter: "user_id=eq.\(userId)"
-            )) { [weak self] payload in
-                print("User program updated: \(payload)")
-                Task {
-                    try await self?.fetchUserPrograms()
-                }
-            }
-        
-        userChannel.subscribe()
-    }
-    
-    private func unsubscribeFromUserPrograms() {
-        // Clean up user-specific subscriptions when logged out
-        // Supabase automatically handles this, but you can add cleanup here
     }
 }
 
