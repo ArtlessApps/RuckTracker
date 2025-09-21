@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 // MARK: - Updated Settings View with Premium Integration
 
@@ -162,10 +163,12 @@ struct UpdatedPhoneMainView: View {
     }
 }
 
-// MARK: - Premium Training Programs Section
+// MARK: - Updated Program Cards with Navigation
 struct PremiumTrainingProgramsSection: View {
     @EnvironmentObject var premiumManager: PremiumManager
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @StateObject private var programService = ProgramService()
+    @State private var showingProgramDetail = false
+    @State private var selectedProgram: Program?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -182,16 +185,25 @@ struct PremiumTrainingProgramsSection: View {
             }
             
             if premiumManager.isPremiumUser {
-                // Show actual programs for premium users
                 activeProgramsView
             } else {
-                // Show locked preview for free users
                 lockedProgramsView
             }
         }
-        .onTapGesture {
-            if !premiumManager.isPremiumUser {
-                premiumManager.showPaywall(context: .programAccess)
+        .sheet(isPresented: $showingProgramDetail) {
+            if let program = selectedProgram {
+                ProgramDetailView(program: program)
+                    .environmentObject(programService)
+            }
+        }
+        .task {
+            // Load programs when view appears (for premium users)
+            if premiumManager.isPremiumUser {
+                do {
+                    try await programService.fetchPrograms()
+                } catch {
+                    print("Failed to load programs: \(error)")
+                }
             }
         }
     }
@@ -199,61 +211,97 @@ struct PremiumTrainingProgramsSection: View {
     @ViewBuilder
     private var activeProgramsView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-            ProgramCard(
+            // Static programs for testing (you can replace with dynamic loading later)
+            FunctionalProgramCard(
                 title: "Military Foundation",
                 description: "8-week program for beginners",
                 difficulty: "Beginner",
                 weeks: 8,
                 isLocked: false
-            )
+            ) {
+                selectedProgram = createMockProgram(
+                    title: "Military Foundation",
+                    description: "8-week foundational program designed for those new to rucking",
+                    difficulty: .beginner,
+                    weeks: 8
+                )
+                showingProgramDetail = true
+            }
             
-            ProgramCard(
+            FunctionalProgramCard(
                 title: "Ranger Challenge",
                 description: "Advanced 12-week training",
                 difficulty: "Advanced", 
                 weeks: 12,
                 isLocked: false
-            )
+            ) {
+                selectedProgram = createMockProgram(
+                    title: "Ranger Challenge",
+                    description: "Advanced 12-week program for experienced ruckers",
+                    difficulty: .advanced,
+                    weeks: 12
+                )
+                showingProgramDetail = true
+            }
             
-            ProgramCard(
+            FunctionalProgramCard(
                 title: "Selection Prep",
                 description: "16-week intensive program",
-                difficulty: "Expert", 
+                difficulty: "Elite", 
                 weeks: 16,
                 isLocked: false
-            )
+            ) {
+                selectedProgram = createMockProgram(
+                    title: "Selection Prep",
+                    description: "Elite 16-week program for special operations preparation",
+                    difficulty: .elite,
+                    weeks: 16
+                )
+                showingProgramDetail = true
+            }
             
-            ProgramCard(
+            FunctionalProgramCard(
                 title: "Maintenance",
                 description: "Ongoing fitness maintenance",
                 difficulty: "All Levels", 
                 weeks: 0,
                 isLocked: false
-            )
+            ) {
+                selectedProgram = createMockProgram(
+                    title: "Maintenance Program",
+                    description: "Ongoing program for maintaining fitness levels",
+                    difficulty: .intermediate,
+                    weeks: 0
+                )
+                showingProgramDetail = true
+            }
         }
     }
     
     @ViewBuilder
     private var lockedProgramsView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-            ProgramCard(
+            FunctionalProgramCard(
                 title: "Military Foundation",
                 description: "8-week program for beginners",
                 difficulty: "Beginner",
                 weeks: 8,
                 isLocked: true
-            )
+            ) {
+                premiumManager.showPaywall(context: .programAccess)
+            }
             
-            ProgramCard(
+            FunctionalProgramCard(
                 title: "Ranger Challenge",
                 description: "Advanced 12-week training",
                 difficulty: "Advanced", 
                 weeks: 12,
                 isLocked: true
-            )
+            ) {
+                premiumManager.showPaywall(context: .programAccess)
+            }
         }
         .overlay(
-            // Premium overlay
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.3))
                 .overlay(
@@ -274,69 +322,101 @@ struct PremiumTrainingProgramsSection: View {
                 )
         )
     }
+    
+    // Helper function to create mock programs for testing
+    private func createMockProgram(title: String, description: String, difficulty: Program.Difficulty, weeks: Int) -> Program {
+        Program(
+            id: UUID(),
+            title: title,
+            description: description,
+            difficulty: difficulty,
+            category: .military,
+            durationWeeks: weeks,
+            isFeatured: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
 }
 
-struct ProgramCard: View {
+// MARK: - Functional Program Card
+struct FunctionalProgramCard: View {
     let title: String
     let description: String
     let difficulty: String
     let weeks: Int
     let isLocked: Bool
+    let action: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .lineLimit(2)
-                    .foregroundColor(isLocked ? .secondary : .primary)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-            }
-            
-            HStack {
-                Label(difficulty, systemImage: "star.fill")
-                    .font(.caption2)
-                    .foregroundColor(isLocked ? .secondary : .orange)
-                
-                Spacer()
-                
-                if weeks > 0 {
-                    Text("\(weeks)w")
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                        .foregroundColor(isLocked ? .secondary : .primary)
+                    
+                    Text(description)
                         .font(.caption)
-                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
-                } else {
-                    Text("Ongoing")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
+                        .lineLimit(2)
                 }
-            }
-            
-            if isLocked {
+                
                 HStack {
+                    Label(difficulty, systemImage: "star.fill")
+                        .font(.caption2)
+                        .foregroundColor(isLocked ? .secondary : .orange)
+                    
                     Spacer()
-                    Image(systemName: "lock.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                    Spacer()
+                    
+                    if weeks > 0 {
+                        Text("\(weeks)w")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Ongoing")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if isLocked {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                        Spacer()
+                    }
+                } else {
+                    HStack {
+                        Spacer()
+                        Text("View Program")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.blue)
+                        Spacer()
+                    }
                 }
             }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isLocked ? Color.orange.opacity(0.3) : Color.blue.opacity(0.2), 
+                                lineWidth: 1
+                            )
+                    )
+            )
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isLocked ? Color.orange.opacity(0.3) : Color.clear, lineWidth: 1)
-                )
-        )
+        .buttonStyle(.plain)
     }
 }
 
@@ -567,4 +647,325 @@ struct AppStoreConfiguration {
        - Include app screenshots showing premium features
        - Provide a demo account for reviewers
     */
+}
+
+// MARK: - Program Detail View
+struct ProgramDetailView: View {
+    let program: Program
+    @EnvironmentObject var programService: ProgramService
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingEnrollment = false
+    @State private var isEnrolled = false
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(program.title)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        if let description = program.description {
+                            Text(description)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        HStack {
+                            DifficultyBadge(difficulty: program.difficulty)
+                            
+                            Spacer()
+                            
+                            if program.durationWeeks > 0 {
+                                Text("\(program.durationWeeks) weeks")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
+                    // Program Overview
+                    ProgramOverviewSection(program: program)
+                    
+                    // Sample Week Preview
+                    SampleWeekSection()
+                    
+                    // Enrollment Section
+                    if !isEnrolled {
+                        EnrollmentSection {
+                            showingEnrollment = true
+                        }
+                    } else {
+                        EnrolledSection()
+                    }
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingEnrollment) {
+            ProgramEnrollmentView(program: program) { startingWeight in
+                enrollInProgram(startingWeight: startingWeight)
+            }
+        }
+    }
+    
+    private func enrollInProgram(startingWeight: Double) {
+        Task {
+            do {
+                try await programService.enrollInProgram(program, startingWeight: startingWeight)
+                await MainActor.run {
+                    isEnrolled = true
+                    showingEnrollment = false
+                }
+            } catch {
+                print("Failed to enroll in program: \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Views
+struct DifficultyBadge: View {
+    let difficulty: Program.Difficulty
+    
+    var body: some View {
+        Text(difficulty.rawValue.capitalized)
+            .font(.caption)
+            .fontWeight(.medium)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(difficultyColor.opacity(0.2))
+            .foregroundColor(difficultyColor)
+            .cornerRadius(6)
+    }
+    
+    private var difficultyColor: Color {
+        switch difficulty {
+        case .beginner: return .green
+        case .intermediate: return .yellow
+        case .advanced: return .orange
+        case .elite: return .red
+        }
+    }
+}
+
+struct ProgramOverviewSection: View {
+    let program: Program
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Program Overview")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                OverviewItem(
+                    icon: "calendar",
+                    title: "Duration",
+                    value: program.durationWeeks > 0 ? "\(program.durationWeeks) weeks" : "Ongoing"
+                )
+                
+                OverviewItem(
+                    icon: "figure.walk",
+                    title: "Difficulty",
+                    value: program.difficulty.rawValue.capitalized
+                )
+                
+                OverviewItem(
+                    icon: "target",
+                    title: "Category",
+                    value: program.category.rawValue.capitalized
+                )
+            }
+        }
+    }
+}
+
+struct OverviewItem: View {
+    let icon: String
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(.orange)
+                .frame(width: 24)
+            
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+    }
+}
+
+struct SampleWeekSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Sample Week")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 8) {
+                SampleWorkoutRow(day: "Monday", workout: "3 mile ruck @ 25lbs")
+                SampleWorkoutRow(day: "Tuesday", workout: "Rest day")
+                SampleWorkoutRow(day: "Wednesday", workout: "5 mile ruck @ 25lbs")
+                SampleWorkoutRow(day: "Thursday", workout: "Cross training")
+                SampleWorkoutRow(day: "Friday", workout: "4 mile ruck @ 30lbs")
+                SampleWorkoutRow(day: "Weekend", workout: "Long ruck or rest")
+            }
+        }
+    }
+}
+
+struct SampleWorkoutRow: View {
+    let day: String
+    let workout: String
+    
+    var body: some View {
+        HStack {
+            Text(day)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .frame(width: 80, alignment: .leading)
+            
+            Text(workout)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct EnrollmentSection: View {
+    let action: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Button(action: action) {
+                Text("Start This Program")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.orange)
+                    .cornerRadius(12)
+            }
+            
+            Text("You'll be able to track your progress and adjust weight as you advance through the program.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+struct EnrolledSection: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text("Enrolled in this program")
+                    .fontWeight(.medium)
+                Spacer()
+            }
+            
+            Button("View Your Progress") {
+                // Navigate to progress view
+            }
+            .font(.subheadline)
+            .foregroundColor(.blue)
+        }
+        .padding()
+        .background(Color.green.opacity(0.1))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Program Enrollment View
+struct ProgramEnrollmentView: View {
+    let program: Program
+    let onEnroll: (Double) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var startingWeight: Double = 20
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 32) {
+                VStack(spacing: 16) {
+                    Text("Start Your Program")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text("Choose your starting ruck weight. You can adjust this as you progress through the program.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                VStack(spacing: 24) {
+                    Text("Starting Ruck Weight")
+                        .font(.headline)
+                    
+                    VStack {
+                        Text("\(Int(startingWeight)) lbs")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.orange)
+                        
+                        Slider(value: $startingWeight, in: 10...50, step: 5)
+                            .accentColor(.orange)
+                    }
+                    
+                    Text("Recommended: 15-20% of body weight")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    Button {
+                        onEnroll(startingWeight)
+                    } label: {
+                        Text("Start Program")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .cornerRadius(12)
+                    }
+                    
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
 }
