@@ -1,47 +1,112 @@
 {
-  "identifier": "premium",
-  "nonRenewingSubscriptions": [],
-  "products": [
-    {
-      "identifier": "com.artless.rucktracker.premium.monthly",
-      "reference_name": "Premium Monthly",
-      "type": "auto_renewable_subscription",
-      "duration": "P1M",
-      "price": "4.99",
-      "locale": "en_US",
-      "subscription_group_identifier": "premium",
-      "introductory_offer": {
-        "type": "free_trial",
-        "duration": "P7D"
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
       }
-    },
-    {
-      "identifier": "com.artless.rucktracker.premium.yearly",
-      "reference_name": "Premium Yearly",
-      "type": "auto_renewable_subscription",
-      "duration": "P1Y",
-      "price": "39.99",
-      "locale": "en_US",
-      "subscription_group_identifier": "premium",
-      "introductory_offer": {
-        "type": "free_trial",
-        "duration": "P7D"
-      }
-    }
+    ]
+  },
+  "identifier" : "0DAF6822",
+  "nonRenewingSubscriptions" : [
+
   ],
-  "subscriptionGroups": [
+  "products" : [
+
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
     {
-      "id": "premium",
-      "localizations": [
-        {
-          "displayName": "Premium",
-          "description": "Unlock all premium features including training programs, advanced analytics, and more."
-        }
+      "id" : "EE3A2F0B",
+      "localizations" : [
+
       ],
-      "subscriptions": [
-        "com.artless.rucktracker.premium.monthly",
-        "com.artless.rucktracker.premium.yearly"
+      "name" : "Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "77590956",
+          "introductoryOffer" : {
+            "internalID" : "3063FEE3",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.artless.rucktracker.premium.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Premium Monthly",
+          "subscriptionGroupID" : "EE3A2F0B",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "2E2B4DDB",
+          "introductoryOffer" : {
+            "internalID" : "7E2D221F",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.artless.rucktracker.premium.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Premium Yearly",
+          "subscriptionGroupID" : "EE3A2F0B",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
       ]
     }
-  ]
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
 }
