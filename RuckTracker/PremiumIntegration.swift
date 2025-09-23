@@ -131,9 +131,6 @@ struct UpdatedPhoneMainView: View {
                             .environmentObject(workoutDataManager)
                     }
                     
-                    RecentActivitySection()
-                        .environmentObject(workoutDataManager)
-                    
                     // Premium Analytics Section (gated)
                     PremiumAnalyticsSection()
                 }

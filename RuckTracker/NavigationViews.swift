@@ -202,18 +202,32 @@ struct ChallengesView: View {
 
 // MARK: - Data Export View
 struct DataExportView: View {
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    Text("Data Export")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top, 20)
+                    // Header section
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Data & Export")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        Text("Manage your workout data and export options")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
                     
-                    Text("Export your workout data")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
+                    // Premium Data Section
+                    PremiumDataSection()
+                        .environmentObject(workoutDataManager)
+                    
+                    Spacer(minLength: 100)
                 }
             }
             .navigationTitle("Data")

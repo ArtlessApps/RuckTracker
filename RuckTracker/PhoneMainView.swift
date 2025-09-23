@@ -15,8 +15,13 @@ struct ImprovedPhoneMainView: View {
     
     var body: some View {
         NavigationView {
-            mainContentView
-                .navigationBarHidden(true)
+            VStack(spacing: 0) {
+                mainContentView
+                
+                // Bottom Navigation Bar
+                bottomNavigationBar
+            }
+            .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -32,6 +37,7 @@ struct ImprovedPhoneMainView: View {
         }
         .sheet(isPresented: $showingDataExport) {
             DataExportView()
+                .environmentObject(workoutDataManager)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
@@ -43,9 +49,6 @@ struct ImprovedPhoneMainView: View {
     private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Top navigation bar
-                topNavigationBar
-                
                 // Main cards
                 justRuckCard
                 programsCard
@@ -57,9 +60,6 @@ struct ImprovedPhoneMainView: View {
                     QuickStatsDashboard()
                         .environmentObject(workoutDataManager)
                 }
-                
-                RecentActivitySection()
-                    .environmentObject(workoutDataManager)
                 
                 // Premium Analytics - only show if user has data
                 if workoutDataManager.totalWorkouts >= 3 {
@@ -73,55 +73,13 @@ struct ImprovedPhoneMainView: View {
                         .environmentObject(workoutManager)
                 }
                 
-                // Export/Sync Premium Features
-                PremiumDataSection()
-                    .environmentObject(workoutDataManager)
-                
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            .padding(.bottom, 100)
+            .padding(.bottom, 20)
         }
         .background(Color.white)
-    }
-    
-    // MARK: - Top Navigation Bar
-    
-    private var topNavigationBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("RuckTracker")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                if premiumManager.isPremiumUser {
-                    HStack(spacing: 4) {
-                        Image(systemName: "crown.fill")
-                            .foregroundColor(.yellow)
-                        Text("Premium")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.yellow)
-                    }
-                } else {
-                    Text("Track your rucking progress")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                showingSettings = true
-            }) {
-                Image(systemName: "gearshape.fill")
-                    .font(.title2)
-                    .foregroundColor(.primary)
-            }
-        }
     }
     
     // MARK: - Main Action Cards
@@ -273,6 +231,74 @@ struct ImprovedPhoneMainView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+    
+    // MARK: - Bottom Navigation Bar
+    
+    private var bottomNavigationBar: some View {
+        HStack(spacing: 0) {
+            // Profile Button
+            Button(action: {
+                // Profile functionality - could open user profile or account settings
+                showingSettings = true
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "person.circle")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                    
+                    Text("Profile")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            
+            // Activity Button
+            Button(action: {
+                showingWorkoutHistory = true
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                    
+                    Text("Activity")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            
+            // Settings Button
+            Button(action: {
+                showingSettings = true
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "gearshape")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                    
+                    Text("Settings")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+        .background(
+            Rectangle()
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: -1)
+        )
     }
 }
 

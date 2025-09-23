@@ -228,42 +228,6 @@ struct QuickStatsDashboard: View {
     }
 }
 
-// MARK: - Recent Activity Section
-struct RecentActivitySection: View {
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Recent Activity")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button("View All") {
-                    // Navigate to full workout history
-                }
-                .font(.subheadline)
-                .foregroundColor(.blue)
-            }
-            
-            if workoutDataManager.recentWorkouts.isEmpty {
-                EmptyStateView(
-                    icon: "figure.walk",
-                    title: "No Workouts Yet",
-                    description: "Start your first ruck workout to see your activity here."
-                )
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(Array(workoutDataManager.recentWorkouts.prefix(3)), id: \.objectID) { workout in
-                        CompactWorkoutRow(workout: workout)
-                    }
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Training Insights Section
 struct TrainingInsightsSection: View {
