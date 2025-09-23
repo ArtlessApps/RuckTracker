@@ -159,6 +159,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let _ = message[WatchConnectivityKeys.requestWorkouts] as? Bool {
             handleWorkoutRequest()
         }
+        
+        // Handle start workout command from phone
+        if let _ = message[WatchConnectivityKeys.startWorkout] as? Bool {
+            handleStartWorkoutCommand()
+        }
     }
     
     private func handleReceivedWorkoutData(_ data: Data) {
@@ -240,4 +245,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
         // Send all workouts to phone
         sendAllWorkoutsToPhone()
     }
+    
+    private func handleStartWorkoutCommand() {
+        print("⌚ Received start workout command from phone")
+        // This would typically trigger the workout start in the watch app
+        // For now, we'll just log it - the actual implementation would depend on
+        // how the watch app is structured to handle external start commands
+        NotificationCenter.default.post(name: .startWorkoutFromPhone, object: nil)
+    }
+}
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let startWorkoutFromPhone = Notification.Name("startWorkoutFromPhone")
 }

@@ -263,7 +263,6 @@ class HealthManager: ObservableObject {
             
             // Track which samples we successfully add
             var samplesAdded = 0
-            let totalSamples = 2 // distance + calories
             
             // Add distance sample if we have permission
             if self.hasDistancePermission,

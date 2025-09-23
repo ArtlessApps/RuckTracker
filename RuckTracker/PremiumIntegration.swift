@@ -881,6 +881,8 @@ struct EnrollmentSection: View {
 }
 
 struct EnrolledSection: View {
+    @State private var showingProgress = false
+    
     var body: some View {
         VStack(spacing: 12) {
             HStack {
@@ -892,7 +894,7 @@ struct EnrolledSection: View {
             }
             
             Button("View Your Progress") {
-                // Navigate to progress view
+                showingProgress = true
             }
             .font(.subheadline)
             .foregroundColor(.blue)
@@ -900,6 +902,9 @@ struct EnrolledSection: View {
         .padding()
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
+        .sheet(isPresented: $showingProgress) {
+            ProgramProgressView()
+        }
     }
 }
 
@@ -967,5 +972,298 @@ struct ProgramEnrollmentView: View {
             .padding()
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+// MARK: - Program Progress View
+struct ProgramProgressView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentWeek = 1
+    @State private var currentWeight = 25.0
+    @State private var completedWorkouts = 3
+    @State private var totalWorkouts = 12
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Progress Header
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Your Progress")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        Text("Military Foundation Program")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Progress Stats
+                    ProgressStatsSection(
+                        currentWeek: currentWeek,
+                        currentWeight: currentWeight,
+                        completedWorkouts: completedWorkouts,
+                        totalWorkouts: totalWorkouts
+                    )
+                    
+                    // Weekly Progress
+                    WeeklyProgressSection(currentWeek: currentWeek)
+                    
+                    // Weight Progression
+                    WeightProgressionSection(currentWeight: currentWeight)
+                    
+                    // Recent Workouts
+                    RecentWorkoutsSection()
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Progress Supporting Views
+struct ProgressStatsSection: View {
+    let currentWeek: Int
+    let currentWeight: Double
+    let completedWorkouts: Int
+    let totalWorkouts: Int
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Progress Overview")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+                ProgressStatCard(
+                    title: "Current Week",
+                    value: "\(currentWeek)",
+                    subtitle: "of 8 weeks",
+                    icon: "calendar",
+                    color: .blue
+                )
+                
+                ProgressStatCard(
+                    title: "Current Weight",
+                    value: "\(Int(currentWeight)) lbs",
+                    subtitle: "ruck weight",
+                    icon: "backpack.fill",
+                    color: .orange
+                )
+                
+                ProgressStatCard(
+                    title: "Workouts Done",
+                    value: "\(completedWorkouts)",
+                    subtitle: "of \(totalWorkouts)",
+                    icon: "checkmark.circle.fill",
+                    color: .green
+                )
+                
+                ProgressStatCard(
+                    title: "Completion",
+                    value: "\(Int((Double(completedWorkouts) / Double(totalWorkouts)) * 100))%",
+                    subtitle: "program progress",
+                    icon: "chart.line.uptrend.xyaxis",
+                    color: .purple
+                )
+            }
+        }
+    }
+}
+
+struct ProgressStatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.title3)
+                
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+                
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.1))
+        )
+    }
+}
+
+struct WeeklyProgressSection: View {
+    let currentWeek: Int
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("This Week's Plan")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 8) {
+                WeeklyWorkoutRow(day: "Monday", workout: "3 mile ruck @ 25lbs", isCompleted: true)
+                WeeklyWorkoutRow(day: "Tuesday", workout: "Rest day", isCompleted: true)
+                WeeklyWorkoutRow(day: "Wednesday", workout: "5 mile ruck @ 25lbs", isCompleted: false)
+                WeeklyWorkoutRow(day: "Thursday", workout: "Cross training", isCompleted: false)
+                WeeklyWorkoutRow(day: "Friday", workout: "4 mile ruck @ 30lbs", isCompleted: false)
+                WeeklyWorkoutRow(day: "Weekend", workout: "Long ruck or rest", isCompleted: false)
+            }
+        }
+    }
+}
+
+struct WeeklyWorkoutRow: View {
+    let day: String
+    let workout: String
+    let isCompleted: Bool
+    
+    var body: some View {
+        HStack {
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(isCompleted ? .green : .gray)
+                .font(.title3)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(day)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Text(workout)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct WeightProgressionSection: View {
+    let currentWeight: Double
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Weight Progression")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 8) {
+                WeightProgressionRow(week: 1, weight: 20.0, isCompleted: true)
+                WeightProgressionRow(week: 2, weight: 22.0, isCompleted: true)
+                WeightProgressionRow(week: 3, weight: 25.0, isCompleted: true)
+                WeightProgressionRow(week: 4, weight: 25.0, isCompleted: false)
+                WeightProgressionRow(week: 5, weight: 28.0, isCompleted: false)
+            }
+        }
+    }
+}
+
+struct WeightProgressionRow: View {
+    let week: Int
+    let weight: Double
+    let isCompleted: Bool
+    
+    var body: some View {
+        HStack {
+            Text("Week \(week)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .frame(width: 60, alignment: .leading)
+            
+            Text("\(Int(weight)) lbs")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            if isCompleted {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            } else {
+                Image(systemName: "circle")
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct RecentWorkoutsSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Recent Workouts")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 8) {
+                RecentWorkoutRow(date: "Today", workout: "3 mile ruck", weight: "25 lbs", duration: "45 min")
+                RecentWorkoutRow(date: "Yesterday", workout: "Rest day", weight: "0 lbs", duration: "0 min")
+                RecentWorkoutRow(date: "2 days ago", workout: "5 mile ruck", weight: "22 lbs", duration: "1h 15m")
+            }
+        }
+    }
+}
+
+struct RecentWorkoutRow: View {
+    let date: String
+    let workout: String
+    let weight: String
+    let duration: String
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(date)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Text(workout)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(weight)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                
+                Text(duration)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }

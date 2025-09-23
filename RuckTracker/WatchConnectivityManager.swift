@@ -72,6 +72,21 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             print("❌ Failed to encode workout data: \(error.localizedDescription)")
         }
     }
+    
+    /// Send a command to start a workout on the watch
+    func sendStartWorkoutCommand() {
+        guard isWatchReachable else {
+            print("📱 Watch not reachable, cannot start workout")
+            return
+        }
+        
+        let message = [WatchConnectivityKeys.startWorkout: true]
+        WCSession.default.sendMessage(message, replyHandler: nil) { error in
+            print("❌ Failed to send start workout command to watch: \(error.localizedDescription)")
+        }
+        
+        print("📱 Sent start workout command to watch")
+    }
 }
 
 // MARK: - WCSessionDelegate

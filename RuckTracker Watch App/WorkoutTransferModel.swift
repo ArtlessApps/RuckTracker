@@ -45,4 +45,5 @@ struct WatchConnectivityKeys {
     static let workoutData = "workoutData"
     static let requestWorkouts = "requestWorkouts"
     static let sendAllWorkouts = "sendAllWorkouts"
+    static let startWorkout = "startWorkout"
 }
