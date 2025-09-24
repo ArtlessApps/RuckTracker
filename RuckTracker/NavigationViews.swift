@@ -42,10 +42,10 @@ struct TrainingProgramsView: View {
                             }
                         }
                         
-                        // Always show all programs - locked for non-premium users
-                        VStack(spacing: 16) {
+                        // Grid layout with fixed-size cards
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
                             // Military Foundation Program
-                            FunctionalProgramCard(
+                            FixedSizeProgramCard(
                                 title: "Military Foundation",
                                 description: "8-week program for beginners",
                                 difficulty: "Beginner",
@@ -66,7 +66,7 @@ struct TrainingProgramsView: View {
                             }
                             
                             // Ranger Challenge Program
-                            FunctionalProgramCard(
+                            FixedSizeProgramCard(
                                 title: "Ranger Challenge",
                                 description: "Advanced 12-week training",
                                 difficulty: "Advanced",
@@ -87,7 +87,7 @@ struct TrainingProgramsView: View {
                             }
                             
                             // Selection Prep Program
-                            FunctionalProgramCard(
+                            FixedSizeProgramCard(
                                 title: "Selection Prep",
                                 description: "16-week intensive program",
                                 difficulty: "Elite",
@@ -108,7 +108,7 @@ struct TrainingProgramsView: View {
                             }
                             
                             // Special Forces Program
-                            FunctionalProgramCard(
+                            FixedSizeProgramCard(
                                 title: "Special Forces",
                                 description: "Elite 20-week program",
                                 difficulty: "Elite",
@@ -161,6 +161,9 @@ struct TrainingProgramsView: View {
                     .environmentObject(programService)
             }
         }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
     }
     
     private func createMockProgram(title: String, description: String, difficulty: Program.Difficulty, weeks: Int) -> Program {
@@ -203,6 +206,7 @@ struct ChallengesView: View {
 // MARK: - Data Export View
 struct DataExportView: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @EnvironmentObject var premiumManager: PremiumManager
     
     var body: some View {
         NavigationView {
@@ -232,6 +236,110 @@ struct DataExportView: View {
             }
             .navigationTitle("Data")
             .navigationBarTitleDisplayMode(.large)
+        }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+    }
+}
+
+// MARK: - Fixed Size Program Card
+struct FixedSizeProgramCard: View {
+    let title: String
+    let description: String
+    let difficulty: String
+    let weeks: Int
+    let isLocked: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header with title and difficulty
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                        .foregroundColor(isLocked ? .secondary : .primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                
+                Spacer()
+                
+                // Bottom section with difficulty and weeks
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label(difficulty, systemImage: "star.fill")
+                            .font(.caption2)
+                            .foregroundColor(isLocked ? .secondary : difficultyColor)
+                        
+                        Spacer()
+                        
+                        if weeks > 0 {
+                            Text("\(weeks)w")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Ongoing")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // Lock indicator or action button
+                    if isLocked {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                            Spacer()
+                        }
+                    } else {
+                        HStack {
+                            Spacer()
+                            Text("View Program")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.blue)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .frame(height: 160) // Fixed height for all cards
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isLocked ? Color.orange.opacity(0.3) : Color.blue.opacity(0.2), 
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var difficultyColor: Color {
+        switch difficulty.lowercased() {
+        case "beginner": return .green
+        case "intermediate": return .yellow
+        case "advanced": return .orange
+        case "elite": return .red
+        default: return .blue
         }
     }
 }
