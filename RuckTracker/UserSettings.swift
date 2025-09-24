@@ -16,6 +16,7 @@ class UserSettings: ObservableObject {
     @Published var preferredWeightUnit: WeightUnit = .pounds
     @Published var preferredDistanceUnit: DistanceUnit = .miles
     @Published var defaultRuckWeight: Double = 20.0 // lbs
+    @Published var username: String? = nil
     
     // App settings
     @Published var hasCompletedOnboarding: Bool = false
@@ -73,6 +74,8 @@ class UserSettings: ObservableObject {
             defaultRuckWeight = 20.0
         }
         
+        username = userDefaults.string(forKey: "username")
+        
         hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedOnboarding")
     }
     
@@ -101,6 +104,16 @@ class UserSettings: ObservableObject {
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { [weak self] value in
                 self?.userDefaults.set(value, forKey: "defaultRuckWeight")
+            }
+            .store(in: &cancellables)
+        
+        $username
+            .sink { [weak self] value in
+                if let value = value {
+                    self?.userDefaults.set(value, forKey: "username")
+                } else {
+                    self?.userDefaults.removeObject(forKey: "username")
+                }
             }
             .store(in: &cancellables)
         
@@ -152,6 +165,7 @@ class UserSettings: ObservableObject {
         preferredWeightUnit = .pounds
         preferredDistanceUnit = .miles
         defaultRuckWeight = 20.0
+        username = nil
         hasCompletedOnboarding = false
     }
 }

@@ -7,6 +7,7 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
+    @State private var showingProfile = false
     @State private var showingSettings = false
     @State private var showingWorkoutHistory = false
     @State private var showingTrainingPrograms = false
@@ -22,6 +23,9 @@ struct ImprovedPhoneMainView: View {
                 bottomNavigationBar
             }
             .navigationBarHidden(true)
+        }
+        .sheet(isPresented: $showingProfile) {
+            ProfileView()
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -239,8 +243,7 @@ struct ImprovedPhoneMainView: View {
         HStack(spacing: 0) {
             // Profile Button
             Button(action: {
-                // Profile functionality - could open user profile or account settings
-                showingSettings = true
+                showingProfile = true
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "person.circle")
