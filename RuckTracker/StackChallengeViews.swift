@@ -20,12 +20,6 @@ struct StackChallengesSection: View {
             // Header section
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text("Stack Challenges")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                    
                     if premiumManager.isPremiumUser {
                         Button("Add Challenge") {
                             showingAddChallenge = true

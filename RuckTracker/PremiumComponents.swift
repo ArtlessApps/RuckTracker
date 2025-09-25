@@ -98,7 +98,7 @@ struct PremiumDataSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Data & Export")
+                Text("Export Data")
                     .font(.title2)
                     .fontWeight(.semibold)
                 
@@ -124,15 +124,6 @@ struct PremiumDataSection: View {
                     isLocked: false
                 ) {
                     // Cloud sync functionality
-                }
-                
-                PremiumFeatureCard(
-                    icon: "chart.bar.fill",
-                    title: "Advanced Analytics",
-                    description: "Detailed performance insights and trends",
-                    isLocked: true
-                ) {
-                    // Show paywall
                 }
             }
         }

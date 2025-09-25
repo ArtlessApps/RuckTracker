@@ -107,56 +107,157 @@ struct ActiveWorkoutStatusCard: View {
     }
 }
 
-// MARK: - Quick Setup Card
+// MARK: - Quick Setup Card (Simplified)
 struct QuickSetupCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @State private var showingAdvancedSettings = false
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
+            // Simplified status and settings
             HStack {
-                Text("Quick Setup")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Ready to ruck")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Text("\(Int(workoutManager.ruckWeight)) lbs configured")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
                 
                 Spacer()
                 
+                // Settings button for progressive disclosure
                 Button(action: {
-                    // Start workout logic
-                    workoutManager.startWorkout()
+                    showingAdvancedSettings = true
                 }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
-                        Text("Start")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(Color.blue)
-                    .cornerRadius(20)
+                    Image(systemName: "gearshape")
+                        .font(.title2)
+                        .foregroundColor(.blue)
                 }
             }
             
-            instructionText
+            // Quick tips (replacing 3-step instructions)
+            HStack {
+                Image(systemName: "lightbulb")
+                    .foregroundColor(.orange)
+                    .font(.caption)
+                
+                Text("Tap start to begin - watch pairing & weight can be adjusted anytime")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+            }
         }
         .padding()
         .background(cardBackground)
-    }
-    
-    private var instructionText: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("1. Set your ruck weight")
-            Text("2. Press start on your Apple Watch")
-            Text("3. Begin your workout")
+        .sheet(isPresented: $showingAdvancedSettings) {
+            QuickSettingsSheet()
+                .environmentObject(workoutManager)
         }
-        .font(.subheadline)
-        .foregroundColor(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(Color.gray.opacity(0.1))
+    }
+}
+
+// MARK: - Quick Settings Sheet (Progressive Disclosure)
+struct QuickSettingsSheet: View {
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var tempRuckWeight: Double
+    
+    init() {
+        // Initialize with current weight - will be updated in onAppear
+        _tempRuckWeight = State(initialValue: 20.0)
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                // Weight setting
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Ruck Weight")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    HStack {
+                        Text("\(Int(tempRuckWeight)) lbs")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        Stepper("", value: $tempRuckWeight, in: 10...100, step: 5)
+                            .labelsHidden()
+                    }
+                    
+                    Slider(value: $tempRuckWeight, in: 10...100, step: 5)
+                        .accentColor(.blue)
+                    
+                    Text("Accurate weight tracking enables precise calorie calculations based on military research")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                // Watch integration info
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Apple Watch")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    HStack {
+                        Image(systemName: "applewatch")
+                            .foregroundColor(.blue)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Enhanced Experience")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            Text("GPS tracking, heart rate monitoring, and notifications")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.blue.opacity(0.1))
+                    )
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Workout Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        workoutManager.ruckWeight = tempRuckWeight
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+        .onAppear {
+            tempRuckWeight = workoutManager.ruckWeight
+        }
     }
 }
 
@@ -235,27 +336,42 @@ struct TrainingInsightsSection: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Training Insights")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 12) {
-                InsightCard(
-                    title: "Weekly Load",
-                    value: String(format: "%.1f lbs", weeklyLoad),
-                    description: loadDescription,
-                    color: .blue
-                )
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Training Insights")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    Text("RuckTracker Pro")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(
+                            Color.blue.opacity(0.1)
+                                .cornerRadius(4)
+                        )
+                }
                 
-                InsightCard(
-                    title: "Progress Trend",
-                    value: progressTrend,
-                    description: trendDescription,
-                    color: progressColor
-                )
+                VStack(spacing: 12) {
+                    InsightCard(
+                        title: "Weekly Load",
+                        value: String(format: "%.1f lbs", weeklyLoad),
+                        description: loadDescription,
+                        color: .blue
+                    )
+                    
+                    InsightCard(
+                        title: "Progress Trend",
+                        value: progressTrend,
+                        description: trendDescription,
+                        color: progressColor
+                    )
+                }
             }
-        }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
@@ -357,3 +473,4 @@ struct QuickStatCard: View {
         )
     }
 }
+

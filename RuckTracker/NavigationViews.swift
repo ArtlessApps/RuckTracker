@@ -15,10 +15,7 @@ struct TrainingProgramsView: View {
                 VStack(spacing: 24) {
                     // Header section
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Training Programs")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
+
                         Text("Military-designed structured training plans to build strength, endurance, and mental toughness.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -152,7 +149,7 @@ struct TrainingProgramsView: View {
                     Spacer(minLength: 100)
                 }
             }
-            .navigationTitle("Programs")
+            .navigationTitle("Training Programs")
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $showingProgramDetail) {
@@ -215,11 +212,7 @@ struct DataExportView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Data & Export")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
+                    VStack(alignment: .leading, spacing: 16) {                        
                         Text("Manage your workout data and export options")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -236,7 +229,7 @@ struct DataExportView: View {
                     Spacer(minLength: 100)
                 }
             }
-            .navigationTitle("Data")
+            .navigationTitle("Export Data")
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
