@@ -181,24 +181,26 @@ struct TrainingProgramsView: View {
     }
 }
 
-// MARK: - Challenges View
+// MARK: - Updated Challenges View
 struct ChallengesView: View {
+    @EnvironmentObject var premiumManager: PremiumManager
+    
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    Text("Challenges")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top, 20)
+                    // Use the new Stack Challenges Section
+                    StackChallengesSection()
+                        .environmentObject(premiumManager)
                     
-                    Text("Coming Soon!")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
+                    Spacer(minLength: 100)
                 }
             }
             .navigationTitle("Challenges")
             .navigationBarTitleDisplayMode(.large)
+        }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
     }
 }

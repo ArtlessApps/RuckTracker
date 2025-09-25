@@ -155,7 +155,7 @@ struct ImprovedPhoneMainView: View {
                         }
                     }
                     
-                    Text("Structured military training plans")
+                    Text("Multi-Week Structured Training Plans")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -181,12 +181,19 @@ struct ImprovedPhoneMainView: View {
         }) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Challenges")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    Text("Coming soon - fitness challenges")
+                    HStack {
+                        Text("Stack Challenges")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        if !premiumManager.isPremiumUser {
+                            PremiumBadge(size: .small)
+                        }
+                    }
+                    Text("1 Week Fitness Challenges")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
