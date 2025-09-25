@@ -203,6 +203,9 @@ class WorkoutManager: ObservableObject {
         )
         
         print("💾 Saved workout to local storage")
+        
+        // Update leaderboards after successful save
+        updateLeaderboardsAfterSave()
     }
     
     // MARK: - HealthKit (Basic)

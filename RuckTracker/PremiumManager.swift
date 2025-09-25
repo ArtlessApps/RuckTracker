@@ -97,10 +97,11 @@ enum PremiumFeature {
     case exportData
     case customTrainingPlans
     case nutritionTracking
+    case leaderboards
     
     var requiresPremium: Bool {
         switch self {
-        case .trainingPrograms, .advancedAnalytics, .communityFeatures, .cloudSync, .exportData, .customTrainingPlans, .nutritionTracking:
+        case .trainingPrograms, .advancedAnalytics, .communityFeatures, .cloudSync, .exportData, .customTrainingPlans, .nutritionTracking, .leaderboards:
             return true
         case .unlimitedWorkouts:
             return false // Free users get unlimited workouts for now
@@ -125,6 +126,8 @@ enum PremiumFeature {
             return "Custom Training Plans"
         case .nutritionTracking:
             return "Nutrition Tracking"
+        case .leaderboards:
+            return "Leaderboards"
         }
     }
     
@@ -146,6 +149,8 @@ enum PremiumFeature {
             return "Create personalized training plans based on your goals"
         case .nutritionTracking:
             return "Track nutrition and hydration for optimal performance"
+        case .leaderboards:
+            return "Compete with others and track your progress on leaderboards"
         }
     }
     
@@ -167,6 +172,8 @@ enum PremiumFeature {
             return "doc.text"
         case .nutritionTracking:
             return "fork.knife"
+        case .leaderboards:
+            return "trophy.fill"
         }
     }
 }

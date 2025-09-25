@@ -14,6 +14,7 @@ struct ImprovedPhoneMainView: View {
     @State private var showingTrainingPrograms = false
     @State private var showingChallenges = false
     @State private var showingDataExport = false
+    @State private var showingLeaderboards = false
     
     var body: some View {
         NavigationView {
@@ -49,6 +50,10 @@ struct ImprovedPhoneMainView: View {
             DataExportView()
                 .environmentObject(workoutDataManager)
         }
+        .sheet(isPresented: $showingLeaderboards) {
+            LeaderboardsView()
+                .environmentObject(premiumManager)
+        }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
@@ -63,6 +68,7 @@ struct ImprovedPhoneMainView: View {
                 justRuckCard
                 programsCard
                 challengesCard
+                leaderboardsCard
                 dataCard
                 
                 // Preserve existing functionality sections
@@ -261,6 +267,44 @@ struct ImprovedPhoneMainView: View {
                         }
                     }
                     Text("1 Week Fitness Challenges")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.gray.opacity(0.05))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var leaderboardsCard: some View {
+        Button(action: {
+            showingLeaderboards = true
+        }) {
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Leaderboards")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        if !premiumManager.isPremiumUser {
+                            PremiumBadge(size: .small)
+                        }
+                    }
+                    Text("Compete with others and track your progress")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

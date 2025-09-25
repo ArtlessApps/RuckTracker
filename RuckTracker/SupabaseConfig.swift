@@ -33,6 +33,11 @@ struct SupabaseConfig {
         
         // Premium/subscription tables
         static let userSubscriptions = "user_subscriptions"
+        
+        // Leaderboard tables
+        static let weeklyDistanceLeaderboard = "weekly_distance_leaderboard"
+        static let consistencyStreakLeaderboard = "consistency_streak_leaderboard"
+        static let userLeaderboardSettings = "user_leaderboard_settings"
     }
 }
 
