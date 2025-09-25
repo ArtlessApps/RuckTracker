@@ -2,6 +2,38 @@ import Foundation
 import SwiftUI
 import Supabase
 
+// MARK: - Upsert Data Models
+
+struct WeeklyDistanceUpsert: Codable {
+    let userId: String
+    let weekStartDate: String
+    let weekEndDate: String
+    let totalDistance: Double
+    let totalWorkouts: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case weekStartDate = "week_start_date"
+        case weekEndDate = "week_end_date"
+        case totalDistance = "total_distance"
+        case totalWorkouts = "total_workouts"
+    }
+}
+
+struct ConsistencyStreakUpsert: Codable {
+    let userId: String
+    let currentStreak: Int
+    let bestStreak: Int
+    let lastWorkoutDate: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case currentStreak = "current_streak"
+        case bestStreak = "best_streak"
+        case lastWorkoutDate = "last_workout_date"
+    }
+}
+
 @MainActor
 class LeaderboardService: ObservableObject {
     static let shared = LeaderboardService()
@@ -92,10 +124,8 @@ class LeaderboardService: ObservableObject {
     }
     
     func loadUserSettings() async throws {
-        guard let client = supabaseClient,
-              let userId = try await client.auth.user()?.id else {
-            return
-        }
+        guard let client = supabaseClient else { return }
+        let userId = try await client.auth.user().id
         
         do {
             let response: [UserLeaderboardSettings] = try await client
@@ -121,10 +151,8 @@ class LeaderboardService: ObservableObject {
     // MARK: - User Settings Management
     
     func createDefaultUserSettings() async throws {
-        guard let client = supabaseClient,
-              let userId = try await client.auth.user()?.id else {
-            return
-        }
+        guard let client = supabaseClient else { return }
+        let userId = try await client.auth.user().id
         
         let defaultSettings = [
             "user_id": AnyJSON.string(userId.uuidString),
@@ -139,7 +167,7 @@ class LeaderboardService: ObservableObject {
                 .insert(defaultSettings)
                 .execute()
             
-            await loadUserSettings()
+            try await loadUserSettings()
         } catch {
             print("Failed to create default user settings: \(error)")
             // Create mock settings for testing
@@ -184,22 +212,20 @@ class LeaderboardService: ObservableObject {
     // MARK: - Data Updates
     
     func updateUserWeeklyDistance(distance: Double, workoutCount: Int) async throws {
-        guard let client = supabaseClient,
-              let userId = try await client.auth.user()?.id else {
-            return
-        }
+        guard let client = supabaseClient else { return }
+        let userId = try await client.auth.user().id
         
         let calendar = Calendar.current
         let now = Date()
         let weekInterval = calendar.dateInterval(of: .weekOfYear, for: now)!
         
-        let upsertData = [
-            "user_id": AnyJSON.string(userId.uuidString),
-            "week_start_date": AnyJSON.string(weekInterval.start.ISO8601Format()),
-            "week_end_date": AnyJSON.string(weekInterval.end.ISO8601Format()),
-            "total_distance": AnyJSON.number(distance),
-            "total_workouts": AnyJSON.number(Double(workoutCount))
-        ]
+        let upsertData = WeeklyDistanceUpsert(
+            userId: userId.uuidString,
+            weekStartDate: weekInterval.start.ISO8601Format(),
+            weekEndDate: weekInterval.end.ISO8601Format(),
+            totalDistance: distance,
+            totalWorkouts: workoutCount
+        )
         
         do {
             try await client
@@ -212,20 +238,15 @@ class LeaderboardService: ObservableObject {
     }
     
     func updateUserConsistencyStreak(currentStreak: Int, bestStreak: Int, lastWorkoutDate: Date?) async throws {
-        guard let client = supabaseClient,
-              let userId = try await client.auth.user()?.id else {
-            return
-        }
+        guard let client = supabaseClient else { return }
+        let userId = try await client.auth.user().id
         
-        var upsertData = [
-            "user_id": AnyJSON.string(userId.uuidString),
-            "current_streak": AnyJSON.number(Double(currentStreak)),
-            "best_streak": AnyJSON.number(Double(bestStreak))
-        ]
-        
-        if let lastWorkoutDate = lastWorkoutDate {
-            upsertData["last_workout_date"] = AnyJSON.string(lastWorkoutDate.ISO8601Format())
-        }
+        let upsertData = ConsistencyStreakUpsert(
+            userId: userId.uuidString,
+            currentStreak: currentStreak,
+            bestStreak: bestStreak,
+            lastWorkoutDate: lastWorkoutDate?.ISO8601Format()
+        )
         
         do {
             try await client

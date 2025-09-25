@@ -12,7 +12,7 @@ extension WorkoutDataManager {
     // MARK: - Leaderboard Integration
     
     /// Updates leaderboard data when a new workout is completed
-    func updateLeaderboardsAfterWorkout(_ workout: Workout) async {
+    func updateLeaderboardsAfterWorkout(_ workout: WorkoutEntity) async {
         await updateWeeklyDistanceLeaderboard()
         await updateConsistencyLeaderboard()
     }
