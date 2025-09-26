@@ -22,7 +22,17 @@ class ProgramService: ObservableObject {
     private var mockCurrentUserId: UUID? = UUID()
     
     init() {
-        // Initialize service
+        // Load cached user programs first
+        loadCachedUserPrograms()
+        
+        // Initialize service and fetch fresh user programs
+        Task {
+            do {
+                try await fetchUserPrograms()
+            } catch {
+                print("Failed to load user programs on init: \(error)")
+            }
+        }
     }
     
     // MARK: - Program Discovery
@@ -156,6 +166,7 @@ class ProgramService: ObservableObject {
             // Simulate successful enrollment by updating local state
             await MainActor.run {
                 self.userPrograms.append(userProgram)
+                self.cacheUserPrograms()
             }
         }
     }
@@ -174,6 +185,7 @@ class ProgramService: ObservableObject {
         
         await MainActor.run {
             self.userPrograms = response
+            self.cacheUserPrograms()
         }
     }
     
@@ -268,6 +280,33 @@ class ProgramService: ObservableObject {
             .from("weight_progressions")
             .insert(progression)
             .execute()
+    }
+    
+    // MARK: - Local Persistence
+    
+    private func cacheUserPrograms() {
+        do {
+            let data = try JSONEncoder().encode(userPrograms)
+            UserDefaults.standard.set(data, forKey: "cached_user_programs")
+            print("✅ Cached \(userPrograms.count) user programs")
+        } catch {
+            print("❌ Failed to cache user programs: \(error)")
+        }
+    }
+    
+    private func loadCachedUserPrograms() {
+        guard let data = UserDefaults.standard.data(forKey: "cached_user_programs") else {
+            print("📱 No cached user programs found")
+            return
+        }
+        
+        do {
+            let cachedPrograms = try JSONDecoder().decode([UserProgram].self, from: data)
+            userPrograms = cachedPrograms
+            print("✅ Loaded \(cachedPrograms.count) cached user programs")
+        } catch {
+            print("❌ Failed to load cached user programs: \(error)")
+        }
     }
 }
 

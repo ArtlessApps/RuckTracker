@@ -490,7 +490,7 @@ struct StackChallengeDetailView: View {
                     .foregroundColor(.green)
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Enrolled in this challenge")
+                    Text("Continue Challenge")
                         .font(.headline)
                         .fontWeight(.semibold)
                     

@@ -641,6 +641,7 @@ struct ProgramDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
     @State private var isEnrolled = false
+    @State private var userProgram: UserProgram?
     
     var body: some View {
         NavigationView {
@@ -683,7 +684,7 @@ struct ProgramDetailView: View {
                             showingEnrollment = true
                         }
                     } else {
-                        EnrolledSection()
+                        EnrolledSection(userProgram: userProgram)
                     }
                     
                     Spacer(minLength: 100)
@@ -704,6 +705,10 @@ struct ProgramDetailView: View {
                 enrollInProgram(startingWeight: startingWeight)
             }
         }
+        .task {
+            // Check if user is already enrolled when view appears
+            await checkEnrollmentStatus()
+        }
     }
     
     private func enrollInProgram(startingWeight: Double) {
@@ -711,12 +716,31 @@ struct ProgramDetailView: View {
             do {
                 try await programService.enrollInProgram(program, startingWeight: startingWeight)
                 await MainActor.run {
-                    isEnrolled = true
+                    // Check enrollment status again to get the new UserProgram
+                    Task {
+                        await checkEnrollmentStatus()
+                    }
                     showingEnrollment = false
                 }
             } catch {
                 print("Failed to enroll in program: \(error)")
             }
+        }
+    }
+    
+    private func checkEnrollmentStatus() async {
+        // Check if user is enrolled in this specific program
+        let enrolled = programService.userPrograms.contains { userProg in
+            userProg.programId == program.id && userProg.isActive
+        }
+        
+        let currentUserProgram = programService.userPrograms.first { userProg in
+            userProg.programId == program.id && userProg.isActive
+        }
+        
+        await MainActor.run {
+            self.isEnrolled = enrolled
+            self.userProgram = currentUserProgram
         }
     }
 }
@@ -866,6 +890,7 @@ struct EnrollmentSection: View {
 }
 
 struct EnrolledSection: View {
+    let userProgram: UserProgram?
     @State private var showingProgress = false
     
     var body: some View {
@@ -873,8 +898,15 @@ struct EnrolledSection: View {
             HStack {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-                Text("Enrolled in this program")
-                    .fontWeight(.medium)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Continue Program")
+                        .fontWeight(.semibold)
+                    if let userProgram = userProgram {
+                        Text("Week \(userProgram.currentWeek) • \(Int(userProgram.currentWeightLbs)) lbs")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
                 Spacer()
             }
             
@@ -888,7 +920,7 @@ struct EnrolledSection: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
         .sheet(isPresented: $showingProgress) {
-            ProgramProgressView()
+            ProgramProgressView(userProgram: userProgram)
         }
     }
 }
@@ -962,11 +994,17 @@ struct ProgramEnrollmentView: View {
 
 // MARK: - Program Progress View
 struct ProgramProgressView: View {
+    let userProgram: UserProgram?
     @Environment(\.dismiss) private var dismiss
-    @State private var currentWeek = 1
-    @State private var currentWeight = 25.0
-    @State private var completedWorkouts = 3
-    @State private var totalWorkouts = 12
+    
+    private var currentWeek: Int {
+        userProgram?.currentWeek ?? 1
+    }
+    
+    private var currentWeight: Double {
+        userProgram?.currentWeightLbs ?? 25.0
+    }
+    
     
     var body: some View {
         NavigationView {
@@ -986,9 +1024,7 @@ struct ProgramProgressView: View {
                     // Progress Stats
                     ProgressStatsSection(
                         currentWeek: currentWeek,
-                        currentWeight: currentWeight,
-                        completedWorkouts: completedWorkouts,
-                        totalWorkouts: totalWorkouts
+                        currentWeight: currentWeight
                     )
                     
                     // Weekly Progress
@@ -1020,8 +1056,6 @@ struct ProgramProgressView: View {
 struct ProgressStatsSection: View {
     let currentWeek: Int
     let currentWeight: Double
-    let completedWorkouts: Int
-    let totalWorkouts: Int
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -1044,22 +1078,6 @@ struct ProgressStatsSection: View {
                     subtitle: "ruck weight",
                     icon: "backpack.fill",
                     color: .orange
-                )
-                
-                ProgressStatCard(
-                    title: "Workouts Done",
-                    value: "\(completedWorkouts)",
-                    subtitle: "of \(totalWorkouts)",
-                    icon: "checkmark.circle.fill",
-                    color: .green
-                )
-                
-                ProgressStatCard(
-                    title: "Completion",
-                    value: "\(Int((Double(completedWorkouts) / Double(totalWorkouts)) * 100))%",
-                    subtitle: "program progress",
-                    icon: "chart.line.uptrend.xyaxis",
-                    color: .purple
                 )
             }
         }

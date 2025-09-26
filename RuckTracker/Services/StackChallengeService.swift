@@ -25,9 +25,13 @@ class StackChallengeService: ObservableObject {
         // Use existing SupabaseManager
         self.supabaseClient = SupabaseManager.shared.client
         
-        // Load challenges on init
+        // Load cached enrollments first
+        loadCachedUserEnrollments()
+        
+        // Load challenges and fresh enrollments on init
         Task {
             await loadChallenges()
+            await loadUserEnrollments()
         }
     }
     
@@ -105,6 +109,7 @@ class StackChallengeService: ObservableObject {
             )
             
             userEnrollments.append(mockEnrollment)
+            cacheUserEnrollments()
             print("📱 Mock enrolled in challenge: \(challenge.title)")
             return mockEnrollment
         }
@@ -130,6 +135,7 @@ class StackChallengeService: ObservableObject {
             .value
         
         userEnrollments.append(enrollment)
+        cacheUserEnrollments()
         print("✅ Successfully enrolled in challenge: \(challenge.title)")
         return enrollment
     }
@@ -152,6 +158,7 @@ class StackChallengeService: ObservableObject {
                 .value
             
             userEnrollments = enrollments
+            cacheUserEnrollments()
             print("✅ Loaded \(enrollments.count) user enrollments")
         } catch {
             print("❌ Error loading user enrollments: \(error)")
@@ -425,6 +432,33 @@ class StackChallengeService: ObservableObject {
         }
         
         print("✅ Updated enrollment progress to \(completionPercentage)%")
+    }
+    
+    // MARK: - Local Persistence
+    
+    private func cacheUserEnrollments() {
+        do {
+            let data = try JSONEncoder().encode(userEnrollments)
+            UserDefaults.standard.set(data, forKey: "cached_user_challenge_enrollments")
+            print("✅ Cached \(userEnrollments.count) user challenge enrollments")
+        } catch {
+            print("❌ Failed to cache user challenge enrollments: \(error)")
+        }
+    }
+    
+    private func loadCachedUserEnrollments() {
+        guard let data = UserDefaults.standard.data(forKey: "cached_user_challenge_enrollments") else {
+            print("📱 No cached user challenge enrollments found")
+            return
+        }
+        
+        do {
+            let cachedEnrollments = try JSONDecoder().decode([UserChallengeEnrollment].self, from: data)
+            userEnrollments = cachedEnrollments
+            print("✅ Loaded \(cachedEnrollments.count) cached user challenge enrollments")
+        } catch {
+            print("❌ Failed to load cached user challenge enrollments: \(error)")
+        }
     }
 }
 
