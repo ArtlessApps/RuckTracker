@@ -47,49 +47,132 @@ struct ActiveWorkoutStatusCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
+            // Status and Time Header
             HStack {
-                Text("Workout Active")
-                    .font(.headline)
-                    .foregroundColor(.green)
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(workoutManager.isPaused ? Color.orange : Color.green)
+                        .frame(width: 8, height: 8)
+                        .scaleEffect(workoutManager.isPaused ? 1.0 : 1.2)
+                        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: workoutManager.isPaused)
+                    
+                    Text(workoutManager.isPaused ? "Workout Paused" : "Workout Active")
+                        .font(.headline)
+                        .foregroundColor(workoutManager.isPaused ? .orange : .green)
+                }
                 
                 Spacer()
                 
                 Text(formatTime(workoutManager.elapsedTime))
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.white)
+                    .monospacedDigit()
             }
             
+            // Stats Row
             HStack(spacing: 20) {
                 VStack(alignment: .leading) {
                     Text("Distance")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.7))
                     Text(String(format: "%.2f mi", workoutManager.distance))
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundColor(.white)
                 }
                 
                 VStack(alignment: .leading) {
                     Text("Weight")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.7))
                     Text(String(format: "%.0f lbs", workoutManager.ruckWeight))
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Calories")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    Text(String(format: "%.0f", workoutManager.calories))
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Heart Rate")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    Text(workoutManager.formattedHeartRate)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(workoutManager.currentHeartRate > 0 ? .red : .white.opacity(0.7))
                 }
                 
                 Spacer()
+            }
+            
+            // Control Buttons
+            HStack(spacing: 16) {
+                // Pause/Resume Button
+                Button(action: {
+                    workoutManager.togglePause()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: workoutManager.isPaused ? "play.fill" : "pause.fill")
+                            .font(.system(size: 14, weight: .medium))
+                        Text(workoutManager.isPaused ? "Resume" : "Pause")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(workoutManager.isPaused ? Color.green : Color.orange)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // Stop Button
+                Button(action: {
+                    workoutManager.endWorkout()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("Stop")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.red)
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.green.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black,
+                            Color.black.opacity(0.9)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
         )
     }

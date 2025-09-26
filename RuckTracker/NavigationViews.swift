@@ -6,7 +6,6 @@ struct TrainingProgramsView: View {
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @StateObject private var programService = ProgramService()
-    @State private var showingProgramDetail = false
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -56,7 +55,6 @@ struct TrainingProgramsView: View {
                                         difficulty: .beginner,
                                         weeks: 8
                                     )
-                                    showingProgramDetail = true
                                 } else {
                                     premiumManager.showPaywall(context: .programAccess)
                                 }
@@ -77,7 +75,6 @@ struct TrainingProgramsView: View {
                                         difficulty: .advanced,
                                         weeks: 12
                                     )
-                                    showingProgramDetail = true
                                 } else {
                                     premiumManager.showPaywall(context: .programAccess)
                                 }
@@ -98,7 +95,6 @@ struct TrainingProgramsView: View {
                                         difficulty: .elite,
                                         weeks: 16
                                     )
-                                    showingProgramDetail = true
                                 } else {
                                     premiumManager.showPaywall(context: .programAccess)
                                 }
@@ -119,7 +115,6 @@ struct TrainingProgramsView: View {
                                         difficulty: .elite,
                                         weeks: 20
                                     )
-                                    showingProgramDetail = true
                                 } else {
                                     premiumManager.showPaywall(context: .programAccess)
                                 }
@@ -152,11 +147,9 @@ struct TrainingProgramsView: View {
             .navigationTitle("Training Programs")
             .navigationBarTitleDisplayMode(.large)
         }
-        .sheet(isPresented: $showingProgramDetail) {
-            if let program = selectedProgram {
-                ProgramDetailView(program: program)
-                    .environmentObject(programService)
-            }
+        .sheet(item: $selectedProgram) { program in
+            ProgramDetailView(program: program)
+                .environmentObject(programService)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
@@ -301,11 +294,6 @@ struct FixedSizeProgramCard: View {
                         }
                     } else {
                         HStack {
-                            Spacer()
-                            Text("View Program")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
                             Spacer()
                         }
                     }

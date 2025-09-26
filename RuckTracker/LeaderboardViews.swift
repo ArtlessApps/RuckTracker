@@ -46,7 +46,6 @@ struct LeaderboardsView: View {
                 await leaderboardService.loadLeaderboards()
             }
         }
-        .premiumGated(for: .leaderboards)
     }
     
     private var leaderboardTabSelector: some View {

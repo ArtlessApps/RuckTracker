@@ -74,8 +74,8 @@ class LeaderboardService: ObservableObject {
     
     func loadWeeklyDistanceLeaderboard() async throws {
         guard let client = supabaseClient else {
-            // Mock data for testing
-            weeklyDistanceLeaderboard = generateMockWeeklyData()
+            // Show empty state for testing
+            weeklyDistanceLeaderboard = []
             return
         }
         
@@ -95,15 +95,15 @@ class LeaderboardService: ObservableObject {
             
             weeklyDistanceLeaderboard = response
         } catch {
-            print("Failed to load weekly distance leaderboard, using mock data: \(error)")
-            weeklyDistanceLeaderboard = generateMockWeeklyData()
+            print("Failed to load weekly distance leaderboard: \(error)")
+            weeklyDistanceLeaderboard = []
         }
     }
     
     func loadConsistencyLeaderboard() async throws {
         guard let client = supabaseClient else {
-            // Mock data for testing
-            consistencyLeaderboard = generateMockConsistencyData()
+            // Show empty state for testing
+            consistencyLeaderboard = []
             return
         }
         
@@ -118,8 +118,8 @@ class LeaderboardService: ObservableObject {
             
             consistencyLeaderboard = response
         } catch {
-            print("Failed to load consistency leaderboard, using mock data: \(error)")
-            consistencyLeaderboard = generateMockConsistencyData()
+            print("Failed to load consistency leaderboard: \(error)")
+            consistencyLeaderboard = []
         }
     }
     

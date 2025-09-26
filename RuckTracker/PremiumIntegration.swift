@@ -164,7 +164,6 @@ struct UpdatedPhoneMainView: View {
 struct PremiumTrainingProgramsSection: View {
     @EnvironmentObject var premiumManager: PremiumManager
     @StateObject private var programService = ProgramService()
-    @State private var showingProgramDetail = false
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -187,11 +186,9 @@ struct PremiumTrainingProgramsSection: View {
                 lockedProgramsView
             }
         }
-        .sheet(isPresented: $showingProgramDetail) {
-            if let program = selectedProgram {
-                ProgramDetailView(program: program)
-                    .environmentObject(programService)
-            }
+        .sheet(item: $selectedProgram) { program in
+            ProgramDetailView(program: program)
+                .environmentObject(programService)
         }
         .task {
             // Load programs when view appears (for premium users)
@@ -222,7 +219,6 @@ struct PremiumTrainingProgramsSection: View {
                     difficulty: .beginner,
                     weeks: 8
                 )
-                showingProgramDetail = true
             }
             
             FunctionalProgramCard(
@@ -238,7 +234,6 @@ struct PremiumTrainingProgramsSection: View {
                     difficulty: .advanced,
                     weeks: 12
                 )
-                showingProgramDetail = true
             }
             
             FunctionalProgramCard(
@@ -254,7 +249,6 @@ struct PremiumTrainingProgramsSection: View {
                     difficulty: .elite,
                     weeks: 16
                 )
-                showingProgramDetail = true
             }
             
             FunctionalProgramCard(
@@ -270,7 +264,6 @@ struct PremiumTrainingProgramsSection: View {
                     difficulty: .intermediate,
                     weeks: 0
                 )
-                showingProgramDetail = true
             }
         }
     }
@@ -391,11 +384,6 @@ struct FunctionalProgramCard: View {
                     }
                 } else {
                     HStack {
-                        Spacer()
-                        Text("View Program")
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundColor(.blue)
                         Spacer()
                     }
                 }

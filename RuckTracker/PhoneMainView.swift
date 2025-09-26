@@ -106,17 +106,6 @@ struct ImprovedPhoneMainView: View {
                 // Active workout status
                 ActiveWorkoutStatusCard()
                     .environmentObject(workoutManager)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.blue.opacity(0.8), Color.clear],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                    )
             } else {
                 // Start Rucking Card
                 VStack(spacing: 20) {
@@ -211,7 +200,11 @@ struct ImprovedPhoneMainView: View {
     
     private var programsCard: some View {
         Button(action: {
-            showingTrainingPrograms = true
+            if premiumManager.isPremiumUser {
+                showingTrainingPrograms = true
+            } else {
+                premiumManager.showPaywall(context: .programAccess)
+            }
         }) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -219,7 +212,7 @@ struct ImprovedPhoneMainView: View {
                         Text("Training Programs")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                         
                         Spacer()
                         
@@ -230,7 +223,7 @@ struct ImprovedPhoneMainView: View {
                     
                     Text("Multi-Week Structured Training Plans")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
                 Spacer()
@@ -250,7 +243,11 @@ struct ImprovedPhoneMainView: View {
     
     private var challengesCard: some View {
         Button(action: {
-            showingChallenges = true
+            if premiumManager.isPremiumUser {
+                showingChallenges = true
+            } else {
+                premiumManager.showPaywall(context: .featureUpsell)
+            }
         }) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -258,7 +255,7 @@ struct ImprovedPhoneMainView: View {
                         Text("Stack Challenges")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                         
                         Spacer()
                         
@@ -268,7 +265,7 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("1 Week Fitness Challenges")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
                 Spacer()
@@ -288,7 +285,11 @@ struct ImprovedPhoneMainView: View {
     
     private var leaderboardsCard: some View {
         Button(action: {
-            showingLeaderboards = true
+            if premiumManager.isPremiumUser {
+                showingLeaderboards = true
+            } else {
+                premiumManager.showPaywall(context: .featureUpsell)
+            }
         }) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -296,7 +297,7 @@ struct ImprovedPhoneMainView: View {
                         Text("Leaderboards")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                         
                         Spacer()
                         
@@ -306,7 +307,7 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("Compete with others and track your progress")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
                 Spacer()
@@ -326,7 +327,11 @@ struct ImprovedPhoneMainView: View {
     
     private var dataCard: some View {
         Button(action: {
-            showingDataExport = true
+            if premiumManager.isPremiumUser {
+                showingDataExport = true
+            } else {
+                premiumManager.showPaywall(context: .featureUpsell)
+            }
         }) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -334,7 +339,7 @@ struct ImprovedPhoneMainView: View {
                         Text("Export Data")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.black)
                         
                         Spacer()
                         
@@ -344,7 +349,7 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("Export your workout data")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
                 
                 Spacer()

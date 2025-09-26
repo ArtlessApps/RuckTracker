@@ -94,6 +94,8 @@ struct FreeTrialBanner: View {
 // MARK: - Premium Data Section
 struct PremiumDataSection: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @State private var exportMessage = ""
+    @State private var showingAlert = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -107,24 +109,13 @@ struct PremiumDataSection: View {
                 PremiumBadge(size: .small)
             }
             
-            VStack(spacing: 12) {
-                PremiumFeatureCard(
-                    icon: "square.and.arrow.up",
-                    title: "Export Data",
-                    description: "Export your workout data to CSV or JSON",
-                    isLocked: false
-                ) {
-                    // Export functionality
-                }
-                
-                PremiumFeatureCard(
-                    icon: "icloud.and.arrow.up",
-                    title: "Cloud Sync",
-                    description: "Sync your data across all devices",
-                    isLocked: false
-                ) {
-                    // Cloud sync functionality
-                }
+            PremiumFeatureCard(
+                icon: "square.and.arrow.up",
+                title: "Export Data",
+                description: "Export your workout data to CSV",
+                isLocked: false
+            ) {
+                exportToCSV()
             }
         }
         .padding()
@@ -132,7 +123,61 @@ struct PremiumDataSection: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.gray.opacity(0.05))
         )
+        .alert("Export Result", isPresented: $showingAlert) {
+            Button("OK") { }
+        } message: {
+            Text(exportMessage)
+        }
     }
+    
+    private func exportToCSV() {
+        let csvData = generateCSVData()
+        shareData(csvData, fileName: "RuckTracker_Workouts.csv", mimeType: "text/csv")
+    }
+    
+    
+    private func generateCSVData() -> Data {
+        var csvString = "Date,Duration (minutes),Distance (miles),Calories,Ruck Weight (lbs),Heart Rate (bpm)\n"
+        
+        for workout in workoutDataManager.workouts {
+            let dateString = workout.date?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown"
+            let durationMinutes = workout.duration / 60
+            csvString += "\(dateString),\(String(format: "%.2f", durationMinutes)),\(String(format: "%.2f", workout.distance)),\(Int(workout.calories)),\(Int(workout.ruckWeight)),\(Int(workout.heartRate))\n"
+        }
+        
+        return csvString.data(using: .utf8) ?? Data()
+    }
+    
+    
+    private func shareData(_ data: Data, fileName: String, mimeType: String) {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        
+        do {
+            try data.write(to: tempURL)
+            
+            DispatchQueue.main.async {
+                let activityVC = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
+                
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first,
+                   let rootVC = window.rootViewController {
+                    
+                    // Handle iPad presentation
+                    if let popover = activityVC.popoverPresentationController {
+                        popover.sourceView = window
+                        popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+                    
+                    rootVC.present(activityVC, animated: true)
+                }
+            }
+        } catch {
+            exportMessage = "Failed to export data: \(error.localizedDescription)"
+            showingAlert = true
+        }
+    }
+    
 }
 
 // MARK: - Premium Feature Card

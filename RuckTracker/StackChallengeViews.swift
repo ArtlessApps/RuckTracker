@@ -11,7 +11,6 @@ import SwiftUI
 struct StackChallengesSection: View {
     @StateObject private var challengeService = StackChallengeService()
     @EnvironmentObject var premiumManager: PremiumManager
-    @State private var showingChallengeDetail = false
     @State private var selectedChallenge: StackChallenge?
     @State private var showingAddChallenge = false
     
@@ -21,7 +20,7 @@ struct StackChallengesSection: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     if premiumManager.isPremiumUser {
-                        Button("Add Challenge") {
+                        Button("Create a Custom Challenge") {
                             showingAddChallenge = true
                         }
                         .font(.subheadline)
@@ -46,11 +45,9 @@ struct StackChallengesSection: View {
                 challengeSectionsView
             }
         }
-        .sheet(isPresented: $showingChallengeDetail) {
-            if let challenge = selectedChallenge {
-                StackChallengeDetailView(challenge: challenge)
-                    .environmentObject(challengeService)
-            }
+        .sheet(item: $selectedChallenge) { challenge in
+            StackChallengeDetailView(challenge: challenge)
+                .environmentObject(challengeService)
         }
         .sheet(isPresented: $showingAddChallenge) {
             AddChallengeView()
@@ -113,7 +110,6 @@ struct StackChallengesSection: View {
                     ) {
                         if premiumManager.isPremiumUser {
                             selectedChallenge = challenge
-                            showingChallengeDetail = true
                         } else {
                             premiumManager.showPaywall(context: .featureUpsell)
                         }
@@ -150,7 +146,6 @@ struct StackChallengesSection: View {
                     ) {
                         if premiumManager.isPremiumUser {
                             selectedChallenge = challenge
-                            showingChallengeDetail = true
                         } else {
                             premiumManager.showPaywall(context: .featureUpsell)
                         }
@@ -251,11 +246,6 @@ struct StackChallengeCard: View {
                     } else {
                         HStack {
                             Spacer()
-                            Text("Start Challenge")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
-                            Spacer()
                         }
                     }
                 }
@@ -286,7 +276,6 @@ struct StackChallengeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var challengeWorkouts: [ChallengeWorkout] = []
     @State private var showingEnrollment = false
-    @State private var isLoading = false
     
     var isEnrolled: Bool {
         challengeService.isUserEnrolled(in: challenge)
@@ -323,9 +312,7 @@ struct StackChallengeDetailView: View {
         }
         .onAppear {
             Task {
-                isLoading = true
                 challengeWorkouts = await challengeService.loadChallengeWorkouts(for: challenge.id)
-                isLoading = false
             }
         }
     }
@@ -467,10 +454,7 @@ struct StackChallengeDetailView: View {
                 .font(.title3)
                 .fontWeight(.semibold)
             
-            if isLoading {
-                ProgressView("Loading workout plan...")
-                    .frame(maxWidth: .infinity)
-            } else if challengeWorkouts.isEmpty {
+            if challengeWorkouts.isEmpty {
                 Text("Workout plan will be available after enrollment")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
