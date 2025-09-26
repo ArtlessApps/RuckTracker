@@ -15,17 +15,15 @@ struct RuckTracker_Watch_AppApp: App {
                 .environmentObject(workoutManager)
                 .environmentObject(workoutDataManager)
                 .onAppear {
-                    print("🏥 Watch App launched - requesting HealthKit authorization...")
+                    print("🏥 Watch App launched - setting up managers...")
                     
                     // Set up the connection between managers
                     workoutManager.setHealthManager(healthManager)
                     workoutManager.setWatchConnectivityManager(watchConnectivityManager)
                     watchConnectivityManager.setWorkoutDataManager(workoutDataManager)
                     
-                    // Request permissions immediately like before
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        healthManager.requestAuthorization()
-                    }
+                    // Note: HealthKit authorization now happens during onboarding flow
+                    // This provides better user experience with proper context
                 }
         }
     }

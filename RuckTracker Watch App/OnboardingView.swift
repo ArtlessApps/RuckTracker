@@ -9,6 +9,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @ObservedObject private var userSettings = UserSettings.shared
+    @EnvironmentObject var healthManager: HealthManager
     @State private var currentStep = 0
     @State private var bodyWeight: Double = 155.0
     @State private var ruckWeight: Double = 20.0
@@ -18,7 +19,7 @@ struct OnboardingView: View {
     @State private var showingRuckWeightPicker = false
     @State private var showingUnitsPicker = false
     
-    private let totalSteps = 3
+    private let totalSteps = 4
     
     var body: some View {
         NavigationView {
@@ -35,6 +36,12 @@ struct OnboardingView: View {
                         backAction: previousStep
                     )
                 case 2:
+                    HealthKitPermissionStep(
+                        healthManager: healthManager,
+                        nextAction: nextStep,
+                        backAction: previousStep
+                    )
+                case 3:
                     PreferencesSetupStep(
                         ruckWeight: ruckWeight,
                         weightUnit: selectedWeightUnit,
@@ -109,6 +116,140 @@ struct OnboardingView: View {
 }
 
 // MARK: - Clean Onboarding Steps
+
+// HealthKit Permission Step
+struct HealthKitPermissionStep: View {
+    @ObservedObject var healthManager: HealthManager
+    let nextAction: () -> Void
+    let backAction: () -> Void
+    
+    var body: some View {
+        List {
+            Section {
+                VStack(spacing: 16) {
+                    Image(systemName: "heart.circle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.red)
+                    
+                    VStack(spacing: 8) {
+                        Text("Health Integration")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                        
+                        Text("RuckTracker uses HealthKit to track your workouts accurately with heart rate, distance, and calories.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.vertical)
+                .listRowBackground(Color.clear)
+            }
+            
+            Section {
+                VStack(spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Text("Heart Rate Monitoring")
+                            .font(.caption)
+                        Spacer()
+                    }
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(.blue)
+                            .font(.caption)
+                        Text("GPS Distance Tracking")
+                            .font(.caption)
+                        Spacer()
+                    }
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "flame.fill")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                        Text("Calorie Calculation")
+                            .font(.caption)
+                        Spacer()
+                    }
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "figure.walk")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                        Text("Workout Logging")
+                            .font(.caption)
+                        Spacer()
+                    }
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Text("Permissions Needed")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Authorization Status
+            Section {
+                if healthManager.isAuthorized {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("HealthKit Connected")
+                            .font(.caption)
+                        Spacer()
+                    }
+                } else {
+                    VStack(spacing: 8) {
+                        if healthManager.authorizationInProgress {
+                            HStack {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                Text("Requesting permissions...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                        } else {
+                            Button("Enable HealthKit") {
+                                healthManager.requestAuthorization()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .foregroundColor(.white)
+                            .padding(.vertical, 8)
+                            .background(Color.red)
+                            .cornerRadius(8)
+                        }
+                    }
+                }
+            }
+            
+            // Navigation
+            Section {
+                HStack {
+                    Button("Back") {
+                        backAction()
+                    }
+                    .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Button("Continue") {
+                        nextAction()
+                    }
+                    .disabled(!healthManager.isAuthorized)
+                    .foregroundColor(healthManager.isAuthorized ? .orange : .secondary)
+                    .fontWeight(healthManager.isAuthorized ? .medium : .regular)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .navigationTitle("Health Setup")
+    }
+}
+
 struct WelcomeStep: View {
     let nextAction: () -> Void
     

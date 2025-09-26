@@ -182,6 +182,15 @@ struct WatchHealthKitStatusBanner: View {
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            // Show recovery instructions if there have been failed attempts
+                            if healthManager.errorManager.currentError != nil {
+                                Text(healthManager.getRecoveryInstructions())
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, 4)
+                            }
                         }
                     }
                     .padding(isMinimal ? 6 : 8)

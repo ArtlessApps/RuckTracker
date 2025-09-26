@@ -29,6 +29,18 @@ class HealthManager: ObservableObject {
     func requestAuthorization() {
         print("🏥 \(platformName): Requesting HealthKit authorization")
         
+        // Guard against duplicate requests
+        guard !authorizationInProgress else {
+            print("⚠️ \(platformName): Authorization already in progress, skipping duplicate request")
+            return
+        }
+        
+        // Don't request again if already authorized
+        guard !isAuthorized else {
+            print("ℹ️ \(platformName): Already authorized, skipping request")
+            return
+        }
+        
         // Clear any previous errors
         errorManager.clearError()
         
@@ -192,14 +204,17 @@ class HealthManager: ObservableObject {
             // Consider authorized if we have essential permissions
             let hasEssentialPermissions: Bool
             if self.isWatchApp {
-                // Watch needs workout, calories, and ideally heart rate
+                // Watch needs workout, calories, and distance - heart rate is optional but preferred
+                // Don't block workout functionality if user denies heart rate permission
                 hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
                                         caloriesStatus == .sharingAuthorized &&
-                                        heartRateStatus == .sharingAuthorized
+                                        distanceStatus == .sharingAuthorized
+                                        // Note: heartRateStatus is checked separately and logged but not required
             } else {
-                // iPhone just needs workout and calories (heart rate not available)
+                // iPhone needs workout, calories, and distance (heart rate not available)
                 hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
-                                        caloriesStatus == .sharingAuthorized
+                                        caloriesStatus == .sharingAuthorized &&
+                                        distanceStatus == .sharingAuthorized
             }
             
             self.isAuthorized = hasEssentialPermissions
@@ -214,7 +229,13 @@ class HealthManager: ObservableObject {
             
             // Log platform-specific status
             if self.isWatchApp {
-                print("📱 Watch: Full HealthKit integration available")
+                if heartRateStatus == .sharingAuthorized {
+                    print("📱 Watch: Full HealthKit integration available (including heart rate)")
+                } else {
+                    print("📱 Watch: HealthKit available but heart rate permission missing")
+                    print("   Heart Rate Status: \(heartRateStatus.description)")
+                    print("   Workouts will still function, but heart rate data won't be collected")
+                }
             } else {
                 print("📱 iPhone: Limited HealthKit (no heart rate) - use Watch for full tracking")
             }
@@ -378,7 +399,7 @@ class HealthManager: ObservableObject {
     
     /// Check if we can save workouts with current permissions
     func canSaveWorkouts() -> Bool {
-        return isAuthorized && hasWorkoutPermission && hasCaloriesPermission
+        return isAuthorized && hasWorkoutPermission && hasCaloriesPermission && hasDistancePermission
     }
     
     /// Get a user-friendly status message
@@ -401,13 +422,70 @@ class HealthManager: ObservableObject {
         
         if isAuthorized {
             if isWatchApp {
-                return "HealthKit is connected and ready"
+                if hasHeartRatePermission {
+                    return "HealthKit fully connected"
+                } else {
+                    return "HealthKit connected (heart rate optional)"
+                }
             } else {
                 return "HealthKit connected (use Apple Watch for heart rate)"
             }
         }
         
-        return "HealthKit permissions needed"
+        // Not authorized - provide specific guidance
+        if isWatchApp {
+            var missingPermissions: [String] = []
+            if !hasWorkoutPermission { missingPermissions.append("Workouts") }
+            if !hasCaloriesPermission { missingPermissions.append("Calories") }
+            if !hasDistancePermission { missingPermissions.append("Distance") }
+            
+            if missingPermissions.isEmpty {
+                return "Grant HealthKit permissions to start tracking"
+            } else {
+                return "Missing: \(missingPermissions.joined(separator: ", "))"
+            }
+        } else {
+            return "HealthKit permissions needed"
+        }
+    }
+    
+    /// Get recovery instructions for when permissions are denied
+    func getRecoveryInstructions() -> String {
+        if isAuthorized {
+            return "HealthKit is working properly"
+        }
+        
+        if authorizationInProgress {
+            return "Please wait for authorization to complete"
+        }
+        
+        var instructions: [String] = []
+        
+        if !hasWorkoutPermission || !hasCaloriesPermission || !hasDistancePermission {
+            if isWatchApp {
+                instructions.append("1. Open Health app on your iPhone")
+                instructions.append("2. Go to Sharing > Apps > RuckTracker")
+                instructions.append("3. Enable required permissions")
+                instructions.append("4. Restart RuckTracker on Apple Watch")
+            } else {
+                instructions.append("1. Open Health app on iPhone")
+                instructions.append("2. Go to Sharing > Apps > RuckTracker")
+                instructions.append("3. Enable Workouts, Calories, and Distance")
+            }
+        }
+        
+        if instructions.isEmpty {
+            instructions.append("Try restarting the app and granting permissions again")
+        }
+        
+        return instructions.joined(separator: "\n")
+    }
+    
+    /// Check if we should show a fallback mode (local-only tracking)
+    var shouldOfferFallbackMode: Bool {
+        // If HealthKit is completely unavailable or user has denied critical permissions
+        return !HKHealthStore.isHealthDataAvailable() || 
+               (!isAuthorized && errorManager.currentError != nil)
     }
     
     // MARK: - Helper Properties

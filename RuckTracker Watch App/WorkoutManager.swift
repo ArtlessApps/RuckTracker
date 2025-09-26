@@ -310,8 +310,12 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         
         // Check if we have authorization
         guard isHealthKitAuthorized else {
-            let error = HealthKitError.insufficientPermissions(requiredTypes: ["Workouts", "Heart Rate", "Calories"])
+            let error = HealthKitError.insufficientPermissions(requiredTypes: ["Workouts", "Distance", "Calories"])
             errorManager.handleError(error, context: "Workout Session Start")
+            
+            print("⚠️ HealthKit not authorized - workout will run in manual mode (timer only)")
+            // Note: We still return here to maintain the current behavior, but this could be 
+            // modified to allow timer-only workouts in the future
             return
         }
         
@@ -435,6 +439,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                 print("✅ HealthKit is now ready - data collection started")
             }
         }
+        
+        print("📊 HealthKit collected data for \(collectedTypes.count) types: \(collectedTypes.map { $0.identifier }.joined(separator: ", "))")
         
         for type in collectedTypes {
             guard let quantityType = type as? HKQuantityType else { continue }
