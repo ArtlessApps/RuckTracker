@@ -36,10 +36,13 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     // HealthKit workout builder for saving workouts
     private var workoutBuilder: HKWorkoutBuilder?
     
-    // Location tracking
+    // Location tracking (kept for GPS fallback)
     private var startLocation: CLLocation?
     private var lastLocation: CLLocation?
     private var totalDistance: Double = 0
+    
+    // HealthKit distance tracking (preferred method)
+    private var healthKitDistance: Double = 0
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -129,6 +132,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         elapsedTime = 0
         distance = 0
         totalDistance = 0
+        healthKitDistance = 0
         calories = 0
         currentHeartRate = 0
         
@@ -286,10 +290,14 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             let distanceMeters = location.distance(from: lastLoc)
             if distanceMeters > 5.0 { // Only update for significant movement
                 totalDistance += distanceMeters
-                distance = totalDistance * 0.000621371 // Convert to miles
+                // Use GPS distance only if HealthKit distance is not available
+                if healthKitDistance == 0 {
+                    distance = totalDistance * 0.000621371 // Convert to miles
+                    print("📍 GPS Distance (fallback): \(String(format: "%.3f", distance)) mi")
+                } else {
+                    print("📍 Using HealthKit distance: \(String(format: "%.3f", healthKitDistance)) mi (GPS: \(String(format: "%.3f", totalDistance * 0.000621371)) mi)")
+                }
                 lastLocation = location
-                
-                print("📍 GPS Distance: \(String(format: "%.3f", distance)) mi")
             }
         }
     }
@@ -305,6 +313,13 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    // MARK: - HealthKit Distance Updates
+    func updateDistanceFromHealthKit(_ healthKitDistance: Double) {
+        self.healthKitDistance = healthKitDistance
+        self.distance = healthKitDistance
+        print("📏 HealthKit distance updated: \(String(format: "%.3f", healthKitDistance)) mi")
+    }
+    
     // MARK: - HealthKit Workout Preparation
     private func prepareHealthKitWorkout() {
         guard HKHealthStore.isHealthDataAvailable() else {
@@ -317,7 +332,52 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         configuration.locationType = .outdoor
         
         workoutBuilder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: .local())
-        print("✅ HealthKit workout builder prepared")
+        
+        // Start collecting HealthKit data immediately for real-time distance updates
+        if let startDate = startDate {
+            workoutBuilder?.beginCollection(withStart: startDate) { [weak self] success, error in
+                if let error = error {
+                    print("❌ Failed to begin HealthKit collection: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard success else {
+                    print("❌ Failed to begin HealthKit collection")
+                    return
+                }
+                
+                print("✅ HealthKit workout builder started - will collect distance data")
+                
+                // Start monitoring HealthKit distance data
+                self?.startHealthKitDistanceMonitoring()
+            }
+        }
+    }
+    
+    private func startHealthKitDistanceMonitoring() {
+        // Monitor HealthKit distance data in real-time
+        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] timer in
+            guard let self = self, self.isActive else {
+                timer.invalidate()
+                return
+            }
+            
+            self.updateDistanceFromHealthKitData()
+        }
+    }
+    
+    private func updateDistanceFromHealthKitData() {
+        guard let workoutBuilder = workoutBuilder,
+              let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
+            return
+        }
+        
+        let statistics = workoutBuilder.statistics(for: distanceType)
+        if let distanceValue = statistics?.sumQuantity()?.doubleValue(for: .mile()) {
+            DispatchQueue.main.async {
+                self.updateDistanceFromHealthKit(distanceValue)
+            }
+        }
     }
     
     private func saveHealthKitWorkout() {
@@ -342,9 +402,10 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 return
             }
             
-            // Add distance sample if we have GPS data
-            if distance > 0, let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
-                let distanceQuantity = HKQuantity(unit: .mile(), doubleValue: distance)
+            // Add distance sample if we have distance data (prefer HealthKit over GPS)
+            let distanceToSave = healthKitDistance > 0 ? healthKitDistance : distance
+            if distanceToSave > 0, let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
+                let distanceQuantity = HKQuantity(unit: .mile(), doubleValue: distanceToSave)
                 let distanceSample = HKQuantitySample(
                     type: distanceType,
                     quantity: distanceQuantity,
@@ -352,6 +413,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     end: endDate
                 )
                 workoutBuilder.add([distanceSample]) { _, _ in }
+                print("📊 Saving distance: \(String(format: "%.3f", distanceToSave)) mi (HealthKit: \(healthKitDistance > 0), GPS: \(distance > 0))")
             }
             
             // Add calorie sample
@@ -443,6 +505,7 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         elapsedTime = 0
         distance = 0
         totalDistance = 0
+        healthKitDistance = 0
         calories = 0
         startDate = nil
         currentHeartRate = 0
