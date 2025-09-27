@@ -185,6 +185,229 @@ struct ChallengeWorkout: Codable, Identifiable {
     }
 }
 
+// MARK: - Step 1: Add these extensions to your existing StackChallengeModels.swift file
+// Add after the existing ChallengeWorkout struct definition
+
+extension ChallengeWorkout {
+    
+    // MARK: - Dynamic Title Generation
+    func getWorkoutTitle(for challenge: StackChallenge) -> String {
+        if isRestDay {
+            return "Rest Day"
+        }
+        
+        switch challenge.focusArea {
+        case .power:
+            return "Power Session"
+        case .speed:
+            return "Speed Work"
+        case .distance:
+            return "Distance Build"
+        case .recovery:
+            return "Active Recovery"
+        case .progressiveWeight:
+            return "Load Progression"
+        case .speedDevelopment:
+            return "Pace Development"
+        case .enduranceProgression:
+            return "Endurance Build"
+        case .tacticalMixed:
+            return "Tactical Training"
+        }
+    }
+    
+    // MARK: - Dynamic Instructions Generation
+    func getInstructions(for challenge: StackChallenge) -> String {
+        if let customInstructions = instructions, !customInstructions.isEmpty {
+            return customInstructions
+        }
+        
+        if isRestDay {
+            return "Active recovery day - light movement and preparation"
+        }
+        
+        // Generate instructions based on challenge focus and workout parameters
+        var instruction = ""
+        
+        switch challenge.focusArea {
+        case .power, .progressiveWeight:
+            instruction = "Focus on maintaining proper form with heavy weight. "
+            if let distance = distanceMiles {
+                instruction += "Complete \(String(format: "%.1f", distance)) miles at a steady, controlled pace."
+            }
+            
+        case .speed, .speedDevelopment:
+            instruction = "Push your pace while maintaining good form. "
+            if let pace = targetPaceMinutes {
+                let minutes = Int(pace)
+                let seconds = Int((pace - Double(minutes)) * 60)
+                instruction += "Target pace: \(minutes):\(String(format: "%02d", seconds))/mile."
+            }
+            
+        case .distance, .enduranceProgression:
+            instruction = "Build endurance with steady effort. "
+            if let distance = distanceMiles {
+                instruction += "Cover \(String(format: "%.1f", distance)) miles maintaining consistent pace."
+            }
+            
+        case .recovery:
+            instruction = "Light recovery session. Focus on movement quality over intensity."
+            
+        case .tacticalMixed:
+            instruction = "Mixed tactical training. Combine strength and endurance elements."
+        }
+        
+        if let weight = weightLbs {
+            instruction += " Carry \(Int(weight)) lbs throughout the session."
+        }
+        
+        return instruction
+    }
+    
+    // MARK: - Color Coordination
+    func getColor(for challenge: StackChallenge) -> String {
+        return challenge.focusArea.color
+    }
+}
+
+// MARK: - Mock Workout Generation for Testing
+extension ChallengeWorkout {
+    static func generateMockWorkouts(for challenge: StackChallenge) -> [ChallengeWorkout] {
+        var workouts: [ChallengeWorkout] = []
+        
+        for day in 1...challenge.durationDays {
+            let workout = generateMockWorkout(for: challenge, day: day)
+            workouts.append(workout)
+        }
+        
+        return workouts
+    }
+    
+    private static func generateMockWorkout(for challenge: StackChallenge, day: Int) -> ChallengeWorkout {
+        // Determine if this should be a rest day (every other day for testing)
+        let isRestDay = (day % 2 == 0) && challenge.focusArea != .recovery
+        
+        if isRestDay {
+            return ChallengeWorkout(
+                id: UUID(),
+                challengeId: challenge.id,
+                dayNumber: day,
+                workoutType: .rest,
+                distanceMiles: nil,
+                targetPaceMinutes: nil,
+                weightLbs: nil,
+                durationMinutes: 30,
+                instructions: nil, // Will use dynamic generation
+                isRestDay: true
+            )
+        }
+        
+        // Generate training workout based on challenge focus
+        let distance = calculateMockDistance(challenge: challenge, day: day)
+        let weight = calculateMockWeight(challenge: challenge, day: day)
+        let pace = calculateMockPace(challenge: challenge)
+        
+        return ChallengeWorkout(
+            id: UUID(),
+            challengeId: challenge.id,
+            dayNumber: day,
+            workoutType: .ruck,
+            distanceMiles: distance,
+            targetPaceMinutes: pace,
+            weightLbs: weight,
+            durationMinutes: nil,
+            instructions: nil, // Will use dynamic generation
+            isRestDay: false
+        )
+    }
+    
+    private static func calculateMockDistance(challenge: StackChallenge, day: Int) -> Double? {
+        switch challenge.focusArea {
+        case .distance, .enduranceProgression:
+            // Progressive distance increase
+            return 2.0 + (Double(day - 1) * 0.5)
+            
+        case .power, .progressiveWeight:
+            // Varied distances for power focus
+            let distances = [3.0, 2.0, 4.0, 2.5, 5.0, 3.5, 4.5]
+            return distances[(day - 1) % distances.count]
+            
+        case .speed, .speedDevelopment:
+            // Consistent distances for speed work
+            return 3.0
+            
+        case .recovery:
+            // Light distances
+            return 1.5 + (Double(day - 1) * 0.25)
+            
+        case .tacticalMixed:
+            // Mixed distances
+            let distances = [2.5, 3.0, 4.0, 2.0, 5.0, 3.5, 6.0]
+            return distances[(day - 1) % distances.count]
+        }
+    }
+    
+    private static func calculateMockWeight(challenge: StackChallenge, day: Int) -> Double? {
+        guard let basePercentage = challenge.weightPercentage else {
+            // Default weights if no percentage specified
+            switch challenge.focusArea {
+            case .power, .progressiveWeight:
+                return 45.0 + (Double(day - 1) * 2.0) // Progressive increase
+            case .speed, .speedDevelopment:
+                return 25.0 // Light for speed
+            case .distance, .enduranceProgression:
+                return 35.0 // Moderate for distance
+            case .recovery:
+                return 15.0 // Very light
+            case .tacticalMixed:
+                return 40.0 // Standard tactical weight
+            }
+        }
+        
+        // Calculate based on percentage (assuming 180lb user for mock)
+        let mockUserWeight = 180.0
+        let baseWeight = mockUserWeight * (basePercentage / 100)
+        
+        // Apply progression based on challenge focus
+        switch challenge.focusArea {
+        case .power, .progressiveWeight:
+            // 5% increase per day
+            return baseWeight * (1.0 + (Double(day - 1) * 0.05))
+            
+        case .distance, .enduranceProgression:
+            // Lighter for distance
+            return baseWeight * 0.8
+            
+        case .recovery:
+            // Very light
+            return baseWeight * 0.5
+            
+        default:
+            return baseWeight
+        }
+    }
+    
+    private static func calculateMockPace(challenge: StackChallenge) -> Double? {
+        guard let basePace = challenge.paceTarget else {
+            // Default paces if none specified
+            switch challenge.focusArea {
+            case .speed, .speedDevelopment:
+                return 16.0 // Fast pace
+            case .power, .progressiveWeight:
+                return 20.0 // Slower with heavy weight
+            case .distance, .enduranceProgression:
+                return 18.0 // Steady endurance pace
+            case .recovery:
+                return 22.0 // Easy recovery pace
+            case .tacticalMixed:
+                return 18.5 // Mixed pace
+            }
+        }
+        
+        return basePace
+    }
+}
+
 // MARK: - User Challenge Completion
 struct UserChallengeCompletion: Codable, Identifiable {
     let id: UUID

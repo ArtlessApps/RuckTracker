@@ -307,8 +307,15 @@ struct StackChallengeDetailView: View {
             }
         }
         .sheet(isPresented: $showingEnrollment) {
-            ChallengeEnrollmentView(challenge: challenge)
+            let challengeManager = ChallengeManager()
+            ChallengeEnrollmentView(
+                challenge: challenge,
+                challengeManager: challengeManager
+            )
                 .environmentObject(challengeService)
+                .task {
+                    await challengeManager.loadChallenge(challenge)
+                }
         }
         .onAppear {
             Task {
@@ -683,176 +690,6 @@ struct ChallengeWorkoutRow: View {
     }
 }
 
-// MARK: - Challenge Enrollment View
-struct ChallengeEnrollmentView: View {
-    let challenge: StackChallenge
-    @EnvironmentObject var challengeService: StackChallengeService
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedWeight: Double = 35.0
-    @State private var isEnrolling = false
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                challengeInfoSection
-                weightSelectionSection
-                enrollmentButtonSection
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Start Challenge")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var challengeInfoSection: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: challenge.focusArea.iconName)
-                    .font(.title)
-                    .foregroundColor(focusColor)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(challenge.title)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("\(challenge.durationDays) Day Challenge")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            
-            if let description = challenge.description {
-                Text(description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(focusColor.opacity(0.05))
-        )
-    }
-    
-    @ViewBuilder
-    private var weightSelectionSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Select Your Starting Weight")
-                .font(.title3)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 16) {
-                HStack {
-                    Text("Weight: \(Int(selectedWeight)) lbs")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    if let targetPercentage = challenge.weightPercentage {
-                        Text("Target: \(Int(targetPercentage))% BW")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Slider(value: $selectedWeight, in: 10...100, step: 5)
-                    .accentColor(focusColor)
-                
-                HStack {
-                    Text("10 lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("100 lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var enrollmentButtonSection: some View {
-        VStack(spacing: 12) {
-            if let weightPercentage = challenge.weightPercentage {
-                let targetWeight = selectedWeight * (weightPercentage / 100)
-                Text("Challenge target: \(Int(targetWeight)) lbs (\(Int(weightPercentage))% of \(Int(selectedWeight)) lbs)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button(action: enrollInChallenge) {
-                HStack {
-                    if isEnrolling {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
-                    } else {
-                        Image(systemName: "play.fill")
-                    }
-                    
-                    Text(isEnrolling ? "Enrolling..." : "Start Challenge")
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(focusColor)
-                )
-            }
-            .disabled(isEnrolling)
-        }
-    }
-    
-    private var focusColor: Color {
-        switch challenge.focusArea.color {
-        case "red": return .red
-        case "blue": return .blue
-        case "green": return .green
-        case "orange": return .orange
-        case "purple": return .purple
-        default: return .blue
-        }
-    }
-    
-    private func enrollInChallenge() {
-        isEnrolling = true
-        
-        Task {
-            do {
-                let _ = try await challengeService.enrollInChallenge(challenge, weightLbs: selectedWeight)
-                
-                await MainActor.run {
-                    dismiss()
-                }
-            } catch {
-                print("❌ Error enrolling in challenge: \(error)")
-                // TODO: Show error alert
-            }
-            
-            await MainActor.run {
-                isEnrolling = false
-            }
-        }
-    }
-}
 
 // MARK: - Add Challenge View (Admin)
 struct AddChallengeView: View {
@@ -1012,6 +849,584 @@ struct AddChallengeView: View {
             
             await MainActor.run {
                 isAdding = false
+            }
+        }
+    }
+}
+
+// MARK: - Step 6: Update your existing StackChallengeViews.swift file
+// Replace or add these components to integrate with the universal challenge system
+
+// MARK: - Updated StackChallengeSection to use UniversalChallengeView
+struct StackChallengeSection: View {
+    @EnvironmentObject var challengeService: StackChallengeService
+    @EnvironmentObject var premiumManager: PremiumManager
+    @State private var selectedChallenge: StackChallenge?
+    @State private var showingChallengeDetail = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Section Header
+            HStack {
+                Text("Stack Challenges")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                
+                Spacer()
+                
+                if !premiumManager.isPremiumUser {
+                    PremiumBadge(size: .small)
+                }
+            }
+            
+            Text("1 Week Fitness Challenges")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            // Challenge Grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                ForEach(challengeService.weeklyChallenges) { challenge in
+                    UpdatedStackChallengeCardView(
+                        challenge: challenge,
+                        isLocked: !premiumManager.isPremiumUser,
+                        isEnrolled: challengeService.isUserEnrolled(in: challenge),
+                        onTap: {
+                            selectedChallenge = challenge
+                            showingChallengeDetail = true
+                        }
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.gray.opacity(0.05))
+        )
+        .sheet(isPresented: $showingChallengeDetail) {
+            if let challenge = selectedChallenge {
+                UniversalChallengeView(challenge: challenge)
+                    .environmentObject(challengeService)
+                    .environmentObject(premiumManager)
+            }
+        }
+        .task {
+            await challengeService.loadChallenges()
+        }
+    }
+}
+
+// MARK: - Updated StackChallengeCardView with proper action handling
+struct UpdatedStackChallengeCardView: View {
+    let challenge: StackChallenge
+    let isLocked: Bool
+    let isEnrolled: Bool
+    let onTap: () -> Void
+    @EnvironmentObject var premiumManager: PremiumManager
+    
+    private var focusColor: Color {
+        Color(challenge.focusArea.color)
+    }
+    
+    var body: some View {
+        Button(action: {
+            if isLocked {
+                // Show premium paywall for locked challenges
+                premiumManager.showPaywall(context: .featureUpsell)
+            } else {
+                // Navigate to universal challenge view
+                onTap()
+            }
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: challenge.focusArea.iconName)
+                        .font(.title3)
+                        .foregroundColor(isLocked ? .secondary : focusColor)
+                    
+                    Spacer()
+                    
+                    Text("\(challenge.durationDays)d")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+                
+                Text(challenge.title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(isLocked ? .secondary : .primary)
+                    .multilineTextAlignment(.leading)
+                
+                if let description = challenge.description {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                
+                Spacer()
+                
+                // Status indicator
+                HStack {
+                    if isEnrolled {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                            Text("Enrolled")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.green)
+                        }
+                    } else if isLocked {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                    
+                    Spacer()
+                }
+            }
+            .frame(height: 160) // Fixed height matching program cards
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isLocked ? Color.orange.opacity(0.3) : 
+                                isEnrolled ? Color.green.opacity(0.3) : focusColor.opacity(0.2), 
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Enhanced Challenge Detail Integration
+// Update your existing StackChallengeDetailView to navigate to UniversalChallengeView after enrollment
+
+struct UpdatedStackChallengeDetailView: View {
+    let challenge: StackChallenge
+    @EnvironmentObject var challengeService: StackChallengeService
+    @EnvironmentObject var premiumManager: PremiumManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingEnrollment = false
+    @State private var navigateToChallenge = false
+    
+    private var isEnrolled: Bool {
+        challengeService.isUserEnrolled(in: challenge)
+    }
+    
+    private var userEnrollment: UserChallengeEnrollment? {
+        challengeService.getUserEnrollment(for: challenge)
+    }
+    
+    private var focusColor: Color {
+        Color(challenge.focusArea.color)
+    }
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Challenge Header
+                challengeHeaderSection
+                
+                // Challenge Stats
+                challengeStatsSection
+                
+                // Challenge Overview
+                challengeOverviewSection
+                
+                // Enrollment or Progress Section
+                if isEnrolled {
+                    enrolledSection
+                } else {
+                    enrollmentSection
+                }
+            }
+            .padding()
+        }
+        .navigationTitle(challenge.title)
+        .navigationBarTitleDisplayMode(.large)
+        .background(Color(.systemGroupedBackground))
+        .sheet(isPresented: $showingEnrollment) {
+            let challengeManager = ChallengeManager()
+            ChallengeEnrollmentView(
+                challenge: challenge,
+                challengeManager: challengeManager
+            )
+                .task {
+                    await challengeManager.loadChallenge(challenge)
+                }
+        }
+        .fullScreenCover(isPresented: $navigateToChallenge) {
+            UniversalChallengeView(challenge: challenge)
+                .environmentObject(challengeService)
+                .environmentObject(premiumManager)
+        }
+    }
+    
+    private var challengeHeaderSection: some View {
+        VStack(spacing: 16) {
+            Image(systemName: challenge.focusArea.iconName)
+                .font(.system(size: 60))
+                .foregroundColor(focusColor)
+            
+            Text(challenge.title)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+            
+            if let description = challenge.description {
+                Text(description)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+    
+    private var challengeStatsSection: some View {
+        HStack(spacing: 20) {
+            StatItem(
+                icon: "calendar",
+                title: "Duration",
+                value: "\(challenge.durationDays) days",
+                color: focusColor
+            )
+            
+            StatItem(
+                icon: challenge.focusArea.iconName,
+                title: "Focus",
+                value: challenge.focusArea.displayName,
+                color: focusColor
+            )
+            
+            if let weightPercentage = challenge.weightPercentage {
+                StatItem(
+                    icon: "scalemass.fill",
+                    title: "Weight",
+                    value: "\(Int(weightPercentage))% BW",
+                    color: focusColor
+                )
+            }
+            
+            if let paceTarget = challenge.paceTarget {
+                StatItem(
+                    icon: "speedometer",
+                    title: "Target Pace",
+                    value: "\(Int(paceTarget)) min/mi",
+                    color: focusColor
+                )
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        )
+    }
+    
+    private var challengeOverviewSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Challenge Overview")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                OverviewRow(
+                    icon: "target",
+                    title: "Duration",
+                    description: "\(challenge.durationDays) consecutive days of focused training"
+                )
+                
+                OverviewRow(
+                    icon: challenge.focusArea.iconName,
+                    title: "Focus Area",
+                    description: "\(challenge.focusArea.displayName) development and improvement"
+                )
+                
+                OverviewRow(
+                    icon: "calendar.badge.checkmark",
+                    title: "Structure",
+                    description: "Daily workouts with built-in recovery periods"
+                )
+                
+                OverviewRow(
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "Progression",
+                    description: "Systematically designed to build your capabilities"
+                )
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        )
+    }
+    
+    private var enrolledSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .font(.title2)
+                
+                Text("Enrolled in Challenge")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+            }
+            
+            if let enrollment = userEnrollment {
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("Current Weight:")
+                        Spacer()
+                        Text("\(Int(enrollment.currentWeightLbs)) lbs")
+                            .fontWeight(.medium)
+                    }
+                    
+                    HStack {
+                        Text("Progress:")
+                        Spacer()
+                        Text("\(Int(enrollment.completionPercentage))%")
+                            .fontWeight(.medium)
+                            .foregroundColor(focusColor)
+                    }
+                    
+                    ProgressView(value: enrollment.completionPercentage / 100.0)
+                        .progressViewStyle(LinearProgressViewStyle(tint: focusColor))
+                        .scaleEffect(y: 2)
+                }
+                .font(.subheadline)
+            }
+            
+            Button(action: {
+                navigateToChallenge = true
+            }) {
+                Text("Continue Challenge")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(focusColor)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.green.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+    
+    private var enrollmentSection: some View {
+        VStack(spacing: 16) {
+            Text("Ready to Start?")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            Text("Enroll in this challenge to get personalized workouts and track your progress through \(challenge.durationDays) days of focused training.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Button(action: {
+                if premiumManager.isPremiumUser {
+                    showingEnrollment = true
+                } else {
+                    premiumManager.showPaywall(context: .featureUpsell)
+                }
+            }) {
+                HStack {
+                    if !premiumManager.isPremiumUser {
+                        Image(systemName: "lock.fill")
+                    }
+                    Text(premiumManager.isPremiumUser ? "Enroll in Challenge" : "Upgrade to Enroll")
+                }
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(premiumManager.isPremiumUser ? focusColor : .orange)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        )
+    }
+}
+
+// MARK: - Integration Instructions for PhoneMainView.swift
+/*
+To integrate this with your PhoneMainView.swift, replace your existing challengesCard with:
+
+private var challengesCard: some View {
+    Button(action: {
+        if premiumManager.isPremiumUser {
+            showingChallenges = true
+        } else {
+            premiumManager.showPaywall(context: .featureUpsell)
+        }
+    }) {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Stack Challenges")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    if !premiumManager.isPremiumUser {
+                        PremiumBadge(size: .small)
+                    }
+                }
+                Text("1 Week Fitness Challenges")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.title2)
+                .foregroundColor(.blue)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.gray.opacity(0.05))
+        )
+    }
+    .buttonStyle(.plain)
+    .sheet(isPresented: $showingChallenges) {
+        UniversalChallengeListView()
+            .environmentObject(premiumManager)
+    }
+}
+
+And add this new view for the challenge list:
+*/
+
+struct UniversalChallengeListView: View {
+    @StateObject private var challengeService = StackChallengeService()
+    @EnvironmentObject var premiumManager: PremiumManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedChallenge: StackChallenge?
+    @State private var showingChallengeDetail = false
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Weekly Challenges Section
+                    if !challengeService.weeklyChallenges.isEmpty {
+                        challengeSection(
+                            title: "Weekly Focus Challenges",
+                            subtitle: "7-day specialized training programs",
+                            challenges: challengeService.weeklyChallenges
+                        )
+                    }
+                    
+                    // Seasonal Challenges Section
+                    if !challengeService.seasonalChallenges.isEmpty {
+                        challengeSection(
+                            title: "Seasonal Challenges",
+                            subtitle: "Extended training programs",
+                            challenges: challengeService.seasonalChallenges
+                        )
+                    }
+                    
+                    if challengeService.isLoading {
+                        ProgressView("Loading challenges...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Stack Challenges")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingChallengeDetail) {
+            if let challenge = selectedChallenge {
+                UniversalChallengeView(challenge: challenge)
+                    .environmentObject(challengeService)
+                    .environmentObject(premiumManager)
+            }
+        }
+        .task {
+            await challengeService.loadChallenges()
+        }
+    }
+    
+    private func challengeSection(title: String, subtitle: String, challenges: [StackChallenge]) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                ForEach(challenges) { challenge in
+                    UpdatedStackChallengeCardView(
+                        challenge: challenge,
+                        isLocked: !premiumManager.isPremiumUser,
+                        isEnrolled: challengeService.isUserEnrolled(in: challenge),
+                        onTap: {
+                            selectedChallenge = challenge
+                            showingChallengeDetail = true
+                        }
+                    )
+                    .environmentObject(premiumManager)
+                }
             }
         }
     }
