@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var healthManager = HealthManager()
+    @StateObject private var healthManager = HealthManager.shared
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
     

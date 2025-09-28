@@ -5,7 +5,7 @@ import Foundation
 struct TrainingProgramsView: View {
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @StateObject private var programService = ProgramService()
+    private let programService = ProgramService.shared
     @State private var selectedProgram: Program?
     
     var body: some View {

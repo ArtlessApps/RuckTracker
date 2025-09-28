@@ -163,7 +163,7 @@ struct UpdatedPhoneMainView: View {
 // MARK: - Updated Program Cards with Navigation
 struct PremiumTrainingProgramsSection: View {
     @EnvironmentObject var premiumManager: PremiumManager
-    @StateObject private var programService = ProgramService()
+    private let programService = ProgramService.shared
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -194,7 +194,7 @@ struct PremiumTrainingProgramsSection: View {
             // Load programs when view appears (for premium users)
             if premiumManager.isPremiumUser {
                 do {
-                    try await programService.fetchPrograms()
+                    await programService.loadPrograms()
                 } catch {
                     print("Failed to load programs: \(error)")
                 }

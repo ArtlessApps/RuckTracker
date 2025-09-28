@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Test View for Functional Program Cards
 struct ProgramTestView: View {
     @StateObject private var premiumManager = PremiumManager.shared
-    @StateObject private var programService = ProgramService()
+    private let programService = ProgramService.shared
     
     var body: some View {
         NavigationView {

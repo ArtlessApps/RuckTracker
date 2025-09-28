@@ -2,6 +2,8 @@ import Foundation
 import HealthKit
 
 class HealthManager: ObservableObject {
+    static let shared = HealthManager()
+    
     let healthStore = HKHealthStore()
     @Published var isAuthorized = false
     @Published var errorManager = HealthKitErrorManager()
@@ -22,7 +24,7 @@ class HealthManager: ObservableObject {
         #endif
     }
     
-    init() {
+    private init() {
         checkAuthorizationStatus()
     }
     

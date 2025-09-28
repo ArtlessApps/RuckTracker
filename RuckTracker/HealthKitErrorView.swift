@@ -222,14 +222,14 @@ struct HealthKitStatusBanner: View {
     VStack(spacing: 20) {
         HealthKitStatusBanner()
             .environmentObject({
-                let healthManager = HealthManager()
+                let healthManager = HealthManager.shared
                 healthManager.errorManager.handleError(.authorizationDenied(dataType: "Heart Rate"), context: "Test")
                 return healthManager
             }())
         
         HealthKitStatusBanner(isCompact: true)
             .environmentObject({
-                let healthManager = HealthManager()
+                let healthManager = HealthManager.shared
                 healthManager.errorManager.handleError(.workoutSaveFailed(underlying: nil), context: "Test")
                 return healthManager
             }())

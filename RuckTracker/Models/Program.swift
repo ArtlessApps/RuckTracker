@@ -12,8 +12,17 @@ struct Program: Codable, Identifiable {
     let createdAt: Date
     let updatedAt: Date
     
-    enum Difficulty: String, Codable, CaseIterable {
+    enum Difficulty: String, Codable, CaseIterable, Comparable {
         case beginner, intermediate, advanced, elite
+        
+        static func < (lhs: Difficulty, rhs: Difficulty) -> Bool {
+            let order: [Difficulty] = [.beginner, .intermediate, .advanced, .elite]
+            guard let lhsIndex = order.firstIndex(of: lhs),
+                  let rhsIndex = order.firstIndex(of: rhs) else {
+                return false
+            }
+            return lhsIndex < rhsIndex
+        }
     }
     
     enum Category: String, Codable, CaseIterable {
@@ -73,21 +82,61 @@ struct UserProgram: Codable, Identifiable {
     let id: UUID
     let userId: UUID
     let programId: UUID
-    let startedAt: Date
-    var currentWeek: Int
+    let enrolledAt: Date
+    let startingWeightLbs: Double
     var currentWeightLbs: Double
+    let targetWeightLbs: Double
     var isActive: Bool
     let completedAt: Date?
+    var completionPercentage: Double
+    var currentWeek: Int
+    var nextWorkoutDate: Date?
     
     enum CodingKeys: String, CodingKey {
         case id
         case userId = "user_id"
         case programId = "program_id"
-        case startedAt = "started_at"
-        case currentWeek = "current_week"
+        case enrolledAt = "enrolled_at"
+        case startingWeightLbs = "starting_weight_lbs"
         case currentWeightLbs = "current_weight_lbs"
+        case targetWeightLbs = "target_weight_lbs"
         case isActive = "is_active"
         case completedAt = "completed_at"
+        case completionPercentage = "completion_percentage"
+        case currentWeek = "current_week"
+        case nextWorkoutDate = "next_workout_date"
+    }
+}
+
+struct ProgramProgress: Codable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let programId: UUID
+    let workoutDate: Date
+    let weekNumber: Int
+    let workoutNumber: Int
+    let weightLbs: Double
+    let distanceMiles: Double
+    let durationMinutes: Int
+    let completed: Bool
+    let notes: String?
+    let heartRateData: HeartRateData?
+    let paceData: PaceData?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case programId = "program_id"
+        case workoutDate = "workout_date"
+        case weekNumber = "week_number"
+        case workoutNumber = "workout_number"
+        case weightLbs = "weight_lbs"
+        case distanceMiles = "distance_miles"
+        case durationMinutes = "duration_minutes"
+        case completed
+        case notes
+        case heartRateData = "heart_rate_data"
+        case paceData = "pace_data"
     }
 }
 
@@ -135,4 +184,99 @@ struct WeightProgression: Codable, Identifiable {
         case reason
         case createdAt = "created_at"
     }
+}
+
+// MARK: - Mock Data Extensions
+extension Program {
+    static let mockPrograms: [Program] = [
+        Program(
+            id: UUID(),
+            title: "Military Foundation",
+            description: "8-week foundational program designed for those new to rucking",
+            difficulty: .beginner,
+            category: .military,
+            durationWeeks: 8,
+            isFeatured: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Program(
+            id: UUID(),
+            title: "Ranger Challenge",
+            description: "Advanced 12-week program for experienced ruckers",
+            difficulty: .advanced,
+            category: .military,
+            durationWeeks: 12,
+            isFeatured: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Program(
+            id: UUID(),
+            title: "Selection Prep",
+            description: "Elite 16-week program for special operations preparation",
+            difficulty: .elite,
+            category: .military,
+            durationWeeks: 16,
+            isFeatured: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Program(
+            id: UUID(),
+            title: "Adventure Ruck",
+            description: "10-week program focused on outdoor adventure preparation",
+            difficulty: .intermediate,
+            category: .adventure,
+            durationWeeks: 10,
+            isFeatured: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Program(
+            id: UUID(),
+            title: "Fitness Foundation",
+            description: "6-week program for general fitness improvement",
+            difficulty: .beginner,
+            category: .fitness,
+            durationWeeks: 6,
+            isFeatured: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Program(
+            id: UUID(),
+            title: "Historical March",
+            description: "14-week program based on historical military marches",
+            difficulty: .advanced,
+            category: .historical,
+            durationWeeks: 14,
+            isFeatured: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    ]
+}
+
+// MARK: - Supporting Data Structures for Universal Program Manager
+
+struct HeartRateData: Codable {
+    let averageHeartRate: Double
+    let maxHeartRate: Double
+    let timeInZones: [HeartRateZone: TimeInterval]
+}
+
+struct PaceData: Codable {
+    let averageMinutesPerMile: Double
+    let fastestMile: Double
+    let slowestMile: Double
+    let paceVariability: Double
+}
+
+enum HeartRateZone: String, Codable, CaseIterable {
+    case recovery = "Recovery"
+    case aerobic = "Aerobic"
+    case threshold = "Threshold"
+    case anaerobic = "Anaerobic"
+    case neuromuscular = "Neuromuscular"
 }

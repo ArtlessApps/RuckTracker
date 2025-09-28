@@ -1,294 +1,365 @@
-// Services/ProgramService.swift
-import Foundation
-import SwiftUI
-import Combine
-import Supabase
+//
+//  ProgramService.swift
+//  RuckTracker
+//
+//  Centralized shared service for all program-related functionality
+//  Mirrors the successful StackChallengeService architecture
+//
 
+import Foundation
+import Supabase
+import Combine
+
+@MainActor
 class ProgramService: ObservableObject {
-    private var supabaseClient: SupabaseClient? {
-        // Use the correct Supabase REST API URL
-        guard let url = URL(string: "https://zqxxcuvgwadokkgmcuwr.supabase.co") else {
-            return nil
-        }
-        let key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxeHhjdXZnd2Fkb2trZ21jdXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5OTI4NTIsImV4cCI6MjA3MzU2ODg1Mn0.vU-gcFzN2YyqDWkihIdMGu_LXp0Y--QSB00Vsr9qm_o"
-        return SupabaseClient(supabaseURL: url, supabaseKey: key)
-    }
+    static let shared = ProgramService()
     
+    private let supabaseClient: SupabaseClient?
+    
+    // MARK: - Published State
     @Published var programs: [Program] = []
     @Published var userPrograms: [UserProgram] = []
+    @Published var featuredPrograms: [Program] = []
+    @Published var userProgress: [ProgramProgress] = []
     @Published var isLoading = false
+    @Published var errorMessage: String?
     
     // Current user ID for testing - replace with proper auth
     private var mockCurrentUserId: UUID? = UUID()
     
-    init() {
-        // Load cached user programs first
-        loadCachedUserPrograms()
+    private init() {
+        // Use existing SupabaseManager (following StackChallengeService pattern)
+        self.supabaseClient = SupabaseManager.shared.client
         
-        // Initialize service and fetch fresh user programs
+        // Load cached data first for immediate UI response
+        loadCachedUserPrograms()
+        loadCachedProgress()
+        
+        // Load fresh data from server
         Task {
-            do {
-                try await fetchUserPrograms()
-            } catch {
-                print("Failed to load user programs on init: \(error)")
-            }
+            await loadPrograms()
+            await loadUserPrograms()
+            await loadUserProgress()
         }
     }
     
     // MARK: - Program Discovery
     
-    func fetchPrograms() async throws {
-        guard let client = supabaseClient else {
-            throw ProgramError.notAuthenticated
-        }
-        
+    func loadPrograms() async {
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
         
         do {
-            let response: [Program] = try await client
-                .from("programs")
-                .select()
-                .order("is_featured", ascending: false)
-                .order("created_at", ascending: false)
-                .execute()
-                .value
-            
-            await MainActor.run {
-                self.programs = response
+            if let client = supabaseClient {
+                try await loadProgramsFromSupabase(client: client)
+            } else {
+                loadMockPrograms()
             }
         } catch {
-            print("Failed to fetch programs from Supabase: \(error)")
-            // For testing, we'll use mock data
-            await MainActor.run {
-                self.programs = createMockPrograms()
-            }
-        }
-    }
-    
-    // Helper method to create mock programs for testing
-    private func createMockPrograms() -> [Program] {
-        return [
-            Program(
-                id: UUID(),
-                title: "Military Foundation",
-                description: "8-week foundational program designed for those new to rucking",
-                difficulty: .beginner,
-                category: .military,
-                durationWeeks: 8,
-                isFeatured: true,
-                createdAt: Date(),
-                updatedAt: Date()
-            ),
-            Program(
-                id: UUID(),
-                title: "Ranger Challenge",
-                description: "Advanced 12-week program for experienced ruckers",
-                difficulty: .advanced,
-                category: .military,
-                durationWeeks: 12,
-                isFeatured: true,
-                createdAt: Date(),
-                updatedAt: Date()
-            ),
-            Program(
-                id: UUID(),
-                title: "Selection Prep",
-                description: "Elite 16-week program for special operations preparation",
-                difficulty: .elite,
-                category: .military,
-                durationWeeks: 16,
-                isFeatured: true,
-                createdAt: Date(),
-                updatedAt: Date()
-            ),
-            Program(
-                id: UUID(),
-                title: "Maintenance Program",
-                description: "Ongoing program for maintaining fitness levels",
-                difficulty: .intermediate,
-                category: .fitness,
-                durationWeeks: 0,
-                isFeatured: false,
-                createdAt: Date(),
-                updatedAt: Date()
-            )
-        ]
-    }
-    
-    func fetchFeaturedPrograms() async throws -> [Program] {
-        guard let client = supabaseClient else {
-            throw ProgramError.notAuthenticated
+            print("❌ Error loading programs: \(error)")
+            errorMessage = error.localizedDescription
+            // Fallback to mock data on error
+            loadMockPrograms()
         }
         
-        let response: [Program] = try await client
+        isLoading = false
+    }
+    
+    private func loadProgramsFromSupabase(client: SupabaseClient) async throws {
+        // Load all programs
+        let allProgramsResponse: [Program] = try await client
             .from("programs")
             .select()
-            .eq("is_featured", value: true)
+            .eq("is_active", value: true)
+            .order("sort_order")
             .execute()
             .value
         
-        return response
+        // Load featured programs
+        let featuredResponse: [Program] = try await client
+            .from("programs")
+            .select()
+            .eq("is_featured", value: true)
+            .eq("is_active", value: true)
+            .order("sort_order")
+            .execute()
+            .value
+        
+        programs = allProgramsResponse
+        featuredPrograms = featuredResponse
+        
+        print("✅ Loaded \(allProgramsResponse.count) programs and \(featuredResponse.count) featured programs")
+    }
+    
+    private func loadMockPrograms() {
+        programs = Program.mockPrograms
+        featuredPrograms = programs.filter { $0.isFeatured }
+        print("📱 Using mock program data")
     }
     
     // MARK: - Program Enrollment
     
-    func enrollInProgram(_ program: Program, startingWeight: Double) async throws {
+    func enrollInProgram(_ program: Program, startingWeight: Double, startDate: Date = Date()) async throws -> UserProgram {
         guard let client = supabaseClient,
               let userId = mockCurrentUserId else {
-            throw ProgramError.notAuthenticated
+            // Return mock enrollment for testing
+            let mockEnrollment = UserProgram(
+                id: UUID(),
+                userId: mockCurrentUserId ?? UUID(),
+                programId: program.id,
+                enrolledAt: startDate,
+                startingWeightLbs: startingWeight,
+                currentWeightLbs: startingWeight,
+                targetWeightLbs: startingWeight + (program.difficulty.weightIncrement * Double(program.durationWeeks)),
+                isActive: true,
+                completedAt: nil,
+                completionPercentage: 0.0,
+                currentWeek: 1,
+                nextWorkoutDate: Calendar.current.date(byAdding: .day, value: 1, to: startDate)
+            )
+            
+            userPrograms.append(mockEnrollment)
+            await cacheUserPrograms()
+            print("📱 Mock: Enrolled in program \(program.title)")
+            return mockEnrollment
         }
         
-        let userProgram = UserProgram(
-            id: UUID(),
-            userId: userId,
-            programId: program.id,
-            startedAt: Date(),
-            currentWeek: 1,
-            currentWeightLbs: startingWeight,
-            isActive: true,
-            completedAt: nil
-        )
-        
-        do {
-            try await client
-                .from("user_programs")
-                .insert(userProgram)
-                .execute()
-            
-            // Fetch updated user programs
-            try await fetchUserPrograms()
-        } catch {
-            // For testing purposes, we'll simulate successful enrollment
-            // In production, you'd want proper error handling
-            print("Supabase enrollment failed, simulating success for testing: \(error)")
-            
-            // Simulate successful enrollment by updating local state
-            await MainActor.run {
-                self.userPrograms.append(userProgram)
-                self.cacheUserPrograms()
-            }
+        // Check if already enrolled
+        if getUserProgram(for: program) != nil {
+            throw ProgramServiceError.alreadyEnrolled
         }
-    }
-    
-    func fetchUserPrograms() async throws {
-        guard let client = supabaseClient,
-              let userId = mockCurrentUserId else { return }
+        
+        let newUserProgram = [
+            "user_id": try AnyJSON(userId.uuidString),
+            "program_id": try AnyJSON(program.id.uuidString),
+            "enrolled_at": try AnyJSON(startDate),
+            "starting_weight_lbs": try AnyJSON(startingWeight),
+            "current_weight_lbs": try AnyJSON(startingWeight),
+            "target_weight_lbs": try AnyJSON(startingWeight + (program.difficulty.weightIncrement * Double(program.durationWeeks))),
+            "is_active": try AnyJSON(true),
+            "completion_percentage": try AnyJSON(0.0),
+            "current_week": try AnyJSON(1)
+        ]
         
         let response: [UserProgram] = try await client
             .from("user_programs")
+            .insert(newUserProgram)
             .select()
-            .eq("user_id", value: userId.uuidString)
-            .eq("is_active", value: true)
             .execute()
             .value
         
-        await MainActor.run {
-            self.userPrograms = response
-            self.cacheUserPrograms()
+        guard let enrollment = response.first else {
+            throw ProgramServiceError.enrollmentFailed
+        }
+        
+        userPrograms.append(enrollment)
+        await cacheUserPrograms()
+        print("✅ Enrolled in program: \(program.title)")
+        
+        return enrollment
+    }
+    
+    // MARK: - User Program Management
+    
+    func loadUserPrograms() async {
+        guard let client = supabaseClient,
+              let userId = mockCurrentUserId else {
+            print("📱 Using cached user programs (no client/user)")
+            return
+        }
+        
+        do {
+            let response: [UserProgram] = try await client
+                .from("user_programs")
+                .select()
+                .eq("user_id", value: userId.uuidString)
+                .order("enrolled_at", ascending: false)
+                .execute()
+                .value
+            
+            userPrograms = response
+            await cacheUserPrograms()
+            print("✅ Loaded \(response.count) user programs")
+        } catch {
+            print("❌ Error loading user programs: \(error)")
         }
     }
     
-    // MARK: - Program Content
-    
-    func fetchProgramWeeks(for programId: UUID) async throws -> [ProgramWeek] {
-        guard let client = supabaseClient else {
-            throw ProgramError.notAuthenticated
-        }
-        
-        let response: [ProgramWeek] = try await client
-            .from("program_weeks")
-            .select()
-            .eq("program_id", value: programId.uuidString)
-            .order("week_number", ascending: true)
-            .execute()
-            .value
-        
-        return response
+    func getUserProgram(for program: Program) -> UserProgram? {
+        return userPrograms.first { $0.programId == program.id && $0.isActive }
     }
     
-    func fetchWorkoutsForWeek(_ weekId: UUID) async throws -> [ProgramWorkout] {
-        guard let client = supabaseClient else {
-            throw ProgramError.notAuthenticated
-        }
-        
-        let response: [ProgramWorkout] = try await client
-            .from("program_workouts")
-            .select()
-            .eq("week_id", value: weekId.uuidString)
-            .order("day_number", ascending: true)
-            .execute()
-            .value
-        
-        return response
+    func getActivePrograms() -> [UserProgram] {
+        return userPrograms.filter { $0.isActive }
+    }
+    
+    func getCompletedPrograms() -> [UserProgram] {
+        return userPrograms.filter { $0.completedAt != nil }
     }
     
     // MARK: - Progress Tracking
     
-    func recordWorkoutCompletion(
-        userProgramId: UUID,
-        workoutId: UUID,
-        actualDistance: Double,
-        actualWeight: Double,
-        duration: TimeInterval,
-        performanceScore: Double
-    ) async throws {
+    func loadUserProgress() async {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else { return }
-        
-        let completion = WorkoutCompletion(
-            id: UUID(),
-            userId: userId,
-            userProgramId: userProgramId,
-            programWorkoutId: workoutId,
-            completedAt: Date(),
-            actualDistanceMiles: actualDistance,
-            actualWeightLbs: actualWeight,
-            actualDurationMinutes: Int(duration / 60),
-            performanceScore: performanceScore,
-            notes: nil
-        )
-        
-        try await client
-            .from("workout_completions")
-            .insert(completion)
-            .execute()
-    }
-    
-    func updateWeightProgression(
-        userProgramId: UUID,
-        weekNumber: Int,
-        newWeight: Double,
-        wasAutoAdjusted: Bool,
-        reason: String?
-    ) async throws {
-        guard let client = supabaseClient else {
-            throw ProgramError.notAuthenticated
+              let userId = mockCurrentUserId else {
+            print("📱 Using cached progress data (no client/user)")
+            return
         }
         
-        let progression = WeightProgression(
-            id: UUID(),
-            userProgramId: userProgramId,
-            weekNumber: weekNumber,
-            weightLbs: newWeight,
-            wasAutoAdjusted: wasAutoAdjusted,
-            reason: reason,
-            createdAt: Date()
-        )
-        
-        try await client
-            .from("weight_progressions")
-            .insert(progression)
-            .execute()
+        do {
+            let response: [ProgramProgress] = try await client
+                .from("program_progress")
+                .select()
+                .eq("user_id", value: userId.uuidString)
+                .order("workout_date", ascending: false)
+                .execute()
+                .value
+            
+            userProgress = response
+            await cacheProgress()
+            print("✅ Loaded \(response.count) progress entries")
+        } catch {
+            print("❌ Error loading user progress: \(error)")
+        }
     }
     
-    // MARK: - Local Persistence
+    func recordProgress(_ progress: ProgramProgress) async throws {
+        guard let client = supabaseClient else {
+            // Add to local cache for mock
+            userProgress.append(progress)
+            await cacheProgress()
+            print("📱 Mock: Recorded progress")
+            return
+        }
+        
+        let progressData = [
+            "user_id": try AnyJSON(progress.userId.uuidString),
+            "program_id": try AnyJSON(progress.programId.uuidString),
+            "workout_date": try AnyJSON(progress.workoutDate),
+            "week_number": try AnyJSON(progress.weekNumber),
+            "workout_number": try AnyJSON(progress.workoutNumber),
+            "weight_lbs": try AnyJSON(progress.weightLbs),
+            "distance_miles": try AnyJSON(progress.distanceMiles),
+            "duration_minutes": try AnyJSON(progress.durationMinutes),
+            "completed": try AnyJSON(progress.completed),
+            "notes": try AnyJSON(progress.notes)
+        ]
+        
+        try await client
+            .from("program_progress")
+            .insert(progressData)
+            .execute()
+        
+        userProgress.append(progress)
+        await cacheProgress()
+        print("✅ Recorded progress for program")
+    }
     
-    private func cacheUserPrograms() {
+    // MARK: - Program Completion
+    
+    func completeProgram(_ userProgramId: UUID) async throws {
+        guard let client = supabaseClient else {
+            // Update local state for mock
+            if let index = userPrograms.firstIndex(where: { $0.id == userProgramId }) {
+                let program = userPrograms[index]
+                let updatedProgram = UserProgram(
+                    id: program.id,
+                    userId: program.userId,
+                    programId: program.programId,
+                    enrolledAt: program.enrolledAt,
+                    startingWeightLbs: program.startingWeightLbs,
+                    currentWeightLbs: program.currentWeightLbs,
+                    targetWeightLbs: program.targetWeightLbs,
+                    isActive: false,
+                    completedAt: Date(),
+                    completionPercentage: 100.0,
+                    currentWeek: program.currentWeek,
+                    nextWorkoutDate: program.nextWorkoutDate
+                )
+                userPrograms[index] = updatedProgram
+            }
+            print("📱 Mock: Completed program")
+            return
+        }
+        
+        try await client
+            .from("user_programs")
+            .update([
+                "completion_percentage": try AnyJSON(100.0),
+                "completed_at": try AnyJSON(Date()),
+                "is_active": try AnyJSON(false)
+            ])
+            .eq("id", value: userProgramId.uuidString)
+            .execute()
+        
+        // Update local state
+        if let index = userPrograms.firstIndex(where: { $0.id == userProgramId }) {
+            let program = userPrograms[index]
+            let updatedProgram = UserProgram(
+                id: program.id,
+                userId: program.userId,
+                programId: program.programId,
+                enrolledAt: program.enrolledAt,
+                startingWeightLbs: program.startingWeightLbs,
+                currentWeightLbs: program.currentWeightLbs,
+                targetWeightLbs: program.targetWeightLbs,
+                isActive: false,
+                completedAt: Date(),
+                completionPercentage: 100.0,
+                currentWeek: program.currentWeek,
+                nextWorkoutDate: program.nextWorkoutDate
+            )
+            userPrograms[index] = updatedProgram
+        }
+        
+        print("✅ Completed program")
+    }
+    
+    // MARK: - Data Management & Caching
+    
+    /// Refresh all program data from server
+    func refreshPrograms() async {
+        await loadPrograms()
+        await loadUserPrograms()
+        await loadUserProgress()
+    }
+    
+    /// Clear local cache
+    func clearCache() {
+        programs.removeAll()
+        userPrograms.removeAll()
+        featuredPrograms.removeAll()
+        userProgress.removeAll()
+        
+        // Clear UserDefaults cache
+        UserDefaults.standard.removeObject(forKey: "cached_user_programs")
+        UserDefaults.standard.removeObject(forKey: "cached_user_progress")
+        
+        print("🗑️ Cleared program cache")
+    }
+    
+    /// Get program by ID
+    func getProgram(by id: UUID) -> Program? {
+        return programs.first { $0.id == id }
+    }
+    
+    /// Get programs by category
+    func getPrograms(by category: Program.Category) -> [Program] {
+        return programs.filter { $0.category == category }
+    }
+    
+    /// Get programs by difficulty
+    func getPrograms(by difficulty: Program.Difficulty) -> [Program] {
+        return programs.filter { $0.difficulty == difficulty }
+    }
+    
+    // MARK: - Private Caching Methods
+    
+    private func cacheUserPrograms() async {
         do {
             let data = try JSONEncoder().encode(userPrograms)
             UserDefaults.standard.set(data, forKey: "cached_user_programs")
-            print("✅ Cached \(userPrograms.count) user programs")
+            print("💾 Cached \(userPrograms.count) user programs")
         } catch {
             print("❌ Failed to cache user programs: \(error)")
         }
@@ -308,10 +379,75 @@ class ProgramService: ObservableObject {
             print("❌ Failed to load cached user programs: \(error)")
         }
     }
+    
+    private func cacheProgress() async {
+        do {
+            let data = try JSONEncoder().encode(userProgress)
+            UserDefaults.standard.set(data, forKey: "cached_user_progress")
+            print("💾 Cached \(userProgress.count) progress entries")
+        } catch {
+            print("❌ Failed to cache progress: \(error)")
+        }
+    }
+    
+    private func loadCachedProgress() {
+        guard let data = UserDefaults.standard.data(forKey: "cached_user_progress") else {
+            print("📱 No cached progress found")
+            return
+        }
+        
+        do {
+            let cachedProgress = try JSONDecoder().decode([ProgramProgress].self, from: data)
+            userProgress = cachedProgress
+            print("✅ Loaded \(cachedProgress.count) cached progress entries")
+        } catch {
+            print("❌ Failed to load cached progress: \(error)")
+        }
+    }
 }
 
-enum ProgramError: Error {
+// MARK: - Service Errors
+enum ProgramServiceError: Error {
     case notAuthenticated
     case programNotFound
     case alreadyEnrolled
+    case enrollmentNotFound
+    case enrollmentFailed
+    case invalidWeight
+    case networkError(String)
+    
+    var localizedDescription: String {
+        switch self {
+        case .notAuthenticated:
+            return "User not authenticated"
+        case .programNotFound:
+            return "Program not found"
+        case .alreadyEnrolled:
+            return "Already enrolled in this program"
+        case .enrollmentNotFound:
+            return "Enrollment not found"
+        case .enrollmentFailed:
+            return "Failed to enroll in program"
+        case .invalidWeight:
+            return "Invalid weight value"
+        case .networkError(let message):
+            return "Network error: \(message)"
+        }
+    }
+}
+
+// MARK: - Extensions for Program Difficulty Weight Increment
+extension Program.Difficulty {
+    var weightIncrement: Double {
+        switch self {
+        case .beginner:
+            return 2.5  // 2.5 lbs per week
+        case .intermediate:
+            return 3.0  // 3.0 lbs per week
+        case .advanced:
+            return 3.5  // 3.5 lbs per week
+        case .elite:
+            return 4.0  // 4.0 lbs per week
+        }
+    }
 }

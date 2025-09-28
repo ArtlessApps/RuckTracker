@@ -59,11 +59,13 @@ class LeaderboardService: ObservableObject {
         errorMessage = nil
         
         do {
-            async let weeklyTask = loadWeeklyDistanceLeaderboard()
-            async let consistencyTask = loadConsistencyLeaderboard()
-            async let settingsTask = loadUserSettings()
-            
-            let (_, _, _) = try await (weeklyTask, consistencyTask, settingsTask)
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { try await self.loadWeeklyDistanceLeaderboard() }
+                group.addTask { try await self.loadConsistencyLeaderboard() }
+                group.addTask { try await self.loadUserSettings() }
+                
+                try await group.waitForAll()
+            }
         } catch {
             errorMessage = "Failed to load leaderboards: \(error.localizedDescription)"
             print("❌ Error loading leaderboards: \(error)")
