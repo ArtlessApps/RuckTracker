@@ -15,6 +15,18 @@ struct ChallengeEnrollmentView: View {
     @State private var isEnrolling = false
     @State private var enrollmentError: String?
     
+    // Focus color computed property
+    private var focusColor: Color {
+        switch challenge.focusArea.color {
+        case "red": return .red
+        case "blue": return .blue
+        case "green": return .green
+        case "orange": return .orange
+        case "purple": return .purple
+        default: return .blue
+        }
+    }
+    
     // Weight range based on challenge type
     private var weightRange: ClosedRange<Double> {
         switch challenge.focusArea {
@@ -48,21 +60,27 @@ struct ChallengeEnrollmentView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Challenge Info Header
-                    challengeHeaderView
-                    
-                    // Weight Selection
-                    weightSelectionView
-                    
-                    // Challenge Preview
-                    challengePreviewView
-                    
-                    // Enrollment Button
-                    enrollmentButtonView
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Challenge Info Header
+                        challengeHeaderView
+                        
+                        // Weight Selection
+                        weightSelectionView
+                        
+                        // Challenge Preview
+                        challengePreviewView
+                        
+                        // Enrollment Button
+                        enrollmentButtonView
+                        
+                        // Extra padding to ensure button is visible
+                        Color.clear.frame(height: 50)
+                    }
+                    .padding()
+                    .frame(minHeight: geometry.size.height)
                 }
-                .padding()
             }
             .navigationTitle("Enroll in Challenge")
             .navigationBarTitleDisplayMode(.large)
@@ -83,7 +101,7 @@ struct ChallengeEnrollmentView: View {
         VStack(spacing: 12) {
             Image(systemName: challenge.focusArea.iconName)
                 .font(.system(size: 50))
-                .foregroundColor(Color(challenge.focusArea.color))
+                .foregroundColor(focusColor)
             
             Text(challenge.title)
                 .font(.title)
@@ -142,7 +160,7 @@ struct ChallengeEnrollmentView: View {
                     Text("\(Int(selectedWeight)) lbs")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(Color(challenge.focusArea.color))
+                        .foregroundColor(focusColor)
                     
                     Spacer()
                     
@@ -156,7 +174,7 @@ struct ChallengeEnrollmentView: View {
                     in: weightRange,
                     step: 5.0
                 )
-                .accentColor(Color(challenge.focusArea.color))
+                .accentColor(focusColor)
             }
             
             // Weight Recommendation
@@ -260,24 +278,26 @@ struct ChallengeEnrollmentView: View {
                     if isEnrolling {
                         ProgressView()
                             .scaleEffect(0.8)
-                            .foregroundColor(.white)
+                            .tint(.white)
                     } else {
                         Image(systemName: "checkmark.circle")
-                        Text("Start \(challenge.title)")
+                        Text("Enroll in Challenge")
                     }
                 }
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
                             isEnrolling ? 
                             Color.gray : 
-                            Color(challenge.focusArea.color)
+                            focusColor
                         )
+                        .shadow(color: focusColor.opacity(0.3), radius: 4, x: 0, y: 2)
                 )
             }
             .disabled(isEnrolling)
@@ -291,18 +311,25 @@ struct ChallengeEnrollmentView: View {
     }
     
     private func enrollInChallenge() {
+        print("🎯 Enroll button tapped - starting enrollment process")
         Task {
             isEnrolling = true
             enrollmentError = nil
             
             do {
+                print("📝 Attempting to enroll with weight: \(selectedWeight) lbs")
                 try await challengeManager.enrollInChallenge(weightLbs: selectedWeight)
                 
+                print("✅ Enrollment successful - enrollment added to service")
+                // The enrollment is already added to the service in ChallengeManager
+                
+                print("🔄 Dismissing enrollment view")
                 // Enrollment successful
                 await MainActor.run {
                     dismiss()
                 }
             } catch {
+                print("❌ Enrollment failed: \(error)")
                 await MainActor.run {
                     enrollmentError = "Failed to enroll: \(error.localizedDescription)"
                     isEnrolling = false

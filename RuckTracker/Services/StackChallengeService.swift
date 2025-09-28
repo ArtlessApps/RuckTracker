@@ -10,6 +10,8 @@ import Supabase
 
 @MainActor
 class StackChallengeService: ObservableObject {
+    static let shared = StackChallengeService()
+    
     private let supabaseClient: SupabaseClient?
     
     @Published var weeklyChallenges: [StackChallenge] = []
@@ -21,7 +23,7 @@ class StackChallengeService: ObservableObject {
     // Current user ID for testing - replace with proper auth
     private var mockCurrentUserId: UUID? = UUID()
     
-    init() {
+    private init() {
         // Use existing SupabaseManager
         self.supabaseClient = SupabaseManager.shared.client
         
@@ -111,6 +113,7 @@ class StackChallengeService: ObservableObject {
             userEnrollments.append(mockEnrollment)
             cacheUserEnrollments()
             print("📱 Mock enrolled in challenge: \(challenge.title)")
+            print("📱 Total enrollments now: \(userEnrollments.count)")
             return mockEnrollment
         }
         
@@ -171,7 +174,7 @@ class StackChallengeService: ObservableObject {
     func loadUserEnrollments() async {
         guard let client = supabaseClient,
               let userId = mockCurrentUserId else {
-            print("📱 Using mock enrollments")
+            print("📱 Using mock enrollments - preserving existing \(userEnrollments.count) enrollments")
             return
         }
         
@@ -377,9 +380,11 @@ class StackChallengeService: ObservableObject {
     // MARK: - Helper Functions
     
     func isUserEnrolled(in challenge: StackChallenge) -> Bool {
-        return userEnrollments.contains { enrollment in
+        let enrolled = userEnrollments.contains { enrollment in
             enrollment.challengeId == challenge.id && enrollment.isActive
         }
+        print("🔍 Checking enrollment for '\(challenge.title)': \(enrolled) (total enrollments: \(userEnrollments.count))")
+        return enrolled
     }
     
     func getUserEnrollment(for challenge: StackChallenge) -> UserChallengeEnrollment? {

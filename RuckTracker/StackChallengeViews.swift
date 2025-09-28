@@ -9,7 +9,7 @@ import SwiftUI
 
 // MARK: - Main Stack Challenges Section
 struct StackChallengesSection: View {
-    @StateObject private var challengeService = StackChallengeService()
+    @StateObject private var challengeService = StackChallengeService.shared
     @EnvironmentObject var premiumManager: PremiumManager
     @State private var selectedChallenge: StackChallenge?
     @State private var showingAddChallenge = false
@@ -307,15 +307,8 @@ struct StackChallengeDetailView: View {
             }
         }
         .sheet(isPresented: $showingEnrollment) {
-            let challengeManager = ChallengeManager()
-            ChallengeEnrollmentView(
-                challenge: challenge,
-                challengeManager: challengeManager
-            )
+            ChallengeEnrollmentViewWrapper(challenge: challenge)
                 .environmentObject(challengeService)
-                .task {
-                    await challengeManager.loadChallenge(challenge)
-                }
         }
         .onAppear {
             Task {
@@ -690,6 +683,32 @@ struct ChallengeWorkoutRow: View {
     }
 }
 
+// MARK: - Challenge Enrollment View Wrapper
+struct ChallengeEnrollmentViewWrapper: View {
+    let challenge: StackChallenge
+    @StateObject private var challengeManager = ChallengeManager()
+    @State private var isLoading = true
+    
+    var body: some View {
+        Group {
+            if isLoading {
+                VStack {
+                    ProgressView("Preparing enrollment...")
+                        .padding()
+                }
+            } else {
+                ChallengeEnrollmentView(
+                    challenge: challenge,
+                    challengeManager: challengeManager
+                )
+            }
+        }
+        .task {
+            await challengeManager.loadChallenge(challenge)
+            isLoading = false
+        }
+    }
+}
 
 // MARK: - Add Challenge View (Admin)
 struct AddChallengeView: View {
@@ -1060,14 +1079,7 @@ struct UpdatedStackChallengeDetailView: View {
         .navigationBarTitleDisplayMode(.large)
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $showingEnrollment) {
-            let challengeManager = ChallengeManager()
-            ChallengeEnrollmentView(
-                challenge: challenge,
-                challengeManager: challengeManager
-            )
-                .task {
-                    await challengeManager.loadChallenge(challenge)
-                }
+            ChallengeEnrollmentViewWrapper(challenge: challenge)
         }
         .fullScreenCover(isPresented: $navigateToChallenge) {
             UniversalChallengeView(challenge: challenge)
@@ -1342,7 +1354,7 @@ And add this new view for the challenge list:
 */
 
 struct UniversalChallengeListView: View {
-    @StateObject private var challengeService = StackChallengeService()
+    @StateObject private var challengeService = StackChallengeService.shared
     @EnvironmentObject var premiumManager: PremiumManager
     @Environment(\.dismiss) private var dismiss
     @State private var selectedChallenge: StackChallenge?

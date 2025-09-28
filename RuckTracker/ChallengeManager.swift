@@ -16,7 +16,7 @@ class ChallengeManager: ObservableObject {
     @Published var enrollment: UserChallengeEnrollment?
     @Published var isLoading = false
     
-    private let challengeService = StackChallengeService()
+    let challengeService = StackChallengeService.shared
     private var challenge: StackChallenge?
     
     // MARK: - Initialization
@@ -52,8 +52,15 @@ class ChallengeManager: ObservableObject {
     }
     
     func enrollInChallenge(weightLbs: Double) async throws {
-        guard let challenge = challenge else { return }
+        print("🔧 ChallengeManager.enrollInChallenge called with weight: \(weightLbs)")
+        print("🔧 Current challenge is: \(String(describing: self.challenge?.title))")
         
+        guard let challenge = self.challenge else { 
+            print("❌ No challenge loaded in ChallengeManager - enrollment failed")
+            return 
+        }
+        
+        print("🔧 Proceeding with enrollment for challenge: \(challenge.title)")
         let newEnrollment = try await challengeService.enrollInChallenge(challenge, weightLbs: weightLbs)
         enrollment = newEnrollment
         
