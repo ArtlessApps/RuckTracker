@@ -60,30 +60,20 @@ class StackChallengeService: ObservableObject {
     }
     
     private func loadChallengesFromSupabase(client: SupabaseClient) async throws {
-        // Load weekly challenges
-        let weeklyResponse: [StackChallenge] = try await client
+        // Load all active challenges
+        let allChallenges: [StackChallenge] = try await client
             .from("stack_challenges")
             .select()
-            .eq("challenge_type", value: "weekly")
             .eq("is_active", value: true)
             .order("sort_order")
             .execute()
             .value
         
-        // Load seasonal challenges
-        let seasonalResponse: [StackChallenge] = try await client
-            .from("stack_challenges")
-            .select()
-            .eq("challenge_type", value: "seasonal")
-            .eq("is_active", value: true)
-            .order("sort_order")
-            .execute()
-            .value
+        // Separate challenges by season (seasonal vs non-seasonal)
+        weeklyChallenges = allChallenges.filter { $0.season == nil }
+        seasonalChallenges = allChallenges.filter { $0.season != nil }
         
-        weeklyChallenges = weeklyResponse
-        seasonalChallenges = seasonalResponse
-        
-        print("✅ Loaded \(weeklyResponse.count) weekly challenges and \(seasonalResponse.count) seasonal challenges")
+        print("✅ Loaded \(weeklyChallenges.count) weekly challenges and \(seasonalChallenges.count) seasonal challenges")
     }
     
     private func loadMockChallenges() {
@@ -207,12 +197,10 @@ class StackChallengeService: ObservableObject {
         
         var challengeData: [String: AnyJSON] = [
             "title": try AnyJSON(challenge.title),
-            "challenge_type": try AnyJSON(challenge.challengeType.rawValue),
             "focus_area": try AnyJSON(challenge.focusArea.rawValue),
             "duration_days": try AnyJSON(challenge.durationDays),
             "distance_focus": try AnyJSON(challenge.distanceFocus),
             "recovery_focus": try AnyJSON(challenge.recoveryFocus),
-            "is_seasonal": try AnyJSON(challenge.isSeasonal),
             "is_active": try AnyJSON(challenge.isActive),
             "sort_order": try AnyJSON(challenge.sortOrder)
         ]
@@ -689,7 +677,7 @@ extension StackChallengeService {
         }
         
         // Adjust for user weight (scaling for smaller/larger users)
-        let weightAdjustment = userWeight / 170.0 // Assume 170 as average
+        let weightAdjustment = userWeight / 180.0 // Assume 180 as average
         return baseWeight * weightAdjustment
     }
     

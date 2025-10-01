@@ -12,30 +12,18 @@ struct StackChallenge: Codable, Identifiable {
     let id: UUID
     let title: String
     let description: String?
-    let challengeType: ChallengeType
     let focusArea: FocusArea
     let durationDays: Int
     let weightPercentage: Double?
     let paceTarget: Double?
     let distanceFocus: Bool
     let recoveryFocus: Bool
-    let isSeasonal: Bool
     let season: Season?
     let isActive: Bool
     let sortOrder: Int
     let createdAt: Date
     let updatedAt: Date
     
-    enum ChallengeType: String, Codable, CaseIterable {
-        case weekly, seasonal
-        
-        var displayName: String {
-            switch self {
-            case .weekly: return "Weekly"
-            case .seasonal: return "Seasonal"
-            }
-        }
-    }
     
     enum FocusArea: String, Codable, CaseIterable {
         case power, speed, distance, recovery
@@ -97,14 +85,12 @@ struct StackChallenge: Codable, Identifiable {
     
     enum CodingKeys: String, CodingKey {
         case id, title, description
-        case challengeType = "challenge_type"
         case focusArea = "focus_area"
         case durationDays = "duration_days"
         case weightPercentage = "weight_percentage"
         case paceTarget = "pace_target"
         case distanceFocus = "distance_focus"
         case recoveryFocus = "recovery_focus"
-        case isSeasonal = "is_seasonal"
         case season
         case isActive = "is_active"
         case sortOrder = "sort_order"
@@ -440,14 +426,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Power Week",
             description: "Heavy weight focus challenge - Build strength with increased load carrying",
-            challengeType: .weekly,
             focusArea: .power,
             durationDays: 7,
             weightPercentage: 27.5,
             paceTarget: nil,
             distanceFocus: false,
             recoveryFocus: false,
-            isSeasonal: false,
             season: nil,
             isActive: true,
             sortOrder: 1,
@@ -458,14 +442,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Speed Week",
             description: "Pace improvement focus challenge - Push your limits with faster paces",
-            challengeType: .weekly,
             focusArea: .speed,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: 18.0,
             distanceFocus: false,
             recoveryFocus: false,
-            isSeasonal: false,
             season: nil,
             isActive: true,
             sortOrder: 2,
@@ -476,14 +458,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Distance Week",
             description: "Endurance building focus challenge - Go the extra mile",
-            challengeType: .weekly,
             focusArea: .distance,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: nil,
             distanceFocus: true,
             recoveryFocus: false,
-            isSeasonal: false,
             season: nil,
             isActive: true,
             sortOrder: 3,
@@ -494,14 +474,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Active Recovery",
             description: "Light recovery focus challenge - Maintain movement while recovering",
-            challengeType: .weekly,
             focusArea: .recovery,
             durationDays: 7,
             weightPercentage: 15.0,
             paceTarget: 22.0,
             distanceFocus: false,
             recoveryFocus: true,
-            isSeasonal: false,
             season: nil,
             isActive: true,
             sortOrder: 4,
@@ -515,14 +493,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Load Carrier",
             description: "Progressive weight mastery challenge - Master heavy carries through systematic progression",
-            challengeType: .seasonal,
             focusArea: .progressiveWeight,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: nil,
             distanceFocus: false,
             recoveryFocus: false,
-            isSeasonal: true,
             season: .fall,
             isActive: true,
             sortOrder: 5,
@@ -533,14 +509,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Pace Pusher",
             description: "Speed development challenge - Systematic pace improvements over time",
-            challengeType: .seasonal,
             focusArea: .speedDevelopment,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: nil,
             distanceFocus: false,
             recoveryFocus: false,
-            isSeasonal: true,
             season: .winter,
             isActive: true,
             sortOrder: 6,
@@ -551,14 +525,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Distance Master",
             description: "Endurance progression challenge - Build your distance capabilities",
-            challengeType: .seasonal,
             focusArea: .enduranceProgression,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: nil,
             distanceFocus: true,
             recoveryFocus: false,
-            isSeasonal: true,
             season: .spring,
             isActive: true,
             sortOrder: 7,
@@ -569,14 +541,12 @@ extension StackChallenge {
             id: UUID(),
             title: "Tactical Ready",
             description: "Mixed operational skills challenge - Real-world application focus",
-            challengeType: .seasonal,
             focusArea: .tacticalMixed,
             durationDays: 7,
             weightPercentage: nil,
             paceTarget: nil,
             distanceFocus: false,
             recoveryFocus: false,
-            isSeasonal: true,
             season: .summer,
             isActive: true,
             sortOrder: 8,

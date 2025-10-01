@@ -31,15 +31,15 @@ struct ChallengeEnrollmentView: View {
     private var weightRange: ClosedRange<Double> {
         switch challenge.focusArea {
         case .recovery:
-            return 10.0...30.0 // Light weights for recovery
+            return 5.0...30.0 // Light weights for recovery
         case .speed, .speedDevelopment:
-            return 15.0...35.0 // Moderate weights for speed
+            return 5.0...35.0 // Moderate weights for speed
         case .distance, .enduranceProgression:
-            return 20.0...45.0 // Standard range for distance
+            return 5.0...45.0 // Standard range for distance
         case .power, .progressiveWeight:
-            return 25.0...60.0 // Heavy weights for power
+            return 5.0...60.0 // Heavy weights for power
         case .tacticalMixed:
-            return 30.0...50.0 // Tactical standard weights
+            return 5.0...50.0 // Tactical standard weights
         }
     }
     

@@ -499,7 +499,7 @@ struct WeightPickerSheet: View {
     @State private var tempWeight: Double
     
     init() {
-        _tempWeight = State(initialValue: 20.0)
+        _tempWeight = State(initialValue: 5.0)
     }
     
     var body: some View {
@@ -520,11 +520,11 @@ struct WeightPickerSheet: View {
                 VStack(spacing: 16) {
                     // Slider
                     VStack(spacing: 8) {
-                        Slider(value: $tempWeight, in: 10...100, step: 5)
+                        Slider(value: $tempWeight, in: 5...100, step: 5)
                             .accentColor(.blue)
                         
                         HStack {
-                            Text("10 lbs")
+                            Text("5 lbs")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Spacer()
@@ -536,7 +536,7 @@ struct WeightPickerSheet: View {
                     
                     // Quick weight buttons
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                        ForEach([15, 20, 25, 30, 35, 40, 45, 50], id: \.self) { weight in
+                        ForEach([5, 10, 15, 20, 25, 30, 35, 40], id: \.self) { weight in
                             Button(action: {
                                 tempWeight = Double(weight)
                             }) {

@@ -189,7 +189,7 @@ struct StackChallengeCard: View {
                         
                         Spacer()
                         
-                        if challenge.isSeasonal, let season = challenge.season {
+                        if let season = challenge.season {
                             Image(systemName: season.iconName)
                                 .font(.caption)
                                 .foregroundColor(isLocked ? .secondary : focusColor)
@@ -332,7 +332,7 @@ struct StackChallengeDetailView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(focusColor)
                         
-                        if challenge.isSeasonal, let season = challenge.season {
+                        if let season = challenge.season {
                             Image(systemName: season.iconName)
                                 .font(.title3)
                                 .foregroundColor(focusColor)
@@ -430,13 +430,8 @@ struct StackChallengeDetailView: View {
                     description: challenge.focusArea.displayName
                 )
                 
-                OverviewRow(
-                    icon: "calendar",
-                    title: "Challenge Type",
-                    description: challenge.challengeType == .weekly ? "Weekly Focus" : "Seasonal Challenge"
-                )
                 
-                if challenge.isSeasonal, let season = challenge.season {
+                if let season = challenge.season {
                     OverviewRow(
                         icon: season.iconName,
                         title: "Season",
@@ -717,14 +712,12 @@ struct AddChallengeView: View {
     
     @State private var title = ""
     @State private var description = ""
-    @State private var challengeType: StackChallenge.ChallengeType = .weekly
     @State private var focusArea: StackChallenge.FocusArea = .power
     @State private var durationDays = 7
     @State private var weightPercentage: Double?
     @State private var paceTarget: Double?
     @State private var distanceFocus = false
     @State private var recoveryFocus = false
-    @State private var isSeasonal = false
     @State private var season: StackChallenge.Season?
     @State private var isAdding = false
     
@@ -738,12 +731,6 @@ struct AddChallengeView: View {
                 }
                 
                 Section("Challenge Settings") {
-                    Picker("Type", selection: $challengeType) {
-                        ForEach(StackChallenge.ChallengeType.allCases, id: \.self) { type in
-                            Text(type.rawValue.capitalized).tag(type)
-                        }
-                    }
-                    
                     Picker("Focus Area", selection: $focusArea) {
                         ForEach(StackChallenge.FocusArea.allCases, id: \.self) { focus in
                             Text(focus.displayName).tag(focus)
@@ -807,14 +794,10 @@ struct AddChallengeView: View {
                 }
                 
                 Section("Seasonal Settings") {
-                    Toggle("Seasonal Challenge", isOn: $isSeasonal)
-                    
-                    if isSeasonal {
-                        Picker("Season", selection: $season) {
-                            Text("None").tag(nil as StackChallenge.Season?)
-                            ForEach(StackChallenge.Season.allCases, id: \.self) { s in
-                                Text(s.displayName).tag(s as StackChallenge.Season?)
-                            }
+                    Picker("Season", selection: $season) {
+                        Text("None").tag(nil as StackChallenge.Season?)
+                        ForEach(StackChallenge.Season.allCases, id: \.self) { s in
+                            Text(s.displayName).tag(s as StackChallenge.Season?)
                         }
                     }
                 }
@@ -840,14 +823,12 @@ struct AddChallengeView: View {
             id: UUID(),
             title: title,
             description: description.isEmpty ? nil : description,
-            challengeType: challengeType,
             focusArea: focusArea,
             durationDays: durationDays,
             weightPercentage: weightPercentage,
             paceTarget: paceTarget,
             distanceFocus: distanceFocus,
             recoveryFocus: recoveryFocus,
-            isSeasonal: isSeasonal,
             season: season,
             isActive: true,
             sortOrder: 0,

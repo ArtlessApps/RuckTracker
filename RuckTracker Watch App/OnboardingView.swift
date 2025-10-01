@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @EnvironmentObject var healthManager: HealthManager
     @State private var currentStep = 0
-    @State private var bodyWeight: Double = 155.0
+    @State private var bodyWeight: Double = 180.0
     @State private var ruckWeight: Double = 20.0
     @State private var selectedWeightUnit: UserSettings.WeightUnit = .pounds
     @State private var selectedDistanceUnit: UserSettings.DistanceUnit = .miles
@@ -84,12 +84,12 @@ struct OnboardingView: View {
         if Locale.current.measurementSystem == .metric {
             selectedWeightUnit = .kilograms
             selectedDistanceUnit = .kilometers
-            bodyWeight = 70.0
+            bodyWeight = 81.6 // 180 lbs converted to kg
             ruckWeight = 9.0
         } else {
             selectedWeightUnit = .pounds
             selectedDistanceUnit = .miles
-            bodyWeight = 155.0
+            bodyWeight = 180.0
             ruckWeight = 20.0
         }
     }
@@ -122,6 +122,7 @@ struct HealthKitPermissionStep: View {
     @ObservedObject var healthManager: HealthManager
     let nextAction: () -> Void
     let backAction: () -> Void
+    @State private var showFallbackOption = false
     
     var body: some View {
         List {
@@ -239,14 +240,58 @@ struct HealthKitPermissionStep: View {
                     Button("Continue") {
                         nextAction()
                     }
-                    .disabled(!healthManager.isAuthorized)
+                    .disabled(!healthManager.isAuthorized && !healthManager.authorizationInProgress)
                     .foregroundColor(healthManager.isAuthorized ? .orange : .secondary)
                     .fontWeight(healthManager.isAuthorized ? .medium : .regular)
                 }
                 .padding(.vertical, 4)
             }
+            
+            // Add fallback option if HealthKit fails or times out
+            if showFallbackOption || (healthManager.errorManager.currentError != nil && !healthManager.isAuthorized) {
+                Section {
+                    VStack(spacing: 8) {
+                        Text("HealthKit Setup Failed")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                        
+                        Text("You can continue without HealthKit, but workout data won't sync to the Health app.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Continue Without HealthKit") {
+                            nextAction()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 6)
+                        .background(Color.orange)
+                        .cornerRadius(6)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
         }
         .navigationTitle("Health Setup")
+        .onAppear {
+            // Set up a timeout to show fallback option if HealthKit doesn't respond
+            DispatchQueue.main.asyncAfter(deadline: .now() + 45.0) {
+                if !healthManager.isAuthorized && !healthManager.authorizationInProgress {
+                    showFallbackOption = true
+                }
+            }
+        }
+        .onChange(of: healthManager.isAuthorized) { isAuthorized in
+            if isAuthorized {
+                showFallbackOption = false
+            }
+        }
+        .onChange(of: healthManager.authorizationInProgress) { inProgress in
+            if !inProgress && !healthManager.isAuthorized {
+                showFallbackOption = true
+            }
+        }
     }
 }
 

@@ -52,6 +52,15 @@ class HealthManager: ObservableObject {
         
         authorizationInProgress = true
         
+        // Set up timeout to prevent hanging
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) { [weak self] in
+            guard let self = self, self.authorizationInProgress else { return }
+            print("⏰ \(self.platformName): HealthKit authorization timeout")
+            self.authorizationInProgress = false
+            let timeoutError = HealthKitError.authorizationFailed(underlying: nil)
+            self.errorManager.handleError(timeoutError, context: "Authorization Timeout")
+        }
+        
         // Safely get health data types
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
               let caloriesType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
@@ -96,19 +105,22 @@ class HealthManager: ObservableObject {
         
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
             DispatchQueue.main.async {
-                self?.authorizationInProgress = false
+                guard let self = self else { return }
+                
+                // Clear the timeout since we got a response
+                self.authorizationInProgress = false
                 
                 if let error = error {
                     let healthKitError = error.asHealthKitError
-                    self?.errorManager.handleError(healthKitError, context: "Authorization Request")
-                    self?.isAuthorized = false
+                    self.errorManager.handleError(healthKitError, context: "Authorization Request")
+                    self.isAuthorized = false
                 } else if !success {
                     let healthKitError = HealthKitError.authorizationFailed(underlying: nil)
-                    self?.errorManager.handleError(healthKitError, context: "Authorization Request")
-                    self?.isAuthorized = false
+                    self.errorManager.handleError(healthKitError, context: "Authorization Request")
+                    self.isAuthorized = false
                 } else {
-                    print("🏥 \(self?.platformName ?? "Unknown") authorization completed successfully")
-                    self?.checkAuthorizationStatus()
+                    print("🏥 \(self.platformName) authorization completed successfully")
+                    self.checkAuthorizationStatus()
                 }
             }
         }
@@ -126,20 +138,24 @@ class HealthManager: ObservableObject {
         
         let workoutType = HKWorkoutType.workoutType()
         
-        // Check individual permissions
-        let heartRateStatus = healthStore.authorizationStatus(for: heartRateType)
-        let caloriesStatus = healthStore.authorizationStatus(for: caloriesType)
-        let distanceStatus = healthStore.authorizationStatus(for: distanceType)
-        let workoutStatus = healthStore.authorizationStatus(for: workoutType)
-        
-        print("🏥 \(platformName) Authorization Status:")
-        print("  - Heart Rate: \(heartRateStatus.rawValue) \(heartRateStatus.description)")
-        print("  - Calories: \(caloriesStatus.rawValue) \(caloriesStatus.description)")
-        print("  - Distance: \(distanceStatus.rawValue) \(distanceStatus.description)")
-        print("  - Workout: \(workoutStatus.rawValue) \(workoutStatus.description)")
-        
-        DispatchQueue.main.async { [weak self] in
+        // Use async dispatch to prevent blocking the main thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
+            
+            // Check individual permissions
+            let heartRateStatus = self.healthStore.authorizationStatus(for: heartRateType)
+            let caloriesStatus = self.healthStore.authorizationStatus(for: caloriesType)
+            let distanceStatus = self.healthStore.authorizationStatus(for: distanceType)
+            let workoutStatus = self.healthStore.authorizationStatus(for: workoutType)
+            
+            print("🏥 \(self.platformName) Authorization Status:")
+            print("  - Heart Rate: \(heartRateStatus.rawValue) \(heartRateStatus.description)")
+            print("  - Calories: \(caloriesStatus.rawValue) \(caloriesStatus.description)")
+            print("  - Distance: \(distanceStatus.rawValue) \(distanceStatus.description)")
+            print("  - Workout: \(workoutStatus.rawValue) \(workoutStatus.description)")
+            
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
             
             // Update individual permission status
             self.hasHeartRatePermission = heartRateStatus == .sharingAuthorized
@@ -238,6 +254,7 @@ class HealthManager: ObservableObject {
                 }
             } else {
                 print("📱 iPhone: Limited HealthKit (no heart rate) - use Watch for full tracking")
+            }
             }
         }
     }

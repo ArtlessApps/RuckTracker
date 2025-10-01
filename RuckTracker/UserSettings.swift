@@ -12,7 +12,7 @@ class UserSettings: ObservableObject {
     static let shared = UserSettings()
     
     // User preferences
-    @Published var bodyWeight: Double = 70.0 // kg
+    @Published var bodyWeight: Double = 180.0 // lbs
     @Published var preferredWeightUnit: WeightUnit = .pounds
     @Published var preferredDistanceUnit: DistanceUnit = .miles
     @Published var defaultRuckWeight: Double = 20.0 // lbs
@@ -56,7 +56,7 @@ class UserSettings: ObservableObject {
     private func loadSettings() {
         bodyWeight = userDefaults.double(forKey: "bodyWeight")
         if bodyWeight == 0 {
-            bodyWeight = 70.0 // Average adult weight in kg
+            bodyWeight = 180.0 // Default weight in lbs
         }
         
         if let weightUnitString = userDefaults.string(forKey: "preferredWeightUnit"),
@@ -161,7 +161,7 @@ class UserSettings: ObservableObject {
     
     // Reset to defaults
     func resetToDefaults() {
-        bodyWeight = 70.0
+        bodyWeight = 180.0
         preferredWeightUnit = .pounds
         preferredDistanceUnit = .miles
         defaultRuckWeight = 20.0

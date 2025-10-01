@@ -956,7 +956,7 @@ struct ProgramEnrollmentView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.orange)
                         
-                        Slider(value: $startingWeight, in: 10...50, step: 5)
+                        Slider(value: $startingWeight, in: 5...50, step: 5)
                             .accentColor(.orange)
                     }
                     
