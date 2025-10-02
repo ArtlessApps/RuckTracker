@@ -12,6 +12,7 @@ import HealthKit
 import CoreData
 import CoreLocation
 
+@MainActor
 class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     // MARK: - Published Properties
     @Published var isActive = false
@@ -22,6 +23,13 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
+    
+    // Post-workout summary state
+    @Published var showingPostWorkoutSummary = false
+    @Published var finalElapsedTime: TimeInterval = 0
+    @Published var finalDistance: Double = 0
+    @Published var finalCalories: Double = 0
+    @Published var finalRuckWeight: Double = 0
     
     // Settings
     private let userSettings = UserSettings.shared
@@ -196,6 +204,12 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func endWorkout() {
         print("🏁 Phone: Ending workout...")
         
+        // Capture final stats before resetting
+        finalElapsedTime = elapsedTime
+        finalDistance = distance
+        finalCalories = calories
+        finalRuckWeight = ruckWeight
+        
         // Stop timer first
         timer?.invalidate()
         timer = nil
@@ -216,7 +230,12 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         saveHealthKitWorkout()
         
         print("📱 Phone: Workout ended - \(formattedElapsedTime)")
-        resetWorkout()
+        
+        // Show post-workout summary
+        showingPostWorkoutSummary = true
+        
+        // Reset workout data (but keep final stats for summary)
+        resetWorkoutData()
     }
     
     // MARK: - Timer
@@ -500,7 +519,30 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     
+    // MARK: - Post-Workout Summary
+    func dismissPostWorkoutSummary() {
+        showingPostWorkoutSummary = false
+        resetWorkout()
+    }
+    
     // MARK: - Cleanup
+    private func resetWorkoutData() {
+        elapsedTime = 0
+        distance = 0
+        totalDistance = 0
+        healthKitDistance = 0
+        calories = 0
+        startDate = nil
+        currentHeartRate = 0
+        
+        // Reset location tracking
+        startLocation = nil
+        lastLocation = nil
+        
+        // Clean up HealthKit objects
+        workoutBuilder = nil
+    }
+    
     private func resetWorkout() {
         elapsedTime = 0
         distance = 0
@@ -516,6 +558,13 @@ class WorkoutManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         // Clean up HealthKit objects
         workoutBuilder = nil
+        
+        // Reset post-workout summary state
+        showingPostWorkoutSummary = false
+        finalElapsedTime = 0
+        finalDistance = 0
+        finalCalories = 0
+        finalRuckWeight = 0
     }
     
     // MARK: - Utility

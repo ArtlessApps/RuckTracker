@@ -85,19 +85,20 @@ class HealthManager: ObservableObject {
         
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
             DispatchQueue.main.async {
-                self?.authorizationInProgress = false
+                guard let self = self else { return }
+                self.authorizationInProgress = false
                 
                 if let error = error {
                     let healthKitError = error.asHealthKitError
-                    self?.errorManager.handleError(healthKitError, context: "Authorization Request")
-                    self?.isAuthorized = false
+                    self.errorManager.handleError(healthKitError, context: "Authorization Request")
+                    self.isAuthorized = false
                 } else if !success {
                     let healthKitError = HealthKitError.authorizationFailed(underlying: nil)
-                    self?.errorManager.handleError(healthKitError, context: "Authorization Request")
-                    self?.isAuthorized = false
+                    self.errorManager.handleError(healthKitError, context: "Authorization Request")
+                    self.isAuthorized = false
                 } else {
-                    print("🏥 \(self?.platformName ?? "Unknown") authorization completed successfully")
-                    self?.checkAuthorizationStatus()
+                    print("🏥 \(self.platformName) authorization completed successfully")
+                    self.checkAuthorizationStatus()
                 }
             }
         }

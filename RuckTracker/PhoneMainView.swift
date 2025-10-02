@@ -57,6 +57,15 @@ struct ImprovedPhoneMainView: View {
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
+        .sheet(isPresented: $workoutManager.showingPostWorkoutSummary) {
+            PhonePostWorkoutSummaryView(
+                finalElapsedTime: workoutManager.finalElapsedTime,
+                finalDistance: workoutManager.finalDistance,
+                finalCalories: workoutManager.finalCalories,
+                finalRuckWeight: workoutManager.finalRuckWeight
+            )
+            .environmentObject(workoutManager)
+        }
     }
     
     // MARK: - Main Content View

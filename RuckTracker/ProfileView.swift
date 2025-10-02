@@ -73,6 +73,9 @@ struct ProfileView: View {
         } message: {
             Text("Are you sure you want to sign out? You'll need to sign in again to access your data.")
         }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
     }
     
     // MARK: - Computed Properties

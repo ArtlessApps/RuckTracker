@@ -14,6 +14,7 @@ import CoreData
 // MARK: - Watch App Types
 // TerrainType enum removed for MVP - using flat terrain only
 
+@MainActor
 class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLiveWorkoutBuilderDelegate {
     // MARK: - Published Properties
     @Published var isActive = false

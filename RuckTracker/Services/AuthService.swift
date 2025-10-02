@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 import Supabase
 
+@MainActor
 class AuthService: ObservableObject {
     private let supabase = SupabaseManager.shared.client
     
