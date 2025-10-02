@@ -81,10 +81,6 @@ struct ImprovedPhoneMainView: View {
                 dataCard
                 
                 // Preserve existing functionality sections
-                if !workoutDataManager.workouts.isEmpty {
-                    QuickStatsDashboard()
-                        .environmentObject(workoutDataManager)
-                }
                 
                 // Premium Analytics - only show if user has data
                 if workoutDataManager.totalWorkouts >= 3 {

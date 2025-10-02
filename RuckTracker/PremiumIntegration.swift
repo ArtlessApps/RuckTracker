@@ -126,10 +126,6 @@ struct UpdatedPhoneMainView: View {
                     // Premium Training Programs Section
                     PremiumTrainingProgramsSection()
                     
-                    if !workoutDataManager.workouts.isEmpty {
-                        QuickStatsDashboard()
-                            .environmentObject(workoutDataManager)
-                    }
                     
                     // Premium Analytics Section (gated)
                     PremiumAnalyticsSection()

@@ -333,6 +333,7 @@ struct WorkoutDetailCardView: View {
                     Text(workout.formattedDate)
                         .font(.headline)
                         .fontWeight(.medium)
+                        .foregroundColor(.primary)
                     
                     Text("\(Int(workout.ruckWeight)) lbs")
                         .font(.subheadline)
@@ -383,8 +384,8 @@ struct WorkoutDetailCardView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
         )
     }
 }

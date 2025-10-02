@@ -96,6 +96,7 @@ struct PremiumDataSection: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @State private var exportMessage = ""
     @State private var showingAlert = false
+    @State private var isExporting = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -110,12 +111,14 @@ struct PremiumDataSection: View {
             }
             
             PremiumFeatureCard(
-                icon: "square.and.arrow.up",
-                title: "Export Data",
-                description: "Export your workout data to CSV",
+                icon: isExporting ? "arrow.clockwise" : "square.and.arrow.up",
+                title: isExporting ? "Exporting..." : "Export Data",
+                description: isExporting ? "Preparing your workout data..." : "Export your workout data to CSV",
                 isLocked: false
             ) {
-                exportToCSV()
+                if !isExporting {
+                    exportToCSV()
+                }
             }
         }
         .padding()
@@ -131,18 +134,49 @@ struct PremiumDataSection: View {
     }
     
     private func exportToCSV() {
-        let csvData = generateCSVData()
-        shareData(csvData, fileName: "RuckTracker_Workouts.csv", mimeType: "text/csv")
+        // Check if there are workouts to export
+        guard !workoutDataManager.workouts.isEmpty else {
+            exportMessage = "No workout data to export. Complete some workouts first!"
+            showingAlert = true
+            return
+        }
+        
+        isExporting = true
+        
+        // Generate CSV data on background queue for better performance
+        DispatchQueue.global(qos: .userInitiated).async {
+            let csvData = self.generateCSVData()
+            
+            DispatchQueue.main.async {
+                self.shareData(csvData, fileName: "RuckTracker_Workouts.csv", mimeType: "text/csv")
+            }
+        }
     }
     
     
     private func generateCSVData() -> Data {
-        var csvString = "Date,Duration (minutes),Distance (miles),Calories,Ruck Weight (lbs),Heart Rate (bpm)\n"
+        // Create a more comprehensive CSV header
+        var csvString = "Date,Time,Duration (minutes),Distance (miles),Calories,Ruck Weight (lbs),Heart Rate (bpm),Notes\n"
         
-        for workout in workoutDataManager.workouts {
+        // Sort workouts by date (most recent first)
+        let sortedWorkouts = workoutDataManager.workouts.sorted { workout1, workout2 in
+            guard let date1 = workout1.date, let date2 = workout2.date else { return false }
+            return date1 > date2
+        }
+        
+        for workout in sortedWorkouts {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .short
+            dateFormatter.timeStyle = .short
+            
             let dateString = workout.date?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown"
+            let timeString = workout.date?.formatted(date: .omitted, time: .shortened) ?? "Unknown"
             let durationMinutes = workout.duration / 60
-            csvString += "\(dateString),\(String(format: "%.2f", durationMinutes)),\(String(format: "%.2f", workout.distance)),\(Int(workout.calories)),\(Int(workout.ruckWeight)),\(Int(workout.heartRate))\n"
+            
+            // Escape any commas in notes and add quotes if needed
+            let notes = (workout.notes ?? "").replacingOccurrences(of: ",", with: ";")
+            
+            csvString += "\(dateString),\(timeString),\(String(format: "%.2f", durationMinutes)),\(String(format: "%.2f", workout.distance)),\(Int(workout.calories)),\(Int(workout.ruckWeight)),\(Int(workout.heartRate)),\(notes)\n"
         }
         
         return csvString.data(using: .utf8) ?? Data()
@@ -150,32 +184,85 @@ struct PremiumDataSection: View {
     
     
     private func shareData(_ data: Data, fileName: String, mimeType: String) {
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        // Use Documents directory instead of temporary directory for better file access
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsURL.appendingPathComponent(fileName)
         
         do {
-            try data.write(to: tempURL)
+            // Remove existing file if it exists
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(at: fileURL)
+            }
             
-            DispatchQueue.main.async {
-                let activityVC = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
-                
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = windowScene.windows.first,
-                   let rootVC = window.rootViewController {
-                    
-                    // Handle iPad presentation
-                    if let popover = activityVC.popoverPresentationController {
-                        popover.sourceView = window
-                        popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
-                        popover.permittedArrowDirections = []
-                    }
-                    
-                    rootVC.present(activityVC, animated: true)
-                }
+            // Write the data
+            try data.write(to: fileURL)
+            
+            // Add a small delay to ensure any current presentations are dismissed
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.presentActivityViewController(with: fileURL)
             }
         } catch {
             exportMessage = "Failed to export data: \(error.localizedDescription)"
             showingAlert = true
         }
+    }
+    
+    private func presentActivityViewController(with url: URL) {
+        // Create a more robust file sharing approach
+        let activityItems: [Any] = [url]
+        let activityVC = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        
+        // Exclude some activity types that might cause issues
+        activityVC.excludedActivityTypes = [
+            .assignToContact,
+            .addToReadingList,
+            .openInIBooks
+        ]
+        
+        // Set a completion handler to ensure proper cleanup
+        activityVC.completionWithItemsHandler = { [weak self] activityType, completed, returnedItems, error in
+            DispatchQueue.main.async {
+                self?.isExporting = false
+                
+                if let error = error {
+                    self?.exportMessage = "Export failed: \(error.localizedDescription)"
+                    self?.showingAlert = true
+                } else if completed {
+                    self?.exportMessage = "Export completed successfully! Your workout data has been shared."
+                    self?.showingAlert = true
+                }
+                
+                // Clean up the file after a delay
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+        }
+        
+        // Find the topmost presented view controller to avoid presentation conflicts
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootVC = window.rootViewController else {
+            exportMessage = "Unable to present export options. Please try again."
+            showingAlert = true
+            return
+        }
+        
+        // Find the topmost presented view controller
+        var topVC = rootVC
+        while let presentedVC = topVC.presentedViewController {
+            topVC = presentedVC
+        }
+        
+        // Handle iPad presentation
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = window
+            popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        // Present from the topmost view controller
+        topVC.present(activityVC, animated: true)
     }
     
 }

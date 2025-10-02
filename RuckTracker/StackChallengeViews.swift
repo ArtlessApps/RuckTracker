@@ -453,8 +453,7 @@ struct StackChallengeDetailView: View {
             )
             
             Button("View Your Progress") {
-                // TODO: Navigate to progress view
-                print("Navigate to challenge progress")
+                navigateToChallenge = true
             }
             .font(.headline)
             .foregroundColor(.white)
