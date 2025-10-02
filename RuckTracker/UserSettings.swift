@@ -17,6 +17,7 @@ class UserSettings: ObservableObject {
     @Published var preferredDistanceUnit: DistanceUnit = .miles
     @Published var defaultRuckWeight: Double = 20.0 // lbs
     @Published var username: String? = nil
+    @Published var email: String? = nil
     
     // App settings
     @Published var hasCompletedOnboarding: Bool = false
@@ -75,6 +76,7 @@ class UserSettings: ObservableObject {
         }
         
         username = userDefaults.string(forKey: "username")
+        email = userDefaults.string(forKey: "email")
         
         hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedOnboarding")
     }
@@ -113,6 +115,16 @@ class UserSettings: ObservableObject {
                     self?.userDefaults.set(value, forKey: "username")
                 } else {
                     self?.userDefaults.removeObject(forKey: "username")
+                }
+            }
+            .store(in: &cancellables)
+        
+        $email
+            .sink { [weak self] value in
+                if let value = value {
+                    self?.userDefaults.set(value, forKey: "email")
+                } else {
+                    self?.userDefaults.removeObject(forKey: "email")
                 }
             }
             .store(in: &cancellables)

@@ -499,25 +499,122 @@ struct AnalyticsEmptyState: View {
 }
 
 struct WeeklyProgressChart: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Weekly Progress")
-                .font(.subheadline)
-                .fontWeight(.medium)
+    @EnvironmentObject var workoutDataManager: WorkoutDataManager
+    @ObservedObject private var userSettings = UserSettings.shared
+    
+    private var weeklyData: [WeeklyDataPoint] {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        // Get last 8 weeks of data
+        var weeks: [WeeklyDataPoint] = []
+        
+        for i in 0..<8 {
+            let weekStart = calendar.date(byAdding: .weekOfYear, value: -i, to: today) ?? today
+            let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? today
             
-            // Placeholder chart - you could integrate with Charts framework
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.blue.opacity(0.1))
+            let weekWorkouts = workoutDataManager.workouts.filter { workout in
+                guard let workoutDate = workout.date else { return false }
+                return workoutDate >= weekStart && workoutDate <= weekEnd
+            }
+            
+            let totalDistance = weekWorkouts.reduce(0) { $0 + $1.distance }
+            let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
+                totalDistance : 
+                totalDistance / userSettings.preferredDistanceUnit.conversionToMiles
+            
+            weeks.append(WeeklyDataPoint(
+                weekStart: weekStart,
+                distance: displayDistance,
+                workoutCount: weekWorkouts.count
+            ))
+        }
+        
+        return weeks.reversed() // Show oldest to newest
+    }
+    
+    private var maxDistance: Double {
+        weeklyData.map(\.distance).max() ?? 1.0
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Weekly Progress")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Spacer()
+                
+                Text("Last 8 weeks")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            if weeklyData.allSatisfy({ $0.distance == 0 }) {
+                // No data state
+                VStack(spacing: 8) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                    
+                    Text("No recent activity")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 .frame(height: 120)
-                .overlay(
-                    VStack {
-                        Text("📊")
-                            .font(.title)
-                        Text("Weekly Distance Chart")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                .frame(maxWidth: .infinity)
+            } else {
+                // Chart with data
+                HStack(alignment: .bottom, spacing: 8) {
+                    ForEach(weeklyData.indices, id: \.self) { index in
+                        let dataPoint = weeklyData[index]
+                        let height = maxDistance > 0 ? (dataPoint.distance / maxDistance) * 100 : 0
+                        
+                        VStack(spacing: 4) {
+                            // Bar
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(dataPoint.distance > 0 ? Color.blue : Color.gray.opacity(0.3))
+                                .frame(width: 20, height: max(height, 4))
+                                .animation(.easeInOut(duration: 0.3), value: height)
+                            
+                            // Week label
+                            Text(weekLabel(for: dataPoint.weekStart))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .rotationEffect(.degrees(-45))
+                                .frame(width: 20, height: 20)
+                        }
                     }
-                )
+                }
+                .frame(height: 120)
+                .frame(maxWidth: .infinity)
+            }
+            
+            // Summary stats
+            if !weeklyData.isEmpty {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("This Week")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(String(format: "%.1f %@", weeklyData.last?.distance ?? 0, userSettings.preferredDistanceUnit.rawValue))
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Avg/Week")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(String(format: "%.1f %@", weeklyData.map(\.distance).reduce(0, +) / Double(weeklyData.count), userSettings.preferredDistanceUnit.rawValue))
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
         }
         .padding()
         .background(
@@ -525,6 +622,18 @@ struct WeeklyProgressChart: View {
                 .fill(Color.gray.opacity(0.05))
         )
     }
+    
+    private func weekLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+}
+
+struct WeeklyDataPoint {
+    let weekStart: Date
+    let distance: Double
+    let workoutCount: Int
 }
 
 struct PerformanceInsightsCard: View {

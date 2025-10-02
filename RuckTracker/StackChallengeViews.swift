@@ -68,12 +68,8 @@ struct StackChallengesSection: View {
                 weeklyChallengesSection
             }
             
-            // Seasonal Challenges Section
-            if !challengeService.seasonalChallenges.isEmpty {
-                seasonalChallengesSection
-            }
             
-            if challengeService.weeklyChallenges.isEmpty && challengeService.seasonalChallenges.isEmpty {
+            if challengeService.weeklyChallenges.isEmpty {
                 EmptyStateView(
                     icon: "target",
                     title: "No Challenges Available",
@@ -120,41 +116,6 @@ struct StackChallengesSection: View {
         }
     }
     
-    @ViewBuilder
-    private var seasonalChallengesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Seasonal Challenges")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                if !premiumManager.isPremiumUser {
-                    PremiumBadge(size: .small)
-                }
-            }
-            .padding(.horizontal, 20)
-            
-            // Grid layout matching program view style
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
-                ForEach(challengeService.seasonalChallenges) { challenge in
-                    StackChallengeCard(
-                        challenge: challenge,
-                        isLocked: !premiumManager.isPremiumUser,
-                        isEnrolled: challengeService.isUserEnrolled(in: challenge)
-                    ) {
-                        if premiumManager.isPremiumUser {
-                            selectedChallenge = challenge
-                        } else {
-                            premiumManager.showPaywall(context: .featureUpsell)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-    }
 }
 
 // MARK: - Stack Challenge Card (Matches Program Card Style)
@@ -189,11 +150,6 @@ struct StackChallengeCard: View {
                         
                         Spacer()
                         
-                        if let season = challenge.season {
-                            Image(systemName: season.iconName)
-                                .font(.caption)
-                                .foregroundColor(isLocked ? .secondary : focusColor)
-                        }
                     }
                     
                     Text(challenge.description ?? "Challenge description")
@@ -332,11 +288,6 @@ struct StackChallengeDetailView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(focusColor)
                         
-                        if let season = challenge.season {
-                            Image(systemName: season.iconName)
-                                .font(.title3)
-                                .foregroundColor(focusColor)
-                        }
                     }
                     
                     if let description = challenge.description {
@@ -431,13 +382,6 @@ struct StackChallengeDetailView: View {
                 )
                 
                 
-                if let season = challenge.season {
-                    OverviewRow(
-                        icon: season.iconName,
-                        title: "Season",
-                        description: "\(season.displayName) Challenge"
-                    )
-                }
             }
         }
     }
@@ -718,7 +662,6 @@ struct AddChallengeView: View {
     @State private var paceTarget: Double?
     @State private var distanceFocus = false
     @State private var recoveryFocus = false
-    @State private var season: StackChallenge.Season?
     @State private var isAdding = false
     
     var body: some View {
@@ -793,14 +736,6 @@ struct AddChallengeView: View {
                     }
                 }
                 
-                Section("Seasonal Settings") {
-                    Picker("Season", selection: $season) {
-                        Text("None").tag(nil as StackChallenge.Season?)
-                        ForEach(StackChallenge.Season.allCases, id: \.self) { s in
-                            Text(s.displayName).tag(s as StackChallenge.Season?)
-                        }
-                    }
-                }
             }
             .navigationTitle("Add Challenge")
             .navigationBarTitleDisplayMode(.inline)
@@ -829,7 +764,7 @@ struct AddChallengeView: View {
             paceTarget: paceTarget,
             distanceFocus: distanceFocus,
             recoveryFocus: recoveryFocus,
-            season: season,
+            season: nil,
             isActive: true,
             sortOrder: 0,
             createdAt: Date(),
@@ -1354,14 +1289,6 @@ struct UniversalChallengeListView: View {
                         )
                     }
                     
-                    // Seasonal Challenges Section
-                    if !challengeService.seasonalChallenges.isEmpty {
-                        challengeSection(
-                            title: "Seasonal Challenges",
-                            subtitle: "Extended training programs",
-                            challenges: challengeService.seasonalChallenges
-                        )
-                    }
                     
                     if challengeService.isLoading {
                         ProgressView("Loading challenges...")

@@ -75,6 +75,36 @@ struct ProfileView: View {
         }
     }
     
+    // MARK: - Computed Properties
+    
+    private var accountStatusText: String {
+        if !authService.isAuthenticated {
+            return "Guest"
+        }
+        
+        if premiumManager.isPremiumUser {
+            if premiumManager.isInFreeTrial {
+                return "Premium (Trial)"
+            } else {
+                return "Premium"
+            }
+        } else {
+            return "Free"
+        }
+    }
+    
+    private var accountStatusColor: Color {
+        if !authService.isAuthenticated {
+            return .orange
+        }
+        
+        if premiumManager.isPremiumUser {
+            return .green
+        } else {
+            return .blue
+        }
+    }
+    
     // MARK: - Profile Header Section
     
     private var profileHeaderSection: some View {
@@ -133,15 +163,24 @@ struct ProfileView: View {
                 .foregroundColor(.primary)
             
             VStack(spacing: 12) {
-                // Login Status
+                // Account Status
                 AccountInfoRow(
                     icon: "person.circle",
                     title: "Account Status",
-                    value: authService.isAuthenticated ? "Signed In" : "Guest",
-                    valueColor: authService.isAuthenticated ? .green : .orange,
+                    value: accountStatusText,
+                    valueColor: accountStatusColor,
                     action: authService.isAuthenticated ? nil : {
                         showingLoginOptions = true
                     }
+                )
+                
+                // Email Address
+                AccountInfoRow(
+                    icon: "envelope",
+                    title: "Email",
+                    value: userSettings.email?.isEmpty == false ? userSettings.email! : "Not Set",
+                    valueColor: userSettings.email?.isEmpty == false ? .blue : .secondary,
+                    action: nil // Email editing would require re-authentication
                 )
                 
                 // Username
@@ -346,6 +385,10 @@ struct LoginOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authService = AuthService()
     @State private var isLoading = false
+    @State private var showingEmailLogin = false
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
     
     var body: some View {
         NavigationView {
@@ -362,19 +405,14 @@ struct LoginOptionsView: View {
                 }
                 
                 VStack(spacing: 16) {
-                    // Anonymous Sign In
+                    // Email/Password Sign In
                     Button {
-                        Task {
-                            isLoading = true
-                            try? await authService.signInAnonymously()
-                            isLoading = false
-                            dismiss()
-                        }
+                        showingEmailLogin = true
                     } label: {
                         HStack {
-                            Image(systemName: "person.circle")
+                            Image(systemName: "envelope")
                                 .font(.title2)
-                            Text("Continue as Guest")
+                            Text("Sign in with Email")
                                 .fontWeight(.medium)
                             Spacer()
                         }
@@ -383,7 +421,6 @@ struct LoginOptionsView: View {
                         .background(Color.blue)
                         .cornerRadius(12)
                     }
-                    .disabled(isLoading)
                     
                     // Apple Sign In (placeholder)
                     Button {
@@ -402,6 +439,29 @@ struct LoginOptionsView: View {
                         .cornerRadius(12)
                     }
                     .disabled(true) // Disabled until implemented
+                    
+                    // Anonymous Sign In
+                    Button {
+                        Task {
+                            isLoading = true
+                            try? await authService.signInAnonymously()
+                            isLoading = false
+                            dismiss()
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.circle")
+                                .font(.title2)
+                            Text("Continue as Guest")
+                                .fontWeight(.medium)
+                            Spacer()
+                        }
+                        .foregroundColor(.secondary)
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                    .disabled(isLoading)
                 }
                 
                 Spacer()
@@ -412,6 +472,26 @@ struct LoginOptionsView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         dismiss()
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingEmailLogin) {
+            EmailLoginView(isSignUp: $isSignUp) { email, password in
+                Task {
+                    isLoading = true
+                    do {
+                        if isSignUp {
+                            try await authService.signUpWithEmail(email: email, password: password)
+                        } else {
+                            try await authService.signInWithEmail(email: email, password: password)
+                        }
+                        isLoading = false
+                        dismiss()
+                    } catch {
+                        isLoading = false
+                        // Handle error - you might want to show an alert
+                        print("Authentication error: \(error)")
                     }
                 }
             }
@@ -522,6 +602,146 @@ struct UsernameEditorView: View {
         
         onSave(username)
         dismiss()
+    }
+}
+
+// MARK: - Email Login View
+
+struct EmailLoginView: View {
+    @Binding var isSignUp: Bool
+    let onAuthenticate: (String, String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                VStack(spacing: 16) {
+                    Text(isSignUp ? "Create Account" : "Sign In")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text(isSignUp ? "Create an account to sync your data" : "Sign in to access your account")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.headline)
+                        
+                        TextField("Enter email", text: $email)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Password")
+                            .font(.headline)
+                        
+                        SecureField("Enter password", text: $password)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
+                    
+                    if isSignUp {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Confirm Password")
+                                .font(.headline)
+                            
+                            SecureField("Confirm password", text: $confirmPassword)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    Button {
+                        authenticate()
+                    } label: {
+                        Text(isSignUp ? "Create Account" : "Sign In")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                    }
+                    .disabled(!isFormValid)
+                    
+                    Button {
+                        isSignUp.toggle()
+                    } label: {
+                        Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .alert("Authentication Error", isPresented: $showingError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+    
+    private var isFormValid: Bool {
+        if email.isEmpty || password.isEmpty {
+            return false
+        }
+        
+        if isSignUp {
+            return password == confirmPassword && password.count >= 6
+        }
+        
+        return true
+    }
+    
+    private func authenticate() {
+        // Basic validation
+        if email.isEmpty || password.isEmpty {
+            errorMessage = "Please fill in all fields"
+            showingError = true
+            return
+        }
+        
+        if isSignUp {
+            if password != confirmPassword {
+                errorMessage = "Passwords do not match"
+                showingError = true
+                return
+            }
+            
+            if password.count < 6 {
+                errorMessage = "Password must be at least 6 characters"
+                showingError = true
+                return
+            }
+        }
+        
+        onAuthenticate(email, password)
     }
 }
 

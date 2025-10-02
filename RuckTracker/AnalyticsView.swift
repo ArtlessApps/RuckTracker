@@ -52,6 +52,9 @@ struct AnalyticsView: View {
             } message: {
                 Text("Are you sure you want to delete this workout? This action cannot be undone.")
             }
+            .sheet(isPresented: $premiumManager.showingPaywall) {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
     }
     
@@ -106,7 +109,12 @@ struct AnalyticsView: View {
                 Spacer()
                 
                 if !premiumManager.isPremiumUser {
-                    PremiumBadge(size: .small)
+                    Button(action: {
+                        premiumManager.showPaywall(context: .featureUpsell)
+                    }) {
+                        PremiumBadge(size: .small)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             
@@ -124,11 +132,6 @@ struct AnalyticsView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.gray.opacity(0.05))
         )
-        .onTapGesture {
-            if !premiumManager.isPremiumUser {
-                premiumManager.showPaywall(context: .featureUpsell)
-            }
-        }
     }
     
     private var lockedAnalyticsView: some View {
