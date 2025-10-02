@@ -150,14 +150,18 @@ class ProgramIntegrationLayer: ObservableObject {
     
     private func initializeAuthService() async throws {
         do {
-            if !supabaseManager.isAuthenticated {
-                try await authService.signInAnonymously()
+            if supabaseManager.isAuthenticated {
+                serviceHealth[.supabase] = .healthy
+                print("✅ User is authenticated")
+            } else {
+                serviceHealth[.supabase] = .error(AuthError.notAuthenticated)
+                print("⚠️ User not authenticated - authentication required")
+                throw AuthError.notAuthenticated
             }
-            serviceHealth[.supabase] = .healthy
         } catch {
             serviceHealth[.supabase] = .error(error)
-            // Continue with offline mode for non-critical auth failures
-            print("⚠️ Auth service initialization failed, continuing in offline mode")
+            print("❌ Auth service initialization failed: \(error)")
+            throw error
         }
     }
     

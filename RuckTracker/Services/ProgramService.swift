@@ -24,8 +24,10 @@ class ProgramService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Current user ID for testing - replace with proper auth
-    private var mockCurrentUserId: UUID? = UUID()
+    // Get current authenticated user ID
+    private var currentUserId: UUID? {
+        return SupabaseManager.shared.currentUser?.id
+    }
     
     private init() {
         // Use existing SupabaseManager (following StackChallengeService pattern)
@@ -101,11 +103,11 @@ class ProgramService: ObservableObject {
     
     func enrollInProgram(_ program: Program, startingWeight: Double, startDate: Date = Date()) async throws -> UserProgram {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else {
+              let userId = currentUserId else {
             // Return mock enrollment for testing
             let mockEnrollment = UserProgram(
                 id: UUID(),
-                userId: mockCurrentUserId ?? UUID(),
+                userId: currentUserId ?? UUID(),
                 programId: program.id,
                 enrolledAt: startDate,
                 startingWeightLbs: startingWeight,
@@ -163,7 +165,7 @@ class ProgramService: ObservableObject {
     
     func loadUserPrograms() async {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else {
+              let userId = currentUserId else {
             print("📱 Using cached user programs (no client/user)")
             return
         }
@@ -201,7 +203,7 @@ class ProgramService: ObservableObject {
     
     func loadUserProgress() async {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else {
+              let userId = currentUserId else {
             print("📱 Using cached progress data (no client/user)")
             return
         }
