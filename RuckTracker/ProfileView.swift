@@ -391,31 +391,31 @@ struct LoginOptionsView: View {
     @State private var showingEmailLogin = false
     @State private var email = ""
     @State private var password = ""
-    @State private var isSignUp = false
+    @State private var isSignUp = true
     
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
-                    Text("Sign In to RuckTracker")
+                    Text("Get Started with RuckTracker")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text("Sign in to sync your data across devices and access leaderboards")
+                    Text("Create an account to sync your data across devices and access all features")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
                 
                 VStack(spacing: 16) {
-                    // Email/Password Sign In
+                    // Email/Password Sign Up
                     Button {
                         showingEmailLogin = true
                     } label: {
                         HStack {
                             Image(systemName: "envelope")
                                 .font(.title2)
-                            Text("Sign in with Email")
+                            Text("Sign up with Email")
                                 .fontWeight(.medium)
                             Spacer()
                         }

@@ -48,7 +48,7 @@ struct PhonePostWorkoutSummaryView: View {
                         GridItem(.flexible())
                     ], spacing: 16) {
                         // Duration
-                        StatCard(
+                        WorkoutStatCard(
                             icon: "clock.fill",
                             title: "Duration",
                             value: formattedTime(finalElapsedTime),
@@ -56,7 +56,7 @@ struct PhonePostWorkoutSummaryView: View {
                         )
                         
                         // Distance
-                        StatCard(
+                        WorkoutStatCard(
                             icon: "location.fill",
                             title: "Distance",
                             value: {
@@ -69,7 +69,7 @@ struct PhonePostWorkoutSummaryView: View {
                         )
                         
                         // Calories
-                        StatCard(
+                        WorkoutStatCard(
                             icon: "flame.fill",
                             title: "Calories",
                             value: "\(Int(finalCalories))",
@@ -77,7 +77,7 @@ struct PhonePostWorkoutSummaryView: View {
                         )
                         
                         // Ruck Weight
-                        StatCard(
+                        WorkoutStatCard(
                             icon: "figure.hiking",
                             title: "Ruck Weight",
                             value: "\(String(format: "%.0f", finalRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)",
@@ -94,7 +94,7 @@ struct PhonePostWorkoutSummaryView: View {
                             let minutes = Int(paceMinutes)
                             let seconds = Int((paceMinutes - Double(minutes)) * 60)
                             
-                            StatCard(
+                            WorkoutStatCard(
                                 icon: "speedometer",
                                 title: "Average Pace",
                                 value: String(format: "%d:%02d /%@", minutes, seconds, userSettings.preferredDistanceUnit.rawValue),
@@ -173,7 +173,7 @@ struct PhonePostWorkoutSummaryView: View {
     }
 }
 
-struct StatCard: View {
+struct WorkoutStatCard: View {
     let icon: String
     let title: String
     let value: String

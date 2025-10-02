@@ -10,22 +10,6 @@ import HealthKit
 
 // MARK: - Core Integration Models
 
-enum AuthError: Error, LocalizedError {
-    case notAuthenticated
-    case authenticationFailed
-    case sessionExpired
-    
-    var errorDescription: String? {
-        switch self {
-        case .notAuthenticated:
-            return "User authentication required"
-        case .authenticationFailed:
-            return "Authentication failed"
-        case .sessionExpired:
-            return "Session expired, please sign in again"
-        }
-    }
-}
 
 struct UnifiedProgramResult {
     let session: ActiveProgramSession

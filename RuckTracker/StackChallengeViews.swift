@@ -232,6 +232,7 @@ struct StackChallengeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var challengeWorkouts: [ChallengeWorkout] = []
     @State private var showingEnrollment = false
+    @State private var navigateToChallenge = false
     
     var isEnrolled: Bool {
         challengeService.isUserEnrolled(in: challenge)
@@ -264,6 +265,10 @@ struct StackChallengeDetailView: View {
         }
         .sheet(isPresented: $showingEnrollment) {
             ChallengeEnrollmentViewWrapper(challenge: challenge)
+                .environmentObject(challengeService)
+        }
+        .fullScreenCover(isPresented: $navigateToChallenge) {
+            UniversalChallengeView(challenge: challenge)
                 .environmentObject(challengeService)
         }
         .onAppear {

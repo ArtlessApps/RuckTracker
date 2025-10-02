@@ -173,8 +173,8 @@ struct PremiumDataSection: View {
             let timeString = workout.date?.formatted(date: .omitted, time: .shortened) ?? "Unknown"
             let durationMinutes = workout.duration / 60
             
-            // Escape any commas in notes and add quotes if needed
-            let notes = (workout.notes ?? "").replacingOccurrences(of: ",", with: ";")
+            // No notes field available in WorkoutEntity, using empty string
+            let notes = ""
             
             csvString += "\(dateString),\(timeString),\(String(format: "%.2f", durationMinutes)),\(String(format: "%.2f", workout.distance)),\(Int(workout.calories)),\(Int(workout.ruckWeight)),\(Int(workout.heartRate)),\(notes)\n"
         }
@@ -220,16 +220,16 @@ struct PremiumDataSection: View {
         ]
         
         // Set a completion handler to ensure proper cleanup
-        activityVC.completionWithItemsHandler = { [weak self] activityType, completed, returnedItems, error in
+        activityVC.completionWithItemsHandler = { activityType, completed, returnedItems, error in
             DispatchQueue.main.async {
-                self?.isExporting = false
+                self.isExporting = false
                 
                 if let error = error {
-                    self?.exportMessage = "Export failed: \(error.localizedDescription)"
-                    self?.showingAlert = true
+                    self.exportMessage = "Export failed: \(error.localizedDescription)"
+                    self.showingAlert = true
                 } else if completed {
-                    self?.exportMessage = "Export completed successfully! Your workout data has been shared."
-                    self?.showingAlert = true
+                    self.exportMessage = "Export completed successfully! Your workout data has been shared."
+                    self.showingAlert = true
                 }
                 
                 // Clean up the file after a delay

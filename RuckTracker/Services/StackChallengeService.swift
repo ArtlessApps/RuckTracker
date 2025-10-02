@@ -20,8 +20,10 @@ class StackChallengeService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Current user ID for testing - replace with proper auth
-    private var mockCurrentUserId: UUID? = UUID()
+    // Get current authenticated user ID
+    private var currentUserId: UUID? {
+        return SupabaseManager.shared.currentUser?.id
+    }
     
     private init() {
         // Use existing SupabaseManager
@@ -86,11 +88,11 @@ class StackChallengeService: ObservableObject {
     
     func enrollInChallenge(_ challenge: StackChallenge, weightLbs: Double) async throws -> UserChallengeEnrollment {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else {
-            // Return mock enrollment for testing
+              let userId = currentUserId else {
+            // Return mock enrollment for testing when not authenticated
             let mockEnrollment = UserChallengeEnrollment(
                 id: UUID(),
-                userId: mockCurrentUserId ?? UUID(), // Mock user ID
+                userId: currentUserId ?? UUID(), // Use current user ID or fallback
                 challengeId: challenge.id,
                 enrolledAt: Date(),
                 currentWeightLbs: weightLbs,
@@ -163,7 +165,7 @@ class StackChallengeService: ObservableObject {
     
     func loadUserEnrollments() async {
         guard let client = supabaseClient,
-              let userId = mockCurrentUserId else {
+              let userId = currentUserId else {
             print("📱 Using mock enrollments - preserving existing \(userEnrollments.count) enrollments")
             return
         }
