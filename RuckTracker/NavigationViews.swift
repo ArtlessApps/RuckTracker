@@ -5,7 +5,7 @@ import Foundation
 struct TrainingProgramsView: View {
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    private let programService = ProgramService.shared
+    @StateObject private var programService = ProgramService.shared
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -38,85 +38,30 @@ struct TrainingProgramsView: View {
                             }
                         }
                         
-                        // Grid layout with fixed-size cards
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
-                            // Military Foundation Program
-                            FixedSizeProgramCard(
-                                title: "Military Foundation",
-                                description: "8-week program for beginners",
-                                difficulty: "Beginner",
-                                weeks: 8,
-                                isLocked: !premiumManager.isPremiumUser
-                            ) {
-                                if premiumManager.isPremiumUser {
-                                    selectedProgram = createMockProgram(
-                                        title: "Military Foundation",
-                                        description: "8-week foundational program designed for those new to rucking",
-                                        difficulty: .beginner,
-                                        weeks: 8
-                                    )
-                                } else {
-                                    premiumManager.showPaywall(context: .programAccess)
-                                }
-                            }
-                            
-                            // Ranger Challenge Program
-                            FixedSizeProgramCard(
-                                title: "Ranger Challenge",
-                                description: "Advanced 12-week training",
-                                difficulty: "Advanced",
-                                weeks: 12,
-                                isLocked: !premiumManager.isPremiumUser
-                            ) {
-                                if premiumManager.isPremiumUser {
-                                    selectedProgram = createMockProgram(
-                                        title: "Ranger Challenge",
-                                        description: "Advanced 12-week program for experienced ruckers",
-                                        difficulty: .advanced,
-                                        weeks: 12
-                                    )
-                                } else {
-                                    premiumManager.showPaywall(context: .programAccess)
-                                }
-                            }
-                            
-                            // Selection Prep Program
-                            FixedSizeProgramCard(
-                                title: "Selection Prep",
-                                description: "16-week intensive program",
-                                difficulty: "Elite",
-                                weeks: 16,
-                                isLocked: !premiumManager.isPremiumUser
-                            ) {
-                                if premiumManager.isPremiumUser {
-                                    selectedProgram = createMockProgram(
-                                        title: "Selection Prep",
-                                        description: "Elite 16-week program for special operations preparation",
-                                        difficulty: .elite,
-                                        weeks: 16
-                                    )
-                                } else {
-                                    premiumManager.showPaywall(context: .programAccess)
-                                }
-                            }
-                            
-                            // Special Forces Program
-                            FixedSizeProgramCard(
-                                title: "Special Forces",
-                                description: "Elite 20-week program",
-                                difficulty: "Elite",
-                                weeks: 20,
-                                isLocked: !premiumManager.isPremiumUser
-                            ) {
-                                if premiumManager.isPremiumUser {
-                                    selectedProgram = createMockProgram(
-                                        title: "Special Forces",
-                                        description: "Elite 20-week program for the most demanding special operations training",
-                                        difficulty: .elite,
-                                        weeks: 20
-                                    )
-                                } else {
-                                    premiumManager.showPaywall(context: .programAccess)
+                        // Dynamic program cards from database
+                        if programService.isLoading {
+                            ProgressView("Loading programs...")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else if programService.programs.isEmpty {
+                            Text("No programs available")
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else {
+                            // Grid layout with database programs
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
+                                ForEach(programService.programs) { program in
+                                    DatabaseProgramCard(
+                                        program: program,
+                                        isLocked: !premiumManager.isPremiumUser && program.category != .fitness
+                                    ) {
+                                        if premiumManager.isPremiumUser || program.category == .fitness {
+                                            selectedProgram = program
+                                        } else {
+                                            premiumManager.showPaywall(context: .programAccess)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -154,20 +99,6 @@ struct TrainingProgramsView: View {
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
-    }
-    
-    private func createMockProgram(title: String, description: String, difficulty: Program.Difficulty, weeks: Int) -> Program {
-        Program(
-            id: UUID(),
-            title: title,
-            description: description,
-            difficulty: difficulty,
-            category: .military,
-            durationWeeks: weeks,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
     }
 }
 
@@ -323,6 +254,128 @@ struct FixedSizeProgramCard: View {
         case "advanced": return .orange
         case "elite": return .red
         default: return .blue
+        }
+    }
+}
+
+// MARK: - Database Program Card
+struct DatabaseProgramCard: View {
+    let program: Program
+    let isLocked: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header with title and difficulty
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(program.title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                        .foregroundColor(isLocked ? .secondary : .primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    if let description = program.description {
+                        Text(description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                
+                Spacer()
+                
+                // Bottom section with difficulty and weeks
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label(program.difficulty.rawValue.capitalized, systemImage: "star.fill")
+                            .font(.caption2)
+                            .foregroundColor(isLocked ? .secondary : difficultyColor)
+                        
+                        Spacer()
+                        
+                        if program.durationWeeks > 0 {
+                            Text("\(program.durationWeeks)w")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Ongoing")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // Category badge
+                    HStack {
+                        Text(program.category.rawValue.capitalized)
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(categoryColor.opacity(0.2))
+                            .foregroundColor(categoryColor)
+                            .clipShape(Capsule())
+                        
+                        Spacer()
+                        
+                        if program.isFeatured {
+                            Image(systemName: "star.fill")
+                                .font(.caption2)
+                                .foregroundColor(.yellow)
+                        }
+                    }
+                    
+                    // Lock indicator or action button
+                    if isLocked {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                            Spacer()
+                        }
+                    } else {
+                        HStack {
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .frame(height: 180) // Slightly taller to accommodate category badge
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isLocked ? Color.orange.opacity(0.3) : Color.blue.opacity(0.2), 
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var difficultyColor: Color {
+        switch program.difficulty {
+        case .beginner: return .green
+        case .intermediate: return .yellow
+        case .advanced: return .orange
+        case .elite: return .red
+        }
+    }
+    
+    private var categoryColor: Color {
+        switch program.category {
+        case .military: return .red
+        case .adventure: return .green
+        case .fitness: return .blue
+        case .historical: return .purple
         }
     }
 }

@@ -200,129 +200,80 @@ struct PremiumTrainingProgramsSection: View {
     
     @ViewBuilder
     private var activeProgramsView: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-            // Static programs for testing (you can replace with dynamic loading later)
-            FunctionalProgramCard(
-                title: "Military Foundation",
-                description: "8-week program for beginners",
-                difficulty: "Beginner",
-                weeks: 8,
-                isLocked: false
-            ) {
-                selectedProgram = createMockProgram(
-                    title: "Military Foundation",
-                    description: "8-week foundational program designed for those new to rucking",
-                    difficulty: .beginner,
-                    weeks: 8
-                )
-            }
-            
-            FunctionalProgramCard(
-                title: "Ranger Challenge",
-                description: "Advanced 12-week training",
-                difficulty: "Advanced", 
-                weeks: 12,
-                isLocked: false
-            ) {
-                selectedProgram = createMockProgram(
-                    title: "Ranger Challenge",
-                    description: "Advanced 12-week program for experienced ruckers",
-                    difficulty: .advanced,
-                    weeks: 12
-                )
-            }
-            
-            FunctionalProgramCard(
-                title: "Selection Prep",
-                description: "16-week intensive program",
-                difficulty: "Elite", 
-                weeks: 16,
-                isLocked: false
-            ) {
-                selectedProgram = createMockProgram(
-                    title: "Selection Prep",
-                    description: "Elite 16-week program for special operations preparation",
-                    difficulty: .elite,
-                    weeks: 16
-                )
-            }
-            
-            FunctionalProgramCard(
-                title: "Maintenance",
-                description: "Ongoing fitness maintenance",
-                difficulty: "All Levels", 
-                weeks: 0,
-                isLocked: false
-            ) {
-                selectedProgram = createMockProgram(
-                    title: "Maintenance Program",
-                    description: "Ongoing program for maintaining fitness levels",
-                    difficulty: .intermediate,
-                    weeks: 0
-                )
+        if programService.isLoading {
+            ProgressView("Loading programs...")
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else if programService.programs.isEmpty {
+            Text("No programs available")
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+                ForEach(programService.programs) { program in
+                    FunctionalProgramCard(
+                        title: program.title,
+                        description: program.description ?? "Training program",
+                        difficulty: program.difficulty.rawValue.capitalized,
+                        weeks: program.durationWeeks,
+                        isLocked: false
+                    ) {
+                        selectedProgram = program
+                    }
+                }
             }
         }
     }
     
     @ViewBuilder
     private var lockedProgramsView: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-            FunctionalProgramCard(
-                title: "Military Foundation",
-                description: "8-week program for beginners",
-                difficulty: "Beginner",
-                weeks: 8,
-                isLocked: true
-            ) {
-                premiumManager.showPaywall(context: .programAccess)
-            }
-            
-            FunctionalProgramCard(
-                title: "Ranger Challenge",
-                description: "Advanced 12-week training",
-                difficulty: "Advanced", 
-                weeks: 12,
-                isLocked: true
-            ) {
-                premiumManager.showPaywall(context: .programAccess)
-            }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.3))
-                .overlay(
-                    VStack(spacing: 8) {
-                        Image(systemName: "crown.fill")
-                            .font(.title)
-                            .foregroundColor(.orange)
-                        
-                        Text("Premium Feature")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                        
-                        Text("Tap to unlock training programs")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
+        if programService.isLoading {
+            ProgressView("Loading programs...")
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else if programService.programs.isEmpty {
+            Text("No programs available")
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+                ForEach(programService.programs.filter { $0.category != .fitness }) { program in
+                    FunctionalProgramCard(
+                        title: program.title,
+                        description: program.description ?? "Training program",
+                        difficulty: program.difficulty.rawValue.capitalized,
+                        weeks: program.durationWeeks,
+                        isLocked: true
+                    ) {
+                        premiumManager.showPaywall(context: .programAccess)
                     }
-                )
-        )
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.3))
+                    .overlay(
+                        VStack(spacing: 8) {
+                            Image(systemName: "crown.fill")
+                                .font(.title)
+                                .foregroundColor(.orange)
+                            
+                            Text("Premium Feature")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                            
+                            Text("Tap to unlock training programs")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    )
+            )
+        }
     }
     
-    // Helper function to create mock programs for testing
-    private func createMockProgram(title: String, description: String, difficulty: Program.Difficulty, weeks: Int) -> Program {
-        Program(
-            id: UUID(),
-            title: title,
-            description: description,
-            difficulty: difficulty,
-            category: .military,
-            durationWeeks: weeks,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
 }
 
 // MARK: - Functional Program Card
