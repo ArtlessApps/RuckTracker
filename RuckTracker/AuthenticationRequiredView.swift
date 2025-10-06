@@ -30,10 +30,10 @@ struct AuthenticationRequiredView: View {
                 
                 // Benefits
                 VStack(spacing: 16) {
-                    BenefitRow(icon: "person.2", title: "Sync Across Devices", description: "Access your data anywhere")
-                    BenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Track Progress", description: "Monitor your improvement over time")
-                    BenefitRow(icon: "trophy", title: "Join Programs", description: "Participate in structured training")
-                    BenefitRow(icon: "person.3", title: "Leaderboards", description: "Compete with other ruckers")
+                    AuthBenefitRow(icon: "person.2", title: "Sync Across Devices", description: "Access your data anywhere")
+                    AuthBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Track Progress", description: "Monitor your improvement over time")
+                    AuthBenefitRow(icon: "trophy", title: "Join Programs", description: "Participate in structured training")
+                    AuthBenefitRow(icon: "person.3", title: "Leaderboards", description: "Compete with other ruckers")
                 }
                 .padding(.horizontal)
                 
@@ -76,7 +76,7 @@ struct AuthenticationRequiredView: View {
     }
 }
 
-struct BenefitRow: View {
+struct AuthBenefitRow: View {
     let icon: String
     let title: String
     let description: String
