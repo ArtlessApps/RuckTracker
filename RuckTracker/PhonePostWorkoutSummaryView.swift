@@ -4,6 +4,7 @@ struct PhonePostWorkoutSummaryView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.dismiss) private var dismiss
+    @State private var showingAnalytics = false
     
     // Final workout stats (captured when workout ends)
     let finalElapsedTime: TimeInterval
@@ -128,8 +129,7 @@ struct PhonePostWorkoutSummaryView: View {
                         
                         // View History Button
                         Button(action: {
-                            // TODO: Navigate to workout history
-                            dismiss()
+                            showingAnalytics = true
                         }) {
                             HStack {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
@@ -157,6 +157,11 @@ struct PhonePostWorkoutSummaryView: View {
             .navigationTitle("Workout Summary")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(true)
+        }
+        .sheet(isPresented: $showingAnalytics) {
+            AnalyticsView(showAllWorkouts: .constant(false))
+                .environmentObject(WorkoutDataManager.shared)
+                .environmentObject(PremiumManager.shared)
         }
     }
     
@@ -216,11 +221,15 @@ struct WorkoutStatCard: View {
 }
 
 #Preview {
-    PhonePostWorkoutSummaryView(
-        finalElapsedTime: 3661, // 1h 1m 1s
-        finalDistance: 3.5,
-        finalCalories: 450,
-        finalRuckWeight: 35
-    )
-    .environmentObject(WorkoutManager())
+    if #available(iOS 17.0, *) {
+        PhonePostWorkoutSummaryView(
+            finalElapsedTime: 3661, // 1h 1m 1s
+            finalDistance: 3.5,
+            finalCalories: 450,
+            finalRuckWeight: 35
+        )
+        .environmentObject(WorkoutManager())
+    } else {
+        Text("Requires iOS 17.0+")
+    }
 }

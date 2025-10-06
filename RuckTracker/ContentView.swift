@@ -4,7 +4,7 @@ struct ContentView: View {
     @StateObject private var healthManager = HealthManager.shared
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
-    @StateObject private var supabaseManager = SupabaseManager.shared
+    @ObservedObject private var supabaseManager = SupabaseManager.shared
     @StateObject private var authService = AuthService()
     
     var body: some View {
@@ -23,7 +23,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            print("📱 ContentView appeared - isAuthenticated: \(supabaseManager.isAuthenticated)")
             healthManager.requestAuthorization()
+        }
+        .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
+            print("🔄 ContentView detected auth state change: \(isAuthenticated)")
         }
     }
 }

@@ -613,8 +613,12 @@ struct WeightPickerSheet: View {
 
 // MARK: - Preview
 #Preview {
-    ImprovedPhoneMainView()
-        .environmentObject(WorkoutManager())
-        .environmentObject(WorkoutDataManager.shared)
-        .environmentObject(PremiumManager.shared)
+    if #available(iOS 17.0, *) {
+        ImprovedPhoneMainView()
+            .environmentObject(WorkoutManager())
+            .environmentObject(WorkoutDataManager.shared)
+            .environmentObject(PremiumManager.shared)
+    } else {
+        Text("Requires iOS 17.0+")
+    }
 }

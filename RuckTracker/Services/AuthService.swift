@@ -11,15 +11,23 @@ class AuthService: ObservableObject {
     @Published var isLoading = false
     
     func signInAnonymously() async throws {
+        print("🔄 Starting anonymous authentication...")
         isLoading = true
         defer { isLoading = false }
         
-        let session = try await supabase.auth.signInAnonymously()
-        
-        await MainActor.run {
-            self.isAuthenticated = true
-            SupabaseManager.shared.currentUser = session.user
-            SupabaseManager.shared.isAuthenticated = true
+        do {
+            let session = try await supabase.auth.signInAnonymously()
+            print("✅ Supabase anonymous auth successful, user ID: \(session.user.id)")
+            
+            await MainActor.run {
+                self.isAuthenticated = true
+                SupabaseManager.shared.currentUser = session.user
+                SupabaseManager.shared.isAuthenticated = true
+                print("✅ AuthService and SupabaseManager updated - isAuthenticated: \(self.isAuthenticated)")
+            }
+        } catch {
+            print("❌ Supabase anonymous auth failed: \(error)")
+            throw error
         }
     }
     
@@ -53,11 +61,6 @@ class AuthService: ObservableObject {
             // Update user settings with email
             UserSettings.shared.email = session.user.email
         }
-    }
-    
-    func signInWithApple() async throws {
-        // Implement Apple Sign In
-        // This will be important for subscription management
     }
     
     func signOut() async throws {

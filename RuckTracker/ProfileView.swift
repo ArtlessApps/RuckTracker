@@ -415,7 +415,7 @@ struct LoginOptionsView: View {
                         HStack {
                             Image(systemName: "envelope")
                                 .font(.title2)
-                            Text("Sign up with Email")
+                            Text("Create Account")
                                 .fontWeight(.medium)
                             Spacer()
                         }
@@ -425,31 +425,20 @@ struct LoginOptionsView: View {
                         .cornerRadius(12)
                     }
                     
-                    // Apple Sign In (placeholder)
-                    Button {
-                        // Implement Apple Sign In
-                    } label: {
-                        HStack {
-                            Image(systemName: "applelogo")
-                                .font(.title2)
-                            Text("Continue with Apple")
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(12)
-                    }
-                    .disabled(true) // Disabled until implemented
-                    
                     // Anonymous Sign In
                     Button {
                         Task {
                             isLoading = true
-                            try? await authService.signInAnonymously()
-                            isLoading = false
-                            dismiss()
+                            do {
+                                try await authService.signInAnonymously()
+                                print("✅ Anonymous authentication successful")
+                                isLoading = false
+                                dismiss()
+                            } catch {
+                                print("❌ Anonymous authentication failed: \(error)")
+                                isLoading = false
+                                // Don't dismiss on error - let user try again
+                            }
                         }
                     } label: {
                         HStack {
