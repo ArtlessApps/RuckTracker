@@ -197,7 +197,7 @@ struct ProgramWorkoutWithState: Identifiable {
         
         var parts: [String] = []
         if let distance = workout.distanceMiles {
-            parts.append("\(distance, specifier: "%.1f") mi")
+            parts.append("\(String(format: "%.1f", distance)) mi")
         }
         if let pace = workout.targetPaceMinutes {
             parts.append("\(Int(pace)) min/mi pace")

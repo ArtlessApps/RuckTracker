@@ -92,18 +92,6 @@ struct ImprovedPhoneMainView: View {
                 
                 // Preserve existing functionality sections
                 
-                // Premium Analytics - only show if user has data
-                if workoutDataManager.totalWorkouts >= 3 {
-                    PremiumAnalyticsSection()
-                        .environmentObject(workoutDataManager)
-                }
-                
-                if workoutDataManager.totalWorkouts >= 5 {
-                    TrainingInsightsSection()
-                        .environmentObject(workoutDataManager)
-                        .environmentObject(workoutManager)
-                }
-                
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 20)

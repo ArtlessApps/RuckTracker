@@ -4,6 +4,25 @@ struct AuthenticationRequiredView: View {
     @EnvironmentObject private var authService: AuthService
     @EnvironmentObject private var supabaseManager: SupabaseManager
     @State private var showingLoginOptions = false
+    @State private var showingExistingUserLogin = false
+    @State private var showingDebugOptions = false
+    
+    private func checkForExistingSessionOrCreateAnonymous() async {
+        // First check if there's an existing session
+        await supabaseManager.checkForExistingSession()
+        
+        // If no existing session, create an anonymous one
+        if !supabaseManager.isAuthenticated {
+            do {
+                try await authService.signInAnonymously()
+                print("✅ Created new anonymous session")
+            } catch {
+                print("❌ Failed to create anonymous session: \(error)")
+            }
+        } else {
+            print("✅ Using existing session")
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -39,8 +58,9 @@ struct AuthenticationRequiredView: View {
                 
                 Spacer()
                 
-                // Sign Up Button
+                // Authentication Options
                 VStack(spacing: 16) {
+                    // Get Started - New User Sign Up
                     Button {
                         showingLoginOptions = true
                     } label: {
@@ -59,6 +79,38 @@ struct AuthenticationRequiredView: View {
                             .cornerRadius(12)
                     }
                     
+                    // Existing User Login
+                    Button {
+                        showingExistingUserLogin = true
+                    } label: {
+                        Text("Existing User Login")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.blue, lineWidth: 2)
+                            )
+                    }
+                    
+                    // Continue as Guest
+                    Button {
+                        Task {
+                            await checkForExistingSessionOrCreateAnonymous()
+                        }
+                    } label: {
+                        Text("Continue as Guest")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            )
+                    }
+                    
                     Text("Sign up to sync your data and access all features")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -67,11 +119,28 @@ struct AuthenticationRequiredView: View {
                 .padding(.horizontal)
                 
                 Spacer()
+                
+                // Debug button (temporary for testing)
+                #if DEBUG
+                Button {
+                    showingDebugOptions = true
+                } label: {
+                    Text("Debug: Clear Session")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                #endif
             }
             .padding()
         }
         .sheet(isPresented: $showingLoginOptions) {
-            LoginOptionsView()
+            LoginOptionsView(mode: .signUp)
+        }
+        .sheet(isPresented: $showingExistingUserLogin) {
+            LoginOptionsView(mode: .signIn)
+        }
+        .sheet(isPresented: $showingDebugOptions) {
+            DebugOptionsView()
         }
     }
 }
@@ -99,6 +168,70 @@ struct AuthBenefitRow: View {
             }
             
             Spacer()
+        }
+    }
+}
+
+struct DebugOptionsView: View {
+    @EnvironmentObject private var supabaseManager: SupabaseManager
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Debug Options")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("Clear any existing Supabase session to test the authentication flow")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                VStack(spacing: 12) {
+                    Button {
+                        Task {
+                            await supabaseManager.clearSession()
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Clear Session")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red)
+                            .cornerRadius(12)
+                    }
+                    
+                    Button {
+                        Task {
+                            await supabaseManager.forceClearAllSessions()
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Force Clear All Sessions")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .cornerRadius(12)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Debug")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }

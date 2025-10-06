@@ -19,21 +19,53 @@ class SupabaseManager: ObservableObject {
         
         client = SupabaseClient(supabaseURL: url, supabaseKey: key)
         
-        // Check if user is already logged in
-        Task {
-            await checkAuthStatus()
-        }
+        // Don't automatically check for existing sessions
+        // Let the user explicitly choose their authentication method
+        print("🔐 SupabaseManager initialized - waiting for user authentication choice")
     }
     
     @MainActor
-    private func checkAuthStatus() async {
+    func checkForExistingSession() async {
         do {
             let session = try await client.auth.session
             self.currentUser = session.user
             self.isAuthenticated = true
+            print("🔐 Found existing session for user: \(session.user.id)")
+            print("🔐 Session details - Email: \(session.user.email ?? "No email"), Anonymous: \(session.user.isAnonymous)")
         } catch {
             self.isAuthenticated = false
             self.currentUser = nil
+            print("🔐 No existing session found: \(error)")
         }
+    }
+    
+    @MainActor
+    func clearSession() async {
+        do {
+            try await client.auth.signOut()
+            self.isAuthenticated = false
+            self.currentUser = nil
+            print("🔐 Session cleared successfully")
+        } catch {
+            print("❌ Failed to clear session: \(error)")
+        }
+    }
+    
+    @MainActor
+    func forceClearAllSessions() async {
+        do {
+            // Try to sign out first
+            try await client.auth.signOut()
+        } catch {
+            print("⚠️ Sign out failed, but continuing with force clear")
+        }
+        
+        // Force clear local state
+        self.isAuthenticated = false
+        self.currentUser = nil
+        
+        // Try to clear any stored sessions by creating a new client
+        // This is a more aggressive approach
+        print("🔐 Force cleared all sessions and local state")
     }
 }

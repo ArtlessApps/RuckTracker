@@ -384,38 +384,47 @@ struct AccountInfoRow: View {
 
 // MARK: - Login Options View
 
+enum LoginMode {
+    case signUp
+    case signIn
+}
+
 struct LoginOptionsView: View {
+    let mode: LoginMode
     @Environment(\.dismiss) private var dismiss
     @StateObject private var authService = AuthService()
     @State private var isLoading = false
     @State private var showingEmailLogin = false
     @State private var email = ""
     @State private var password = ""
-    @State private var isSignUp = true
+    
+    init(mode: LoginMode = .signUp) {
+        self.mode = mode
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
-                    Text("Get Started with RuckTracker")
+                    Text(mode == .signUp ? "Get Started with RuckTracker" : "Welcome Back")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text("Create an account to sync your data across devices and access all features")
+                    Text(mode == .signUp ? "Create an account to sync your data across devices and access all features" : "Sign in to access your account and sync your data")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
                 
                 VStack(spacing: 16) {
-                    // Email/Password Sign Up
+                    // Email/Password Authentication
                     Button {
                         showingEmailLogin = true
                     } label: {
                         HStack {
                             Image(systemName: "envelope")
                                 .font(.title2)
-                            Text("Create Account")
+                            Text(mode == .signUp ? "Create Account" : "Sign In")
                                 .fontWeight(.medium)
                             Spacer()
                         }
@@ -469,11 +478,11 @@ struct LoginOptionsView: View {
             }
         }
         .sheet(isPresented: $showingEmailLogin) {
-            EmailLoginView(isSignUp: $isSignUp) { email, password in
+            EmailLoginView(mode: mode) { email, password in
                 Task {
                     isLoading = true
                     do {
-                        if isSignUp {
+                        if mode == .signUp {
                             try await authService.signUpWithEmail(email: email, password: password)
                         } else {
                             try await authService.signInWithEmail(email: email, password: password)
@@ -600,7 +609,7 @@ struct UsernameEditorView: View {
 // MARK: - Email Login View
 
 struct EmailLoginView: View {
-    @Binding var isSignUp: Bool
+    let mode: LoginMode
     let onAuthenticate: (String, String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var email = ""
@@ -613,11 +622,11 @@ struct EmailLoginView: View {
         NavigationView {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
-                    Text(isSignUp ? "Create Account" : "Sign In")
+                    Text(mode == .signUp ? "Create Account" : "Sign In")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text(isSignUp ? "Create an account to sync your data" : "Sign in to access your account")
+                    Text(mode == .signUp ? "Create an account to sync your data" : "Sign in to access your account")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -643,7 +652,7 @@ struct EmailLoginView: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                     
-                    if isSignUp {
+                    if mode == .signUp {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Confirm Password")
                                 .font(.headline)
@@ -660,7 +669,7 @@ struct EmailLoginView: View {
                     Button {
                         authenticate()
                     } label: {
-                        Text(isSignUp ? "Create Account" : "Sign In")
+                        Text(mode == .signUp ? "Create Account" : "Sign In")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -676,12 +685,7 @@ struct EmailLoginView: View {
                     }
                     .disabled(!isFormValid)
                     
-                    Button {
-                        isSignUp.toggle()
-                    } label: {
-                        Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                            .foregroundColor(.blue)
-                    }
+                    // Toggle removed - users now choose from main screen
                     
                     Button("Cancel") {
                         dismiss()
@@ -704,7 +708,7 @@ struct EmailLoginView: View {
             return false
         }
         
-        if isSignUp {
+        if mode == .signUp {
             return password == confirmPassword && password.count >= 6
         }
         
@@ -719,7 +723,7 @@ struct EmailLoginView: View {
             return
         }
         
-        if isSignUp {
+        if mode == .signUp {
             if password != confirmPassword {
                 errorMessage = "Passwords do not match"
                 showingError = true

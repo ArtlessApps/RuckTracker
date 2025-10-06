@@ -992,7 +992,7 @@ struct EnrolledSection: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
         .sheet(isPresented: $showingProgress) {
-            ProgramProgressView(userProgram: userProgram, program: program)
+            ProgramWorkoutsView(userProgram: userProgram, program: program)
         }
     }
 }
@@ -1483,7 +1483,7 @@ struct WorkoutDetailView: View {
                 .font(.headline)
             
             if let distance = workout.workout.distanceMiles {
-                DetailRow(label: "Distance", value: "\(distance, specifier: "%.1f") miles")
+                DetailRow(label: "Distance", value: "\(String(format: "%.1f", distance)) miles")
             }
             
             if let pace = workout.workout.targetPaceMinutes {
