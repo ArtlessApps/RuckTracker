@@ -66,6 +66,16 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
+        .sheet(isPresented: $premiumManager.showingPostPurchasePrompt) {
+            PostPurchaseAccountPrompt(
+                onAccountCreated: {
+                    premiumManager.dismissPostPurchasePrompt()
+                },
+                onSkip: {
+                    premiumManager.dismissPostPurchasePrompt()
+                }
+            )
+        }
     }
     
     // MARK: - Main Content View

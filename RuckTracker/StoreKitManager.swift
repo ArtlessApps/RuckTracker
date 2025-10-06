@@ -12,6 +12,7 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var isLoading = false
     @Published var purchaseError: PurchaseError?
     @Published var showingPurchaseError = false
+    @Published var showingPostPurchasePrompt = false
     
     // Product IDs - these must match your App Store Connect configuration
     private let monthlySubscriptionID = "com.artless.rucktracker.premium.monthly"
@@ -78,6 +79,9 @@ class StoreKitManager: NSObject, ObservableObject {
                 
                 // The transaction is verified. Deliver content to the user.
                 await updateCustomerProductStatus()
+                
+                // Show post-purchase prompt for anonymous users
+                await showPostPurchasePromptIfNeeded()
                 
                 // Always finish a transaction.
                 await transaction.finish()
@@ -189,6 +193,24 @@ class StoreKitManager: NSObject, ObservableObject {
         case .verified(let safe):
             return safe
         }
+    }
+    
+    // MARK: - Post-Purchase Prompt
+    
+    private func showPostPurchasePromptIfNeeded() async {
+        // Check if user is anonymous (no email set)
+        let userSettings = UserSettings.shared
+        let isAnonymous = userSettings.email?.isEmpty != false
+        
+        if isAnonymous {
+            DispatchQueue.main.async {
+                self.showingPostPurchasePrompt = true
+            }
+        }
+    }
+    
+    func dismissPostPurchasePrompt() {
+        showingPostPurchasePrompt = false
     }
     
     // MARK: - Error Handling

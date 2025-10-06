@@ -68,6 +68,16 @@ struct SubscriptionPaywallView: View {
             .sheet(isPresented: $showingPrivacy) {
                 PrivacyPolicyView()
             }
+            .sheet(isPresented: $storeManager.showingPostPurchasePrompt) {
+                PostPurchaseAccountPrompt(
+                    onAccountCreated: {
+                        storeManager.dismissPostPurchasePrompt()
+                    },
+                    onSkip: {
+                        storeManager.dismissPostPurchasePrompt()
+                    }
+                )
+            }
         }
     }
     

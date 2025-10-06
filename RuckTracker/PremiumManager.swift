@@ -10,6 +10,7 @@ class PremiumManager: ObservableObject {
     @Published var subscriptionExpiryDate: Date?
     @Published var showingPaywall = false
     @Published var paywallContext: SubscriptionPaywallView.PaywallContext = .featureUpsell
+    @Published var showingPostPurchasePrompt = false
     
     private let storeKitManager = StoreKitManager.shared
     private var cancellables = Set<AnyCancellable>()
@@ -24,6 +25,13 @@ class PremiumManager: ObservableObject {
         storeKitManager.$subscriptionStatus
             .sink { [weak self] status in
                 self?.updatePremiumStatus()
+            }
+            .store(in: &cancellables)
+        
+        // Listen to post-purchase prompt from StoreKitManager
+        storeKitManager.$showingPostPurchasePrompt
+            .sink { [weak self] showing in
+                self?.showingPostPurchasePrompt = showing
             }
             .store(in: &cancellables)
         
@@ -59,6 +67,11 @@ class PremiumManager: ObservableObject {
     func showPaywall(context: SubscriptionPaywallView.PaywallContext) {
         paywallContext = context
         showingPaywall = true
+    }
+    
+    func dismissPostPurchasePrompt() {
+        showingPostPurchasePrompt = false
+        storeKitManager.dismissPostPurchasePrompt()
     }
     
     // MARK: - Free Trial Logic
