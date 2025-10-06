@@ -347,6 +347,151 @@ class ProgramService: ObservableObject {
         print("✅ Recorded progress for program")
     }
     
+    // MARK: - Workout Loading & Completion
+    
+    func loadProgramWorkouts(programId: UUID) async throws -> [ProgramWorkout] {
+        guard let client = supabaseClient else {
+            print("📱 Using mock workouts (no client)")
+            return generateMockWorkouts(programId: programId)
+        }
+        
+        do {
+            // First get all weeks for this program
+            let weeks: [ProgramWeek] = try await client
+                .from("program_weeks")
+                .select()
+                .eq("program_id", value: programId.uuidString)
+                .order("week_number", ascending: true)
+                .execute()
+                .value
+            
+            if weeks.isEmpty {
+                print("📱 No weeks found, using mock workouts")
+                return generateMockWorkouts(programId: programId)
+            }
+            
+            // Then get all workouts for these weeks
+            let weekIds = weeks.map { $0.id.uuidString }
+            let workouts: [ProgramWorkout] = try await client
+                .from("program_workouts")
+                .select()
+                .in("week_id", values: weekIds)
+                .order("day_number", ascending: true)
+                .execute()
+                .value
+            
+            if workouts.isEmpty {
+                print("📱 No workouts found, using mock workouts")
+                return generateMockWorkouts(programId: programId)
+            }
+            
+            print("✅ Loaded \(workouts.count) workouts for program")
+            return workouts
+        } catch {
+            print("❌ Error loading workouts: \(error), using mock")
+            return generateMockWorkouts(programId: programId)
+        }
+    }
+    
+    func loadWorkoutCompletions(userProgramId: UUID) async throws -> [WorkoutCompletion] {
+        guard let client = supabaseClient else {
+            print("📱 No completions (no client)")
+            return []
+        }
+        
+        do {
+            let completions: [WorkoutCompletion] = try await client
+                .from("workout_completions")
+                .select()
+                .eq("user_program_id", value: userProgramId.uuidString)
+                .order("completed_at", ascending: true)
+                .execute()
+                .value
+            
+            print("✅ Loaded \(completions.count) workout completions")
+            return completions
+        } catch {
+            print("❌ Error loading completions: \(error)")
+            return []
+        }
+    }
+    
+    func completeWorkout(
+        userProgramId: UUID,
+        programWorkoutId: UUID,
+        distanceMiles: Double,
+        weightLbs: Double,
+        durationMinutes: Int,
+        notes: String? = nil
+    ) async throws {
+        guard let client = supabaseClient,
+              let userId = currentUserId else {
+            print("📱 Mock: Completed workout")
+            return
+        }
+        
+        let performanceScore = calculatePerformanceScore(
+            distance: distanceMiles,
+            duration: durationMinutes,
+            weight: weightLbs
+        )
+        
+        let completionData = [
+            "user_id": try AnyJSON(userId.uuidString),
+            "user_program_id": try AnyJSON(userProgramId.uuidString),
+            "program_workout_id": try AnyJSON(programWorkoutId.uuidString),
+            "completed_at": try AnyJSON(Date()),
+            "actual_distance_miles": try AnyJSON(distanceMiles),
+            "actual_weight_lbs": try AnyJSON(weightLbs),
+            "actual_duration_minutes": try AnyJSON(durationMinutes),
+            "performance_score": try AnyJSON(performanceScore),
+            "notes": try AnyJSON(notes ?? "")
+        ]
+        
+        try await client
+            .from("workout_completions")
+            .insert(completionData)
+            .execute()
+        
+        print("✅ Completed workout and saved to database")
+    }
+    
+    private func calculatePerformanceScore(distance: Double, duration: Int, weight: Double) -> Double {
+        // Simple performance score calculation
+        // Higher score = better performance (faster pace with more weight)
+        let pacePerMile = Double(duration) / distance
+        let baseScore = 100.0 / pacePerMile
+        let weightBonus = weight / 10.0
+        return baseScore + weightBonus
+    }
+    
+    private func generateMockWorkouts(programId: UUID) -> [ProgramWorkout] {
+        // Generate realistic mock workouts for an 8-week program
+        let weekId = UUID() // Mock week ID
+        return [
+            // Week 1
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 1, workoutType: .ruck, distanceMiles: 2.0, targetPaceMinutes: 15.0, instructions: "Easy pace, focus on form"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 2, workoutType: .rest, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Recovery day"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 3, workoutType: .ruck, distanceMiles: 3.0, targetPaceMinutes: 15.0, instructions: "Steady pace"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 4, workoutType: .crossTraining, distanceMiles: nil, targetPaceMinutes: nil, instructions: "30 minutes of cardio"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 5, workoutType: .ruck, distanceMiles: 4.0, targetPaceMinutes: 16.0, instructions: "Long ruck, comfortable pace"),
+            
+            // Week 2
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 6, workoutType: .rest, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Recovery day"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 7, workoutType: .ruck, distanceMiles: 3.0, targetPaceMinutes: 14.5, instructions: "Pick up the pace"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 8, workoutType: .crossTraining, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Strength training"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 9, workoutType: .ruck, distanceMiles: 5.0, targetPaceMinutes: 15.0, instructions: "Building endurance"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 10, workoutType: .rest, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Recovery day"),
+            
+            // Week 3
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 11, workoutType: .ruck, distanceMiles: 4.0, targetPaceMinutes: 14.0, instructions: "Faster pace workout"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 12, workoutType: .rest, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Recovery day"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 13, workoutType: .ruck, distanceMiles: 6.0, targetPaceMinutes: 15.5, instructions: "Long endurance ruck"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 14, workoutType: .crossTraining, distanceMiles: nil, targetPaceMinutes: nil, instructions: "Active recovery"),
+            ProgramWorkout(id: UUID(), weekId: weekId, dayNumber: 15, workoutType: .ruck, distanceMiles: 3.0, targetPaceMinutes: 13.5, instructions: "Speed work"),
+        ]
+    }
+    
     // MARK: - Program Completion
     
     func completeProgram(_ userProgramId: UUID) async throws {

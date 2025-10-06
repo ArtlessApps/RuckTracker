@@ -700,6 +700,33 @@ struct ProgramDetailView: View {
     @State private var userProgram: UserProgram?
     
     var body: some View {
+        Group {
+            if isEnrolled {
+                // Show workouts if enrolled
+                ProgramWorkoutsView(
+                    userProgram: userProgram,
+                    program: program,
+                    onDismiss: {
+                        dismiss()
+                    }
+                )
+            } else {
+                // Show program info if not enrolled
+                programInfoView
+            }
+        }
+        .sheet(isPresented: $showingEnrollment) {
+            ProgramEnrollmentView(program: program) { startingWeight in
+                enrollInProgram(startingWeight: startingWeight)
+            }
+        }
+        .task {
+            // Check if user is already enrolled when view appears
+            await checkEnrollmentStatus()
+        }
+    }
+    
+    private var programInfoView: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -735,12 +762,8 @@ struct ProgramDetailView: View {
                     SampleWeekSection()
                     
                     // Enrollment Section
-                    if !isEnrolled {
-                        EnrollmentSection {
-                            showingEnrollment = true
-                        }
-                    } else {
-                        EnrolledSection(userProgram: userProgram)
+                    EnrollmentSection {
+                        showingEnrollment = true
                     }
                     
                     Spacer(minLength: 100)
@@ -756,15 +779,6 @@ struct ProgramDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingEnrollment) {
-            ProgramEnrollmentView(program: program) { startingWeight in
-                enrollInProgram(startingWeight: startingWeight)
-            }
-        }
-        .task {
-            // Check if user is already enrolled when view appears
-            await checkEnrollmentStatus()
-        }
     }
     
     private func enrollInProgram(startingWeight: Double) {
@@ -777,6 +791,7 @@ struct ProgramDetailView: View {
                         await checkEnrollmentStatus()
                     }
                     showingEnrollment = false
+                    // View will automatically switch to workouts because isEnrolled becomes true
                 }
             } catch {
                 print("Failed to enroll in program: \(error)")
@@ -947,6 +962,7 @@ struct EnrollmentSection: View {
 
 struct EnrolledSection: View {
     let userProgram: UserProgram?
+    let program: Program
     @State private var showingProgress = false
     
     var body: some View {
@@ -976,7 +992,7 @@ struct EnrolledSection: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
         .sheet(isPresented: $showingProgress) {
-            ProgramProgressView(userProgram: userProgram)
+            ProgramProgressView(userProgram: userProgram, program: program)
         }
     }
 }
@@ -1048,54 +1064,355 @@ struct ProgramEnrollmentView: View {
     }
 }
 
-// MARK: - Program Progress View
-struct ProgramProgressView: View {
+// MARK: - Program Workouts View (Peloton-style)
+struct ProgramWorkoutsView: View {
     let userProgram: UserProgram?
+    let program: Program?
+    let onDismiss: (() -> Void)?
+    @StateObject private var programService = ProgramService.shared
+    @State private var workouts: [ProgramWorkoutWithState] = []
+    @State private var isLoading = true
+    @State private var selectedWorkout: ProgramWorkoutWithState?
+    @State private var showingWorkoutDetail = false
+    
+    init(userProgram: UserProgram?, program: Program?, onDismiss: (() -> Void)? = nil) {
+        self.userProgram = userProgram
+        self.program = program
+        self.onDismiss = onDismiss
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                if isLoading {
+                    ProgressView("Loading workouts...")
+                } else if workouts.isEmpty {
+                    emptyStateView
+                } else {
+                    workoutListView
+                }
+            }
+            .navigationTitle(program?.title ?? "Workouts")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        onDismiss?()
+                    }
+                }
+            }
+            .sheet(isPresented: $showingWorkoutDetail) {
+                if let workout = selectedWorkout {
+                    WorkoutDetailView(
+                        workout: workout,
+                        userProgram: userProgram,
+                        onComplete: {
+                            Task {
+                                await loadWorkouts()
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        .task {
+            await loadWorkouts()
+        }
+    }
+    
+    private var workoutListView: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // Progress header
+                progressHeader
+                
+                // Workout list
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
+                        WorkoutRowView(
+                            workout: workout,
+                            index: index + 1
+                        )
+                        .onTapGesture {
+                            if !workout.isLocked {
+                                selectedWorkout = workout
+                                showingWorkoutDetail = true
+                            }
+                        }
+                        
+                        if index < workouts.count - 1 {
+                            Divider()
+                                .padding(.leading, 80)
+                        }
+                    }
+                }
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+                .padding()
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+    }
+    
+    private var progressHeader: some View {
+        VStack(spacing: 12) {
+            // Overall progress
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program?.title ?? "Program")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    
+                    Text("\(completedCount) of \(workouts.count) workouts")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                CircularProgressView(
+                    progress: progressPercentage,
+                    lineWidth: 8
+                )
+                .frame(width: 60, height: 60)
+            }
+            
+            // Progress bar
+            ProgressView(value: progressPercentage)
+                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                .scaleEffect(y: 2)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .padding()
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "list.bullet.clipboard")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+            
+            Text("No Workouts Found")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text("This program doesn't have any workouts yet.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+    }
+    
+    private var completedCount: Int {
+        workouts.filter { $0.isCompleted }.count
+    }
+    
+    private var progressPercentage: Double {
+        guard !workouts.isEmpty else { return 0 }
+        return Double(completedCount) / Double(workouts.count)
+    }
+    
+    private func loadWorkouts() async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        guard let userProgram = userProgram,
+              let program = program else {
+            print("❌ Missing userProgram or program")
+            return
+        }
+        
+        do {
+            // Load workouts and completions
+            let programWorkouts = try await programService.loadProgramWorkouts(programId: program.id)
+            let completions = try await programService.loadWorkoutCompletions(userProgramId: userProgram.id)
+            
+            // Map workouts to state
+            let completedWorkoutIds = Set(completions.map { $0.programWorkoutId })
+            var lastCompletedIndex = -1
+            
+            workouts = programWorkouts.enumerated().map { index, workout in
+                let isCompleted = completedWorkoutIds.contains(workout.id)
+                let completionDate = completions.first { $0.programWorkoutId == workout.id }?.completedAt
+                
+                if isCompleted {
+                    lastCompletedIndex = index
+                }
+                
+                // Peloton logic: First workout is unlocked, rest unlock sequentially
+                // Rest days are always unlocked
+                let isLocked: Bool
+                if workout.workoutType == .rest {
+                    isLocked = false
+                } else {
+                    isLocked = index > lastCompletedIndex + 1
+                }
+                
+                return ProgramWorkoutWithState(
+                    workout: workout,
+                    weekNumber: (workout.dayNumber - 1) / 7 + 1,
+                    isCompleted: isCompleted,
+                    isLocked: isLocked,
+                    completionDate: completionDate
+                )
+            }
+            
+            print("✅ Loaded \(workouts.count) workouts, \(completedCount) completed")
+        } catch {
+            print("❌ Error loading workouts: \(error)")
+        }
+    }
+}
+
+// MARK: - Workout Row View (Peloton-style)
+struct WorkoutRowView: View {
+    let workout: ProgramWorkoutWithState
+    let index: Int
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Left: Status icon
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.15))
+                    .frame(width: 50, height: 50)
+                
+                if workout.isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(statusColor)
+                } else if workout.isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                } else {
+                    Text("\(index)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(statusColor)
+                }
+            }
+            
+            // Middle: Workout info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(workout.displayTitle)
+                    .font(.headline)
+                    .foregroundColor(workout.isLocked ? .secondary : .primary)
+                
+                Text(workout.displaySubtitle)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                if let instructions = workout.workout.instructions {
+                    Text(instructions)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            
+            Spacer()
+            
+            // Right: Chevron or lock
+            if workout.isLocked {
+                Image(systemName: "lock.fill")
+                    .foregroundColor(.gray)
+                    .font(.caption)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+        }
+        .padding()
+        .background(workout.isLocked ? Color.clear : Color(.systemBackground))
+        .contentShape(Rectangle())
+        .opacity(workout.isLocked ? 0.6 : 1.0)
+    }
+    
+    private var statusColor: Color {
+        if workout.isCompleted {
+            return .green
+        } else if workout.isLocked {
+            return .gray
+        } else {
+            return .blue
+        }
+    }
+}
+
+// MARK: - Circular Progress View
+struct CircularProgressView: View {
+    let progress: Double
+    let lineWidth: CGFloat
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.gray.opacity(0.2), lineWidth: lineWidth)
+            
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(
+                    Color.blue,
+                    style: StrokeStyle(
+                        lineWidth: lineWidth,
+                        lineCap: .round
+                    )
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeInOut, value: progress)
+            
+            Text("\(Int(progress * 100))%")
+                .font(.caption)
+                .fontWeight(.bold)
+        }
+    }
+}
+
+// MARK: - Workout Detail View
+struct WorkoutDetailView: View {
+    let workout: ProgramWorkoutWithState
+    let userProgram: UserProgram?
+    let onComplete: () -> Void
+    
     @Environment(\.dismiss) private var dismiss
-    
-    private var currentWeek: Int {
-        userProgram?.currentWeek ?? 1
-    }
-    
-    private var currentWeight: Double {
-        userProgram?.currentWeightLbs ?? 25.0
-    }
-    
+    @StateObject private var programService = ProgramService.shared
+    @State private var isCompleting = false
+    @State private var showingCompletionConfirmation = false
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Progress Header
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Your Progress")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        Text("Military Foundation Program")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
+                    // Workout header
+                    workoutHeader
+                    
+                    // Instructions
+                    if let instructions = workout.workout.instructions {
+                        instructionsSection(instructions)
                     }
                     
-                    // Progress Stats
-                    ProgressStatsSection(
-                        currentWeek: currentWeek,
-                        currentWeight: currentWeight
-                    )
+                    // Details
+                    detailsSection
                     
-                    // Weekly Progress
-                    WeeklyProgressSection(currentWeek: currentWeek)
-                    
-                    // Weight Progression
-                    WeightProgressionSection(currentWeight: currentWeight)
-                    
-                    // Recent Workouts
-                    RecentWorkoutsSection()
+                    // Completion status
+                    if workout.isCompleted {
+                        completedSection
+                    } else if !workout.isLocked {
+                        actionSection
+                    }
                     
                     Spacer(minLength: 100)
                 }
                 .padding()
             }
+            .navigationTitle(workout.displayTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1104,11 +1421,217 @@ struct ProgramProgressView: View {
                     }
                 }
             }
+            .alert("Mark as Complete?", isPresented: $showingCompletionConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Complete") {
+                    Task {
+                        await completeWorkout()
+                    }
+                }
+            } message: {
+                Text("Mark this workout as completed and unlock the next workout.")
+            }
+        }
+    }
+    
+    private var workoutHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: workoutIcon)
+                    .font(.system(size: 40))
+                    .foregroundColor(.blue)
+                
+                Spacer()
+                
+                if workout.isCompleted {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(.green)
+                }
+            }
+            
+            Text(workout.displayTitle)
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private func instructionsSection(_ instructions: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Instructions", systemImage: "list.bullet.clipboard")
+                .font(.headline)
+            
+            Text(instructions)
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var detailsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Workout Details", systemImage: "info.circle")
+                .font(.headline)
+            
+            if let distance = workout.workout.distanceMiles {
+                DetailRow(label: "Distance", value: "\(distance, specifier: "%.1f") miles")
+            }
+            
+            if let pace = workout.workout.targetPaceMinutes {
+                DetailRow(label: "Target Pace", value: "\(Int(pace)) min/mile")
+            }
+            
+            if let weight = userProgram?.currentWeightLbs {
+                DetailRow(label: "Ruck Weight", value: "\(Int(weight)) lbs")
+            }
+            
+            DetailRow(label: "Workout Type", value: workout.workout.workoutType.rawValue.capitalized)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var completedSection: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.green)
+            
+            Text("Workout Completed!")
+                .font(.title3)
+                .fontWeight(.semibold)
+            
+            if let completionDate = workout.completionDate {
+                Text("Completed on \(completionDate, style: .date)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.green.opacity(0.1))
+        .cornerRadius(12)
+    }
+    
+    private var actionSection: some View {
+        VStack(spacing: 16) {
+            if workout.workout.workoutType == .rest {
+                Button(action: {
+                    showingCompletionConfirmation = true
+                }) {
+                    HStack {
+                        if isCompleting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Mark as Complete")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                .disabled(isCompleting)
+            } else {
+                Button(action: {
+                    showingCompletionConfirmation = true
+                }) {
+                    HStack {
+                        if isCompleting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "play.circle.fill")
+                            Text("Start Workout")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                .disabled(isCompleting)
+                
+                Text("Note: For now, this will mark the workout as complete. Full workout tracking coming soon!")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+    
+    private var workoutIcon: String {
+        switch workout.workout.workoutType {
+        case .ruck:
+            return "figure.walk"
+        case .rest:
+            return "bed.double.fill"
+        case .crossTraining:
+            return "figure.run"
+        }
+    }
+    
+    private func completeWorkout() async {
+        guard let userProgram = userProgram else { return }
+        
+        isCompleting = true
+        defer { isCompleting = false }
+        
+        do {
+            // Use default values for now - in full implementation, these would come from actual workout
+            let distance = workout.workout.distanceMiles ?? 0.0
+            let weight = userProgram.currentWeightLbs
+            let duration = Int((distance * (workout.workout.targetPaceMinutes ?? 15.0)))
+            
+            try await programService.completeWorkout(
+                userProgramId: userProgram.id,
+                programWorkoutId: workout.workout.id,
+                distanceMiles: distance,
+                weightLbs: weight,
+                durationMinutes: duration,
+                notes: nil
+            )
+            
+            onComplete()
+            dismiss()
+        } catch {
+            print("❌ Error completing workout: \(error)")
         }
     }
 }
 
-// MARK: - Progress Supporting Views
+struct DetailRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .fontWeight(.medium)
+        }
+    }
+}
+
+// MARK: - Old Progress Supporting Views (keeping for compatibility)
 struct ProgressStatsSection: View {
     let currentWeek: Int
     let currentWeight: Double

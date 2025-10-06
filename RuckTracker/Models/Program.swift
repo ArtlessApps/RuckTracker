@@ -166,6 +166,47 @@ struct WorkoutCompletion: Codable, Identifiable {
     }
 }
 
+// MARK: - Extended Program Workout with UI State
+struct ProgramWorkoutWithState: Identifiable {
+    let workout: ProgramWorkout
+    let weekNumber: Int
+    let isCompleted: Bool
+    let isLocked: Bool
+    let completionDate: Date?
+    
+    var id: UUID { workout.id }
+    
+    var displayTitle: String {
+        switch workout.workoutType {
+        case .ruck:
+            if let distance = workout.distanceMiles {
+                return "\(Int(distance)) Mile Ruck"
+            }
+            return "Ruck Workout"
+        case .rest:
+            return "Rest Day"
+        case .crossTraining:
+            return "Cross Training"
+        }
+    }
+    
+    var displaySubtitle: String {
+        if workout.workoutType == .rest {
+            return "Recovery day"
+        }
+        
+        var parts: [String] = []
+        if let distance = workout.distanceMiles {
+            parts.append("\(distance, specifier: "%.1f") mi")
+        }
+        if let pace = workout.targetPaceMinutes {
+            parts.append("\(Int(pace)) min/mi pace")
+        }
+        
+        return parts.isEmpty ? "Workout \(workout.dayNumber)" : parts.joined(separator: " • ")
+    }
+}
+
 struct WeightProgression: Codable, Identifiable {
     let id: UUID
     let userProgramId: UUID
