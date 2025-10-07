@@ -8,32 +8,43 @@ struct ContentView: View {
     @StateObject private var authService = AuthService()
     
     var body: some View {
-        Group {
-            if supabaseManager.isAuthenticated {
-                ImprovedPhoneMainView()
-                    .environmentObject(healthManager)
-                    .environmentObject(workoutManager)
-                    .environmentObject(workoutDataManager)
-                    .environmentObject(supabaseManager)
-                    .environmentObject(authService)
-            } else {
-                AuthenticationRequiredView()
-                    .environmentObject(authService)
-                    .environmentObject(supabaseManager)
+        // Always show main view - users always have a session (anonymous or authenticated)
+        ImprovedPhoneMainView()
+            .environmentObject(healthManager)
+            .environmentObject(workoutManager)
+            .environmentObject(workoutDataManager)
+            .environmentObject(supabaseManager)
+            .environmentObject(authService)
+            .onAppear {
+                print("📱 ContentView appeared - isAuthenticated: \(supabaseManager.isAuthenticated)")
+                healthManager.requestAuthorization()
+                
+                // Auto-create anonymous session if no session exists
+                Task {
+                    await ensureUserSession()
+                }
             }
-        }
-        .onAppear {
-            print("📱 ContentView appeared - isAuthenticated: \(supabaseManager.isAuthenticated)")
-            healthManager.requestAuthorization()
-            
-            // Ensure we check for existing session on app launch
-            Task {
-                await supabaseManager.checkForExistingSession()
+            .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
+                print("🔄 ContentView detected auth state change: \(isAuthenticated)")
+                print("🔄 Current SupabaseManager state - isAuthenticated: \(supabaseManager.isAuthenticated), currentUser: \(supabaseManager.currentUser?.id.uuidString ?? "nil")")
             }
-        }
-        .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
-            print("🔄 ContentView detected auth state change: \(isAuthenticated)")
-            print("🔄 Current SupabaseManager state - isAuthenticated: \(supabaseManager.isAuthenticated), currentUser: \(supabaseManager.currentUser?.id.uuidString ?? "nil")")
+    }
+    
+    // Ensure user always has a session (anonymous or authenticated)
+    private func ensureUserSession() async {
+        // First check if there's an existing session
+        await supabaseManager.checkForExistingSession()
+        
+        // If no session exists, automatically create an anonymous one
+        if !supabaseManager.isAuthenticated {
+            do {
+                try await authService.signInAnonymously()
+                print("✅ Auto-created anonymous session for new user")
+            } catch {
+                print("❌ Failed to create anonymous session: \(error)")
+            }
+        } else {
+            print("✅ User has existing session")
         }
     }
 }

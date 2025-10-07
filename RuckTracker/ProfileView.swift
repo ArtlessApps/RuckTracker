@@ -19,6 +19,7 @@ struct ProfileView: View {
     @StateObject private var authService = AuthService()
     @StateObject private var premiumManager = PremiumManager.shared
     @StateObject private var userSettings = UserSettings.shared
+    @EnvironmentObject private var supabaseManager: SupabaseManager
     @State private var showingLoginOptions = false
     @State private var showingUsernameEditor = false
     @State private var tempUsername: String = ""
@@ -28,11 +29,13 @@ struct ProfileView: View {
     enum ActiveSheet: Identifiable {
         case loginOptions
         case usernameEditor
+        case addEmail
         
         var id: Int {
             switch self {
             case .loginOptions: return 0
             case .usernameEditor: return 1
+            case .addEmail: return 2
             }
         }
     }
@@ -83,6 +86,10 @@ struct ProfileView: View {
                 UsernameEditorView(currentUsername: userSettings.username) { newUsername in
                     userSettings.username = newUsername
                 }
+            case .addEmail:
+                AddEmailView()
+                    .environmentObject(authService)
+                    .environmentObject(supabaseManager)
             }
         }
         .alert("Sign Out", isPresented: $showingLogoutAlert) {
@@ -93,7 +100,7 @@ struct ProfileView: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Are you sure you want to sign out? You'll need to sign in again to access your data.")
+            Text("Signing out will create a new guest account. You'll need to sign in again to access your current data.")
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
@@ -103,10 +110,16 @@ struct ProfileView: View {
     // MARK: - Computed Properties
     
     private var accountStatusText: String {
-        if !authService.isAuthenticated {
-            return "Guest"
+        // Check if user is anonymous (guest)
+        if supabaseManager.isAnonymousUser {
+            if premiumManager.isPremiumUser {
+                return "Guest (Premium)"
+            } else {
+                return "Guest"
+            }
         }
         
+        // Authenticated user with email
         if premiumManager.isPremiumUser {
             if premiumManager.isInFreeTrial {
                 return "Premium (Trial)"
@@ -119,7 +132,7 @@ struct ProfileView: View {
     }
     
     private var accountStatusColor: Color {
-        if !authService.isAuthenticated {
+        if supabaseManager.isAnonymousUser {
             return .orange
         }
         
@@ -194,18 +207,18 @@ struct ProfileView: View {
                     title: "Account Status",
                     value: accountStatusText,
                     valueColor: accountStatusColor,
-                    action: authService.isAuthenticated ? nil : {
-                        activeSheet = .loginOptions
-                    }
+                    action: nil
                 )
                 
-                // Email Address
+                // Email Address - with action for anonymous users
                 AccountInfoRow(
                     icon: "envelope",
                     title: "Email",
-                    value: userSettings.email?.isEmpty == false ? userSettings.email! : "Not Set",
-                    valueColor: userSettings.email?.isEmpty == false ? .blue : .secondary,
-                    action: nil // Email editing would require re-authentication
+                    value: supabaseManager.hasEmail ? (userSettings.email ?? "Set") : "Not Set",
+                    valueColor: supabaseManager.hasEmail ? .blue : .secondary,
+                    action: supabaseManager.isAnonymousUser ? {
+                        activeSheet = .addEmail
+                    } : nil
                 )
                 
                 // Username
@@ -220,16 +233,14 @@ struct ProfileView: View {
                     }
                 )
                 
-                // User ID (if authenticated)
-                if authService.isAuthenticated {
-                    AccountInfoRow(
-                        icon: "key",
-                        title: "User ID",
-                        value: "••••••••",
-                        valueColor: .secondary,
-                        action: nil
-                    )
-                }
+                // User ID (show for all users)
+                AccountInfoRow(
+                    icon: "key",
+                    title: "User ID",
+                    value: "••••••••",
+                    valueColor: .secondary,
+                    action: nil
+                )
             }
         }
         .padding()
@@ -342,22 +353,64 @@ struct ProfileView: View {
     
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            // Always show sign out button if user has any session (including guest)
-            Button("Sign Out") {
-                showingLogoutAlert = true
-            }
-            .font(.subheadline)
-            .foregroundColor(.red)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.red.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
+            // For anonymous users: Show "Add Email to Sync" button
+            if supabaseManager.isAnonymousUser {
+                Button {
+                    activeSheet = .addEmail
+                } label: {
+                    HStack {
+                        Image(systemName: "envelope.badge.shield.half.filled")
+                            .font(.title3)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Add Email to Sync")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            Text("Secure your data and sync across devices")
+                                .font(.caption)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [.orange, .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-            )
+                    .cornerRadius(12)
+                }
+                
+                // Info about guest account
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.blue)
+                    Text("Your data is saved on this device. Add an email to sync across devices and secure your account.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 4)
+            } else {
+                // For authenticated users: Show sign out button
+                Button("Sign Out") {
+                    showingLogoutAlert = true
+                }
+                .font(.subheadline)
+                .foregroundColor(.red)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.red.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            }
         }
     }
 }
@@ -643,6 +696,208 @@ struct UsernameEditorView: View {
         
         onSave(username)
         dismiss()
+    }
+}
+
+// MARK: - Add Email View
+
+struct AddEmailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var authService: AuthService
+    @EnvironmentObject private var supabaseManager: SupabaseManager
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    @State private var isLoading = false
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                VStack(spacing: 16) {
+                    Image(systemName: "envelope.badge.shield.half.filled")
+                        .font(.system(size: 60))
+                        .foregroundColor(.orange)
+                    
+                    Text("Add Email to Sync")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text("Add an email and password to secure your account and sync your data across all your devices.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                
+                // Benefits list
+                VStack(alignment: .leading, spacing: 12) {
+                    SimpleBenefitRow(icon: "icloud", text: "Sync data across devices")
+                    SimpleBenefitRow(icon: "lock.shield", text: "Secure your account")
+                    SimpleBenefitRow(icon: "arrow.clockwise", text: "Never lose your progress")
+                    SimpleBenefitRow(icon: "checkmark.circle", text: "Keep all your current data")
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.1))
+                )
+                .padding(.horizontal)
+                
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.headline)
+                        
+                        TextField("Enter email", text: $email)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .submitLabel(.next)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Password")
+                            .font(.headline)
+                        
+                        SecureField("Enter password (min 6 characters)", text: $password)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .submitLabel(.next)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Confirm Password")
+                            .font(.headline)
+                        
+                        SecureField("Confirm password", text: $confirmPassword)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .submitLabel(.done)
+                    }
+                }
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                VStack(spacing: 16) {
+                    Button {
+                        addEmail()
+                    } label: {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else {
+                            Text("Secure My Account")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        }
+                    }
+                    .background(
+                        LinearGradient(
+                            colors: [.orange, .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
+                    .disabled(!isFormValid || isLoading)
+                    .opacity(isFormValid && !isLoading ? 1.0 : 0.6)
+                    
+                    Button("Maybe Later") {
+                        dismiss()
+                    }
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Error", isPresented: $showingError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
+            }
+            .onTapGesture {
+                hideKeyboard()
+            }
+        }
+    }
+    
+    private var isFormValid: Bool {
+        return !email.isEmpty && 
+               !password.isEmpty && 
+               password.count >= 6 &&
+               password == confirmPassword
+    }
+    
+    private func addEmail() {
+        // Validate email format
+        guard email.contains("@") && email.contains(".") else {
+            errorMessage = "Please enter a valid email address"
+            showingError = true
+            return
+        }
+        
+        // Validate passwords match
+        guard password == confirmPassword else {
+            errorMessage = "Passwords do not match"
+            showingError = true
+            return
+        }
+        
+        // Validate password length
+        guard password.count >= 6 else {
+            errorMessage = "Password must be at least 6 characters"
+            showingError = true
+            return
+        }
+        
+        isLoading = true
+        
+        Task {
+            do {
+                try await authService.linkEmailToAnonymousAccount(email: email, password: password)
+                await MainActor.run {
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        }
+    }
+}
+
+struct SimpleBenefitRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+                .frame(width: 24)
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            Spacer()
+        }
     }
 }
 

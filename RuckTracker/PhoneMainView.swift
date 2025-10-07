@@ -6,6 +6,7 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
+    @EnvironmentObject var supabaseManager: SupabaseManager
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingProfile = false
     @State private var showingSettings = false
@@ -55,6 +56,7 @@ struct ImprovedPhoneMainView: View {
             switch sheet {
             case .profile:
                 ProfileView()
+                    .environmentObject(supabaseManager)
             case .settings:
                 SettingsView()
             case .analytics:
@@ -96,6 +98,7 @@ struct ImprovedPhoneMainView: View {
                     premiumManager.dismissPostPurchasePrompt()
                 }
             )
+            .environmentObject(supabaseManager)
         }
     }
     

@@ -11,6 +11,18 @@ class SupabaseManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     
+    // Helper property to check if current user is anonymous
+    var isAnonymousUser: Bool {
+        guard let user = currentUser else { return false }
+        return user.isAnonymous
+    }
+    
+    // Helper property to check if user has email
+    var hasEmail: Bool {
+        guard let user = currentUser else { return false }
+        return user.email != nil && !(user.email?.isEmpty ?? true)
+    }
+    
     private init() {
         guard let url = URL(string: "https://zqxxcuvgwadokkgmcuwr.supabase.co") else {
             fatalError("Missing Supabase configuration")
@@ -51,6 +63,18 @@ class SupabaseManager: ObservableObject {
         } catch {
             print("❌ Failed to clear session: \(error)")
         }
+    }
+    
+    @MainActor
+    func updateUserEmail(email: String, password: String) async throws {
+        // This updates the current user with an email and password
+        // For anonymous users, this effectively "upgrades" them to a full account
+        try await client.auth.update(user: UserAttributes(email: email, password: password))
+        
+        // Refresh the session to get updated user info
+        await checkForExistingSession()
+        
+        print("🔐 Successfully linked email to anonymous account")
     }
     
     @MainActor
