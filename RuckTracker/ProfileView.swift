@@ -342,23 +342,22 @@ struct ProfileView: View {
     
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            if authService.isAuthenticated {
-                Button("Sign Out") {
-                    showingLogoutAlert = true
-                }
-                .font(.subheadline)
-                .foregroundColor(.red)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                        )
-                )
+            // Always show sign out button if user has any session (including guest)
+            Button("Sign Out") {
+                showingLogoutAlert = true
             }
+            .font(.subheadline)
+            .foregroundColor(.red)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.red.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                    )
+            )
         }
     }
 }

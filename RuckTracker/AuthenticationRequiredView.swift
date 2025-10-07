@@ -75,11 +75,11 @@ struct AuthenticationRequiredView: View {
                 
                 // Authentication Options
                 VStack(spacing: 16) {
-                    // Get Started - New User Sign Up
+                    // Create Account - New User Sign Up
                     Button {
                         activeSheet = .loginOptions(.signUp)
                     } label: {
-                        Text("Get Started")
+                        Text("Create Account")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -94,28 +94,13 @@ struct AuthenticationRequiredView: View {
                             .cornerRadius(12)
                     }
                     
-                    // Existing User Login
-                    Button {
-                        activeSheet = .existingUserLogin
-                    } label: {
-                        Text("Existing User Login")
-                            .font(.headline)
-                            .foregroundColor(.blue)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.blue, lineWidth: 2)
-                            )
-                    }
-                    
-                    // Continue as Guest
+                    // Maybe Later - Continue as Guest
                     Button {
                         Task {
                             await checkForExistingSessionOrCreateAnonymous()
                         }
                     } label: {
-                        Text("Continue as Guest")
+                        Text("Maybe Later")
                             .font(.headline)
                             .foregroundColor(.gray)
                             .frame(maxWidth: .infinity)
@@ -124,6 +109,15 @@ struct AuthenticationRequiredView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.gray, lineWidth: 1)
                             )
+                    }
+                    
+                    // I Already Have an Account
+                    Button {
+                        activeSheet = .existingUserLogin
+                    } label: {
+                        Text("I Already Have an Account")
+                            .font(.caption)
+                            .foregroundColor(.blue)
                     }
                     
                     Text("Sign up to sync your data and access all features")

@@ -25,6 +25,11 @@ struct ContentView: View {
         .onAppear {
             print("📱 ContentView appeared - isAuthenticated: \(supabaseManager.isAuthenticated)")
             healthManager.requestAuthorization()
+            
+            // Ensure we check for existing session on app launch
+            Task {
+                await supabaseManager.checkForExistingSession()
+            }
         }
         .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
             print("🔄 ContentView detected auth state change: \(isAuthenticated)")

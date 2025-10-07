@@ -19,9 +19,11 @@ class SupabaseManager: ObservableObject {
         
         client = SupabaseClient(supabaseURL: url, supabaseKey: key)
         
-        // Don't automatically check for existing sessions
-        // Let the user explicitly choose their authentication method
-        print("🔐 SupabaseManager initialized - waiting for user authentication choice")
+        // Check for existing session on initialization
+        Task {
+            await checkForExistingSession()
+        }
+        print("🔐 SupabaseManager initialized - checking for existing session")
     }
     
     @MainActor
