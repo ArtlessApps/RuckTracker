@@ -2,6 +2,14 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// PremiumManager handles premium subscription status
+///
+/// Key Design Principle:
+/// Premium status is determined SOLELY by StoreKit subscription status
+/// - Premium is tied to Apple ID, NOT user email/authentication
+/// - Anonymous users CAN have premium (they purchased via Apple Pay)
+/// - Premium persists across sign in/sign out (tied to device's Apple ID)
+/// - Signing out does NOT affect premium status
 @MainActor
 class PremiumManager: ObservableObject {
     static let shared = PremiumManager()
@@ -29,6 +37,14 @@ class PremiumManager: ObservableObject {
             }
             .store(in: &cancellables)
         
+        // Listen to authentication state changes
+        SupabaseManager.shared.$isAuthenticated
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePremiumStatus()
+            }
+            .store(in: &cancellables)
+        
         // Listen to post-purchase prompt from StoreKitManager
         storeKitManager.$showingPostPurchasePrompt
             .sink { [weak self] showing in
@@ -42,25 +58,34 @@ class PremiumManager: ObservableObject {
     
     private func updatePremiumStatus() {
         let wasPremium = isPremiumUser
-        let newPremiumStatus = storeKitManager.isSubscribed
+        let storeKitSubscribed = storeKitManager.isSubscribed
         let newExpiryDate = storeKitManager.subscriptionExpiryDate
+        
+        // Premium status is based on StoreKit subscription status
+        // Users with valid subscriptions get premium access regardless of authentication status
+        // This allows anonymous users who purchase subscriptions to access premium features
+        let newPremiumStatus = storeKitSubscribed
         
         // Always update the status, even if it's the same
         isPremiumUser = newPremiumStatus
-        subscriptionExpiryDate = newExpiryDate
+        subscriptionExpiryDate = newPremiumStatus ? newExpiryDate : nil
         
         // Log status changes with more detail
         if wasPremium != isPremiumUser {
             print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
+            print("🔐 StoreKit subscription: \(storeKitSubscribed)")
+            print("🔐 User authenticated: \(SupabaseManager.shared.isAuthenticated)")
+            print("🔐 User has email: \(SupabaseManager.shared.hasEmail)")
             print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
-            print("🔐 StoreKit isSubscribed: \(storeKitManager.isSubscribed)")
             if let expiry = newExpiryDate {
                 print("🔐 Subscription expiry: \(expiry)")
             }
         } else {
             // Log current status for debugging
             print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
-            print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
+            print("🔐 StoreKit subscription: \(storeKitSubscribed)")
+            print("🔐 User authenticated: \(SupabaseManager.shared.isAuthenticated)")
+            print("🔐 User has email: \(SupabaseManager.shared.hasEmail)")
         }
     }
     
@@ -90,6 +115,19 @@ class PremiumManager: ObservableObject {
     
     func dismissPaywall() {
         showingPaywall = false
+    }
+    
+    // MARK: - Sign Out Handling
+    
+    /// This method is intentionally a no-op
+    /// Premium status is tied to Apple ID / StoreKit, not authentication state
+    /// When a user signs out, they get a NEW anonymous session but keep their premium
+    /// status if their device's Apple ID has an active subscription
+    func resetPremiumStatusForSignOut() {
+        print("🔐 Sign out detected - premium status remains unchanged")
+        print("🔐 Premium is tied to Apple ID, not authentication")
+        print("🔐 Current premium status: \(isPremiumUser ? "Premium" : "Free")")
+        // No-op: Premium status is managed by StoreKit, not authentication
     }
     
     // MARK: - Free Trial Logic

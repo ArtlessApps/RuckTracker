@@ -1,5 +1,12 @@
 import SwiftUI
 
+/// ContentView - Main entry point for the app
+///
+/// Key Behavior:
+/// - NO authentication wall - users start using immediately
+/// - Auto-creates anonymous session on first launch
+/// - Users are ALWAYS authenticated (either anonymous or connected)
+/// - Never blocks user from accessing the app
 struct ContentView: View {
     @StateObject private var healthManager = HealthManager.shared
     @StateObject private var workoutManager = WorkoutManager()
@@ -8,7 +15,8 @@ struct ContentView: View {
     @StateObject private var authService = AuthService()
     
     var body: some View {
-        // Always show main view - users always have a session (anonymous or authenticated)
+        // Always show main view - no authentication gate
+        // Users always have a session (anonymous or connected)
         ImprovedPhoneMainView()
             .environmentObject(healthManager)
             .environmentObject(workoutManager)
@@ -16,35 +24,45 @@ struct ContentView: View {
             .environmentObject(supabaseManager)
             .environmentObject(authService)
             .onAppear {
-                print("📱 ContentView appeared - isAuthenticated: \(supabaseManager.isAuthenticated)")
+                print("📱 ContentView appeared")
+                print("📱 Authentication state: \(supabaseManager.userTypeDisplay)")
                 healthManager.requestAuthorization()
                 
-                // Auto-create anonymous session if no session exists
+                // Ensure user has a session (create anonymous if needed)
                 Task {
                     await ensureUserSession()
                 }
             }
             .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
-                print("🔄 ContentView detected auth state change: \(isAuthenticated)")
-                print("🔄 Current SupabaseManager state - isAuthenticated: \(supabaseManager.isAuthenticated), currentUser: \(supabaseManager.currentUser?.id.uuidString ?? "nil")")
+                print("🔄 Authentication state changed: \(supabaseManager.userTypeDisplay)")
+                print("🔄 User ID: \(supabaseManager.currentUser?.id.uuidString ?? "none")")
+                print("🔄 Has email: \(supabaseManager.hasEmail)")
+                print("🔄 Is anonymous: \(supabaseManager.isAnonymousUser)")
             }
     }
     
-    // Ensure user always has a session (anonymous or authenticated)
+    /// Ensures user always has a session
+    /// - New users: Creates anonymous session automatically
+    /// - Returning users: Restores existing session
     private func ensureUserSession() async {
-        // First check if there's an existing session
+        print("🔐 Checking for existing session...")
+        
+        // Check for existing session (anonymous or connected)
         await supabaseManager.checkForExistingSession()
         
-        // If no session exists, automatically create an anonymous one
+        // If no session exists, create a new anonymous session
+        // This ensures first-time users can start using the app immediately
         if !supabaseManager.isAuthenticated {
             do {
                 try await authService.signInAnonymously()
-                print("✅ Auto-created anonymous session for new user")
+                print("✅ Created new anonymous session (App User)")
+                print("✅ User ID: \(supabaseManager.currentUser?.id.uuidString ?? "unknown")")
             } catch {
                 print("❌ Failed to create anonymous session: \(error)")
             }
         } else {
-            print("✅ User has existing session")
+            print("✅ Restored existing session: \(supabaseManager.userTypeDisplay)")
+            print("✅ User ID: \(supabaseManager.currentUser?.id.uuidString ?? "unknown")")
         }
     }
 }

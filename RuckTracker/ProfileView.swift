@@ -16,7 +16,7 @@ extension View {
 
 struct ProfileView: View {
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var authService = AuthService()
+    @EnvironmentObject private var authService: AuthService
     @StateObject private var premiumManager = PremiumManager.shared
     @StateObject private var userSettings = UserSettings.shared
     @EnvironmentObject private var supabaseManager: SupabaseManager
@@ -81,7 +81,8 @@ struct ProfileView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .loginOptions:
-                LoginOptionsView()
+                LoginOptionsView(mode: .signIn)
+                    .environmentObject(authService)
             case .usernameEditor:
                 UsernameEditorView(currentUsername: userSettings.username) { newUsername in
                     userSettings.username = newUsername
@@ -92,55 +93,82 @@ struct ProfileView: View {
                     .environmentObject(supabaseManager)
             }
         }
-        .alert("Sign Out", isPresented: $showingLogoutAlert) {
-            Button("Sign Out", role: .destructive) {
+        .alert("Disconnect Account", isPresented: $showingLogoutAlert) {
+            Button("Disconnect", role: .destructive) {
                 Task {
                     try? await authService.signOut()
                 }
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Signing out will create a new guest account. You'll need to sign in again to access your current data.")
+            Text("Disconnecting will create a new anonymous session. You'll need to connect again to access your current synced data.\n\nNote: Your premium subscription is tied to your Apple ID and will remain active.")
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+        .onAppear {
+            print("📱 ProfileView appeared - isAuthenticated: \(supabaseManager.isAuthenticated), hasEmail: \(supabaseManager.hasEmail), isAnonymous: \(supabaseManager.isAnonymousUser)")
+            print("📱 AuthService isAuthenticated: \(authService.isAuthenticated)")
+        }
+        .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
+            print("🔄 ProfileView detected auth state change: \(isAuthenticated)")
+        }
+        .onChange(of: supabaseManager.hasEmail) { hasEmail in
+            print("🔄 ProfileView detected email state change: \(hasEmail)")
+        }
+        .onChange(of: supabaseManager.isAnonymousUser) { isAnonymous in
+            print("🔄 ProfileView detected anonymous state change: \(isAnonymous)")
         }
     }
     
     // MARK: - Computed Properties
     
+    /// Returns user-friendly account status text
+    /// App User: Anonymous user without email
+    /// Connected: User with email
+    /// Premium: Based on subscription status (independent of email)
     private var accountStatusText: String {
-        // Check if user is anonymous (guest)
-        if supabaseManager.isAnonymousUser {
+        // Premium status (subscription tier)
+        let premiumStatus: String = {
             if premiumManager.isPremiumUser {
-                return "Guest (Premium)"
+                if premiumManager.isInFreeTrial {
+                    return "Premium (Trial)"
+                } else {
+                    return "Premium"
+                }
             } else {
-                return "Guest"
+                return "Free"
             }
-        }
+        }()
         
-        // Authenticated user with email
-        if premiumManager.isPremiumUser {
-            if premiumManager.isInFreeTrial {
-                return "Premium (Trial)"
-            } else {
-                return "Premium"
-            }
+        // Connection status (authentication tier)
+        if supabaseManager.hasEmail {
+            return premiumStatus // "Free" or "Premium" or "Premium (Trial)"
         } else {
-            return "Free"
+            // Anonymous users show same status (remove "Guest" terminology)
+            return premiumStatus
         }
     }
     
+    /// Returns color for account status badge
     private var accountStatusColor: Color {
-        if supabaseManager.isAnonymousUser {
-            return .orange
-        }
-        
         if premiumManager.isPremiumUser {
-            return .green
+            return .green // Premium = green
+        } else if supabaseManager.hasEmail {
+            return .blue // Connected (free) = blue
         } else {
-            return .blue
+            return .orange // App User (free) = orange
         }
+    }
+    
+    /// Returns connection status for display
+    private var connectionStatusText: String {
+        supabaseManager.hasEmail ? "Connected" : "App User"
+    }
+    
+    /// Returns connection status color
+    private var connectionStatusColor: Color {
+        supabaseManager.hasEmail ? .green : .orange
     }
     
     // MARK: - Profile Header Section
@@ -178,9 +206,14 @@ struct ProfileView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    Text(authService.isAuthenticated ? "Signed In" : "Guest User")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(connectionStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(connectionStatusText)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }
@@ -214,9 +247,9 @@ struct ProfileView: View {
                 AccountInfoRow(
                     icon: "envelope",
                     title: "Email",
-                    value: supabaseManager.hasEmail ? (userSettings.email ?? "Set") : "Not Set",
+                    value: supabaseManager.hasEmail ? (supabaseManager.userEmail ?? "Set") : "Not Set",
                     valueColor: supabaseManager.hasEmail ? .blue : .secondary,
-                    action: supabaseManager.isAnonymousUser ? {
+                    action: supabaseManager.isAnonymousUser && !supabaseManager.hasEmail ? {
                         activeSheet = .addEmail
                     } : nil
                 )
@@ -353,19 +386,19 @@ struct ProfileView: View {
     
     private var actionsSection: some View {
         VStack(spacing: 12) {
-            // For anonymous users: Show "Add Email to Sync" button
-            if supabaseManager.isAnonymousUser {
+            // For App Users (anonymous without email): Show "Connect Account" button
+            if !supabaseManager.hasEmail {
                 Button {
                     activeSheet = .addEmail
                 } label: {
                     HStack {
-                        Image(systemName: "envelope.badge.shield.half.filled")
+                        Image(systemName: "link.circle.fill")
                             .font(.title3)
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Add Email to Sync")
+                            Text("Connect Account")
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                            Text("Secure your data and sync across devices")
+                            Text("Sync your data across all devices")
                                 .font(.caption)
                         }
                         Spacer()
@@ -376,7 +409,7 @@ struct ProfileView: View {
                     .padding()
                     .background(
                         LinearGradient(
-                            colors: [.orange, .red],
+                            colors: [.blue, .purple],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -384,18 +417,20 @@ struct ProfileView: View {
                     .cornerRadius(12)
                 }
                 
-                // Info about guest account
+                // Info about app user account
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle")
                         .foregroundColor(.blue)
-                    Text("Your data is saved on this device. Add an email to sync across devices and secure your account.")
+                    Text("Your data is saved on this device. Connect an account to sync across devices.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 4)
-            } else {
-                // For authenticated users: Show sign out button
-                Button("Sign Out") {
+            }
+            
+            // For Connected Users: Show disconnect (sign out) button
+            if supabaseManager.hasEmail {
+                Button("Disconnect Account") {
                     showingLogoutAlert = true
                 }
                 .font(.subheadline)
@@ -466,7 +501,7 @@ enum LoginMode {
 struct LoginOptionsView: View {
     let mode: LoginMode
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var authService = AuthService()
+    @EnvironmentObject private var authService: AuthService
     @State private var isLoading = false
     @State private var showingEmailLogin = false
     @State private var email = ""
@@ -711,6 +746,7 @@ struct AddEmailView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var isLoading = false
+    @State private var showingSuccessAlert = false
     
     var body: some View {
         NavigationView {
@@ -829,6 +865,13 @@ struct AddEmailView: View {
             } message: {
                 Text(errorMessage)
             }
+            .alert("Check Your Email! ✉️", isPresented: $showingSuccessAlert) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("We've sent a confirmation email to \(email).\n\nPlease check your inbox and click the confirmation link to complete your account setup. Once confirmed, you'll be able to sign in on all your devices!")
+            }
             .onTapGesture {
                 hideKeyboard()
             }
@@ -871,7 +914,7 @@ struct AddEmailView: View {
                 try await authService.linkEmailToAnonymousAccount(email: email, password: password)
                 await MainActor.run {
                     isLoading = false
-                    dismiss()
+                    showingSuccessAlert = true
                 }
             } catch {
                 await MainActor.run {

@@ -136,14 +136,12 @@ struct PostPurchaseAccountPrompt: View {
     
     private var benefitsSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text(isAnonymousUser ? "Secure Your Subscription" : "Protect Your Progress")
+            Text("Connect Your Account")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
-            Text(isAnonymousUser ? 
-                 "Add an email to secure your premium subscription and sync your data across all your devices" :
-                 "Create a free account to backup your workout data and sync across all your devices")
+            Text("Add an email to sync your data and premium subscription across all your devices")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.leading)
@@ -189,11 +187,10 @@ struct PostPurchaseAccountPrompt: View {
     
     private var actionButtonsSection: some View {
         VStack(spacing: 16) {
-            // Add Email or Create Account Button
+            // Connect Account Button (for all users post-purchase)
             Button {
-                // For anonymous users, show add email flow
-                // For others (shouldn't happen in new flow), show sign up
-                activeSheet = isAnonymousUser ? .addEmail : .emailSignUp
+                // Always show add email flow (all users are anonymous after purchase if not connected)
+                activeSheet = .addEmail
             } label: {
                 HStack {
                     if isCreatingAccount {
@@ -201,11 +198,11 @@ struct PostPurchaseAccountPrompt: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
-                        Image(systemName: isAnonymousUser ? "envelope.badge.shield.half.filled" : "person.badge.plus")
+                        Image(systemName: "link.circle.fill")
                             .font(.title2)
                     }
                     
-                    Text(isAnonymousUser ? "Add Email to Sync" : "Create an Account")
+                    Text("Connect Account")
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
@@ -214,7 +211,7 @@ struct PostPurchaseAccountPrompt: View {
                 .padding()
                 .background(
                     LinearGradient(
-                        colors: isAnonymousUser ? [.orange, .red] : [.blue, .purple],
+                        colors: [.blue, .purple],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -234,14 +231,12 @@ struct PostPurchaseAccountPrompt: View {
             }
             .disabled(isCreatingAccount)
             
-            // Info text for anonymous users
-            if isAnonymousUser {
-                Text("Your premium features are active! Add an email to keep them safe.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
+            // Info text
+            Text("Your premium features are already active! Connect an account to access them on all your devices.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
         }
     }
 }

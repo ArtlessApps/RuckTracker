@@ -3,6 +3,13 @@ import Foundation
 import SwiftUI
 import Supabase
 
+/// AuthService handles all authentication operations
+/// 
+/// User Types:
+/// 1. Anonymous User (App User): Has session but no email - default state
+/// 2. Connected User: Has session with email - can sync across devices
+/// 
+/// Premium Status: Independent of authentication - managed by StoreKit via Apple ID
 @MainActor
 class AuthService: ObservableObject {
     private let supabase = SupabaseManager.shared.client
@@ -84,28 +91,42 @@ class AuthService: ObservableObject {
         }
     }
     
+    /// Sign out a connected user and create a new anonymous session
+    /// 
+    /// This method:
+    /// 1. Only allows sign out for users with email (Connected Users)
+    /// 2. Clears the current session
+    /// 3. Creates a NEW anonymous session (fresh start)
+    /// 4. Premium status persists if subscription is tied to Apple ID
+    ///
+    /// Note: Anonymous users (App Users) cannot sign out - they would lose their data
     func signOut() async throws {
         print("🔄 Starting sign out process...")
         
-        // Only sign out if user has an email (authenticated user)
-        // Anonymous users should never truly "sign out"
-        guard !SupabaseManager.shared.isAnonymousUser else {
-            print("⚠️ Cannot sign out anonymous user - session preserved")
+        // Only allow sign out for Connected Users (users with email)
+        // Anonymous users cannot sign out to prevent data loss
+        guard SupabaseManager.shared.canSignOut else {
+            print("⚠️ Cannot sign out - user must have email to sign out (prevents data loss)")
+            print("⚠️ Current state: isAuthenticated=\(SupabaseManager.shared.isAuthenticated), hasEmail=\(SupabaseManager.shared.hasEmail)")
             return
         }
+        
+        print("✅ User can sign out - proceeding...")
         
         // Clear the authenticated session
         await SupabaseManager.shared.clearSession()
         
         await MainActor.run {
             self.isAuthenticated = false
-            print("✅ Signed out authenticated user")
+            print("✅ Signed out connected user")
         }
         
-        // Automatically create a new anonymous session
+        // Automatically create a NEW anonymous session
+        // This ensures user can continue using the app with a fresh anonymous account
         do {
             try await signInAnonymously()
             print("✅ Created new anonymous session after sign out")
+            print("📊 New anonymous session - User ID: \(SupabaseManager.shared.currentUser?.id.uuidString ?? "unknown")")
         } catch {
             print("❌ Failed to create new anonymous session: \(error)")
             throw error

@@ -11,16 +11,48 @@ class SupabaseManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     
-    // Helper property to check if current user is anonymous
+    // MARK: - User State Properties
+    
+    /// Indicates if the current user is anonymous (no email connected)
+    /// This is the default state for new users - they have a session but no email
     var isAnonymousUser: Bool {
         guard let user = currentUser else { return false }
         return user.isAnonymous
     }
     
-    // Helper property to check if user has email
+    /// Indicates if the user has connected an email (confirmed or pending confirmation)
+    /// This determines if the user is a "Connected User" vs "App User" (anonymous)
     var hasEmail: Bool {
         guard let user = currentUser else { return false }
-        return user.email != nil && !(user.email?.isEmpty ?? true)
+        // Check both email (confirmed) and newEmail (pending confirmation)
+        let hasConfirmedEmail = user.email != nil && !(user.email?.isEmpty ?? true)
+        let hasPendingEmail = user.newEmail != nil && !(user.newEmail?.isEmpty ?? true)
+        return hasConfirmedEmail || hasPendingEmail
+    }
+    
+    /// Returns the user's email address (confirmed or pending)
+    var userEmail: String? {
+        guard let user = currentUser else { return nil }
+        // Return confirmed email if available, otherwise pending email
+        if let email = user.email, !email.isEmpty {
+            return email
+        }
+        return user.newEmail
+    }
+    
+    /// User type for UI display purposes
+    /// - Returns: "App User" for anonymous, "Connected" for users with email
+    var userTypeDisplay: String {
+        if !isAuthenticated {
+            return "Not Connected"
+        }
+        return hasEmail ? "Connected" : "App User"
+    }
+    
+    /// Indicates if user can sign out
+    /// Anonymous users without email cannot sign out (would lose their data)
+    var canSignOut: Bool {
+        return isAuthenticated && hasEmail
     }
     
     private init() {
@@ -67,14 +99,37 @@ class SupabaseManager: ObservableObject {
     
     @MainActor
     func updateUserEmail(email: String, password: String) async throws {
-        // This updates the current user with an email and password
-        // For anonymous users, this effectively "upgrades" them to a full account
-        try await client.auth.update(user: UserAttributes(email: email, password: password))
+        // For anonymous users, we need to convert them to a full authenticated account
+        // The Supabase update method requires email confirmation by default
+        // Instead, we'll use updateUser with email change confirmation disabled
         
-        // Refresh the session to get updated user info
-        await checkForExistingSession()
+        print("🔐 Attempting to update user with email: \(email)")
         
-        print("🔐 Successfully linked email to anonymous account")
+        // Update both email and password for the anonymous user
+        // This should convert them to a full account
+        let updatedUser = try await client.auth.update(
+            user: UserAttributes(
+                email: email,
+                password: password,
+                data: nil as [String: AnyJSON]?
+            )
+        )
+        
+        print("🔐 Update response received - User ID: \(updatedUser.id)")
+        print("🔐 Update response - Email: \(updatedUser.email ?? "nil"), Anonymous: \(updatedUser.isAnonymous)")
+        print("🔐 Update response - New Email: \(updatedUser.newEmail ?? "nil")")
+        
+        // Update local state with the new user info immediately
+        self.currentUser = updatedUser
+        
+        // Note: If email confirmation is required in Supabase settings,
+        // the email will be in user.newEmail until confirmed
+        // For now, we'll treat the account as upgraded even if email is pending confirmation
+        
+        print("🔐 Successfully updated anonymous account")
+        print("🔐 Updated user state - isAuthenticated: \(isAuthenticated), hasEmail: \(hasEmail), isAnonymous: \(isAnonymousUser)")
+        print("🔐 Current user email: \(currentUser?.email ?? "nil")")
+        print("🔐 Current user new email (pending confirmation): \(currentUser?.newEmail ?? "nil")")
     }
     
     @MainActor
