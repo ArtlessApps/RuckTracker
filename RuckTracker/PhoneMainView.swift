@@ -15,6 +15,31 @@ struct ImprovedPhoneMainView: View {
     @State private var showingChallenges = false
     @State private var showingDataExport = false
     @State private var showingLeaderboards = false
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case profile
+        case settings
+        case analytics
+        case workoutHistory
+        case trainingPrograms
+        case challenges
+        case dataExport
+        case leaderboards
+        
+        var id: Int {
+            switch self {
+            case .profile: return 0
+            case .settings: return 1
+            case .analytics: return 2
+            case .workoutHistory: return 3
+            case .trainingPrograms: return 4
+            case .challenges: return 5
+            case .dataExport: return 6
+            case .leaderboards: return 7
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -26,33 +51,29 @@ struct ImprovedPhoneMainView: View {
             }
             .navigationBarHidden(true)
         }
-        .sheet(isPresented: $showingProfile) {
-            ProfileView()
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
-        }
-        .sheet(isPresented: $showingAnalytics) {
-            AnalyticsView(showAllWorkouts: $showingWorkoutHistory)
-                .environmentObject(workoutDataManager)
-                .environmentObject(premiumManager)
-        }
-        .sheet(isPresented: $showingWorkoutHistory) {
-            AllWorkoutsView()
-        }
-        .sheet(isPresented: $showingTrainingPrograms) {
-            TrainingProgramsView()
-        }
-        .sheet(isPresented: $showingChallenges) {
-            ChallengesView()
-        }
-        .sheet(isPresented: $showingDataExport) {
-            DataExportView()
-                .environmentObject(workoutDataManager)
-        }
-        .sheet(isPresented: $showingLeaderboards) {
-            LeaderboardsView()
-                .environmentObject(premiumManager)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .profile:
+                ProfileView()
+            case .settings:
+                SettingsView()
+            case .analytics:
+                AnalyticsView(showAllWorkouts: $showingWorkoutHistory)
+                    .environmentObject(workoutDataManager)
+                    .environmentObject(premiumManager)
+            case .workoutHistory:
+                AllWorkoutsView()
+            case .trainingPrograms:
+                TrainingProgramsView()
+            case .challenges:
+                ChallengesView()
+            case .dataExport:
+                DataExportView()
+                    .environmentObject(workoutDataManager)
+            case .leaderboards:
+                LeaderboardsView()
+                    .environmentObject(premiumManager)
+            }
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
@@ -204,7 +225,7 @@ struct ImprovedPhoneMainView: View {
     private var programsCard: some View {
         Button(action: {
             if premiumManager.isPremiumUser {
-                showingTrainingPrograms = true
+                activeSheet = .trainingPrograms
             } else {
                 premiumManager.showPaywall(context: .programAccess)
             }
@@ -247,7 +268,7 @@ struct ImprovedPhoneMainView: View {
     private var challengesCard: some View {
         Button(action: {
             if premiumManager.isPremiumUser {
-                showingChallenges = true
+                activeSheet = .challenges
             } else {
                 premiumManager.showPaywall(context: .featureUpsell)
             }
@@ -289,7 +310,7 @@ struct ImprovedPhoneMainView: View {
     private var leaderboardsCard: some View {
         Button(action: {
             if premiumManager.isPremiumUser {
-                showingLeaderboards = true
+                activeSheet = .leaderboards
             } else {
                 premiumManager.showPaywall(context: .featureUpsell)
             }
@@ -331,7 +352,7 @@ struct ImprovedPhoneMainView: View {
     private var dataCard: some View {
         Button(action: {
             if premiumManager.isPremiumUser {
-                showingDataExport = true
+                activeSheet = .dataExport
             } else {
                 premiumManager.showPaywall(context: .featureUpsell)
             }
@@ -376,7 +397,7 @@ struct ImprovedPhoneMainView: View {
         HStack(spacing: 0) {
             // Profile Button
             Button(action: {
-                showingProfile = true
+                activeSheet = .profile
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "person.circle")
@@ -394,7 +415,7 @@ struct ImprovedPhoneMainView: View {
             
             // Activity Button
             Button(action: {
-                showingAnalytics = true
+                activeSheet = .analytics
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
@@ -412,7 +433,7 @@ struct ImprovedPhoneMainView: View {
             
             // Settings Button
             Button(action: {
-                showingSettings = true
+                activeSheet = .settings
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "gearshape")

@@ -6,6 +6,19 @@ struct PostPurchaseAccountPrompt: View {
     @State private var showingEmailSignUp = false
     @State private var showingUsernameSetup = false
     @State private var isCreatingAccount = false
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case emailSignUp
+        case usernameSetup
+        
+        var id: Int {
+            switch self {
+            case .emailSignUp: return 0
+            case .usernameSetup: return 1
+            }
+        }
+    }
     
     let onAccountCreated: () -> Void
     let onSkip: () -> Void
@@ -37,25 +50,27 @@ struct PostPurchaseAccountPrompt: View {
                 }
             }
         }
-        .sheet(isPresented: $showingEmailSignUp) {
-            PostPurchaseEmailSignUpView { email, password in
-                Task {
-                    isCreatingAccount = true
-                    do {
-                        try await authService.signUpWithEmail(email: email, password: password)
-                        isCreatingAccount = false
-                        showingUsernameSetup = true
-                    } catch {
-                        isCreatingAccount = false
-                        print("Account creation failed: \(error)")
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .emailSignUp:
+                PostPurchaseEmailSignUpView { email, password in
+                    Task {
+                        isCreatingAccount = true
+                        do {
+                            try await authService.signUpWithEmail(email: email, password: password)
+                            isCreatingAccount = false
+                            activeSheet = .usernameSetup
+                        } catch {
+                            isCreatingAccount = false
+                            print("Account creation failed: \(error)")
+                        }
                     }
                 }
-            }
-        }
-        .sheet(isPresented: $showingUsernameSetup) {
-            PostPurchaseUsernameSetupView {
-                onAccountCreated()
-                dismiss()
+            case .usernameSetup:
+                PostPurchaseUsernameSetupView {
+                    onAccountCreated()
+                    dismiss()
+                }
             }
         }
     }
@@ -154,7 +169,7 @@ struct PostPurchaseAccountPrompt: View {
         VStack(spacing: 16) {
             // Create Account Button
             Button {
-                showingEmailSignUp = true
+                activeSheet = .emailSignUp
             } label: {
                 HStack {
                     if isCreatingAccount {
@@ -166,7 +181,7 @@ struct PostPurchaseAccountPrompt: View {
                             .font(.title2)
                     }
                     
-                    Text("Create Free Account")
+                    Text("Create an Account")
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
@@ -184,12 +199,12 @@ struct PostPurchaseAccountPrompt: View {
             }
             .disabled(isCreatingAccount)
             
-            // Continue as Guest Button
+            // Maybe Later Button
             Button {
                 onSkip()
                 dismiss()
             } label: {
-                Text("Continue as Guest")
+                Text("Maybe later")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
