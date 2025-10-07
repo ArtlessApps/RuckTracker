@@ -11,13 +11,15 @@ struct AuthenticationRequiredView: View {
     enum ActiveSheet: Identifiable {
         case loginOptions(LoginMode)
         case existingUserLogin
+        case directEmailLogin
         case debugOptions
         
         var id: Int {
             switch self {
             case .loginOptions: return 0
             case .existingUserLogin: return 1
-            case .debugOptions: return 2
+            case .directEmailLogin: return 2
+            case .debugOptions: return 3
             }
         }
     }
@@ -113,7 +115,7 @@ struct AuthenticationRequiredView: View {
                     
                     // I Already Have an Account
                     Button {
-                        activeSheet = .existingUserLogin
+                        activeSheet = .directEmailLogin
                     } label: {
                         Text("I Already Have an Account")
                             .font(.caption)
@@ -148,6 +150,16 @@ struct AuthenticationRequiredView: View {
                 LoginOptionsView(mode: mode)
             case .existingUserLogin:
                 LoginOptionsView(mode: .signIn)
+            case .directEmailLogin:
+                EmailLoginView(mode: .signIn) { email, password in
+                    Task {
+                        do {
+                            try await authService.signInWithEmail(email: email, password: password)
+                        } catch {
+                            print("Sign in error: \(error)")
+                        }
+                    }
+                }
             case .debugOptions:
                 DebugOptionsView()
             }

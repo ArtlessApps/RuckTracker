@@ -64,12 +64,14 @@ class AuthService: ObservableObject {
     }
     
     func signOut() async throws {
-        try await supabase.auth.signOut()
+        print("🔄 Starting sign out process...")
+        
+        // Use SupabaseManager's clearSession method to ensure proper cleanup
+        await SupabaseManager.shared.clearSession()
         
         await MainActor.run {
             self.isAuthenticated = false
-            SupabaseManager.shared.currentUser = nil
-            SupabaseManager.shared.isAuthenticated = false
+            print("✅ AuthService updated - isAuthenticated: \(self.isAuthenticated)")
         }
     }
 }

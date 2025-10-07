@@ -33,6 +33,7 @@ struct ContentView: View {
         }
         .onChange(of: supabaseManager.isAuthenticated) { isAuthenticated in
             print("🔄 ContentView detected auth state change: \(isAuthenticated)")
+            print("🔄 Current SupabaseManager state - isAuthenticated: \(supabaseManager.isAuthenticated), currentUser: \(supabaseManager.currentUser?.id.uuidString ?? "nil")")
         }
     }
 }
