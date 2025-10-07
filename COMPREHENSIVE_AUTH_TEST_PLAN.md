@@ -360,7 +360,7 @@ This document provides a comprehensive test plan for all authentication scenario
 
 ---
 
-#### Test F2: Network Loss During Sign In
+#### Test F2: Network Loss During Sign Inå
 **Starting State:** Anonymous user
 
 **Steps:**

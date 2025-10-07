@@ -44,13 +44,10 @@ struct ProfileView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Profile Header
+                    // Streamlined Profile Info
                     profileHeaderSection
                     
-                    // Account Information
-                    accountInformationSection
-                    
-                    // Subscription Details
+                    // Subscription Details (if premium or show upgrade)
                     subscriptionDetailsSection
                     
                     // Actions
@@ -174,46 +171,81 @@ struct ProfileView: View {
     // MARK: - Profile Header Section
     
     private var profileHeaderSection: some View {
-        VStack(spacing: 16) {
-            // Profile Avatar
-            VStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 80, height: 80)
+        VStack(spacing: 20) {
+            // Username with edit button
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Username")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                }
-                
-                VStack(spacing: 4) {
                     if let username = userSettings.username, !username.isEmpty {
                         Text(username)
                             .font(.title2)
-                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
                             .foregroundColor(.primary)
                     } else {
-                        Text("Set Username")
+                        Text("Not Set")
                             .font(.title2)
-                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
                             .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                Button {
+                    tempUsername = userSettings.username ?? ""
+                    activeSheet = .usernameEditor
+                } label: {
+                    Text("Edit")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
+            }
+            
+            Divider()
+            
+            // Subscription Status
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Subscription")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 8) {
+                        Text(accountStatusText)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(accountStatusColor)
+                        
+                        if premiumManager.isPremiumUser {
+                            Image(systemName: "crown.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            Divider()
+            
+            // Account - Only show if connected (email address)
+            if supabaseManager.hasEmail {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Account")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(supabaseManager.userEmail ?? "Connected")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
                     }
                     
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(connectionStatusColor)
-                            .frame(width: 8, height: 8)
-                        Text(connectionStatusText)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                    Spacer()
                 }
             }
         }
@@ -224,64 +256,6 @@ struct ProfileView: View {
         )
     }
     
-    // MARK: - Account Information Section
-    
-    private var accountInformationSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Account Information")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            VStack(spacing: 12) {
-                // Account Status
-                AccountInfoRow(
-                    icon: "person.circle",
-                    title: "Account Status",
-                    value: accountStatusText,
-                    valueColor: accountStatusColor,
-                    action: nil
-                )
-                
-                // Email Address - with action for anonymous users
-                AccountInfoRow(
-                    icon: "envelope",
-                    title: "Email",
-                    value: supabaseManager.hasEmail ? (supabaseManager.userEmail ?? "Set") : "Not Set",
-                    valueColor: supabaseManager.hasEmail ? .blue : .secondary,
-                    action: supabaseManager.isAnonymousUser && !supabaseManager.hasEmail ? {
-                        activeSheet = .addEmail
-                    } : nil
-                )
-                
-                // Username
-                AccountInfoRow(
-                    icon: "person.badge.plus",
-                    title: "Username",
-                    value: userSettings.username?.isEmpty == false ? userSettings.username! : "Not Set",
-                    valueColor: userSettings.username?.isEmpty == false ? .blue : .secondary,
-                    action: {
-                        tempUsername = userSettings.username ?? ""
-                        activeSheet = .usernameEditor
-                    }
-                )
-                
-                // User ID (show for all users)
-                AccountInfoRow(
-                    icon: "key",
-                    title: "User ID",
-                    value: "••••••••",
-                    valueColor: .secondary,
-                    action: nil
-                )
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.gray.opacity(0.05))
-        )
-    }
     
     // MARK: - Subscription Details Section
     
@@ -385,15 +359,15 @@ struct ProfileView: View {
     // MARK: - Actions Section
     
     private var actionsSection: some View {
-        VStack(spacing: 12) {
-            // For App Users (anonymous without email): Show "Connect Account" button
+        VStack(spacing: 16) {
+            // For App Users (anonymous without email): Show prominent "Connect Account" card
             if !supabaseManager.hasEmail {
                 Button {
                     activeSheet = .addEmail
                 } label: {
                     HStack {
                         Image(systemName: "link.circle.fill")
-                            .font(.title3)
+                            .font(.title2)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Connect Account")
                                 .font(.headline)
@@ -417,7 +391,7 @@ struct ProfileView: View {
                     .cornerRadius(12)
                 }
                 
-                // Info about app user account
+                // Info about data
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle")
                         .foregroundColor(.blue)
@@ -428,7 +402,7 @@ struct ProfileView: View {
                 .padding(.horizontal, 4)
             }
             
-            // For Connected Users: Show disconnect (sign out) button
+            // For Connected Users: Show disconnect button
             if supabaseManager.hasEmail {
                 Button("Disconnect Account") {
                     showingLogoutAlert = true
@@ -747,39 +721,42 @@ struct AddEmailView: View {
     @State private var errorMessage = ""
     @State private var isLoading = false
     @State private var showingSuccessAlert = false
+    @State private var isSignInMode = false // Toggle between sign in and create account
     
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
-                    Image(systemName: "envelope.badge.shield.half.filled")
+                    Image(systemName: isSignInMode ? "person.circle.fill" : "envelope.badge.shield.half.filled")
                         .font(.system(size: 60))
                         .foregroundColor(.orange)
                     
-                    Text("Add Email to Sync")
+                    Text(isSignInMode ? "Sign In" : "Connect Account")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text("Add an email and password to secure your account and sync your data across all your devices.")
+                    Text(isSignInMode ? "Sign in to access your account and sync your data across all devices." : "Add an email and password to secure your account and sync your data across all your devices.")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
                 
-                // Benefits list
-                VStack(alignment: .leading, spacing: 12) {
-                    SimpleBenefitRow(icon: "icloud", text: "Sync data across devices")
-                    SimpleBenefitRow(icon: "lock.shield", text: "Secure your account")
-                    SimpleBenefitRow(icon: "arrow.clockwise", text: "Never lose your progress")
-                    SimpleBenefitRow(icon: "checkmark.circle", text: "Keep all your current data")
+                // Benefits list (only show for new accounts)
+                if !isSignInMode {
+                    VStack(alignment: .leading, spacing: 12) {
+                        SimpleBenefitRow(icon: "icloud", text: "Sync data across devices")
+                        SimpleBenefitRow(icon: "lock.shield", text: "Secure your account")
+                        SimpleBenefitRow(icon: "arrow.clockwise", text: "Never lose your progress")
+                        SimpleBenefitRow(icon: "checkmark.circle", text: "Keep all your current data")
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.blue.opacity(0.1))
+                    )
+                    .padding(.horizontal)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.1))
-                )
-                .padding(.horizontal)
                 
                 VStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -803,13 +780,16 @@ struct AddEmailView: View {
                             .submitLabel(.next)
                     }
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Confirm Password")
-                            .font(.headline)
-                        
-                        SecureField("Confirm password", text: $confirmPassword)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .submitLabel(.done)
+                    // Only show confirm password for new accounts
+                    if !isSignInMode {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Confirm Password")
+                                .font(.headline)
+                            
+                            SecureField("Confirm password", text: $confirmPassword)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .submitLabel(.done)
+                        }
                     }
                 }
                 .padding(.horizontal)
@@ -818,7 +798,11 @@ struct AddEmailView: View {
                 
                 VStack(spacing: 16) {
                     Button {
-                        addEmail()
+                        if isSignInMode {
+                            signIn()
+                        } else {
+                            addEmail()
+                        }
                     } label: {
                         if isLoading {
                             ProgressView()
@@ -826,7 +810,7 @@ struct AddEmailView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else {
-                            Text("Secure My Account")
+                            Text(isSignInMode ? "Sign In" : "Connect Account")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -835,7 +819,7 @@ struct AddEmailView: View {
                     }
                     .background(
                         LinearGradient(
-                            colors: [.orange, .red],
+                            colors: isSignInMode ? [.blue, .purple] : [.orange, .red],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -843,6 +827,19 @@ struct AddEmailView: View {
                     .cornerRadius(12)
                     .disabled(!isFormValid || isLoading)
                     .opacity(isFormValid && !isLoading ? 1.0 : 0.6)
+                    
+                    // Toggle between sign in and create account
+                    Button {
+                        isSignInMode.toggle()
+                        // Clear confirm password when switching to sign in
+                        if isSignInMode {
+                            confirmPassword = ""
+                        }
+                    } label: {
+                        Text(isSignInMode ? "Need an account? Connect account" : "Already have an account? Sign in")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
                     
                     Button("Maybe Later") {
                         dismiss()
@@ -879,10 +876,16 @@ struct AddEmailView: View {
     }
     
     private var isFormValid: Bool {
-        return !email.isEmpty && 
-               !password.isEmpty && 
-               password.count >= 6 &&
-               password == confirmPassword
+        if isSignInMode {
+            // Sign in only needs email and password
+            return !email.isEmpty && !password.isEmpty
+        } else {
+            // Create account needs email, password, and matching confirmation
+            return !email.isEmpty && 
+                   !password.isEmpty && 
+                   password.count >= 6 &&
+                   password == confirmPassword
+        }
     }
     
     private func addEmail() {
@@ -920,6 +923,40 @@ struct AddEmailView: View {
                 await MainActor.run {
                     isLoading = false
                     errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+        }
+    }
+    
+    private func signIn() {
+        // Validate email format
+        guard email.contains("@") && email.contains(".") else {
+            errorMessage = "Please enter a valid email address"
+            showingError = true
+            return
+        }
+        
+        // Validate password
+        guard !password.isEmpty else {
+            errorMessage = "Please enter your password"
+            showingError = true
+            return
+        }
+        
+        isLoading = true
+        
+        Task {
+            do {
+                try await authService.signInWithEmail(email: email, password: password)
+                await MainActor.run {
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = "Sign in failed. Please check your email and password."
                     showingError = true
                 }
             }
