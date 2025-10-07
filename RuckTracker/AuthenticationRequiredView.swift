@@ -6,6 +6,21 @@ struct AuthenticationRequiredView: View {
     @State private var showingLoginOptions = false
     @State private var showingExistingUserLogin = false
     @State private var showingDebugOptions = false
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case loginOptions(LoginMode)
+        case existingUserLogin
+        case debugOptions
+        
+        var id: Int {
+            switch self {
+            case .loginOptions: return 0
+            case .existingUserLogin: return 1
+            case .debugOptions: return 2
+            }
+        }
+    }
     
     private func checkForExistingSessionOrCreateAnonymous() async {
         // First check if there's an existing session
@@ -62,7 +77,7 @@ struct AuthenticationRequiredView: View {
                 VStack(spacing: 16) {
                     // Get Started - New User Sign Up
                     Button {
-                        showingLoginOptions = true
+                        activeSheet = .loginOptions(.signUp)
                     } label: {
                         Text("Get Started")
                             .font(.headline)
@@ -81,7 +96,7 @@ struct AuthenticationRequiredView: View {
                     
                     // Existing User Login
                     Button {
-                        showingExistingUserLogin = true
+                        activeSheet = .existingUserLogin
                     } label: {
                         Text("Existing User Login")
                             .font(.headline)
@@ -123,7 +138,7 @@ struct AuthenticationRequiredView: View {
                 // Debug button (temporary for testing)
                 #if DEBUG
                 Button {
-                    showingDebugOptions = true
+                    activeSheet = .debugOptions
                 } label: {
                     Text("Debug: Clear Session")
                         .font(.caption)
@@ -133,14 +148,15 @@ struct AuthenticationRequiredView: View {
             }
             .padding()
         }
-        .sheet(isPresented: $showingLoginOptions) {
-            LoginOptionsView(mode: .signUp)
-        }
-        .sheet(isPresented: $showingExistingUserLogin) {
-            LoginOptionsView(mode: .signIn)
-        }
-        .sheet(isPresented: $showingDebugOptions) {
-            DebugOptionsView()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .loginOptions(let mode):
+                LoginOptionsView(mode: mode)
+            case .existingUserLogin:
+                LoginOptionsView(mode: .signIn)
+            case .debugOptions:
+                DebugOptionsView()
+            }
         }
     }
 }

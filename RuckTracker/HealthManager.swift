@@ -83,7 +83,25 @@ class HealthManager: ObservableObject {
             ]
         }
         
+        // Add timeout handling for simulator
+        let timeout: TimeInterval = 30.0
+        let timeoutWorkItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            if self.authorizationInProgress {
+                print("⚠️ \(self.platformName): HealthKit authorization timed out")
+                DispatchQueue.main.async {
+                    self.authorizationInProgress = false
+                    // Don't treat timeout as error in simulator - just check current status
+                    self.checkAuthorizationStatus()
+                }
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: timeoutWorkItem)
+        
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
+            timeoutWorkItem.cancel() // Cancel timeout if we get a response
+            
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.authorizationInProgress = false

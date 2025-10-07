@@ -3,6 +3,7 @@ import StoreKit
 
 struct SubscriptionPaywallView: View {
     @StateObject private var storeManager = StoreKitManager.shared
+    @StateObject private var premiumManager = PremiumManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var selectedProduct: Product?
     @State private var showingTerms = false
@@ -67,16 +68,6 @@ struct SubscriptionPaywallView: View {
             }
             .sheet(isPresented: $showingPrivacy) {
                 PrivacyPolicyView()
-            }
-            .sheet(isPresented: $storeManager.showingPostPurchasePrompt) {
-                PostPurchaseAccountPrompt(
-                    onAccountCreated: {
-                        storeManager.dismissPostPurchasePrompt()
-                    },
-                    onSkip: {
-                        storeManager.dismissPostPurchasePrompt()
-                    }
-                )
             }
         }
     }
@@ -225,8 +216,13 @@ struct SubscriptionPaywallView: View {
                         do {
                             let transaction = try await storeManager.purchase(selectedProduct)
                             if transaction != nil {
-                                // Purchase successful, dismiss paywall
-                                dismiss()
+                                // Purchase successful, dismiss paywall with a small delay
+                                // to ensure proper sheet transition
+                                premiumManager.dismissPaywall()
+                                
+                                // Add a small delay to ensure the post-purchase prompt
+                                // is shown after the paywall is fully dismissed
+                                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
                             }
                         } catch {
                             // Error handling is done in StoreKitManager

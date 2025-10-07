@@ -23,6 +23,8 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var subscriptionGroupStatus: Product.SubscriptionInfo.RenewalInfo?
     
     private var updateListenerTask: Task<Void, Error>?
+    private var isCheckingStatus = false
+    private var lastStatusCheck: Date = Date.distantPast
     
     enum SubscriptionStatus {
         case notSubscribed
@@ -109,34 +111,64 @@ class StoreKitManager: NSObject, ObservableObject {
     // MARK: - Subscription Status
     
     func checkSubscriptionStatus() async {
-        subscriptionStatus = .loading
+        // Prevent multiple simultaneous status checks
+        guard !isCheckingStatus else { 
+            print("🔄 Subscription status check already in progress, skipping...")
+            return 
+        }
+        isCheckingStatus = true
+        defer { isCheckingStatus = false }
+        
+        print("🔍 Checking subscription status...")
+        // Don't set to loading to avoid triggering PremiumManager updates
+        // subscriptionStatus = .loading
         
         do {
             for await result in StoreKit.Transaction.currentEntitlements {
                 let transaction = try checkVerified(result)
+                print("🔍 Found transaction: \(transaction.productID), type: \(transaction.productType), purchase date: \(transaction.purchaseDate)")
+                
                 if transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID {
-            
+                    print("🔍 Processing subscription transaction: \(transaction.productID)")
+                    
+                    // Check if this is a test transaction (sandbox environment)
+                    #if DEBUG
+                    if transaction.environment == .sandbox {
+                        print("⚠️ Found sandbox/test subscription - this should not be active in production")
+                        // In debug mode, we might want to ignore test subscriptions
+                        // Uncomment the next line to ignore sandbox subscriptions in debug
+                        // continue
+                    }
+                    #endif
+                    
                     // Check if subscription is active
                     if let expirationDate = transaction.expirationDate {
+                        print("🔍 Subscription expires: \(expirationDate), current date: \(Date())")
                         if expirationDate > Date() {
                             subscriptionStatus = .subscribed(expiry: expirationDate)
+                            print("✅ Active subscription found - setting to subscribed")
                             
                             // Find the current product
                             currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
                         } else {
                             subscriptionStatus = .expired
+                            print("❌ Subscription expired")
                         }
                     } else {
                         // Non-consumable or active subscription
                         subscriptionStatus = .subscribed(expiry: Date.distantFuture)
+                        print("✅ Non-consumable subscription found - setting to subscribed")
                     }
                     
                     print("✅ Subscription status updated: \(subscriptionStatus)")
                     return
+                } else {
+                    print("🔍 Ignoring non-subscription transaction: \(transaction.productID)")
                 }
             }
             
             // No active subscription found
+            print("🔍 No subscription transactions found - setting to notSubscribed")
             subscriptionStatus = .notSubscribed
             
         } catch {
@@ -178,10 +210,21 @@ class StoreKitManager: NSObject, ObservableObject {
     }
     
     private func updateCustomerProductStatus() async {
+        // Debounce status checks to prevent rapid successive calls
+        let now = Date()
+        let timeSinceLastCheck = now.timeIntervalSince(lastStatusCheck)
+        
+        // Only check if it's been at least 1 second since last check
+        guard timeSinceLastCheck >= 1.0 else {
+            print("🔄 Debouncing subscription status check (last check was \(String(format: "%.1f", timeSinceLastCheck))s ago)")
+            return
+        }
+        
+        lastStatusCheck = now
         await checkSubscriptionStatus()
         
-        // Notify other parts of the app about subscription changes
-        NotificationCenter.default.post(name: .subscriptionStatusChanged, object: nil)
+        // Note: Removed notification posting since PremiumManager already listens to 
+        // subscriptionStatus changes directly via @Published property
     }
     
     // MARK: - Verification
@@ -203,6 +246,9 @@ class StoreKitManager: NSObject, ObservableObject {
         let isAnonymous = userSettings.email?.isEmpty != false
         
         if isAnonymous {
+            // Add a small delay to ensure the paywall is fully dismissed first
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
             DispatchQueue.main.async {
                 self.showingPostPurchasePrompt = true
             }
@@ -228,7 +274,7 @@ class StoreKitManager: NSObject, ObservableObject {
         switch subscriptionStatus {
         case .subscribed, .inGracePeriod:
             return true
-        default:
+        case .loading, .notSubscribed, .expired:
             return false
         }
     }

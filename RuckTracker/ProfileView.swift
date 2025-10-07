@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+// MARK: - Keyboard Dismissal Helper
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
 struct ProfileView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var authService = AuthService()
@@ -16,6 +23,19 @@ struct ProfileView: View {
     @State private var showingUsernameEditor = false
     @State private var tempUsername: String = ""
     @State private var showingLogoutAlert = false
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case loginOptions
+        case usernameEditor
+        
+        var id: Int {
+            switch self {
+            case .loginOptions: return 0
+            case .usernameEditor: return 1
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -55,12 +75,14 @@ struct ProfileView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingLoginOptions) {
-            LoginOptionsView()
-        }
-        .sheet(isPresented: $showingUsernameEditor) {
-            UsernameEditorView(currentUsername: userSettings.username) { newUsername in
-                userSettings.username = newUsername
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .loginOptions:
+                LoginOptionsView()
+            case .usernameEditor:
+                UsernameEditorView(currentUsername: userSettings.username) { newUsername in
+                    userSettings.username = newUsername
+                }
             }
         }
         .alert("Sign Out", isPresented: $showingLogoutAlert) {
@@ -173,7 +195,7 @@ struct ProfileView: View {
                     value: accountStatusText,
                     valueColor: accountStatusColor,
                     action: authService.isAuthenticated ? nil : {
-                        showingLoginOptions = true
+                        activeSheet = .loginOptions
                     }
                 )
                 
@@ -194,7 +216,7 @@ struct ProfileView: View {
                     valueColor: userSettings.username?.isEmpty == false ? .blue : .secondary,
                     action: {
                         tempUsername = userSettings.username ?? ""
-                        showingUsernameEditor = true
+                        activeSheet = .usernameEditor
                     }
                 )
                 
@@ -397,6 +419,13 @@ struct LoginOptionsView: View {
     @State private var showingEmailLogin = false
     @State private var email = ""
     @State private var password = ""
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    enum ActiveSheet: Identifiable {
+        case emailLogin
+        
+        var id: Int { 0 }
+    }
     
     init(mode: LoginMode = .signUp) {
         self.mode = mode
@@ -419,7 +448,7 @@ struct LoginOptionsView: View {
                 VStack(spacing: 16) {
                     // Email/Password Authentication
                     Button {
-                        showingEmailLogin = true
+                        activeSheet = .emailLogin
                     } label: {
                         HStack {
                             Image(systemName: "envelope")
@@ -476,23 +505,30 @@ struct LoginOptionsView: View {
                     }
                 }
             }
+            .onTapGesture {
+                // Dismiss keyboard when tapping outside text fields
+                hideKeyboard()
+            }
         }
-        .sheet(isPresented: $showingEmailLogin) {
-            EmailLoginView(mode: mode) { email, password in
-                Task {
-                    isLoading = true
-                    do {
-                        if mode == .signUp {
-                            try await authService.signUpWithEmail(email: email, password: password)
-                        } else {
-                            try await authService.signInWithEmail(email: email, password: password)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .emailLogin:
+                EmailLoginView(mode: mode) { email, password in
+                    Task {
+                        isLoading = true
+                        do {
+                            if mode == .signUp {
+                                try await authService.signUpWithEmail(email: email, password: password)
+                            } else {
+                                try await authService.signInWithEmail(email: email, password: password)
+                            }
+                            isLoading = false
+                            dismiss()
+                        } catch {
+                            isLoading = false
+                            // Handle error - you might want to show an alert
+                            print("Authentication error: \(error)")
                         }
-                        isLoading = false
-                        dismiss()
-                    } catch {
-                        isLoading = false
-                        // Handle error - you might want to show an alert
-                        print("Authentication error: \(error)")
                     }
                 }
             }
@@ -528,10 +564,11 @@ struct UsernameEditorView: View {
                     Text("Username")
                         .font(.headline)
                     
-                    TextField("Enter username", text: $username)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        TextField("Enter username", text: $username)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .submitLabel(.done)
                     
                     Text("3-20 characters, letters and numbers only")
                         .font(.caption)
@@ -575,6 +612,10 @@ struct UsernameEditorView: View {
                 Button("OK") { }
             } message: {
                 Text(errorMessage)
+            }
+            .onTapGesture {
+                // Dismiss keyboard when tapping outside text fields
+                hideKeyboard()
             }
         }
     }
@@ -642,6 +683,7 @@ struct EmailLoginView: View {
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                            .submitLabel(.next)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -650,6 +692,7 @@ struct EmailLoginView: View {
                         
                         SecureField("Enter password", text: $password)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .submitLabel(.done)
                     }
                     
                     if mode == .signUp {
@@ -659,6 +702,7 @@ struct EmailLoginView: View {
                             
                             SecureField("Confirm password", text: $confirmPassword)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .submitLabel(.done)
                         }
                     }
                 }
@@ -699,6 +743,10 @@ struct EmailLoginView: View {
                 Button("OK") { }
             } message: {
                 Text(errorMessage)
+            }
+            .onTapGesture {
+                // Dismiss keyboard when tapping outside text fields
+                hideKeyboard()
             }
         }
     }

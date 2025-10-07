@@ -21,8 +21,9 @@ class PremiumManager: ObservableObject {
     }
     
     private func setupSubscriptions() {
-        // Listen to subscription status changes
+        // Listen to subscription status changes with a small delay to ensure stability
         storeKitManager.$subscriptionStatus
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.updatePremiumStatus()
             }
@@ -35,19 +36,32 @@ class PremiumManager: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Listen to system notifications
-        NotificationCenter.default.publisher(for: .subscriptionStatusChanged)
-            .sink { [weak self] _ in
-                self?.updatePremiumStatus()
-            }
-            .store(in: &cancellables)
+        // Note: Removed duplicate notification listener since we already listen to 
+        // storeKitManager.$subscriptionStatus changes above
     }
     
     private func updatePremiumStatus() {
-        isPremiumUser = storeKitManager.isSubscribed
-        subscriptionExpiryDate = storeKitManager.subscriptionExpiryDate
+        let wasPremium = isPremiumUser
+        let newPremiumStatus = storeKitManager.isSubscribed
+        let newExpiryDate = storeKitManager.subscriptionExpiryDate
         
-        print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
+        // Always update the status, even if it's the same
+        isPremiumUser = newPremiumStatus
+        subscriptionExpiryDate = newExpiryDate
+        
+        // Log status changes with more detail
+        if wasPremium != isPremiumUser {
+            print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
+            print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
+            print("🔐 StoreKit isSubscribed: \(storeKitManager.isSubscribed)")
+            if let expiry = newExpiryDate {
+                print("🔐 Subscription expiry: \(expiry)")
+            }
+        } else {
+            // Log current status for debugging
+            print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
+            print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
+        }
     }
     
     // MARK: - Feature Gating
@@ -72,6 +86,10 @@ class PremiumManager: ObservableObject {
     func dismissPostPurchasePrompt() {
         showingPostPurchasePrompt = false
         storeKitManager.dismissPostPurchasePrompt()
+    }
+    
+    func dismissPaywall() {
+        showingPaywall = false
     }
     
     // MARK: - Free Trial Logic
