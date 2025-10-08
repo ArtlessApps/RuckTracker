@@ -96,6 +96,7 @@ struct TrainingProgramsView: View {
             ProgramDetailView(program: program)
                 .environmentObject(programService)
         }
+        // Note: workoutManager is inherited from parent environment
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
         }

@@ -186,6 +186,7 @@ struct PremiumTrainingProgramsSection: View {
             ProgramDetailView(program: program)
                 .environmentObject(programService)
         }
+        // Note: workoutManager is inherited from parent environment
         .task {
             // Load programs when view appears (for premium users)
             if premiumManager.isPremiumUser {
@@ -1382,6 +1383,7 @@ struct WorkoutDetailView: View {
     let onComplete: () -> Void
     
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var workoutManager: WorkoutManager
     @StateObject private var programService = ProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
@@ -1548,17 +1550,12 @@ struct WorkoutDetailView: View {
                 .disabled(isCompleting)
             } else {
                 Button(action: {
-                    showingCompletionConfirmation = true
+                    startWorkoutTracking()
                 }) {
                     HStack {
-                        if isCompleting {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Image(systemName: "play.circle.fill")
-                            Text("Start Workout")
-                                .fontWeight(.semibold)
-                        }
+                        Image(systemName: "play.circle.fill")
+                        Text("Start Workout")
+                            .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -1566,9 +1563,8 @@ struct WorkoutDetailView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
-                .disabled(isCompleting)
                 
-                Text("Note: For now, this will mark the workout as complete. Full workout tracking coming soon!")
+                Text("Tip: After completing, return here to mark as complete and unlock next workout")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -1585,6 +1581,22 @@ struct WorkoutDetailView: View {
         case .crossTraining:
             return "figure.run"
         }
+    }
+    
+    private func startWorkoutTracking() {
+        // Get the ruck weight from the program
+        let weight = userProgram?.currentWeightLbs ?? 20.0
+        
+        print("🏋️ Starting workout from program:")
+        print("  - Distance: \(workout.workout.distanceMiles ?? 0) miles")
+        print("  - Weight: \(weight) lbs")
+        print("  - Target Pace: \(workout.workout.targetPaceMinutes ?? 0) min/mile")
+        
+        // Start the workout with the program weight
+        workoutManager.startWorkout(weight: weight)
+        
+        // Dismiss the detail view to show the active workout tracker
+        dismiss()
     }
     
     private func completeWorkout() async {
