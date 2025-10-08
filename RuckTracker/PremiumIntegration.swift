@@ -183,8 +183,14 @@ struct PremiumTrainingProgramsSection: View {
             }
         }
         .sheet(item: $selectedProgram) { program in
-            ProgramDetailView(program: program)
-                .environmentObject(programService)
+            ProgramDetailView(
+                program: program,
+                isPresentingWorkoutFlow: .constant(false),
+                onDismiss: {
+                    selectedProgram = nil
+                }
+            )
+            .environmentObject(programService)
         }
         // Note: workoutManager is inherited from parent environment
         .task {
@@ -694,6 +700,8 @@ struct AppStoreConfiguration {
 // MARK: - Program Detail View
 struct ProgramDetailView: View {
     let program: Program
+    @Binding var isPresentingWorkoutFlow: Bool
+    let onDismiss: (() -> Void)?
     @EnvironmentObject var programService: ProgramService
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
@@ -707,8 +715,9 @@ struct ProgramDetailView: View {
                 ProgramWorkoutsView(
                     userProgram: userProgram,
                     program: program,
+                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
                     onDismiss: {
-                        dismiss()
+                        onDismiss?()
                     }
                 )
             } else {
@@ -993,7 +1002,7 @@ struct EnrolledSection: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
         .sheet(isPresented: $showingProgress) {
-            ProgramWorkoutsView(userProgram: userProgram, program: program)
+            ProgramWorkoutsView(userProgram: userProgram, program: program, isPresentingWorkoutFlow: .constant(false))
         }
     }
 }
@@ -1070,15 +1079,17 @@ struct ProgramWorkoutsView: View {
     let userProgram: UserProgram?
     let program: Program?
     let onDismiss: (() -> Void)?
+    @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var programService = ProgramService.shared
     @State private var workouts: [ProgramWorkoutWithState] = []
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
     @State private var showingWorkoutDetail = false
     
-    init(userProgram: UserProgram?, program: Program?, onDismiss: (() -> Void)? = nil) {
+    init(userProgram: UserProgram?, program: Program?, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.userProgram = userProgram
         self.program = program
+        self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
         self.onDismiss = onDismiss
     }
     
@@ -1102,7 +1113,7 @@ struct ProgramWorkoutsView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingWorkoutDetail) {
+            .sheet(isPresented: $isPresentingWorkoutFlow) {
                 if let workout = selectedWorkout {
                     WorkoutDetailView(
                         workout: workout,
@@ -1111,7 +1122,9 @@ struct ProgramWorkoutsView: View {
                             Task {
                                 await loadWorkouts()
                             }
-                        }
+                        },
+                        isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
+                        onDismiss: onDismiss
                     )
                 }
             }
@@ -1137,7 +1150,7 @@ struct ProgramWorkoutsView: View {
                         .onTapGesture {
                             if !workout.isLocked {
                                 selectedWorkout = workout
-                                showingWorkoutDetail = true
+                                isPresentingWorkoutFlow = true
                             }
                         }
                         
@@ -1381,6 +1394,8 @@ struct WorkoutDetailView: View {
     let workout: ProgramWorkoutWithState
     let userProgram: UserProgram?
     let onComplete: () -> Void
+    @Binding var isPresentingWorkoutFlow: Bool
+    let onDismiss: (() -> Void)?
     
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var workoutManager: WorkoutManager
@@ -1595,8 +1610,9 @@ struct WorkoutDetailView: View {
         // Start the workout with the program weight
         workoutManager.startWorkout(weight: weight)
         
-        // Dismiss the detail view to show the active workout tracker
-        dismiss()
+        // Dismiss all modal sheets by setting the shared binding to false
+        // This is the clean, Apple-recommended way to handle nested modal presentations
+        isPresentingWorkoutFlow = false
     }
     
     private func completeWorkout() async {

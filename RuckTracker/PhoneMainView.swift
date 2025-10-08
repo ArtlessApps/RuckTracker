@@ -18,6 +18,7 @@ struct ImprovedPhoneMainView: View {
     @State private var showingDataExport = false
     @State private var showingLeaderboards = false
     @State private var activeSheet: ActiveSheet? = nil
+    @State private var isPresentingWorkoutFlow = false
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -68,7 +69,7 @@ struct ImprovedPhoneMainView: View {
             case .workoutHistory:
                 AllWorkoutsView()
             case .trainingPrograms:
-                TrainingProgramsView()
+                TrainingProgramsView(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
             case .challenges:
                 ChallengesView()
             case .dataExport:

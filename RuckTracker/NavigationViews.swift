@@ -3,10 +3,12 @@ import Foundation
 
 // MARK: - Training Programs View
 struct TrainingProgramsView: View {
+    @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @StateObject private var programService = ProgramService.shared
     @State private var selectedProgram: Program?
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -93,12 +95,23 @@ struct TrainingProgramsView: View {
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(item: $selectedProgram) { program in
-            ProgramDetailView(program: program)
-                .environmentObject(programService)
+            ProgramDetailView(
+                program: program, 
+                isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
+                onDismiss: {
+                    selectedProgram = nil
+                }
+            )
+            .environmentObject(programService)
         }
         // Note: workoutManager is inherited from parent environment
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+        .onChange(of: isPresentingWorkoutFlow) { newValue in
+            if !newValue {
+                dismiss()
+            }
         }
     }
 }
