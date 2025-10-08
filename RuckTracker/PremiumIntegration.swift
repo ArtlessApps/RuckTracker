@@ -228,8 +228,61 @@ struct PremiumTrainingProgramsSection: View {
                 return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending // alphabetical
             }
             
-            // Flexible grid that handles mixed card widths
-            FlexGrid(programs: sortedPrograms, selectedProgram: $selectedProgram)
+            // Separate enrolled and available programs
+            let enrolledPrograms = sortedPrograms.filter { program in
+                programService.userPrograms.contains { userProgram in
+                    userProgram.programId == program.id && userProgram.isActive
+                }
+            }
+            let availablePrograms = sortedPrograms.filter { program in
+                !programService.userPrograms.contains { userProgram in
+                    userProgram.programId == program.id && userProgram.isActive
+                }
+            }
+
+            VStack(spacing: 16) {
+                // Enrolled programs (full-width)
+                if !enrolledPrograms.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Active Programs")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.green)
+
+                        LazyVStack(spacing: 16) {
+                            ForEach(enrolledPrograms) { program in
+                                if let userProgram = programService.userPrograms.first(where: { $0.programId == program.id && $0.isActive }) {
+                                    EnrolledProgramCard(
+                                        program: program,
+                                        userProgram: userProgram,
+                                        nextWorkout: getNextWorkoutName(for: program),
+                                        completedWorkouts: getCompletedWorkouts(for: userProgram),
+                                        totalWorkouts: getTotalWorkouts(for: program),
+                                        onNavigateToNextWorkout: {
+                                            selectedProgram = program
+                                        },
+                                        onLaunchWorkoutTracker: {
+                                            print("Launch workout tracker for program: \(program.title)")
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Available programs (2-column grid)
+                if !availablePrograms.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Available Programs")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+
+                        FlexibleGrid(programs: availablePrograms, selectedProgram: $selectedProgram)
+                    }
+                }
+            }
         }
     }
     

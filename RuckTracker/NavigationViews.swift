@@ -70,24 +70,6 @@ struct TrainingProgramsView: View {
                     }
                     .padding(.horizontal, 20)
                     
-                    // Additional program information
-                    if premiumManager.isPremiumUser {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Program Features")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 20)
-                            
-                            VStack(spacing: 12) {
-                                FeatureRow(icon: "calendar", title: "Structured Schedule", description: "Weekly plans with rest days and progression")
-                                FeatureRow(icon: "chart.line.uptrend.xyaxis", title: "Progress Tracking", description: "Monitor your improvement over time")
-                                FeatureRow(icon: "person.2.fill", title: "Community Support", description: "Connect with other ruckers on the same journey")
-                                FeatureRow(icon: "trophy.fill", title: "Achievement Badges", description: "Earn recognition for completing milestones")
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                    
                     Spacer(minLength: 100)
                 }
             }
