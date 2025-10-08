@@ -194,10 +194,11 @@ struct PremiumTrainingProgramsSection: View {
         }
         // Note: workoutManager is inherited from parent environment
         .task {
-            // Load programs when view appears (for premium users)
+            // Load programs and user programs when view appears (for premium users)
             if premiumManager.isPremiumUser {
                 do {
                     await programService.loadPrograms()
+                    await programService.loadUserPrograms()
                 } catch {
                     print("Failed to load programs: \(error)")
                 }
@@ -217,20 +218,109 @@ struct PremiumTrainingProgramsSection: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                ForEach(programService.programs) { program in
-                    FunctionalProgramCard(
-                        title: program.title,
-                        description: program.description ?? "Training program",
-                        difficulty: program.difficulty.rawValue.capitalized,
-                        weeks: program.durationWeeks,
-                        isLocked: false
-                    ) {
-                        selectedProgram = program
-                    }
-                }
+            // Sort programs: enrolled first, then alphabetical
+            let sortedPrograms = programService.programs.sorted { a, b in
+                let aEnrolled = programService.userPrograms.contains { $0.programId == a.id && $0.isActive }
+                let bEnrolled = programService.userPrograms.contains { $0.programId == b.id && $0.isActive }
+                
+                if aEnrolled && !bEnrolled { return true }  // a comes first
+                if !aEnrolled && bEnrolled { return false } // b comes first
+                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending // alphabetical
             }
+            
+            // Flexible grid that handles mixed card widths
+            FlexGrid(programs: sortedPrograms, selectedProgram: $selectedProgram)
         }
+    }
+    
+    // MARK: - Helper Functions
+    
+    // MARK: - Progress Calculation
+    private func getProgress(programId: UUID) -> (completed: Int, total: Int, percentage: Int) {
+        guard let program = programService.programs.first(where: { $0.id == programId }) else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        // Calculate total workouts for the program
+        let totalWorkouts = getTotalWorkouts(for: program)
+        
+        // Get user program to calculate completed workouts
+        let userProgram = programService.userPrograms.first { $0.programId == programId && $0.isActive }
+        let completedWorkouts = getCompletedWorkouts(for: userProgram)
+        
+        // Calculate percentage
+        let percentage = totalWorkouts > 0 ? Int((Double(completedWorkouts) / Double(totalWorkouts)) * 100) : 0
+        
+        return (completed: completedWorkouts, total: totalWorkouts, percentage: percentage)
+    }
+    
+    private func getNextWorkout(programId: UUID) -> String? {
+        guard let program = programService.programs.first(where: { $0.id == programId }) else {
+            return nil
+        }
+        
+        // In a real implementation, this would:
+        // 1. Fetch all workouts for the program
+        // 2. Find the first incomplete workout
+        // 3. Return the workout name/description
+        // For now, returning a mock next workout name
+        return getNextWorkoutName(for: program)
+    }
+    
+    // MARK: - Real Implementation Helpers (for future use)
+    private func getProgressFromWorkouts(programId: UUID) -> (completed: Int, total: Int, percentage: Int) {
+        // This would be the real implementation when workout data is available
+        /*
+        guard let program = programService.programs.first(where: { $0.id == programId }),
+              let workouts = program.workouts else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        let completed = workouts.filter { $0.completed }.count
+        let total = workouts.count
+        let percentage = total > 0 ? Int((Double(completed) / Double(total)) * 100) : 0
+        
+        return (completed: completed, total: total, percentage: percentage)
+        */
+        
+        // Fallback to mock implementation
+        return getProgress(programId: programId)
+    }
+    
+    private func getNextWorkoutFromWorkouts(programId: UUID) -> String? {
+        // This would be the real implementation when workout data is available
+        /*
+        guard let program = programService.programs.first(where: { $0.id == programId }),
+              let workouts = program.workouts else {
+            return nil
+        }
+        
+        // Find the first incomplete workout
+        let nextWorkout = workouts.first { !$0.completed } ?? workouts.first
+        return nextWorkout?.name
+        */
+        
+        // Fallback to mock implementation
+        return getNextWorkout(programId: programId)
+    }
+    
+    // MARK: - Legacy Helper Functions (Updated to use new progress calculation)
+    private func getNextWorkoutName(for program: Program) -> String? {
+        // Mock implementation - in real app, this would fetch from program workouts
+        return "3 Mile Ruck @ 25lbs"
+    }
+    
+    private func getCompletedWorkouts(for userProgram: UserProgram?) -> Int {
+        guard let userProgram = userProgram else { return 0 }
+        
+        // Use the new progress calculation
+        let progress = getProgress(programId: userProgram.programId)
+        return progress.completed
+    }
+    
+    private func getTotalWorkouts(for program: Program) -> Int {
+        // Mock implementation - in real app, this would count total program workouts
+        return program.durationWeeks * 5 // Assume 5 workouts per week
     }
     
     @ViewBuilder
@@ -283,7 +373,403 @@ struct PremiumTrainingProgramsSection: View {
     
 }
 
-// MARK: - Functional Program Card
+// MARK: - Enrolled Program Card (Specialized Variant)
+struct EnrolledProgramCard: View {
+    let program: Program
+    let userProgram: UserProgram
+    let nextWorkout: String?
+    let completedWorkouts: Int
+    let totalWorkouts: Int
+    let onNavigateToNextWorkout: () -> Void
+    let onLaunchWorkoutTracker: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header row: Target icon + program name + ACTIVE badge
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "target")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                    
+                    Text(program.title.uppercased())
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                }
+                
+                Spacer()
+                
+                // ACTIVE badge - exact design tokens
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white)
+                    Text("ACTIVE")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(red: 16/255, green: 185/255, blue: 129/255))  // #10B981
+                .cornerRadius(12)
+            }
+            
+            // Action row: Continue Program + arrow (with separate handlers)
+            HStack {
+                Button(action: onNavigateToNextWorkout) {
+                    Text("Continue Program")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Button(action: onLaunchWorkoutTracker) {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // Next workout information
+            if let nextWorkout = nextWorkout {
+                HStack {
+                    Text("Next:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(nextWorkout)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+            }
+            
+            // Workout details: Week • Day • Distance • Weight
+            HStack(spacing: 16) {
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                    Text("Week \(userProgram.currentWeek)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "figure.walk")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                    Text("Day \(calculateCurrentDay())")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "location")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                    Text("3.0 mi")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "backpack.fill")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                    Text("\(Int(userProgram.currentWeightLbs)) lbs")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+            }
+            
+            // Progress bar with text
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Progress:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(completedWorkouts)/\(totalWorkouts) (\(Int(progressPercentage))%)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                // Progress bar with exact design tokens
+                ProgressView(value: progressPercentage / 100.0)
+                    .progressViewStyle(LinearProgressViewStyle(tint: Color(red: 59/255, green: 130/255, blue: 246/255)))  // #3B82F6
+                    .frame(height: 6)  // Exact height from design tokens
+                    .background(Color(red: 229/255, green: 231/255, blue: 235/255))  // #E5E7EB
+                    .cornerRadius(3)
+            }
+        }
+        .padding(16)  // Exact padding from design tokens
+        .frame(minHeight: 160)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(red: 59/255, green: 130/255, blue: 246/255, opacity: 0.05))  // rgba(59, 130, 246, 0.05)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(red: 59/255, green: 130/255, blue: 246/255), lineWidth: 2)  // #3B82F6
+                )
+        )
+        .onTapGesture {
+            // Main card tap navigates to next workout detail
+            onNavigateToNextWorkout()
+        }
+    }
+    
+    private var progressPercentage: Double {
+        guard totalWorkouts > 0 else { return 0 }
+        return (Double(completedWorkouts) / Double(totalWorkouts)) * 100
+    }
+    
+    private func calculateCurrentDay() -> Int {
+        // Calculate current day based on week and typical 7-day structure
+        return ((userProgram.currentWeek - 1) * 7) + 1
+    }
+}
+
+// MARK: - Flexible Grid Container
+struct FlexGrid: View {
+    let programs: [Program]
+    @Binding var selectedProgram: Program?
+    @StateObject private var programService = ProgramService.shared
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Separate enrolled and available programs
+            let enrolledPrograms = programs.filter { program in
+                programService.userPrograms.contains { userProgram in
+                    userProgram.programId == program.id && userProgram.isActive
+                }
+            }
+            let availablePrograms = programs.filter { program in
+                !programService.userPrograms.contains { userProgram in
+                    userProgram.programId == program.id && userProgram.isActive
+                }
+            }
+            
+            // Enrolled programs section (full width)
+            if !enrolledPrograms.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Active Programs")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                    
+                    LazyVStack(spacing: 16) {  // 16px marginBottom from design tokens
+                        ForEach(enrolledPrograms) { program in
+                            if let userProgram = programService.userPrograms.first(where: { $0.programId == program.id && $0.isActive }) {
+                                EnrolledProgramCard(
+                                    program: program,
+                                    userProgram: userProgram,
+                                    nextWorkout: getNextWorkoutName(for: program),
+                                    completedWorkouts: getCompletedWorkouts(for: userProgram),
+                                    totalWorkouts: getTotalWorkouts(for: program),
+                                    onNavigateToNextWorkout: {
+                                        selectedProgram = program
+                                    },
+                                    onLaunchWorkoutTracker: {
+                                        print("Launch workout tracker for program: \(program.title)")
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Available programs section (grid layout)
+            if !availablePrograms.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Available Programs")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                    
+                    // Flexible grid that handles mixed widths
+                    FlexibleGrid(programs: availablePrograms, selectedProgram: $selectedProgram)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    private func getNextWorkoutName(for program: Program) -> String? {
+        return "3 Mile Ruck @ 25lbs"
+    }
+    
+    private func getCompletedWorkouts(for userProgram: UserProgram) -> Int {
+        return Int(userProgram.completionPercentage / 10)
+    }
+    
+    private func getTotalWorkouts(for program: Program) -> Int {
+        return program.durationWeeks * 5
+    }
+}
+
+// MARK: - Flexible Grid for Available Programs
+struct FlexibleGrid: View {
+    let programs: [Program]
+    @Binding var selectedProgram: Program?
+    
+    var body: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
+        ], spacing: 16) {
+            ForEach(programs) { program in
+                EnhancedProgramCard(
+                    program: program,
+                    isEnrolled: false,
+                    userProgram: nil,
+                    fullWidth: false
+                ) {
+                    selectedProgram = program
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Enhanced Program Card with Enrollment Status
+struct EnhancedProgramCard: View {
+    let program: Program
+    let isEnrolled: Bool
+    let userProgram: UserProgram?
+    let fullWidth: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header with title and enrollment status
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(program.title)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .lineLimit(2)
+                            .foregroundColor(.primary)
+                        
+                        if let description = program.description {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Enrollment status indicator
+                    if isEnrolled {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                            Text("Active")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                
+                // Progress information for enrolled programs
+                if isEnrolled, let userProgram = userProgram {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Week \(userProgram.currentWeek)")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.blue)
+                            
+                            Spacer()
+                            
+                            Text("\(Int(userProgram.currentWeightLbs)) lbs")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        // Progress bar
+                        ProgressView(value: userProgram.completionPercentage / 100.0)
+                            .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                            .scaleEffect(y: 1.5)
+                    }
+                    .padding(.top, 4)
+                }
+                
+                // Bottom section with difficulty and weeks
+                HStack {
+                    Label(program.difficulty.rawValue.capitalized, systemImage: "star.fill")
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                    
+                    Spacer()
+                    
+                    if program.durationWeeks > 0 {
+                        Text("\(program.durationWeeks)w")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Ongoing")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(backgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(borderColor, lineWidth: borderWidth)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var backgroundColor: Color {
+        if isEnrolled {
+            return Color.green.opacity(0.08)
+        } else {
+            return Color.gray.opacity(0.08)
+        }
+    }
+    
+    private var borderColor: Color {
+        if isEnrolled {
+            return Color.green.opacity(0.3)
+        } else {
+            return Color.blue.opacity(0.2)
+        }
+    }
+    
+    private var borderWidth: CGFloat {
+        return isEnrolled ? 2 : 1
+    }
+}
+
+// MARK: - Functional Program Card (Legacy)
 struct FunctionalProgramCard: View {
     let title: String
     let description: String
@@ -1601,11 +2087,6 @@ struct WorkoutDetailView: View {
     private func startWorkoutTracking() {
         // Get the ruck weight from the program
         let weight = userProgram?.currentWeightLbs ?? 20.0
-        
-        print("🏋️ Starting workout from program:")
-        print("  - Distance: \(workout.workout.distanceMiles ?? 0) miles")
-        print("  - Weight: \(weight) lbs")
-        print("  - Target Pace: \(workout.workout.targetPaceMinutes ?? 0) min/mile")
         
         // Start the workout with the program weight
         workoutManager.startWorkout(weight: weight)
