@@ -142,78 +142,12 @@ struct WeightProgression: Codable, Identifiable {
 
 // MARK: - Mock Data Extensions
 extension Program {
-    /// Deprecated: Programs now loaded from Programs.json
-    @available(*, deprecated, message: "Use LocalProgramService instead")
+    /// Programs are now loaded from Programs.json
+    /// This property exists only for backward compatibility during migration
     static var mockPrograms: [Program] {
-        // Keep for backwards compatibility
-        return [
-        Program(
-            id: UUID(),
-            title: "Military Foundation",
-            description: "8-week foundational program designed for those new to rucking",
-            difficulty: .beginner,
-            category: .military,
-            durationWeeks: 8,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Program(
-            id: UUID(),
-            title: "Ranger Challenge",
-            description: "Advanced 12-week program for experienced ruckers",
-            difficulty: .advanced,
-            category: .military,
-            durationWeeks: 12,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Program(
-            id: UUID(),
-            title: "Selection Prep",
-            description: "Elite 16-week program for special operations preparation",
-            difficulty: .elite,
-            category: .military,
-            durationWeeks: 16,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Program(
-            id: UUID(),
-            title: "Adventure Ruck",
-            description: "10-week program focused on outdoor adventure preparation",
-            difficulty: .intermediate,
-            category: .adventure,
-            durationWeeks: 10,
-            isFeatured: true,
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Program(
-            id: UUID(),
-            title: "Fitness Foundation",
-            description: "6-week program for general fitness improvement",
-            difficulty: .beginner,
-            category: .fitness,
-            durationWeeks: 6,
-            isFeatured: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Program(
-            id: UUID(),
-            title: "Historical March",
-            description: "14-week program based on historical military marches",
-            difficulty: .advanced,
-            category: .historical,
-            durationWeeks: 14,
-            isFeatured: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-        ]
+        // Return empty array - all programs should come from Programs.json
+        print("⚠️ WARNING: mockPrograms called - Programs.json should be used instead")
+        return []
     }
 }
 

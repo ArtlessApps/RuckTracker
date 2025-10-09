@@ -21,7 +21,7 @@ struct ProfileView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Streamlined Profile Info
+                    // Simplified Profile Info
                     profileHeaderSection
                     
                     // Subscription Details (if premium or show upgrade)
@@ -69,50 +69,23 @@ struct ProfileView: View {
     
     // MARK: - Computed Properties
     
-    /// Returns user-friendly account status text
-    /// App User: Anonymous user without email
-    /// Connected: User with email
-    /// Premium: Based on subscription status (independent of email)
-    private var accountStatusText: String {
-        let premiumStatus: String = {
-            if premiumManager.isPremiumUser {
-                if premiumManager.isInFreeTrial {
-                    return "Premium (Trial)"
-                } else {
-                    return "Premium"
-                }
-            } else {
-                return "Free"
-            }
-        }()
-        
-        // Connection status (authentication tier)
-        return premiumStatus // "Free" or "Premium" or "Premium (Trial)"
-    }
-    
-    /// Returns color for account status badge
-    private var accountStatusColor: Color {
+    /// Returns user-friendly subscription status
+    private var subscriptionStatusText: String {
         if premiumManager.isPremiumUser {
-            return .green // Premium = green
+            if premiumManager.isInFreeTrial {
+                return "Premium (Trial)"
+            } else {
+                return "Premium"
+            }
         } else {
-            return .orange // App User (free) = orange
+            return "Free"
         }
-    }
-    
-    /// Returns connection status for display
-    private var connectionStatusText: String {
-        "Local User"
-    }
-    
-    /// Returns connection status color
-    private var connectionStatusColor: Color {
-        .blue
     }
     
     // MARK: - Profile Header Section
     
     private var profileHeaderSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             // Username with edit button
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -144,31 +117,22 @@ struct ProfileView: View {
                 }
             }
             
-            // Account status
+            Divider()
+            
+            // Simple subscription status
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Status")
+                    Text("Subscription")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Text(accountStatusText)
+                    Text(subscriptionStatusText)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(accountStatusColor)
+                        .foregroundColor(.primary)
                 }
                 
                 Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Connection")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text(connectionStatusText)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(connectionStatusColor)
-                }
             }
         }
         .padding()
@@ -186,17 +150,16 @@ struct ProfileView: View {
             Text("Subscription")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
             
             if premiumManager.isPremiumUser {
-                activeSubscriptionView
+                premiumUserView
             } else {
                 freeUserView
             }
         }
     }
     
-    private var activeSubscriptionView: some View {
+    private var premiumUserView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "crown.fill")
@@ -204,34 +167,57 @@ struct ProfileView: View {
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Premium Active")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
                     if premiumManager.isInFreeTrial {
-                        Text("Trial Period")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        Text("Premium Trial Active")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        if let expiryDate = premiumManager.subscriptionExpiryDate {
+                            Text("Trial ends \(expiryDate, style: .date)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     } else {
-                        Text("Active Subscription")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        Text("Premium Active")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        if let expiryDate = premiumManager.subscriptionExpiryDate {
+                            Text("Renews \(expiryDate, style: .date)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
                 
                 Spacer()
             }
             
-            if let expiryDate = premiumManager.subscriptionExpiryDate {
-                HStack {
-                    Text("Expires:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text(expiryDate, style: .date)
-                        .font(.caption)
-                        .fontWeight(.medium)
+            // Premium features list
+            VStack(alignment: .leading, spacing: 8) {
+                FeatureRow(icon: "chart.xyaxis.line", text: "Advanced analytics")
+                FeatureRow(icon: "folder.fill", text: "Training programs")
+                FeatureRow(icon: "trophy.fill", text: "Challenges & achievements")
+                FeatureRow(icon: "square.and.arrow.down.fill", text: "Data export")
+            }
+            .padding(.top, 4)
+            
+            // Manage subscription button
+            Button {
+                if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+                    UIApplication.shared.open(url)
                 }
+            } label: {
+                Text("Manage Subscription")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.blue)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.blue, lineWidth: 1)
+                    )
             }
         }
         .padding()
@@ -300,6 +286,25 @@ struct ProfileView: View {
     private var actionsSection: some View {
         VStack(spacing: 16) {
             
+        }
+    }
+}
+
+// MARK: - Feature Row Helper
+
+private struct FeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
     }
 }

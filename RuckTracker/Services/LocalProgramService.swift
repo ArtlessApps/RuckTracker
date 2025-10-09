@@ -41,8 +41,9 @@ class LocalProgramService: ObservableObject {
             case .failure(let error):
                 errorMessage = "Failed to load programs: \(error.localizedDescription)"
                 print("❌ Error loading programs: \(error)")
-                // Fallback to mock data
-                programs = Program.mockPrograms
+                print("❌ CRITICAL: Programs.json must be added to the bundle")
+                // No fallback - programs should come from JSON only
+                programs = []
             }
         }
         
