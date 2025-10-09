@@ -106,8 +106,8 @@ struct ChallengesView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Use the new Stack Challenges Section
-                    StackChallengesSection()
+                    // Use the new Challenges Section
+                    ChallengesSection()
                         .environmentObject(premiumManager)
                     
                     Spacer(minLength: 100)

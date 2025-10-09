@@ -82,6 +82,70 @@ struct ChallengeCorrelationData {
     let recommendations: [String]
 }
 
+// MARK: - Challenge Integration Models
+
+struct ActiveChallengeSession: Codable {
+    let id: UUID
+    let challengeId: UUID
+    let userChallengeId: UUID
+    let startedAt: Date
+    let currentDay: Int
+    let isActive: Bool
+}
+
+struct ChallengeAnalytics: Codable {
+    let challengeId: UUID
+    let totalDays: Int
+    let completedDays: Int
+    let completionPercentage: Double
+    let averageDistance: Double
+    let averageWeight: Double
+    let lastWorkoutDate: Date?
+}
+
+struct ChallengeWorkflow: Codable {
+    let id: UUID
+    let challengeId: UUID
+    let workouts: [ChallengeWorkoutStep]
+    let estimatedDuration: TimeInterval
+}
+
+struct ChallengeWorkoutStep: Codable {
+    let id: UUID
+    let dayNumber: Int
+    let workoutType: String
+    let distanceMiles: Double?
+    let targetWeightLbs: Double?
+    let targetPaceMinutes: Double?
+}
+
+struct UnifiedChallengeResult {
+    let session: ActiveChallengeSession
+    let workflow: ChallengeWorkflow
+    let healthKitSynced: Bool
+    let premiumFeatures: Bool
+}
+
+struct ChallengeRecordResult {
+    let recorded: Bool
+    let healthKitWorkout: HKWorkout?
+    let adaptationTriggered: Bool
+    let syncedToServer: Bool
+}
+
+struct UnifiedChallengeProgressData {
+    let challengeAnalytics: ChallengeAnalytics
+    let healthKitData: HealthKitProgressData?
+    let programCorrelations: ProgramCorrelationData?
+    let lastUpdated: Date
+}
+
+struct ProgramCorrelationData {
+    let activePrograms: Int
+    let correlationScore: Double
+    let recommendations: [String]
+}
+
 struct PendingOperation: Identifiable, Codable {
     let id: UUID
     let type: OperationType
@@ -201,6 +265,7 @@ enum ServiceHealth: Equatable {
 
 enum OperationType: String, Codable, CaseIterable {
     case programEnrollment = "Program Enrollment"
+    case challengeEnrollment = "Challenge Enrollment"
     case workoutRecord = "Workout Record"
     case progressSync = "Progress Sync"
     case healthKitSync = "HealthKit Sync"
@@ -493,7 +558,9 @@ struct OfflineDataSnapshot {
     let timestamp: Date
     let programs: [Program]
     let userPrograms: [UserProgram]
-    let challenges: [StackChallenge]
+    let challenges: [Challenge]
+    let userChallenges: [UserChallenge]
+    let stackChallenges: [StackChallenge]
     let userEnrollments: [UserChallengeEnrollment]
     let pendingOperations: [PendingOperation]
     

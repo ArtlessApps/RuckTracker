@@ -260,7 +260,7 @@ struct ImprovedPhoneMainView: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Stack Challenges")
+                        Text("Weekly Challenges")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.black)
@@ -271,7 +271,7 @@ struct ImprovedPhoneMainView: View {
                             PremiumBadge(size: .small)
                         }
                     }
-                    Text("1 Week Fitness Challenges")
+                    Text("7-Day Focused Challenges")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }

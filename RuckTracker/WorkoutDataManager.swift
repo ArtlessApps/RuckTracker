@@ -29,6 +29,8 @@ extension WorkoutEntity {
     @NSManaged public var ruckWeight: Double
     @NSManaged public var programId: String? // Store as String, convert to UUID
     @NSManaged public var programWorkoutDay: Int16 // Which day in program
+    @NSManaged public var challengeId: String? // Store as String, convert to UUID
+    @NSManaged public var challengeDay: Int16 // Which day in challenge
 }
 
 class WorkoutDataManager: ObservableObject {
@@ -94,7 +96,19 @@ class WorkoutDataManager: ObservableObject {
         programWorkoutDayAttribute.isOptional = true
         programWorkoutDayAttribute.defaultValue = 0
         
-        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, programIdAttribute, programWorkoutDayAttribute]
+        // Add challenge tracking attributes
+        let challengeIdAttribute = NSAttributeDescription()
+        challengeIdAttribute.name = "challengeId"
+        challengeIdAttribute.attributeType = .stringAttributeType
+        challengeIdAttribute.isOptional = true
+        
+        let challengeDayAttribute = NSAttributeDescription()
+        challengeDayAttribute.name = "challengeDay"
+        challengeDayAttribute.attributeType = .integer16AttributeType
+        challengeDayAttribute.isOptional = true
+        challengeDayAttribute.defaultValue = 0
+        
+        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, programIdAttribute, programWorkoutDayAttribute, challengeIdAttribute, challengeDayAttribute]
         model.entities = [entity]
         
         let container = NSPersistentContainer(name: "RuckTrackerData", managedObjectModel: model)
