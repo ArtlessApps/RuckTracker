@@ -31,14 +31,21 @@ struct LocalProgram: Codable, Identifiable {
 }
 
 struct LocalProgramWeek: Codable, Identifiable {
-    var id: UUID { UUID() } // Generate on the fly
+    let id: UUID  // Change from computed to stored property
     let weekNumber: Int
     let workouts: [LocalProgramWorkout]
+    
+    // Coding keys for JSON decoding
+    enum CodingKeys: String, CodingKey {
+        case id = "week_id"  // Map to week_id from your JSON
+        case weekNumber = "week_number"
+        case workouts
+    }
     
     // Convert to existing ProgramWeek model
     func toProgramWeek(programId: UUID) -> ProgramWeek {
         return ProgramWeek(
-            id: UUID(),
+            id: id,  // Use actual ID instead of generating
             programId: programId,
             weekNumber: weekNumber,
             baseWeightLbs: nil,
@@ -48,17 +55,27 @@ struct LocalProgramWeek: Codable, Identifiable {
 }
 
 struct LocalProgramWorkout: Codable, Identifiable {
-    var id: UUID { UUID() } // Generate on the fly
+    let id: UUID  // Change from computed to stored property
     let dayNumber: Int
     let workoutType: String
     let distanceMiles: Double?
     let targetPaceMinutes: Double?
     let instructions: String?
     
+    // Coding keys for JSON decoding
+    enum CodingKeys: String, CodingKey {
+        case id
+        case dayNumber = "day_number"
+        case workoutType = "workout_type"
+        case distanceMiles = "distance_miles"
+        case targetPaceMinutes = "target_pace_minutes"
+        case instructions
+    }
+    
     // Convert to existing ProgramWorkout model
     func toProgramWorkout(weekId: UUID) -> ProgramWorkout {
         return ProgramWorkout(
-            id: UUID(),
+            id: id,  // Use actual ID instead of generating
             weekId: weekId,
             dayNumber: dayNumber,
             workoutType: ProgramWorkout.WorkoutType(rawValue: workoutType) ?? .ruck,

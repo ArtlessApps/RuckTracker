@@ -9,7 +9,28 @@
     "isFeatured": true,
     "isActive": true,
     "sortOrder": 1,
-    "weeks": []
+    "weeks": [
+      {
+        "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "f7c94adc-6e46-49e8-9ae7-eb1f70d52308",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "175f546e-34d5-4f91-86e6-f152598f988e",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+        "week_number": 4,
+        "workouts": []
+      }
+    ]
   },
   {
     "id": "22222222-2222-2222-2222-222222222222",
@@ -21,7 +42,13 @@
     "isFeatured": true,
     "isActive": true,
     "sortOrder": 2,
-    "weeks": []
+    "weeks": [
+      {
+        "week_id": "24855161-0a89-4d08-8bca-f16d951a536b",
+        "week_number": 1,
+        "workouts": []
+      }
+    ]
   },
   {
     "id": "33333333-3333-3333-3333-333333333333",

@@ -14,6 +14,7 @@ class LocalProgramService: ObservableObject {
     @Published var errorMessage: String?
     
     private let storage = LocalProgramStorage.shared
+    private let workoutLoader = LocalWorkoutLoader.shared
     private var localPrograms: [LocalProgram] = []
     
     private init() {
@@ -103,37 +104,19 @@ class LocalProgramService: ObservableObject {
             return []
         }
         
-        // Convert all weeks and workouts to ProgramWorkout models
-        var allWorkouts: [ProgramWorkout] = []
+        // Get all workouts for this program using the workout loader
+        let workouts = workoutLoader.getAllWorkouts(
+            forProgramId: programId,
+            weeks: localProgram.weeks
+        )
         
-        for week in localProgram.weeks {
-            let weekId = UUID() // Generate week ID
-            let workouts = week.workouts.map { $0.toProgramWorkout(weekId: weekId) }
-            allWorkouts.append(contentsOf: workouts)
-        }
-        
-        print("✅ Loaded \(allWorkouts.count) workouts for program")
-        return allWorkouts
+        print("✅ Loaded \(workouts.count) workouts for program: \(localProgram.title)")
+        return workouts
     }
     
     func loadProgramWorkouts(programId: UUID) async throws -> [ProgramWorkout] {
-        // Find program in local data
-        guard let localProgram = localPrograms.first(where: { $0.id == programId }) else {
-            print("❌ Program not found: \(programId)")
-            return []
-        }
-        
-        // Convert all weeks and workouts to ProgramWorkout models
-        var allWorkouts: [ProgramWorkout] = []
-        
-        for week in localProgram.weeks {
-            let weekId = UUID() // Generate week ID
-            let workouts = week.workouts.map { $0.toProgramWorkout(weekId: weekId) }
-            allWorkouts.append(contentsOf: workouts)
-        }
-        
-        print("✅ Loaded \(allWorkouts.count) workouts for program")
-        return allWorkouts
+        // Use the synchronous method since we're loading from local JSON
+        return loadProgramWorkouts(programId: programId)
     }
     
     func loadWorkoutCompletions(userProgramId: UUID) -> [WorkoutCompletion] {
@@ -206,5 +189,45 @@ class LocalProgramService: ObservableObject {
     
     func getEnrolledProgramId() -> UUID? {
         return storage.getEnrolledProgramId()
+    }
+    
+    // MARK: - Testing
+    
+    func testWorkoutIntegration(programId: UUID) {
+        print("\n🧪 Testing Workout Integration for Program: \(programId)")
+        
+        guard let program = programs.first(where: { $0.id == programId }) else {
+            print("❌ Program not found")
+            return
+        }
+        
+        print("📚 Program: \(program.title)")
+        print("📅 Duration: \(program.durationWeeks) weeks")
+        
+        let workouts = loadProgramWorkouts(programId: programId)
+        print("💪 Total workouts loaded: \(workouts.count)")
+        
+        // Group by week
+        let workoutsByWeek = Dictionary(grouping: workouts) { workout in
+            // Find which week this workout belongs to
+            guard let localProgram = localPrograms.first(where: { $0.id == programId }) else {
+                return 0
+            }
+            return localProgram.weeks.first { $0.id == workout.weekId }?.weekNumber ?? 0
+        }
+        
+        // Print summary by week
+        for weekNumber in 1...program.durationWeeks {
+            let weekWorkouts = workoutsByWeek[weekNumber] ?? []
+            print("  Week \(weekNumber): \(weekWorkouts.count) workouts")
+            
+            for workout in weekWorkouts.sorted(by: { $0.dayNumber < $1.dayNumber }) {
+                let type = workout.workoutType.rawValue
+                let distance = workout.distanceMiles.map { "\($0) mi" } ?? "N/A"
+                print("    Day \(workout.dayNumber): \(type) - \(distance)")
+            }
+        }
+        
+        print("✅ Integration test complete\n")
     }
 }
