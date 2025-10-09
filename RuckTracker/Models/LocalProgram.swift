@@ -42,6 +42,15 @@ struct LocalProgramWeek: Codable, Identifiable {
         case workouts
     }
     
+    // Custom initializer to handle the week_id mapping
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let weekIdString = try container.decode(String.self, forKey: .id)
+        id = UUID(uuidString: weekIdString) ?? UUID()
+        weekNumber = try container.decode(Int.self, forKey: .weekNumber)
+        workouts = try container.decode([LocalProgramWorkout].self, forKey: .workouts)
+    }
+    
     // Convert to existing ProgramWeek model
     func toProgramWeek(programId: UUID) -> ProgramWeek {
         return ProgramWeek(

@@ -13,7 +13,7 @@ class LocalWorkoutLoader {
     // MARK: - Loading
     
     func loadWorkouts() {
-        let result: Result<[WorkoutJSON], Error> = Bundle.main.decodeWithErrorHandling("Workouts.json")
+        let result: Result<[WorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("Workouts.json")
         
         switch result {
         case .success(let workoutsData):
@@ -74,6 +74,32 @@ private struct WorkoutJSON: Codable {
         case targetPaceMinutes = "target_pace_minutes"
         case instructions
         case createdAt = "created_at"
+    }
+    
+    // Custom initializer to handle the JSON structure
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        weekId = try container.decode(String.self, forKey: .weekId)
+        dayNumber = try container.decode(Int.self, forKey: .dayNumber)
+        workoutType = try container.decode(String.self, forKey: .workoutType)
+        
+        // Handle distance_miles as string that needs to be converted to Double
+        if let distanceString = try container.decodeIfPresent(String.self, forKey: .distanceMiles) {
+            distanceMiles = Double(distanceString)
+        } else {
+            distanceMiles = nil
+        }
+        
+        // Handle target_pace_minutes as string that needs to be converted to Double
+        if let paceString = try container.decodeIfPresent(String.self, forKey: .targetPaceMinutes) {
+            targetPaceMinutes = Double(paceString)
+        } else {
+            targetPaceMinutes = nil
+        }
+        
+        instructions = try container.decodeIfPresent(String.self, forKey: .instructions)
+        createdAt = try container.decode(String.self, forKey: .createdAt)
     }
     
     func toProgramWorkout() -> ProgramWorkout {

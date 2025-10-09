@@ -30,8 +30,8 @@ class LocalProgramService: ObservableObject {
         errorMessage = nil
         
         do {
-            // Load from bundled JSON
-            let result: Result<[LocalProgram], Error> = Bundle.main.decodeWithErrorHandling("Programs.json")
+            // Load from bundled JSON with custom decoder
+            let result: Result<[LocalProgram], Error> = Bundle.main.decodeWithCustomDecoder("Programs.json")
             
             switch result {
             case .success(let loadedPrograms):
@@ -114,9 +114,21 @@ class LocalProgramService: ObservableObject {
         return workouts
     }
     
-    func loadProgramWorkouts(programId: UUID) async throws -> [ProgramWorkout] {
-        // Use the synchronous method since we're loading from local JSON
-        return loadProgramWorkouts(programId: programId)
+    func loadProgramWorkouts(programId: UUID) async -> [ProgramWorkout] {
+        // Find program in local data
+        guard let localProgram = localPrograms.first(where: { $0.id == programId }) else {
+            print("❌ Program not found: \(programId)")
+            return []
+        }
+        
+        // Get all workouts for this program using the workout loader
+        let workouts = workoutLoader.getAllWorkouts(
+            forProgramId: programId,
+            weeks: localProgram.weeks
+        )
+        
+        print("✅ Loaded \(workouts.count) workouts for program: \(localProgram.title)")
+        return workouts
     }
     
     func loadWorkoutCompletions(userProgramId: UUID) -> [WorkoutCompletion] {
