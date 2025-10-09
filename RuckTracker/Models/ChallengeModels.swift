@@ -51,3 +51,197 @@ struct ChallengeProgress {
     let currentDay: Int
     let nextWorkoutDay: Int?
 }
+
+// MARK: - Challenge Workout Models
+
+struct ChallengeWorkout: Identifiable, Codable {
+    let id: UUID
+    let challengeId: UUID
+    let dayNumber: Int
+    let workoutType: WorkoutType
+    let distanceMiles: Double?
+    let targetPaceMinutes: Double?
+    let weightLbs: Double?
+    let durationMinutes: Int?
+    let instructions: String?
+    let isRestDay: Bool
+    let createdAt: Date
+    let updatedAt: Date
+    
+    enum WorkoutType: String, Codable, CaseIterable {
+        case ruck, rest, run, strength, cardio
+        
+        var displayName: String {
+            switch self {
+            case .ruck: return "Ruck"
+            case .rest: return "Rest"
+            case .run: return "Run"
+            case .strength: return "Strength"
+            case .cardio: return "Cardio"
+            }
+        }
+        
+        var iconName: String {
+            switch self {
+            case .ruck: return "backpack.fill"
+            case .rest: return "bed.double.fill"
+            case .run: return "figure.run"
+            case .strength: return "dumbbell.fill"
+            case .cardio: return "heart.fill"
+            }
+        }
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id, dayNumber = "day_number"
+        case challengeId = "challenge_id"
+        case workoutType = "workout_type"
+        case distanceMiles = "distance_miles"
+        case targetPaceMinutes = "target_pace_minutes"
+        case weightLbs = "weight_lbs"
+        case durationMinutes = "duration_minutes"
+        case instructions
+        case isRestDay = "is_rest_day"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+// MARK: - ChallengeWorkout Extensions
+
+extension ChallengeWorkout {
+    func getWorkoutTitle(for challenge: Challenge) -> String {
+        if isRestDay {
+            return "Day \(dayNumber) - Rest Day"
+        }
+        
+        let baseTitle = "Day \(dayNumber) - \(workoutType.displayName)"
+        
+        // Add specific details based on workout type
+        switch workoutType {
+        case .ruck:
+            var title = baseTitle
+            if let distance = distanceMiles {
+                title += " (\(String(format: "%.1f", distance)) miles)"
+            }
+            if let weight = weightLbs {
+                title += " (\(String(format: "%.0f", weight)) lbs)"
+            }
+            return title
+            
+        case .run:
+            var title = baseTitle
+            if let distance = distanceMiles {
+                title += " (\(String(format: "%.1f", distance)) miles)"
+            }
+            if let pace = targetPaceMinutes {
+                title += " (\(String(format: "%.1f", pace)) min/mile pace)"
+            }
+            return title
+            
+        case .strength:
+            var title = baseTitle
+            if let duration = durationMinutes {
+                title += " (\(duration) minutes)"
+            }
+            return title
+            
+        case .cardio:
+            var title = baseTitle
+            if let duration = durationMinutes {
+                title += " (\(duration) minutes)"
+            }
+            return title
+            
+        case .rest:
+            return baseTitle
+        }
+    }
+    
+    func getInstructions(for challenge: Challenge) -> String {
+        // Return custom instructions if available
+        if let instructions = instructions, !instructions.isEmpty {
+            return instructions
+        }
+        
+        // Generate default instructions based on workout type
+        switch workoutType {
+        case .ruck:
+            var instruction = "Complete a rucking workout"
+            if let distance = distanceMiles {
+                instruction += " covering \(String(format: "%.1f", distance)) miles"
+            }
+            if let weight = weightLbs {
+                instruction += " with \(String(format: "%.0f", weight)) lbs"
+            }
+            if let pace = targetPaceMinutes {
+                instruction += " at \(String(format: "%.1f", pace)) min/mile pace"
+            }
+            return instruction + "."
+            
+        case .run:
+            var instruction = "Complete a running workout"
+            if let distance = distanceMiles {
+                instruction += " covering \(String(format: "%.1f", distance)) miles"
+            }
+            if let pace = targetPaceMinutes {
+                instruction += " at \(String(format: "%.1f", pace)) min/mile pace"
+            }
+            return instruction + "."
+            
+        case .strength:
+            var instruction = "Complete a strength training workout"
+            if let duration = durationMinutes {
+                instruction += " for \(duration) minutes"
+            }
+            return instruction + "."
+            
+        case .cardio:
+            var instruction = "Complete a cardio workout"
+            if let duration = durationMinutes {
+                instruction += " for \(duration) minutes"
+            }
+            return instruction + "."
+            
+        case .rest:
+            return "Take a rest day to allow your body to recover and prepare for the next workout."
+        }
+    }
+}
+
+struct ChallengeWorkoutCompletion: Identifiable, Codable {
+    let id: UUID
+    let userId: UUID  // Keep for compatibility
+    let userChallengeId: UUID
+    let challengeWorkoutId: UUID
+    let completedAt: Date
+    let actualDistanceMiles: Double?
+    let actualWeightLbs: Double?
+    let actualDurationMinutes: Int?
+    let performanceScore: Double?
+    let notes: String?
+}
+
+// MARK: - User Challenge Enrollment Model
+
+struct UserChallengeEnrollment: Identifiable, Codable {
+    let id: UUID
+    let challengeId: UUID
+    let enrolledAt: Date
+    let startingWeight: Double
+    var completionPercentage: Double
+    var currentDay: Int
+    var isActive: Bool
+    var completedAt: Date?
+    
+    init(id: UUID = UUID(), challengeId: UUID, enrolledAt: Date = Date(), startingWeight: Double, completionPercentage: Double = 0.0, currentDay: Int = 1, isActive: Bool = true, completedAt: Date? = nil) {
+        self.id = id
+        self.challengeId = challengeId
+        self.enrolledAt = enrolledAt
+        self.startingWeight = startingWeight
+        self.completionPercentage = completionPercentage
+        self.currentDay = currentDay
+        self.isActive = isActive
+        self.completedAt = completedAt
+    }
+}

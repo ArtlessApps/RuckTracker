@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct UniversalChallengeView: View {
-    let challenge: StackChallenge
+    let challenge: Challenge
     @StateObject private var challengeManager = ChallengeManager()
     @EnvironmentObject var premiumManager: PremiumManager
     @Environment(\.dismiss) private var dismiss
@@ -174,7 +174,7 @@ struct UniversalChallengeView: View {
 // MARK: - Universal Workout Row View
 struct UniversalWorkoutRowView: View {
     let workout: ChallengeWorkout
-    let challenge: StackChallenge
+    let challenge: Challenge
     let isCompleted: Bool
     let isCurrent: Bool
     let canComplete: Bool
@@ -249,7 +249,7 @@ struct WorkoutStatusIndicator: View {
     let isCompleted: Bool
     let isCurrent: Bool
     let canComplete: Bool
-    let challenge: StackChallenge
+    let challenge: Challenge
     
     var body: some View {
         ZStack {
@@ -335,7 +335,7 @@ struct StatLabel: View {
 
 struct CurrentWorkoutCallout: View {
     let workout: ChallengeWorkout
-    let challenge: StackChallenge
+    let challenge: Challenge
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

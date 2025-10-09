@@ -14,6 +14,7 @@ class LocalChallengeService: ObservableObject {
     @Published var errorMessage: String?
     
     private let storage = LocalChallengeStorage.shared
+    private let workoutLoader = LocalChallengeWorkoutLoader.shared
     private var localChallenges: [LocalChallenge] = []
     
     private init() {
@@ -138,6 +139,53 @@ class LocalChallengeService: ObservableObject {
         return storage.getEnrolledChallengeId()
     }
     
+    // MARK: - Challenge Workouts
+    
+    func getChallengeWorkouts(forChallengeId challengeId: UUID) -> [ChallengeWorkout] {
+        return workoutLoader.getWorkouts(forChallengeId: challengeId)
+    }
+    
+    func getChallengeWorkout(forChallengeId challengeId: UUID, dayNumber: Int) -> ChallengeWorkout? {
+        return workoutLoader.getWorkouts(forChallengeId: challengeId).first { $0.dayNumber == dayNumber }
+    }
+    
+    func getActiveChallengeWorkouts(forChallengeId challengeId: UUID) -> [ChallengeWorkout] {
+        return workoutLoader.getWorkouts(forChallengeId: challengeId).filter { !$0.isRestDay }
+    }
+    
+    func getRestDays(forChallengeId challengeId: UUID) -> [ChallengeWorkout] {
+        return workoutLoader.getWorkouts(forChallengeId: challengeId).filter { $0.isRestDay }
+    }
+    
+    func getCurrentChallengeWorkout() -> ChallengeWorkout? {
+        guard let enrolledChallengeId = getEnrolledChallengeId() else { return nil }
+        guard let progress = challengeProgress else { return nil }
+        
+        return getChallengeWorkout(forChallengeId: enrolledChallengeId, dayNumber: progress.currentDay)
+    }
+    
+    func getNextChallengeWorkout() -> ChallengeWorkout? {
+        guard let enrolledChallengeId = getEnrolledChallengeId() else { return nil }
+        guard let progress = challengeProgress else { return nil }
+        
+        let nextDay = progress.nextWorkoutDay ?? (progress.currentDay + 1)
+        return getChallengeWorkout(forChallengeId: enrolledChallengeId, dayNumber: nextDay)
+    }
+    
+    // MARK: - Challenge Workout Loading
+    
+    func loadChallengeWorkouts(challengeId: UUID) -> [ChallengeWorkout] {
+        let workouts = workoutLoader.getWorkouts(forChallengeId: challengeId)
+        print("✅ Loaded \(workouts.count) workouts for challenge: \(challengeId)")
+        return workouts
+    }
+    
+    func loadChallengeWorkouts(challengeId: UUID) async -> [ChallengeWorkout] {
+        let workouts = workoutLoader.getWorkouts(forChallengeId: challengeId)
+        print("✅ Loaded \(workouts.count) workouts for challenge: \(challengeId)")
+        return workouts
+    }
+    
     // MARK: - Testing
     
     func testChallengeIntegration(challengeId: UUID) {
@@ -160,6 +208,61 @@ class LocalChallengeService: ObservableObject {
             print("🏃 Pace Target: \(paceTarget) min/mile")
         }
         
+        // Test challenge workouts
+        let workouts = getChallengeWorkouts(forChallengeId: challengeId)
+        print("🏋️ Challenge Workouts: \(workouts.count)")
+        
+        let activeWorkouts = getActiveChallengeWorkouts(forChallengeId: challengeId)
+        print("💪 Active Workouts: \(activeWorkouts.count)")
+        
+        let restDays = getRestDays(forChallengeId: challengeId)
+        print("😴 Rest Days: \(restDays.count)")
+        
         print("✅ Integration test complete\n")
+    }
+    
+    // MARK: - Challenge Workout Testing
+    
+    func testChallengeWorkoutLoading() {
+        print("\n🧪 Testing Challenge Workout Loading")
+        
+        // Test loading challenge workouts
+        let challengeId = UUID(uuidString: "f1c56e9d-7c3a-4325-adb1-739e5f48b7bb")!
+        let workouts = getChallengeWorkouts(forChallengeId: challengeId)
+        
+        print("📊 Total Workouts: \(workouts.count)")
+        
+        for workout in workouts {
+            print("🏋️ Day \(workout.dayNumber): \(workout.workoutType.displayName)")
+            if let distance = workout.distanceMiles {
+                print("   📏 Distance: \(distance) miles")
+            }
+            if let weight = workout.weightLbs {
+                print("   ⚖️ Weight: \(weight) lbs")
+            }
+            if let duration = workout.durationMinutes {
+                print("   ⏱️ Duration: \(duration) minutes")
+            }
+            if let instructions = workout.instructions {
+                print("   📝 Instructions: \(instructions)")
+            }
+            print("   😴 Rest Day: \(workout.isRestDay)")
+            print("")
+        }
+        
+        let activeWorkouts = getActiveChallengeWorkouts(forChallengeId: challengeId)
+        let restDays = getRestDays(forChallengeId: challengeId)
+        
+        print("💪 Active Workouts: \(activeWorkouts.count)")
+        print("😴 Rest Days: \(restDays.count)")
+        
+        // Test specific day lookup
+        if let day1Workout = getChallengeWorkout(forChallengeId: challengeId, dayNumber: 1) {
+            print("✅ Day 1 workout found: \(day1Workout.workoutType.displayName)")
+        } else {
+            print("❌ Day 1 workout not found")
+        }
+        
+        print("✅ Challenge workout loading test complete\n")
     }
 }

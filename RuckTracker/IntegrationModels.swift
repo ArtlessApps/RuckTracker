@@ -560,7 +560,6 @@ struct OfflineDataSnapshot {
     let userPrograms: [UserProgram]
     let challenges: [Challenge]
     let userChallenges: [UserChallenge]
-    let stackChallenges: [StackChallenge]
     let userEnrollments: [UserChallengeEnrollment]
     let pendingOperations: [PendingOperation]
     

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ChallengeEnrollmentView: View {
-    let challenge: StackChallenge
+    let challenge: Challenge
     let challengeManager: ChallengeManager
     @Environment(\.dismiss) private var dismiss
     @State private var selectedWeight: Double = 20.0

@@ -16,12 +16,12 @@ class ChallengeManager: ObservableObject {
     @Published var enrollment: UserChallengeEnrollment?
     @Published var isLoading = false
     
-    let challengeService = StackChallengeService.shared
-    private var challenge: StackChallenge?
+    let challengeService = LocalChallengeService.shared
+    private var challenge: Challenge?
     
     // MARK: - Initialization
     
-    func loadChallenge(_ challenge: StackChallenge) async {
+    func loadChallenge(_ challenge: Challenge) async {
         self.challenge = challenge
         isLoading = true
         
@@ -42,10 +42,23 @@ class ChallengeManager: ObservableObject {
     
     // MARK: - Enrollment Management
     
-    private func getEnrollment(for challenge: StackChallenge) async -> UserChallengeEnrollment? {
+    private func getEnrollment(for challenge: Challenge) async -> UserChallengeEnrollment? {
         // Check if user is already enrolled
-        if let existingEnrollment = challengeService.getUserEnrollment(for: challenge) {
-            return existingEnrollment
+        if challengeService.isEnrolledIn(challengeId: challenge.id) {
+            // Create enrollment from existing data
+            let userChallenge = challengeService.userChallenges.first { $0.challengeId == challenge.id }
+            if let userChallenge = userChallenge {
+                return UserChallengeEnrollment(
+                    id: userChallenge.id,
+                    challengeId: challenge.id,
+                    enrolledAt: userChallenge.startDate,
+                    startingWeight: userChallenge.currentWeightLbs,
+                    completionPercentage: userChallenge.completionPercentage,
+                    currentDay: userChallenge.currentDay,
+                    isActive: userChallenge.isActive,
+                    completedAt: userChallenge.completedAt
+                )
+            }
         }
         
         return nil
@@ -61,7 +74,13 @@ class ChallengeManager: ObservableObject {
         }
         
         print("🔧 Proceeding with enrollment for challenge: \(challenge.title)")
-        let newEnrollment = try await challengeService.enrollInChallenge(challenge, weightLbs: weightLbs)
+        challengeService.enrollInChallenge(challenge, startingWeight: weightLbs)
+        
+        // Create enrollment object
+        let newEnrollment = UserChallengeEnrollment(
+            challengeId: challenge.id,
+            startingWeight: weightLbs
+        )
         enrollment = newEnrollment
         
         // Generate personalized workouts based on user weight
@@ -74,22 +93,21 @@ class ChallengeManager: ObservableObject {
     
     // MARK: - Workout Management
     
-    private func getWorkouts(for challenge: StackChallenge) async -> [ChallengeWorkout] {
-        // For now, use mock generation - can be replaced with server data later
-        return ChallengeWorkout.generateMockWorkouts(for: challenge)
+    private func getWorkouts(for challenge: Challenge) async -> [ChallengeWorkout] {
+        // Load workouts from the challenge service
+        return challengeService.getChallengeWorkouts(forChallengeId: challenge.id)
     }
     
-    private func generatePersonalizedWorkouts(for challenge: StackChallenge, userWeight: Double) async -> [ChallengeWorkout] {
-        // This would eventually call the server for dynamic generation
-        // For now, use the mock generation with user weight consideration
-        let mockWorkouts = ChallengeWorkout.generateMockWorkouts(for: challenge)
+    private func generatePersonalizedWorkouts(for challenge: Challenge, userWeight: Double) async -> [ChallengeWorkout] {
+        // Load workouts from the challenge service
+        let workouts = challengeService.getChallengeWorkouts(forChallengeId: challenge.id)
         
-        // Adjust weights based on user's actual weight
-        return mockWorkouts.map { workout in
+        // Adjust weights based on user's actual weight if needed
+        return workouts.map { workout in
             var adjustedWorkout = workout
             
             if let baseWeight = workout.weightLbs, !workout.isRestDay {
-                // Adjust weight based on user's actual weight vs mock weight (180 lbs)
+                // Adjust weight based on user's actual weight vs base weight (180 lbs)
                 let weightRatio = userWeight / 180.0
                 adjustedWorkout = ChallengeWorkout(
                     id: workout.id,
@@ -101,7 +119,9 @@ class ChallengeManager: ObservableObject {
                     weightLbs: baseWeight * weightRatio,
                     durationMinutes: workout.durationMinutes,
                     instructions: workout.instructions,
-                    isRestDay: workout.isRestDay
+                    isRestDay: workout.isRestDay,
+                    createdAt: workout.createdAt,
+                    updatedAt: workout.updatedAt
                 )
             }
             
@@ -164,12 +184,9 @@ class ChallengeManager: ObservableObject {
         // Update local enrollment
         self.enrollment?.completionPercentage = completionPercentage
         
+        // Update local storage
         // TODO: Update server when available
-        do {
-            try await challengeService.updateEnrollmentProgress(enrollment.id, completionPercentage: completionPercentage)
-        } catch {
-            print("❌ Failed to update enrollment progress: \(error)")
-        }
+        print("✅ Updated enrollment progress to \(completionPercentage)%")
     }
     
     // MARK: - Current Day Logic

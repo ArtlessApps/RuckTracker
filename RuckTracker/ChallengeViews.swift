@@ -97,17 +97,17 @@ struct ChallengeCardView: View {
                 HStack {
                     Image(systemName: challenge.focusArea.iconName)
                         .font(.title2)
-                        .foregroundColor(Color(challenge.focusArea.color))
+                        .foregroundColor(focusAreaColor(challenge.focusArea))
                     
                     Spacer()
                     
                     Text(challenge.focusArea.displayName)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(Color(challenge.focusArea.color))
+                        .foregroundColor(focusAreaColor(challenge.focusArea))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color(challenge.focusArea.color).opacity(0.1))
+                        .background(focusAreaColor(challenge.focusArea).opacity(0.1))
                         .cornerRadius(8)
                 }
                 
@@ -189,7 +189,7 @@ struct ChallengeDetailView: View {
                         HStack {
                             Image(systemName: challenge.focusArea.iconName)
                                 .font(.largeTitle)
-                                .foregroundColor(Color(challenge.focusArea.color))
+                                .foregroundColor(focusAreaColor(challenge.focusArea))
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(challenge.title)
@@ -198,7 +198,7 @@ struct ChallengeDetailView: View {
                                 
                                 Text(challenge.focusArea.displayName)
                                     .font(.subheadline)
-                                    .foregroundColor(Color(challenge.focusArea.color))
+                                    .foregroundColor(focusAreaColor(challenge.focusArea))
                             }
                             
                             Spacer()
@@ -298,7 +298,7 @@ struct LocalChallengeEnrollmentView: View {
                 VStack(spacing: 16) {
                     Image(systemName: challenge.focusArea.iconName)
                         .font(.system(size: 60))
-                        .foregroundColor(Color(challenge.focusArea.color))
+                        .foregroundColor(focusAreaColor(challenge.focusArea))
                     
                     Text("Enroll in \(challenge.title)")
                         .font(.title2)
@@ -409,6 +409,25 @@ struct DetailRowView: View {
     }
 }
 
+
+// MARK: - Helper Functions
+
+private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
+    switch focusArea.color {
+    case "red":
+        return .red
+    case "blue":
+        return .blue
+    case "green":
+        return .green
+    case "orange":
+        return .orange
+    case "purple":
+        return .purple
+    default:
+        return .blue
+    }
+}
 
 // MARK: - Preview
 struct ChallengeViews_Previews: PreviewProvider {
