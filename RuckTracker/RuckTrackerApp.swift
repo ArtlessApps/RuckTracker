@@ -17,7 +17,6 @@ struct RuckTrackerApp: App {
                 .environmentObject(healthManager)
                 .environmentObject(workoutManager)
                 .environmentObject(workoutDataManager)
-                .environmentObject(supabaseManager)
                 .environmentObject(storeKitManager)    // Add this
                 .environmentObject(premiumManager)     // Add this
                 .onAppear {

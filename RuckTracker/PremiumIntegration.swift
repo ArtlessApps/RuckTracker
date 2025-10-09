@@ -108,11 +108,11 @@ struct PremiumFeatureRow: View {
 // MARK: - Updated Phone Main View with Premium Features
 
 struct UpdatedPhoneMainView: View {
+    @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @StateObject private var premiumManager = PremiumManager.shared
     @State private var showingSettings = false
-    @State private var showingPremiumPrograms = false
     
     var body: some View {
         NavigationView {
@@ -158,7 +158,7 @@ struct UpdatedPhoneMainView: View {
 
 // MARK: - Updated Program Cards with Navigation
 struct PremiumTrainingProgramsSection: View {
-    @EnvironmentObject var premiumManager: PremiumManager
+    @StateObject private var premiumManager = PremiumManager.shared
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
     
@@ -214,7 +214,7 @@ struct PremiumTrainingProgramsSection: View {
             VStack(spacing: 16) {
                 // Show enrolled program first if exists
                 if let enrolled = programService.enrolledProgram,
-                   let progress = $programService.programProgress {
+                   let progress = programService.programProgress {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Active Program")
                             .font(.subheadline)
@@ -264,69 +264,6 @@ struct PremiumTrainingProgramsSection: View {
             }
         }
     }
-}
-
-// MARK: - Enrolled Program Card
-struct EnrolledProgramCard: View {
-    let program: Program
-    let progress: ProgramProgress
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(program.title)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        if let description = program.description {
-                            Text(description)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .font(.title3)
-                }
-                
-                // Progress information
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Week \(progress.currentWeek)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.blue)
-                        
-                        Spacer()
-                        
-                        Text("\(progress.completedWorkouts)/\(progress.totalWorkouts) workouts")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    ProgressView(value: progress.completionPercentage / 100.0)
-                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
-                        .scaleEffect(y: 1.5)
-                }
-            }
-            .padding()
-            .background(Color.green.opacity(0.08))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.3), lineWidth: 2)
-            )
-        }
-        .buttonStyle(.plain)
-        }
-    }
     
     // MARK: - Helper Functions
     
@@ -340,7 +277,13 @@ struct EnrolledProgramCard: View {
         let totalWorkouts = getTotalWorkouts(for: program)
         
         // Get user program to calculate completed workouts
-        let userProgram = programService.userPrograms.first { $0.programId == programId && $0.isActive }
+        // Check if enrolled in program
+        guard programService.isEnrolledIn(programId: programId) else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        // Create a mock UserProgram for calculation
+        let userProgram = UserProgram(programId: programId, targetWeight: 0.0)
         let completedWorkouts = getCompletedWorkouts(for: userProgram)
         
         // Calculate percentage
@@ -467,8 +410,70 @@ struct EnrolledProgramCard: View {
     }
 }
 
-// MARK: - Enrolled Program Card (Specialized Variant)
+// MARK: - Enrolled Program Card
 struct EnrolledProgramCard: View {
+    let program: Program
+    let progress: ProgramProgress
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(program.title)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        if let description = program.description {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.title3)
+                }
+                
+                // Progress information
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Week \(progress.currentWeek)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        Text("\(progress.completed)/\(progress.total) workouts")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    ProgressView(value: progress.completionPercentage / 100.0)
+                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                        .scaleEffect(y: 1.5)
+                }
+            }
+            .padding()
+            .background(Color.green.opacity(0.08))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Enrolled Program Card (Specialized Variant)
+struct EnrolledProgramCardDetailed: View {
     let program: Program
     let userProgram: UserProgram
     let nextWorkout: String?
@@ -642,18 +647,19 @@ struct FlexGrid: View {
     @Binding var selectedProgram: Program?
     @ObservedObject private var programService = LocalProgramService.shared
     
+    init(programs: [Program], selectedProgram: Binding<Program?>) {
+        self.programs = programs
+        self._selectedProgram = selectedProgram
+    }
+    
     var body: some View {
         VStack(spacing: 16) {
             // Separate enrolled and available programs
             let enrolledPrograms = programs.filter { program in
-                programService.userPrograms.contains { userProgram in
-                    userProgram.programId == program.id && userProgram.isActive
-                }
+                programService.isEnrolledIn(programId: program.id)
             }
             let availablePrograms = programs.filter { program in
-                !programService.userPrograms.contains { userProgram in
-                    userProgram.programId == program.id && userProgram.isActive
-                }
+                !programService.isEnrolledIn(programId: program.id)
             }
             
             // Enrolled programs section (full width)
@@ -666,12 +672,18 @@ struct FlexGrid: View {
                     
                     LazyVStack(spacing: 16) {  // 16px marginBottom from design tokens
                         ForEach(enrolledPrograms) { program in
-                            if let userProgram = programService.userPrograms.first(where: { $0.programId == program.id && $0.isActive }) {
-                                EnrolledProgramCard(
+                            if programService.isEnrolledIn(programId: program.id) {
+                                // Create a mock UserProgram for the detailed card
+                                let mockUserProgram = UserProgram(
+                                    programId: program.id,
+                                    targetWeight: 0.0
+                                )
+                                
+                                EnrolledProgramCardDetailed(
                                     program: program,
-                                    userProgram: userProgram,
+                                    userProgram: mockUserProgram,
                                     nextWorkout: getNextWorkoutName(for: program),
-                                    completedWorkouts: getCompletedWorkouts(for: userProgram),
+                                    completedWorkouts: getCompletedWorkouts(for: mockUserProgram),
                                     totalWorkouts: getTotalWorkouts(for: program),
                                     onNavigateToNextWorkout: {
                                         selectedProgram = program
@@ -719,6 +731,11 @@ struct FlexGrid: View {
 struct FlexibleGrid: View {
     let programs: [Program]
     @Binding var selectedProgram: Program?
+    
+    init(programs: [Program], selectedProgram: Binding<Program?>) {
+        self.programs = programs
+        self._selectedProgram = selectedProgram
+    }
     
     var body: some View {
         LazyVGrid(columns: [
@@ -941,8 +958,8 @@ struct FunctionalProgramCard: View {
 
 // MARK: - Premium Analytics Section
 struct PremiumAnalyticsSection: View {
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @EnvironmentObject var premiumManager: PremiumManager
+    @ObservedObject private var workoutDataManager = WorkoutDataManager.shared
+    @StateObject private var premiumManager = PremiumManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -1282,11 +1299,17 @@ struct ProgramDetailView: View {
     let program: Program
     @Binding var isPresentingWorkoutFlow: Bool
     let onDismiss: (() -> Void)?
-    @EnvironmentObject var programService: ProgramService
+    @ObservedObject private var programService = LocalProgramService.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
     @State private var isEnrolled = false
     @State private var userProgram: UserProgram?
+    
+    init(program: Program, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
+        self.program = program
+        self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
+        self.onDismiss = onDismiss
+    }
     
     var body: some View {
         Group {
@@ -1393,7 +1416,8 @@ struct ProgramDetailView: View {
         await MainActor.run {
             self.isEnrolled = enrolled
             if enrolled {
-                self.enrolledProgram = program
+                // Create a mock UserProgram when enrolled
+                self.userProgram = UserProgram(programId: program.id, targetWeight: 0.0)
             }
         }
     }
@@ -1575,7 +1599,12 @@ struct EnrolledSection: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
         .sheet(isPresented: $showingProgress) {
-            ProgramWorkoutsView(userProgram: userProgram, program: program, isPresentingWorkoutFlow: .constant(false))
+            ProgramWorkoutsView(
+                userProgram: userProgram,
+                program: program,
+                isPresentingWorkoutFlow: .constant(false),
+                onDismiss: nil
+            )
         }
     }
 }
@@ -1975,6 +2004,14 @@ struct WorkoutDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
+    
+    init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
+        self.workout = workout
+        self.userProgram = userProgram
+        self.onComplete = onComplete
+        self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
+        self.onDismiss = onDismiss
+    }
     
     var body: some View {
         NavigationView {

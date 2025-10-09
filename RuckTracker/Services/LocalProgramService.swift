@@ -7,6 +7,7 @@ class LocalProgramService: ObservableObject {
     
     // Published state
     @Published var programs: [Program] = []
+    @Published var userPrograms: [UserProgram] = []
     @Published var enrolledProgram: Program?
     @Published var programProgress: ProgramProgress?
     @Published var isLoading = false
@@ -17,6 +18,7 @@ class LocalProgramService: ObservableObject {
     
     private init() {
         loadPrograms()
+        loadUserPrograms()
         loadEnrollmentStatus()
     }
     
@@ -45,6 +47,11 @@ class LocalProgramService: ObservableObject {
         }
         
         isLoading = false
+    }
+    
+    func loadUserPrograms() {
+        userPrograms = storage.getAllUserPrograms()
+        print("✅ Loaded \(userPrograms.count) user programs")
     }
     
     func loadEnrollmentStatus() {
@@ -108,6 +115,26 @@ class LocalProgramService: ObservableObject {
         return allWorkouts
     }
     
+    func loadProgramWorkouts(programId: UUID) async throws -> [ProgramWorkout] {
+        // Find program in local data
+        guard let localProgram = localPrograms.first(where: { $0.id == programId }) else {
+            print("❌ Program not found: \(programId)")
+            return []
+        }
+        
+        // Convert all weeks and workouts to ProgramWorkout models
+        var allWorkouts: [ProgramWorkout] = []
+        
+        for week in localProgram.weeks {
+            let weekId = UUID() // Generate week ID
+            let workouts = week.workouts.map { $0.toProgramWorkout(weekId: weekId) }
+            allWorkouts.append(contentsOf: workouts)
+        }
+        
+        print("✅ Loaded \(allWorkouts.count) workouts for program")
+        return allWorkouts
+    }
+    
     func loadWorkoutCompletions(userProgramId: UUID) -> [WorkoutCompletion] {
         // Get workouts from CoreData that belong to this program
         let programWorkouts = WorkoutDataManager.shared.workouts.filter { workout in
@@ -143,25 +170,31 @@ class LocalProgramService: ObservableObject {
         workoutDay: Int,
         distanceMiles: Double,
         weightLbs: Double,
-        durationMinutes: Int
+        durationMinutes: Int,
+        notes: String? = nil
     ) {
         // Workout is already saved to CoreData by WorkoutManager
         // Just need to link it to the program
         
+        guard let enrolledProgramId = storage.getEnrolledProgramId() else {
+            print("❌ No enrolled program found")
+            return
+        }
+        
         // Update the most recent workout with program metadata
         if let recentWorkout = WorkoutDataManager.shared.workouts.first {
-            recentWorkout.programId = programId.uuidString
+            recentWorkout.programId = enrolledProgramId.uuidString
             recentWorkout.programWorkoutDay = Int16(workoutDay)
             WorkoutDataManager.shared.saveContext()
         }
         
         // Recalculate progress
-        programProgress = storage.getProgramProgress(programId: programId)
+        programProgress = storage.getProgramProgress(programId: enrolledProgramId)
         
         // Trigger UI update
         objectWillChange.send()
         
-        print("✅ Completed workout day \(workoutDay) for program")
+        print("✅ Completed workout for program")
     }
     
     // MARK: - Helper Methods

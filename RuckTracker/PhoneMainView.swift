@@ -53,8 +53,6 @@ struct ImprovedPhoneMainView: View {
             switch sheet {
             case .profile:
                 ProfileView()
-                    .environmentObject(supabaseManager)
-                    .environmentObject(authService)
             case .settings:
                 SettingsView()
             case .analytics:

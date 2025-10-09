@@ -43,6 +43,21 @@ class LocalProgramStorage {
         print("✅ Unenrolled from program")
     }
     
+    func getAllUserPrograms() -> [UserProgram] {
+        // For now, return a single user program if enrolled
+        guard let programId = getEnrolledProgramId() else {
+            return []
+        }
+        
+        let userProgram = UserProgram(
+            programId: programId,
+            targetWeight: getStartingWeight(),
+            isActive: true
+        )
+        
+        return [userProgram]
+    }
+    
     // MARK: - Program Progress
     
     func getProgramProgress(programId: UUID) -> ProgramProgress {
@@ -50,57 +65,33 @@ class LocalProgramStorage {
         let totalWorkouts = getTotalWorkoutCount(programId: programId)
         
         let completionPercentage = totalWorkouts > 0 
-            ? (Double(workouts.count) / Double(totalWorkouts)) * 100.0 
+            ? Double(workouts.count) / Double(totalWorkouts) * 100.0
             : 0.0
         
-        let currentWeek = calculateCurrentWeek(completedWorkouts: workouts.count)
+        let currentWeek = (workouts.count / 5) + 1  // Assuming 5 workouts per week
+        let nextWorkoutDay = workouts.count + 1
         
         return ProgramProgress(
-            programId: programId,
-            completedWorkouts: workouts.count,
-            totalWorkouts: totalWorkouts,
+            completed: workouts.count,
+            total: totalWorkouts,
             completionPercentage: completionPercentage,
-            currentWeek: currentWeek
+            currentWeek: currentWeek,
+            nextWorkoutDay: nextWorkoutDay <= totalWorkouts ? nextWorkoutDay : nil
         )
     }
     
     // MARK: - Workout Completions
     
     private func getCompletedProgramWorkouts(programId: UUID) -> [WorkoutEntity] {
-        // Get workouts from CoreData that belong to this program
-        let allWorkouts = WorkoutDataManager.shared.workouts
-        
-        // Filter workouts that have matching program metadata
-        // (We'll add programId field to WorkoutEntity in next step)
-        return allWorkouts.filter { workout in
-            // For now, match by date range of enrollment
-            guard let enrollmentDate = getEnrollmentDate(),
-                  let workoutDate = workout.date,
-                  workoutDate >= enrollmentDate else {
-                return false
-            }
-            return true
+        return WorkoutDataManager.shared.workouts.filter { workout in
+            workout.programId == programId.uuidString
         }
     }
     
     private func getTotalWorkoutCount(programId: UUID) -> Int {
-        // This will be calculated from Programs.json
-        // For now, return a placeholder
-        return 40 // ~8 weeks * 5 workouts per week
+        // Mock implementation - should be based on actual program data
+        // For now, assume programs have 12 weeks with 5 workouts each
+        return 60
     }
     
-    private func calculateCurrentWeek(completedWorkouts: Int) -> Int {
-        // Assuming 5 workouts per week
-        return (completedWorkouts / 5) + 1
-    }
-}
-
-// MARK: - Progress Model
-
-struct ProgramProgress {
-    let programId: UUID
-    let completedWorkouts: Int
-    let totalWorkouts: Int
-    let completionPercentage: Double
-    let currentWeek: Int
 }

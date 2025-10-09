@@ -264,22 +264,20 @@ class WorkoutManager: NSObject, ObservableObject {
                 return
             }
             
-            Task { @MainActor in
-                if self.isActive && !self.isPaused {
-                    if let startDate = self.startDate {
-                        self.elapsedTime = Date().timeIntervalSince(startDate)
-                        
-                        // Update calories every 10 seconds
-                        if Int(self.elapsedTime) % 10 == 0 {
-                            self.updateCalories()
-                        }
+            if self.isActive && !self.isPaused {
+                if let startDate = self.startDate {
+                    self.elapsedTime = Date().timeIntervalSince(startDate)
+                    
+                    // Update calories every 10 seconds
+                    if Int(self.elapsedTime) % 10 == 0 {
+                        self.updateCalories()
                     }
                 }
-                
-                if !self.isActive {
-                    timerInstance.invalidate()
-                    self.timer = nil
-                }
+            }
+            
+            if !self.isActive {
+                timerInstance.invalidate()
+                self.timer = nil
             }
         }
     }
@@ -543,13 +541,19 @@ extension WorkoutManager: CLLocationManagerDelegate {
         
         // If this was a program workout, mark it complete
         if let programId = programId, let day = workoutDay {
-            LocalProgramService.shared.completeWorkout(
-                programId: programId,
-                workoutDay: day,
-                distanceMiles: distance,
-                weightLbs: ruckWeight,
-                durationMinutes: Int(elapsedTime / 60)
-            )
+            Task {
+                do {
+                    try await LocalProgramService.shared.completeWorkout(
+                        programId: programId,
+                        workoutDay: day,
+                        distanceMiles: distance,
+                        weightLbs: ruckWeight,
+                        durationMinutes: Int(elapsedTime / 60)
+                    )
+                } catch {
+                    print("❌ Failed to complete program workout: \(error)")
+                }
+            }
         }
         
     }
@@ -559,7 +563,7 @@ extension WorkoutManager: CLLocationManagerDelegate {
         guard let progress = LocalProgramService.shared.programProgress else {
             return nil
         }
-        return progress.completedWorkouts + 1
+        return progress.completed + 1
     }
     
     // MARK: - Program Progress Tracking
@@ -580,17 +584,13 @@ extension WorkoutManager: CLLocationManagerDelegate {
         guard let activeProgram = activeUserPrograms.first else { return }
         
         do {
-            // Create a mock program workout ID for now
-            // In a real implementation, we'd need to match this workout to a specific program workout
-            let mockProgramWorkoutId = UUID()
-            
             // Calculate duration in minutes
             let durationMinutes = Int(elapsedTime / 60)
             
             // Update program progress
             try await programService.completeWorkout(
-                userProgramId: activeProgram.id,
-                programWorkoutId: mockProgramWorkoutId,
+                programId: activeProgram.id,
+                workoutDay: 1, // Use day 1 as default for now
                 distanceMiles: distance,
                 weightLbs: ruckWeight,
                 durationMinutes: durationMinutes,

@@ -76,7 +76,7 @@ struct ProfileView: View {
     private var accountStatusText: String {
         let premiumStatus: String = {
             if premiumManager.isPremiumUser {
-                if premiumManager.isInTrialPeriod {
+                if premiumManager.isInFreeTrial {
                     return "Premium (Trial)"
                 } else {
                     return "Premium"
@@ -208,7 +208,7 @@ struct ProfileView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                     
-                    if premiumManager.isInTrialPeriod {
+                    if premiumManager.isInFreeTrial {
                         Text("Trial Period")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -300,6 +300,56 @@ struct ProfileView: View {
     private var actionsSection: some View {
         VStack(spacing: 16) {
             
+        }
+    }
+}
+
+// MARK: - Username Editor View
+
+struct UsernameEditorView: View {
+    let currentUsername: String?
+    let onSave: (String) -> Void
+    
+    @State private var username: String = ""
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Username")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    TextField("Enter username", text: $username)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .autocapitalization(.words)
+                        .disableAutocorrection(true)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Edit Username")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        onSave(username)
+                        dismiss()
+                    }
+                    .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .onAppear {
+            username = currentUsername ?? ""
         }
     }
 }

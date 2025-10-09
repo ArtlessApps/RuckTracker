@@ -24,8 +24,8 @@ struct LocalProgram: Codable, Identifiable {
             category: Program.Category(rawValue: category) ?? .fitness,
             durationWeeks: durationWeeks,
             isFeatured: isFeatured,
-            isActive: isActive,
-            sortOrder: sortOrder
+            createdAt: Date(),
+            updatedAt: Date()
         )
     }
 }
@@ -40,7 +40,9 @@ struct LocalProgramWeek: Codable, Identifiable {
         return ProgramWeek(
             id: UUID(),
             programId: programId,
-            weekNumber: weekNumber
+            weekNumber: weekNumber,
+            baseWeightLbs: nil,
+            description: nil
         )
     }
 }
@@ -59,7 +61,7 @@ struct LocalProgramWorkout: Codable, Identifiable {
             id: UUID(),
             weekId: weekId,
             dayNumber: dayNumber,
-            workoutType: Program.WorkoutType(rawValue: workoutType) ?? .ruck,
+            workoutType: ProgramWorkout.WorkoutType(rawValue: workoutType) ?? .ruck,
             distanceMiles: distanceMiles,
             targetPaceMinutes: targetPaceMinutes,
             instructions: instructions

@@ -6,11 +6,14 @@
 //
 
 import Foundation
+import Supabase
 
 @MainActor
 class StackChallengeService: ObservableObject {
     static let shared = StackChallengeService()
     
+    // Local-only mode - no Supabase client
+    private var supabaseClient: SupabaseClient? = nil
     
     @Published var weeklyChallenges: [StackChallenge] = []
     @Published var seasonalChallenges: [StackChallenge] = []
@@ -42,38 +45,13 @@ class StackChallengeService: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            if let client = supabaseClient {
-                try await loadChallengesFromSupabase(client: client)
-            } else {
-                loadMockChallenges()
-            }
-        } catch {
-            print("❌ Error loading challenges: \(error)")
-            errorMessage = error.localizedDescription
-            // Fallback to mock data on error
-            loadMockChallenges()
-        }
+        // Local-only mode - always use mock challenges
+        loadMockChallenges()
         
         isLoading = false
     }
     
-    private func loadChallengesFromSupabase(client: SupabaseClient) async throws {
-        // Load all active challenges
-        let allChallenges: [StackChallenge] = try await client
-            .from("stack_challenges")
-            .select()
-            .eq("is_active", value: true)
-            .order("sort_order")
-            .execute()
-            .value
-        
-        // Separate challenges by season (seasonal vs non-seasonal)
-        weeklyChallenges = allChallenges.filter { $0.season == nil }
-        seasonalChallenges = allChallenges.filter { $0.season != nil }
-        
-        print("✅ Loaded \(weeklyChallenges.count) weekly challenges and \(seasonalChallenges.count) seasonal challenges")
-    }
+    // Removed: loadChallengesFromSupabase - no longer using Supabase
     
     private func loadMockChallenges() {
         weeklyChallenges = StackChallenge.mockWeeklyChallenges

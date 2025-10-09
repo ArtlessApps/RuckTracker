@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Premium Status Banner
 struct PremiumStatusBanner: View {
-    @EnvironmentObject var premiumManager: PremiumManager
+    @StateObject private var premiumManager = PremiumManager.shared
     
     var body: some View {
         HStack(spacing: 12) {
@@ -44,7 +44,7 @@ struct PremiumStatusBanner: View {
 
 // MARK: - Free Trial Banner
 struct FreeTrialBanner: View {
-    @EnvironmentObject var premiumManager: PremiumManager
+    @StateObject private var premiumManager = PremiumManager.shared
     
     var body: some View {
         VStack(spacing: 12) {

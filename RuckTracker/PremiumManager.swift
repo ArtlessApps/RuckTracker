@@ -120,7 +120,8 @@ class PremiumManager: ObservableObject {
         print("🔐 Sign out detected - premium status remains unchanged")
         print("🔐 Premium is tied to Apple ID, not authentication")
         print("🔐 Current premium status: \(isPremiumUser ? "Premium" : "Free")")
-        // No-op: Premium status is managed by StoreKit, not authentication
+        // Premium status remains tied to device's Apple ID subscription
+        // No action needed
     }
     
     // MARK: - Free Trial Logic

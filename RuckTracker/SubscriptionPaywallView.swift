@@ -16,6 +16,7 @@ struct SubscriptionPaywallView: View {
         case programAccess
         case settings
         case featureUpsell
+        case profileUpgrade
     }
     
     var body: some View {
@@ -103,6 +104,8 @@ struct SubscriptionPaywallView: View {
             return "Upgrade to access all premium features and training programs"
         case .featureUpsell:
             return "This feature requires a Pro subscription"
+        case .profileUpgrade:
+            return "Upgrade to Premium for more features and training programs"
         }
     }
     

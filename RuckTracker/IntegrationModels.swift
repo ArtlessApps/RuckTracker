@@ -10,10 +10,46 @@ import HealthKit
 
 // MARK: - Core Integration Models
 
+// Supporting types for unified integration
+struct ActiveProgramSession: Codable {
+    let id: UUID
+    let programId: UUID
+    let userProgramId: UUID
+    let startedAt: Date
+    let currentWeek: Int
+    let currentDay: Int
+    let isActive: Bool
+}
+
+struct ProgramAnalytics: Codable {
+    let programId: UUID
+    let totalWorkouts: Int
+    let completedWorkouts: Int
+    let completionPercentage: Double
+    let averageDistance: Double
+    let averageWeight: Double
+    let lastWorkoutDate: Date?
+}
+
+struct IntegrationWorkflow: Codable {
+    let id: UUID
+    let programId: UUID
+    let workouts: [WorkoutStep]
+    let estimatedDuration: TimeInterval
+}
+
+struct WorkoutStep: Codable {
+    let id: UUID
+    let dayNumber: Int
+    let weekNumber: Int
+    let workoutType: String
+    let distanceMiles: Double?
+    let targetWeightLbs: Double?
+}
 
 struct UnifiedProgramResult {
     let session: ActiveProgramSession
-    let workflow: GeneratedWorkflow
+    let workflow: IntegrationWorkflow
     let healthKitSynced: Bool
     let premiumFeatures: Bool
 }
