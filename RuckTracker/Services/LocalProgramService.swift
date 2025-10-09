@@ -30,20 +30,55 @@ class LocalProgramService: ObservableObject {
         errorMessage = nil
         
         do {
-            // Load from bundled JSON with custom decoder
             let result: Result<[LocalProgram], Error> = Bundle.main.decodeWithCustomDecoder("Programs.json")
             
             switch result {
-            case .success(let loadedPrograms):
+            case .success(var loadedPrograms):
+                // ENHANCEMENT: Add week data to programs
+                let weekLoader = LocalWeekLoader.shared
+                
+                for i in 0..<loadedPrograms.count {
+                    let weeks = weekLoader.getWeeks(forProgramId: loadedPrograms[i].id)
+                    
+                    // Update workouts for each week
+                    var updatedWeeks: [LocalProgramWeek] = []
+                    for week in weeks {
+                        // Use the workouts that are already loaded in the week data
+                        // The week data from LocalWeekLoader already has empty workouts array
+                        // We'll populate it with workouts from the workout loader
+                        let programWorkouts = workoutLoader.getWorkouts(forWeekId: week.id)
+                        
+                        // Convert ProgramWorkout to LocalProgramWorkout
+                        let localWorkouts = programWorkouts.map { programWorkout in
+                            LocalProgramWorkout(
+                                id: programWorkout.id,
+                                dayNumber: programWorkout.dayNumber,
+                                workoutType: programWorkout.workoutType.rawValue,
+                                distanceMiles: programWorkout.distanceMiles,
+                                targetPaceMinutes: programWorkout.targetPaceMinutes,
+                                instructions: programWorkout.instructions
+                            )
+                        }
+                        
+                        let updatedWeek = LocalProgramWeek(
+                            id: week.id,
+                            weekNumber: week.weekNumber,
+                            baseWeightLbs: week.baseWeightLbs,
+                            description: week.description,
+                            workouts: localWorkouts
+                        )
+                        updatedWeeks.append(updatedWeek)
+                    }
+                    
+                    loadedPrograms[i].weeks = updatedWeeks
+                }
+                
                 localPrograms = loadedPrograms
                 programs = loadedPrograms.map { $0.toProgram() }
-                print("✅ Loaded \(programs.count) programs from bundle")
+                print("✅ Loaded \(programs.count) programs with week data")
                 
             case .failure(let error):
                 errorMessage = "Failed to load programs: \(error.localizedDescription)"
-                print("❌ Error loading programs: \(error)")
-                print("❌ CRITICAL: Programs.json must be added to the bundle")
-                // No fallback - programs should come from JSON only
                 programs = []
             }
         }
@@ -204,6 +239,24 @@ class LocalProgramService: ObservableObject {
     }
     
     // MARK: - Testing
+    
+    func testWeekLoading(programId: UUID) {
+        print("\n🧪 Testing Week Loading for Program: \(programId)")
+        
+        let weekLoader = LocalWeekLoader.shared
+        let weeks = weekLoader.getWeeks(forProgramId: programId)
+        
+        print("📅 Total weeks loaded: \(weeks.count)")
+        
+        for week in weeks {
+            print("  Week \(week.weekNumber):")
+            print("    Weight: \(week.baseWeightLbs ?? 0) lbs")
+            print("    Description: \(week.description ?? "None")")
+            print("    Workouts: \(week.workouts.count)")
+        }
+        
+        print("✅ Week loading test complete\n")
+    }
     
     func testWorkoutIntegration(programId: UUID) {
         print("\n🧪 Testing Workout Integration for Program: \(programId)")

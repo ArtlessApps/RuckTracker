@@ -12,7 +12,7 @@ struct LocalProgram: Codable, Identifiable {
     let isFeatured: Bool
     let isActive: Bool
     let sortOrder: Int
-    let weeks: [LocalProgramWeek]
+    var weeks: [LocalProgramWeek]  // CHANGE FROM 'let' TO 'var'
     
     // Convert to existing Program model
     func toProgram() -> Program {
@@ -33,12 +33,16 @@ struct LocalProgram: Codable, Identifiable {
 struct LocalProgramWeek: Codable, Identifiable {
     let id: UUID  // Change from computed to stored property
     let weekNumber: Int
+    let baseWeightLbs: Double?      // ADD THIS
+    let description: String?         // ADD THIS
     let workouts: [LocalProgramWorkout]
     
     // Coding keys for JSON decoding
     enum CodingKeys: String, CodingKey {
         case id = "week_id"  // Map to week_id from your JSON
         case weekNumber = "week_number"
+        case baseWeightLbs = "base_weight_lbs"   // ADD THIS
+        case description                          // ADD THIS
         case workouts
     }
     
@@ -48,6 +52,8 @@ struct LocalProgramWeek: Codable, Identifiable {
         let weekIdString = try container.decode(String.self, forKey: .id)
         id = UUID(uuidString: weekIdString) ?? UUID()
         weekNumber = try container.decode(Int.self, forKey: .weekNumber)
+        baseWeightLbs = try container.decodeIfPresent(Double.self, forKey: .baseWeightLbs)  // ADD THIS
+        description = try container.decodeIfPresent(String.self, forKey: .description)      // ADD THIS
         workouts = try container.decode([LocalProgramWorkout].self, forKey: .workouts)
     }
     
@@ -57,8 +63,8 @@ struct LocalProgramWeek: Codable, Identifiable {
             id: id,  // Use actual ID instead of generating
             programId: programId,
             weekNumber: weekNumber,
-            baseWeightLbs: nil,
-            description: nil
+            baseWeightLbs: baseWeightLbs,     // NOW MAPS CORRECTLY
+            description: description           // NOW MAPS CORRECTLY
         )
     }
 }

@@ -61,22 +61,34 @@ class LocalProgramStorage {
     // MARK: - Program Progress
     
     func getProgramProgress(programId: UUID) -> ProgramProgress {
-        let workouts = getCompletedProgramWorkouts(programId: programId)
+        let weekLoader = LocalWeekLoader.shared
+        let weeks = weekLoader.getWeeks(forProgramId: programId)
+        
+        let completedWorkouts = getCompletedProgramWorkouts(programId: programId)
         let totalWorkouts = getTotalWorkoutCount(programId: programId)
         
+        // Calculate current week based on start date
+        guard let startDate = getEnrollmentDate() else {
+            return ProgramProgress(completed: 0, total: totalWorkouts, completionPercentage: 0, currentWeek: 1, nextWorkoutDay: 1)
+        }
+        
+        let daysSinceStart = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
+        let currentWeek = min((daysSinceStart / 7) + 1, weeks.count)
+        
+        // Get current week's base weight
+        let currentWeekData = weeks.first { $0.weekNumber == currentWeek }
+        let currentWeight = currentWeekData?.baseWeightLbs ?? getStartingWeight()
+        
         let completionPercentage = totalWorkouts > 0 
-            ? Double(workouts.count) / Double(totalWorkouts) * 100.0
+            ? Double(completedWorkouts.count) / Double(totalWorkouts) * 100.0
             : 0.0
         
-        let currentWeek = (workouts.count / 5) + 1  // Assuming 5 workouts per week
-        let nextWorkoutDay = workouts.count + 1
-        
         return ProgramProgress(
-            completed: workouts.count,
+            completed: completedWorkouts.count,
             total: totalWorkouts,
             completionPercentage: completionPercentage,
             currentWeek: currentWeek,
-            nextWorkoutDay: nextWorkoutDay <= totalWorkouts ? nextWorkoutDay : nil
+            nextWorkoutDay: completedWorkouts.count + 1
         )
     }
     
