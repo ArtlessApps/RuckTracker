@@ -6,13 +6,11 @@
 //
 
 import Foundation
-import Supabase
 
 @MainActor
 class StackChallengeService: ObservableObject {
     static let shared = StackChallengeService()
     
-    private let supabaseClient: SupabaseClient?
     
     @Published var weeklyChallenges: [StackChallenge] = []
     @Published var seasonalChallenges: [StackChallenge] = []
@@ -20,14 +18,13 @@ class StackChallengeService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Get current authenticated user ID
+    // Get current user ID (local-only)
     private var currentUserId: UUID? {
-        return SupabaseManager.shared.currentUser?.id
+        return nil // Local-only mode
     }
     
     private init() {
-        // Use existing SupabaseManager
-        self.supabaseClient = SupabaseManager.shared.client
+        // Local-only mode - no Supabase client needed
         
         // Load cached enrollments first
         loadCachedUserEnrollments()

@@ -6,7 +6,6 @@ struct RuckTrackerApp: App {
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
-    @StateObject private var supabaseManager = SupabaseManager.shared
     
     // Add these for premium functionality
     @StateObject private var storeKitManager = StoreKitManager.shared

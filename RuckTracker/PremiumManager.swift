@@ -37,13 +37,6 @@ class PremiumManager: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Listen to authentication state changes
-        SupabaseManager.shared.$isAuthenticated
-            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.updatePremiumStatus()
-            }
-            .store(in: &cancellables)
         
         // Listen to post-purchase prompt from StoreKitManager
         storeKitManager.$showingPostPurchasePrompt
@@ -74,8 +67,8 @@ class PremiumManager: ObservableObject {
         if wasPremium != isPremiumUser {
             print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
             print("🔐 StoreKit subscription: \(storeKitSubscribed)")
-            print("🔐 User authenticated: \(SupabaseManager.shared.isAuthenticated)")
-            print("🔐 User has email: \(SupabaseManager.shared.hasEmail)")
+            print("🔐 User authenticated: true (local-only)")
+            print("🔐 User has email: false (local-only)")
             print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
             if let expiry = newExpiryDate {
                 print("🔐 Subscription expiry: \(expiry)")
@@ -84,8 +77,8 @@ class PremiumManager: ObservableObject {
             // Log current status for debugging
             print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
             print("🔐 StoreKit subscription: \(storeKitSubscribed)")
-            print("🔐 User authenticated: \(SupabaseManager.shared.isAuthenticated)")
-            print("🔐 User has email: \(SupabaseManager.shared.hasEmail)")
+            print("🔐 User authenticated: true (local-only)")
+            print("🔐 User has email: false (local-only)")
         }
     }
     
@@ -166,11 +159,10 @@ enum PremiumFeature {
     case exportData
     case customTrainingPlans
     case nutritionTracking
-    case leaderboards
     
     var requiresPremium: Bool {
         switch self {
-        case .trainingPrograms, .advancedAnalytics, .communityFeatures, .cloudSync, .exportData, .customTrainingPlans, .nutritionTracking, .leaderboards:
+        case .trainingPrograms, .advancedAnalytics, .communityFeatures, .cloudSync, .exportData, .customTrainingPlans, .nutritionTracking:
             return true
         case .unlimitedWorkouts:
             return false // Free users get unlimited workouts for now
@@ -195,8 +187,6 @@ enum PremiumFeature {
             return "Custom Training Plans"
         case .nutritionTracking:
             return "Nutrition Tracking"
-        case .leaderboards:
-            return "Leaderboards"
         }
     }
     
@@ -218,8 +208,6 @@ enum PremiumFeature {
             return "Create personalized training plans based on your goals"
         case .nutritionTracking:
             return "Track nutrition and hydration for optimal performance"
-        case .leaderboards:
-            return "Compete with others and track your progress on leaderboards"
         }
     }
     
@@ -241,8 +229,6 @@ enum PremiumFeature {
             return "doc.text"
         case .nutritionTracking:
             return "fork.knife"
-        case .leaderboards:
-            return "trophy.fill"
         }
     }
 }

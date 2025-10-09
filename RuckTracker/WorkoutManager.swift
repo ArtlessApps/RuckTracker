@@ -239,6 +239,11 @@ class WorkoutManager: NSObject, ObservableObject {
         // Save HealthKit workout
         saveHealthKitWorkout()
         
+        // Update program progress if user is in an active program
+        Task {
+            await updateProgramProgressIfActive()
+        }
+        
         print("📱 Phone: Workout ended - \(formattedElapsedTime)")
         
         // Show post-workout summary
@@ -518,20 +523,88 @@ extension WorkoutManager: CLLocationManagerDelegate {
         // Use actual heart rate if available, otherwise 0 (will show as N/A)
         let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 0
         
-        // Save to CoreData
+        // Check if currently enrolled in a program
+        let programId = LocalProgramService.shared.getEnrolledProgramId()
+        let workoutDay = calculateCurrentWorkoutDay()
+        
+        // Save to CoreData with program metadata
         WorkoutDataManager.shared.saveWorkout(
             date: startDate,
             duration: elapsedTime,
             distance: distance,
             calories: calories,
             ruckWeight: ruckWeight,
-            heartRate: avgHeartRate
+            heartRate: avgHeartRate,
+            programId: programId,           // NEW
+            programWorkoutDay: workoutDay   // NEW
         )
         
         print("💾 iPhone: Saved workout to local storage")
         
-        // Update leaderboards after successful save
-        updateLeaderboardsAfterSave()
+        // If this was a program workout, mark it complete
+        if let programId = programId, let day = workoutDay {
+            LocalProgramService.shared.completeWorkout(
+                programId: programId,
+                workoutDay: day,
+                distanceMiles: distance,
+                weightLbs: ruckWeight,
+                durationMinutes: Int(elapsedTime / 60)
+            )
+        }
+        
+    }
+    
+    private func calculateCurrentWorkoutDay() -> Int? {
+        // Get the next workout day from program progress
+        guard let progress = LocalProgramService.shared.programProgress else {
+            return nil
+        }
+        return progress.completedWorkouts + 1
+    }
+    
+    // MARK: - Program Progress Tracking
+    private func updateProgramProgressIfActive() async {
+        // Check if user has any active programs
+        let programService = LocalProgramService.shared
+        let activeUserPrograms = programService.userPrograms.filter { $0.isActive }
+        
+        guard !activeUserPrograms.isEmpty else {
+            print("📱 No active programs - skipping program progress update")
+            return
+        }
+        
+        print("📱 Found \(activeUserPrograms.count) active programs - updating progress")
+        
+        // For now, we'll update the first active program
+        // In a full implementation, we'd need to determine which program this workout belongs to
+        guard let activeProgram = activeUserPrograms.first else { return }
+        
+        do {
+            // Create a mock program workout ID for now
+            // In a real implementation, we'd need to match this workout to a specific program workout
+            let mockProgramWorkoutId = UUID()
+            
+            // Calculate duration in minutes
+            let durationMinutes = Int(elapsedTime / 60)
+            
+            // Update program progress
+            try await programService.completeWorkout(
+                userProgramId: activeProgram.id,
+                programWorkoutId: mockProgramWorkoutId,
+                distanceMiles: distance,
+                weightLbs: ruckWeight,
+                durationMinutes: durationMinutes,
+                notes: "Workout completed via main workout flow"
+            )
+            
+            print("✅ Updated program progress for active program")
+            
+            // Reload user programs to get updated progress
+            await programService.loadUserPrograms()
+            
+        } catch {
+            print("❌ Failed to update program progress: \(error)")
+        }
     }
     
     

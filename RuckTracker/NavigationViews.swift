@@ -6,7 +6,7 @@ struct TrainingProgramsView: View {
     @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @StateObject private var programService = ProgramService.shared
+    @StateObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
     @Environment(\.dismiss) private var dismiss
     

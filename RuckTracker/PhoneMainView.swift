@@ -6,8 +6,6 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
-    @EnvironmentObject var supabaseManager: SupabaseManager
-    @EnvironmentObject var authService: AuthService
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingProfile = false
     @State private var showingSettings = false
@@ -16,7 +14,6 @@ struct ImprovedPhoneMainView: View {
     @State private var showingTrainingPrograms = false
     @State private var showingChallenges = false
     @State private var showingDataExport = false
-    @State private var showingLeaderboards = false
     @State private var activeSheet: ActiveSheet? = nil
     @State private var isPresentingWorkoutFlow = false
     
@@ -28,7 +25,6 @@ struct ImprovedPhoneMainView: View {
         case trainingPrograms
         case challenges
         case dataExport
-        case leaderboards
         
         var id: Int {
             switch self {
@@ -39,7 +35,6 @@ struct ImprovedPhoneMainView: View {
             case .trainingPrograms: return 4
             case .challenges: return 5
             case .dataExport: return 6
-            case .leaderboards: return 7
             }
         }
     }
@@ -75,9 +70,6 @@ struct ImprovedPhoneMainView: View {
             case .dataExport:
                 DataExportView()
                     .environmentObject(workoutDataManager)
-            case .leaderboards:
-                LeaderboardsView()
-                    .environmentObject(premiumManager)
             }
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
@@ -92,17 +84,6 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
-        .sheet(isPresented: $premiumManager.showingPostPurchasePrompt) {
-            PostPurchaseAccountPrompt(
-                onAccountCreated: {
-                    premiumManager.dismissPostPurchasePrompt()
-                },
-                onSkip: {
-                    premiumManager.dismissPostPurchasePrompt()
-                }
-            )
-            .environmentObject(supabaseManager)
-        }
     }
     
     // MARK: - Main Content View
@@ -114,7 +95,6 @@ struct ImprovedPhoneMainView: View {
                 justRuckCard
                 programsCard
                 challengesCard
-                leaderboardsCard
                 dataCard
                 
                 // Preserve existing functionality sections
@@ -313,47 +293,6 @@ struct ImprovedPhoneMainView: View {
         .buttonStyle(.plain)
     }
     
-    private var leaderboardsCard: some View {
-        Button(action: {
-            if premiumManager.isPremiumUser {
-                activeSheet = .leaderboards
-            } else {
-                premiumManager.showPaywall(context: .featureUpsell)
-            }
-        }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Leaderboards")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
-                        
-                        Spacer()
-                        
-                        if !premiumManager.isPremiumUser {
-                            PremiumBadge(size: .small)
-                        }
-                    }
-                    Text("Compete with others and track your progress")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.05))
-            )
-        }
-        .buttonStyle(.plain)
-    }
     
     private var dataCard: some View {
         Button(action: {

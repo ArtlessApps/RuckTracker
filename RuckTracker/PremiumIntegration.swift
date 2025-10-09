@@ -159,7 +159,7 @@ struct UpdatedPhoneMainView: View {
 // MARK: - Updated Program Cards with Navigation
 struct PremiumTrainingProgramsSection: View {
     @EnvironmentObject var premiumManager: PremiumManager
-    private let programService = ProgramService.shared
+    @ObservedObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -185,24 +185,17 @@ struct PremiumTrainingProgramsSection: View {
         .sheet(item: $selectedProgram) { program in
             ProgramDetailView(
                 program: program,
-                isPresentingWorkoutFlow: .constant(false),
+                isPresentingWorkoutFlow: Binding.constant(false),
                 onDismiss: {
                     selectedProgram = nil
                 }
             )
             .environmentObject(programService)
         }
-        // Note: workoutManager is inherited from parent environment
-        .task {
-            // Load programs and user programs when view appears (for premium users)
-            if premiumManager.isPremiumUser {
-                do {
-                    await programService.loadPrograms()
-                    await programService.loadUserPrograms()
-                } catch {
-                    print("Failed to load programs: \(error)")
-                }
-            }
+        .onAppear {
+            // Load programs when view appears
+            programService.loadPrograms()
+            programService.loadEnrollmentStatus()
         }
     }
     
@@ -218,71 +211,120 @@ struct PremiumTrainingProgramsSection: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            // Sort programs: enrolled first, then alphabetical
-            let sortedPrograms = programService.programs.sorted { a, b in
-                let aEnrolled = programService.userPrograms.contains { $0.programId == a.id && $0.isActive }
-                let bEnrolled = programService.userPrograms.contains { $0.programId == b.id && $0.isActive }
-                
-                if aEnrolled && !bEnrolled { return true }  // a comes first
-                if !aEnrolled && bEnrolled { return false } // b comes first
-                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending // alphabetical
-            }
-            
-            // Separate enrolled and available programs
-            let enrolledPrograms = sortedPrograms.filter { program in
-                programService.userPrograms.contains { userProgram in
-                    userProgram.programId == program.id && userProgram.isActive
-                }
-            }
-            let availablePrograms = sortedPrograms.filter { program in
-                !programService.userPrograms.contains { userProgram in
-                    userProgram.programId == program.id && userProgram.isActive
-                }
-            }
-
             VStack(spacing: 16) {
-                // Enrolled programs (full-width)
-                if !enrolledPrograms.isEmpty {
+                // Show enrolled program first if exists
+                if let enrolled = programService.enrolledProgram,
+                   let progress = $programService.programProgress {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Active Programs")
+                        Text("Active Program")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(.green)
-
-                        LazyVStack(spacing: 16) {
-                            ForEach(enrolledPrograms) { program in
-                                if let userProgram = programService.userPrograms.first(where: { $0.programId == program.id && $0.isActive }) {
-                                    EnrolledProgramCard(
-                                        program: program,
-                                        userProgram: userProgram,
-                                        nextWorkout: getNextWorkoutName(for: program),
-                                        completedWorkouts: getCompletedWorkouts(for: userProgram),
-                                        totalWorkouts: getTotalWorkouts(for: program),
-                                        onNavigateToNextWorkout: {
-                                            selectedProgram = program
-                                        },
-                                        onLaunchWorkoutTracker: {
-                                            print("Launch workout tracker for program: \(program.title)")
-                                        }
-                                    )
+                        
+                        EnrolledProgramCard(
+                            program: enrolled,
+                            progress: progress,
+                            onTap: {
+                                selectedProgram = enrolled
+                            }
+                        )
+                    }
+                }
+                
+                // Show available programs
+                let availablePrograms = programService.programs.filter { program in
+                    program.id != programService.enrolledProgram?.id
+                }
+                
+                if !availablePrograms.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(programService.enrolledProgram == nil ? "Available Programs" : "Other Programs")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible(), spacing: 8),
+                            GridItem(.flexible(), spacing: 8)
+                        ], spacing: 16) {
+                            ForEach(availablePrograms) { program in
+                                FunctionalProgramCard(
+                                    title: program.title,
+                                    description: program.description ?? "Training program",
+                                    difficulty: program.difficulty.rawValue.capitalized,
+                                    weeks: program.durationWeeks,
+                                    isLocked: false
+                                ) {
+                                    selectedProgram = program
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+}
 
-                // Available programs (2-column grid)
-                if !availablePrograms.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Available Programs")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-
-                        FlexibleGrid(programs: availablePrograms, selectedProgram: $selectedProgram)
+// MARK: - Enrolled Program Card
+struct EnrolledProgramCard: View {
+    let program: Program
+    let progress: ProgramProgress
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(program.title)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        if let description = program.description {
+                            Text(description)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
                     }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.title3)
+                }
+                
+                // Progress information
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Week \(progress.currentWeek)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        Text("\(progress.completedWorkouts)/\(progress.totalWorkouts) workouts")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    ProgressView(value: progress.completionPercentage / 100.0)
+                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                        .scaleEffect(y: 1.5)
                 }
             }
+            .padding()
+            .background(Color.green.opacity(0.08))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
         }
     }
     
@@ -423,7 +465,6 @@ struct PremiumTrainingProgramsSection: View {
             )
         }
     }
-    
 }
 
 // MARK: - Enrolled Program Card (Specialized Variant)
@@ -599,7 +640,7 @@ struct EnrolledProgramCard: View {
 struct FlexGrid: View {
     let programs: [Program]
     @Binding var selectedProgram: Program?
-    @StateObject private var programService = ProgramService.shared
+    @ObservedObject private var programService = LocalProgramService.shared
     
     var body: some View {
         VStack(spacing: 16) {
@@ -1331,36 +1372,29 @@ struct ProgramDetailView: View {
     }
     
     private func enrollInProgram(startingWeight: Double) {
+        // Remove the async/await - now synchronous
+        programService.enrollInProgram(program, startingWeight: startingWeight)
+        
         Task {
-            do {
-                try await programService.enrollInProgram(program, startingWeight: startingWeight)
-                await MainActor.run {
-                    // Check enrollment status again to get the new UserProgram
-                    Task {
-                        await checkEnrollmentStatus()
-                    }
-                    showingEnrollment = false
-                    // View will automatically switch to workouts because isEnrolled becomes true
+            await MainActor.run {
+                showingEnrollment = false
+                // Reload enrollment status
+                Task {
+                    await checkEnrollmentStatus()
                 }
-            } catch {
-                print("Failed to enroll in program: \(error)")
             }
         }
     }
     
     private func checkEnrollmentStatus() async {
-        // Check if user is enrolled in this specific program
-        let enrolled = programService.userPrograms.contains { userProg in
-            userProg.programId == program.id && userProg.isActive
-        }
-        
-        let currentUserProgram = programService.userPrograms.first { userProg in
-            userProg.programId == program.id && userProg.isActive
-        }
+        // Check if enrolled
+        let enrolled = programService.isEnrolledIn(programId: program.id)
         
         await MainActor.run {
             self.isEnrolled = enrolled
-            self.userProgram = currentUserProgram
+            if enrolled {
+                self.enrolledProgram = program
+            }
         }
     }
 }
@@ -1619,7 +1653,7 @@ struct ProgramWorkoutsView: View {
     let program: Program?
     let onDismiss: (() -> Void)?
     @Binding var isPresentingWorkoutFlow: Bool
-    @StateObject private var programService = ProgramService.shared
+    @ObservedObject private var programService = LocalProgramService.shared
     @State private var workouts: [ProgramWorkoutWithState] = []
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
@@ -1772,31 +1806,31 @@ struct ProgramWorkoutsView: View {
         isLoading = true
         defer { isLoading = false }
         
-        guard let userProgram = userProgram,
-              let program = program else {
-            print("❌ Missing userProgram or program")
+        guard let program = program else {
+            print("❌ No program provided")
             return
         }
         
         do {
-            // Load workouts and completions
+            // Load workouts from local service
             let programWorkouts = try await programService.loadProgramWorkouts(programId: program.id)
-            let completions = try await programService.loadWorkoutCompletions(userProgramId: userProgram.id)
+            
+            // Get completions from CoreData (via local service)
+            let completedWorkoutDays = WorkoutDataManager.shared.workouts
+                .filter { $0.programId == program.id.uuidString }
+                .compactMap { Int($0.programWorkoutDay) }
             
             // Map workouts to state
-            let completedWorkoutIds = Set(completions.map { $0.programWorkoutId })
             var lastCompletedIndex = -1
             
             workouts = programWorkouts.enumerated().map { index, workout in
-                let isCompleted = completedWorkoutIds.contains(workout.id)
-                let completionDate = completions.first { $0.programWorkoutId == workout.id }?.completedAt
+                let isCompleted = completedWorkoutDays.contains(workout.dayNumber)
                 
                 if isCompleted {
                     lastCompletedIndex = index
                 }
                 
-                // Peloton logic: First workout is unlocked, rest unlock sequentially
-                // Rest days are always unlocked
+                // Unlock logic: first workout unlocked, rest unlock after previous completion
                 let isLocked: Bool
                 if workout.workoutType == .rest {
                     isLocked = false
@@ -1809,11 +1843,11 @@ struct ProgramWorkoutsView: View {
                     weekNumber: (workout.dayNumber - 1) / 7 + 1,
                     isCompleted: isCompleted,
                     isLocked: isLocked,
-                    completionDate: completionDate
+                    completionDate: nil
                 )
             }
             
-            print("✅ Loaded \(workouts.count) workouts, \(completedCount) completed")
+            print("✅ Loaded \(workouts.count) workouts, \(completedWorkoutDays.count) completed")
         } catch {
             print("❌ Error loading workouts: \(error)")
         }
@@ -1938,7 +1972,7 @@ struct WorkoutDetailView: View {
     
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var workoutManager: WorkoutManager
-    @StateObject private var programService = ProgramService.shared
+    @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
     
@@ -2150,31 +2184,26 @@ struct WorkoutDetailView: View {
     }
     
     private func completeWorkout() async {
-        guard let userProgram = userProgram else { return }
+        guard let programId = programService.getEnrolledProgramId() else { return }
         
         isCompleting = true
         defer { isCompleting = false }
         
-        do {
-            // Use default values for now - in full implementation, these would come from actual workout
-            let distance = workout.workout.distanceMiles ?? 0.0
-            let weight = userProgram.currentWeightLbs
-            let duration = Int((distance * (workout.workout.targetPaceMinutes ?? 15.0)))
-            
-            try await programService.completeWorkout(
-                userProgramId: userProgram.id,
-                programWorkoutId: workout.workout.id,
-                distanceMiles: distance,
-                weightLbs: weight,
-                durationMinutes: duration,
-                notes: nil
-            )
-            
-            onComplete()
-            dismiss()
-        } catch {
-            print("❌ Error completing workout: \(error)")
-        }
+        let distance = workout.workout.distanceMiles ?? 0.0
+        let weight = userProgram?.currentWeightLbs ?? 20.0
+        let duration = Int((distance * (workout.workout.targetPaceMinutes ?? 15.0)))
+        
+        // This is now synchronous
+        programService.completeWorkout(
+            programId: programId,
+            workoutDay: workout.workout.dayNumber,
+            distanceMiles: distance,
+            weightLbs: weight,
+            durationMinutes: duration
+        )
+        
+        onComplete()
+        dismiss()
     }
 }
 

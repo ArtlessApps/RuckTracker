@@ -27,6 +27,8 @@ extension WorkoutEntity {
     @NSManaged public var duration: Double
     @NSManaged public var heartRate: Double
     @NSManaged public var ruckWeight: Double
+    @NSManaged public var programId: String? // Store as String, convert to UUID
+    @NSManaged public var programWorkoutDay: Int16 // Which day in program
 }
 
 class WorkoutDataManager: ObservableObject {
@@ -80,7 +82,19 @@ class WorkoutDataManager: ObservableObject {
         heartRateAttribute.isOptional = false
         heartRateAttribute.defaultValue = 0.0
         
-        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute]
+        // Add program tracking attributes
+        let programIdAttribute = NSAttributeDescription()
+        programIdAttribute.name = "programId"
+        programIdAttribute.attributeType = .stringAttributeType
+        programIdAttribute.isOptional = true
+        
+        let programWorkoutDayAttribute = NSAttributeDescription()
+        programWorkoutDayAttribute.name = "programWorkoutDay"
+        programWorkoutDayAttribute.attributeType = .integer16AttributeType
+        programWorkoutDayAttribute.isOptional = true
+        programWorkoutDayAttribute.defaultValue = 0
+        
+        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, programIdAttribute, programWorkoutDayAttribute]
         model.entities = [entity]
         
         let container = NSPersistentContainer(name: "RuckTrackerData", managedObjectModel: model)
@@ -116,7 +130,9 @@ class WorkoutDataManager: ObservableObject {
         distance: Double,
         calories: Double,
         ruckWeight: Double,
-        heartRate: Double
+        heartRate: Double,
+        programId: UUID? = nil,
+        programWorkoutDay: Int? = nil
     ) {
         let workout = WorkoutEntity(context: context)
         workout.date = date
@@ -125,6 +141,14 @@ class WorkoutDataManager: ObservableObject {
         workout.calories = calories
         workout.ruckWeight = ruckWeight
         workout.heartRate = heartRate
+        
+        // Add program metadata if provided
+        if let programId = programId {
+            workout.programId = programId.uuidString
+        }
+        if let day = programWorkoutDay {
+            workout.programWorkoutDay = Int16(day)
+        }
         
         saveContext()
         fetchWorkouts() // Refresh the list

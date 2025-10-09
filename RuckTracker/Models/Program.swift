@@ -229,7 +229,11 @@ struct WeightProgression: Codable, Identifiable {
 
 // MARK: - Mock Data Extensions
 extension Program {
-    static let mockPrograms: [Program] = [
+    /// Deprecated: Programs now loaded from Programs.json
+    @available(*, deprecated, message: "Use LocalProgramService instead")
+    static var mockPrograms: [Program] {
+        // Keep for backwards compatibility
+        return [
         Program(
             id: UUID(),
             title: "Military Foundation",
@@ -296,7 +300,8 @@ extension Program {
             createdAt: Date(),
             updatedAt: Date()
         )
-    ]
+        ]
+    }
 }
 
 // MARK: - Supporting Data Structures for Universal Program Manager
