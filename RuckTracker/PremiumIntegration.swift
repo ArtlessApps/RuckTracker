@@ -211,18 +211,16 @@ struct PremiumTrainingProgramsSection: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // ENROLLED PROGRAMS SECTION (NEW)
-                    if !enrolledPrograms.isEmpty {
-                        enrolledProgramsSection
-                    }
-                    
-                    // AVAILABLE PROGRAMS SECTION
-                    availableProgramsSection
+            VStack(spacing: 16) {
+                // ENROLLED PROGRAMS SECTION (NEW)
+                if !enrolledPrograms.isEmpty {
+                    enrolledProgramsSection
                 }
-                .padding(.horizontal)
+                
+                // AVAILABLE PROGRAMS SECTION
+                availableProgramsSection
             }
+            .padding(.horizontal)
         }
     }
     
@@ -266,10 +264,12 @@ struct PremiumTrainingProgramsSection: View {
                     // Navigate to program detail
                     selectedProgram = program
                 }
+                .padding(.horizontal)
             }
             
             Divider()
                 .padding(.vertical, 8)
+                .padding(.horizontal)
         }
     }
     

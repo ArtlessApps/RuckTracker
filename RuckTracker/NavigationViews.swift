@@ -1,6 +1,9 @@
 import SwiftUI
 import Foundation
 
+// Import required models and components
+// These are defined in other files in the project
+
 // MARK: - Training Programs View
 struct TrainingProgramsView: View {
     @Binding var isPresentingWorkoutFlow: Bool
@@ -51,20 +54,14 @@ struct TrainingProgramsView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else {
-                            // Grid layout with database programs
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
-                                ForEach(programService.programs) { program in
-                                    DatabaseProgramCard(
-                                        program: program,
-                                        isLocked: !premiumManager.isPremiumUser && program.category != .fitness
-                                    ) {
-                                        if premiumManager.isPremiumUser || program.category == .fitness {
-                                            selectedProgram = program
-                                        } else {
-                                            premiumManager.showPaywall(context: .programAccess)
-                                        }
-                                    }
+                            VStack(spacing: 16) {
+                                // ENROLLED PROGRAMS SECTION (NEW)
+                                if !enrolledPrograms.isEmpty {
+                                    enrolledProgramsSection
                                 }
+                                
+                                // AVAILABLE PROGRAMS SECTION
+                                availableProgramsSection
                             }
                         }
                     }
@@ -93,6 +90,83 @@ struct TrainingProgramsView: View {
         .onChange(of: isPresentingWorkoutFlow) { newValue in
             if !newValue {
                 dismiss()
+            }
+        }
+        .onAppear {
+            // Load programs and enrollment status when view appears
+            programService.loadPrograms()
+            programService.loadEnrollmentStatus()
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var enrolledPrograms: [(UserProgram, Program)] {
+        programService.userPrograms
+            .filter { $0.isActive }
+            .compactMap { userProgram in
+                if let program = programService.programs.first(where: { $0.id == userProgram.programId }) {
+                    return (userProgram, program)
+                }
+                return nil
+            }
+            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
+    }
+    
+    private var availablePrograms: [Program] {
+        let enrolledIds = Set(programService.userPrograms.map { $0.programId })
+        return programService.programs
+            .filter { !enrolledIds.contains($0.id) }
+            .sorted { $0.isFeatured && !$1.isFeatured } // Featured first
+    }
+    
+    // MARK: - Enrolled Section
+    
+    private var enrolledProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Active Programs")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
+            ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
+                DatabaseProgramCard(
+                    program: program,
+                    isLocked: false // Enrolled programs are never locked
+                ) {
+                    selectedProgram = program
+                }
+                .padding(.horizontal)
+            }
+            
+            Divider()
+                .padding(.vertical, 8)
+                .padding(.horizontal)
+        }
+    }
+    
+    // MARK: - Available Section
+    
+    private var availableProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Available Programs")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
+                ForEach(availablePrograms) { program in
+                    DatabaseProgramCard(
+                        program: program,
+                        isLocked: !premiumManager.isPremiumUser && program.category != .fitness
+                    ) {
+                        if premiumManager.isPremiumUser || program.category == .fitness {
+                            selectedProgram = program
+                        } else {
+                            premiumManager.showPaywall(context: .programAccess)
+                        }
+                    }
+                }
             }
         }
     }
