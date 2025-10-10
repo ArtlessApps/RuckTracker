@@ -72,15 +72,88 @@ struct ChallengesSection: View {
             )
             .padding()
         } else {
-            // Grid layout for challenges
+            ScrollView {
+                VStack(spacing: 16) {
+                    // ENROLLED CHALLENGES SECTION (NEW)
+                    if !enrolledChallenges.isEmpty {
+                        enrolledChallengesSection
+                    }
+                    
+                    // AVAILABLE CHALLENGES SECTION
+                    availableChallengesSection
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var enrolledChallenges: [(UserChallenge, Challenge)] {
+        challengeService.userChallenges
+            .filter { $0.isActive }
+            .compactMap { userChallenge in
+                if let challenge = challengeService.challenges.first(where: { $0.id == userChallenge.challengeId }) {
+                    return (userChallenge, challenge)
+                }
+                return nil
+            }
+            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
+    }
+    
+    private var availableChallenges: [Challenge] {
+        let enrolledIds = Set(challengeService.userChallenges.map { $0.challengeId })
+        return challengeService.challenges
+            .filter { !enrolledIds.contains($0.id) && $0.isActive }
+            .sorted { challenge1, challenge2 in
+                // Sort by focus area, then alphabetically
+                if challenge1.focusArea.rawValue != challenge2.focusArea.rawValue {
+                    return challenge1.focusArea.rawValue < challenge2.focusArea.rawValue
+                }
+                return challenge1.title < challenge2.title
+            }
+    }
+    
+    // MARK: - Enrolled Section
+    
+    private var enrolledChallengesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Active")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
+            ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
+                EnrolledChallengeCard(
+                    challenge: challenge,
+                    userChallenge: userChallenge
+                ) {
+                    selectedChallenge = challenge
+                }
+                .padding(.horizontal)
+            }
+            
+            Divider()
+                .padding(.vertical, 8)
+        }
+    }
+    
+    // MARK: - Available Section
+    
+    private var availableChallengesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Available Challenges")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
-                ForEach(challengeService.challenges) { challenge in
+                ForEach(availableChallenges) { challenge in
                     ChallengeCardView(challenge: challenge) {
                         selectedChallenge = challenge
                     }
                 }
             }
-            .padding(.horizontal, 20)
         }
     }
 }
@@ -428,6 +501,7 @@ private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
         return .blue
     }
 }
+
 
 // MARK: - Preview
 struct ChallengeViews_Previews: PreviewProvider {

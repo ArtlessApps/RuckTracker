@@ -159,7 +159,7 @@ struct UpdatedPhoneMainView: View {
 // MARK: - Updated Program Cards with Navigation
 struct PremiumTrainingProgramsSection: View {
     @StateObject private var premiumManager = PremiumManager.shared
-    @ObservedObject private var programService = LocalProgramService.shared
+    @StateObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -211,54 +211,89 @@ struct PremiumTrainingProgramsSection: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            VStack(spacing: 16) {
-                // Show enrolled program first if exists
-                if let enrolled = programService.enrolledProgram,
-                   let progress = programService.programProgress {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Active Program")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.green)
-                        
-                        EnrolledProgramCard(
-                            program: enrolled,
-                            progress: progress,
-                            onTap: {
-                                selectedProgram = enrolled
-                            }
-                        )
+            ScrollView {
+                VStack(spacing: 16) {
+                    // ENROLLED PROGRAMS SECTION (NEW)
+                    if !enrolledPrograms.isEmpty {
+                        enrolledProgramsSection
                     }
+                    
+                    // AVAILABLE PROGRAMS SECTION
+                    availableProgramsSection
                 }
-                
-                // Show available programs
-                let availablePrograms = programService.programs.filter { program in
-                    program.id != programService.enrolledProgram?.id
+                .padding(.horizontal)
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var enrolledPrograms: [(UserProgram, Program)] {
+        programService.userPrograms
+            .filter { $0.isActive }
+            .compactMap { userProgram in
+                if let program = programService.programs.first(where: { $0.id == userProgram.programId }) {
+                    return (userProgram, program)
                 }
-                
-                if !availablePrograms.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(programService.enrolledProgram == nil ? "Available Programs" : "Other Programs")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                        
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 8),
-                            GridItem(.flexible(), spacing: 8)
-                        ], spacing: 16) {
-                            ForEach(availablePrograms) { program in
-                                FunctionalProgramCard(
-                                    title: program.title,
-                                    description: program.description ?? "Training program",
-                                    difficulty: program.difficulty.rawValue.capitalized,
-                                    weeks: program.durationWeeks,
-                                    isLocked: false
-                                ) {
-                                    selectedProgram = program
-                                }
-                            }
-                        }
+                return nil
+            }
+            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
+    }
+    
+    private var availablePrograms: [Program] {
+        let enrolledIds = Set(programService.userPrograms.map { $0.programId })
+        return programService.programs
+            .filter { !enrolledIds.contains($0.id) }
+            .sorted { $0.isFeatured && !$1.isFeatured } // Featured first
+    }
+    
+    // MARK: - Enrolled Section
+    
+    private var enrolledProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Continue")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
+            ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
+                EnhancedProgramCard(
+                    program: program,
+                    isEnrolled: true,
+                    userProgram: userProgram,
+                    fullWidth: true
+                ) {
+                    // Navigate to program detail
+                    selectedProgram = program
+                }
+            }
+            
+            Divider()
+                .padding(.vertical, 8)
+        }
+    }
+    
+    // MARK: - Available Section
+    
+    private var availableProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Available Programs")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 16) {
+                ForEach(availablePrograms) { program in
+                    EnhancedProgramCard(
+                        program: program,
+                        isEnrolled: false,
+                        userProgram: nil,
+                        fullWidth: false
+                    ) {
+                        selectedProgram = program
                     }
                 }
             }
