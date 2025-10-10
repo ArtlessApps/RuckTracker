@@ -549,10 +549,10 @@ struct EnrolledProgramCardDetailed: View {
                 .cornerRadius(12)
             }
             
-            // Action row: Continue Program + arrow (with separate handlers)
+            // Action row: Enrolled + arrow (with separate handlers)
             HStack {
                 Button(action: onNavigateToNextWorkout) {
-                    Text("Continue Program")
+                    Text("Enrolled")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)
@@ -827,7 +827,7 @@ struct EnhancedProgramCard: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.caption)
                                 .foregroundColor(.green)
-                            Text("Active")
+                            Text("Enrolled")
                                 .font(.caption2)
                                 .fontWeight(.medium)
                                 .foregroundColor(.green)
@@ -1583,18 +1583,27 @@ struct EnrollmentSection: View {
     let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Button(action: action) {
-                Text("Start This Program")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.orange)
-                    .cornerRadius(12)
+                HStack {
+                    Image(systemName: "checkmark.circle")
+                    Text("Enroll in Program")
+                }
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                )
             }
+            .buttonStyle(.plain)
             
-            Text("You'll be able to track your progress and adjust weight as you advance through the program.")
+            Text("You can adjust your weight anytime during the program")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -1609,30 +1618,50 @@ struct EnrolledSection: View {
     
     var body: some View {
         VStack(spacing: 12) {
+            // Status indicator
             HStack {
                 Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
                     .foregroundColor(.green)
+                
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Continue Program")
+                    Text("Enrolled in this program")  // ← MORE LIKE CHALLENGE
                         .fontWeight(.semibold)
+                    
                     if let userProgram = userProgram {
                         Text("Week \(userProgram.currentWeek) • \(Int(userProgram.currentWeightLbs)) lbs")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                 }
+                
                 Spacer()
             }
             
+            // Progress button
             Button("View Your Progress") {
                 showingProgress = true
             }
-            .font(.subheadline)
-            .foregroundColor(.blue)
+            .font(.headline)
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue)
+            )
+            .buttonStyle(.plain)
         }
         .padding()
-        .background(Color.green.opacity(0.1))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.green.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
+        )
         .sheet(isPresented: $showingProgress) {
             ProgramWorkoutsView(
                 userProgram: userProgram,
@@ -1653,60 +1682,193 @@ struct ProgramEnrollmentView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 32) {
-                VStack(spacing: 16) {
-                    Text("Start Your Program")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text("Choose your starting ruck weight. You can adjust this as you progress through the program.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                
-                VStack(spacing: 24) {
-                    Text("Starting Ruck Weight")
-                        .font(.headline)
-                    
-                    VStack {
-                        Text("\(Int(startingWeight)) lbs")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.orange)
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Challenge Info Header - NEW
+                        challengeHeaderView
                         
-                        Slider(value: $startingWeight, in: 5...50, step: 5)
-                            .accentColor(.orange)
+                        // Weight Selection - KEEP EXISTING
+                        weightSelectionView
+                        
+                        // Enrollment Button - UPDATE
+                        enrollmentButtonView
+                        
+                        // Extra padding to ensure button is visible
+                        Color.clear.frame(height: 50)
                     }
-                    
-                    Text("Recommended: 15-20% of body weight")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    .padding()
+                    .frame(minHeight: geometry.size.height)
                 }
-                
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    Button {
-                        onEnroll(startingWeight)
-                    } label: {
-                        Text("Start Program")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.orange)
-                            .cornerRadius(12)
-                    }
-                    
+            }
+            .navigationTitle("Enroll in Program")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.secondary)
                 }
             }
+        }
+    }
+    
+    // MARK: - Computed Views
+    
+    private var challengeHeaderView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 50))
+                .foregroundColor(.blue)
+            
+            Text(program.title)
+                .font(.title)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+            
+            if let description = program.description {
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            // Program stats
+            HStack(spacing: 20) {
+                StatView(
+                    icon: "calendar",
+                    title: "Duration",
+                    value: "\(program.durationWeeks) weeks"
+                )
+                
+                StatView(
+                    icon: "star.fill",
+                    title: "Difficulty",
+                    value: program.difficulty.rawValue.capitalized
+                )
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        )
+    }
+    
+    private var weightSelectionView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Select Your Starting Weight")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            Text("Choose a ruck weight that challenges you while maintaining proper form throughout the program.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            // Weight display
+            VStack(spacing: 8) {
+                Text("\(Int(startingWeight)) lbs")
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundColor(.blue)
+                
+                Text("Starting Weight")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue.opacity(0.1))
+            )
+            
+            // Slider
+            HStack {
+                Text("10 lbs")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                
+                Slider(value: $startingWeight, in: 10...80, step: 5)
+                    .tint(.blue)
+                
+                Text("80 lbs")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            // Recommendations
+            VStack(alignment: .leading, spacing: 8) {
+                Text("💡 Recommendations")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                
+                Text("Beginner: 10-25 lbs • Intermediate: 25-45 lbs • Advanced: 45+ lbs")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
             .padding()
-            .navigationBarTitleDisplayMode(.inline)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemBackground))
+            )
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        )
+    }
+    
+    private var enrollmentButtonView: some View {
+        VStack(spacing: 12) {
+            Button(action: { onEnroll(startingWeight) }) {
+                HStack {
+                    Image(systemName: "checkmark.circle")
+                    Text("Enroll in Program")
+                }
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                )
+            }
+            .buttonStyle(.plain)
+            
+            Text("You can adjust your weight anytime during the program")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+}
+
+// MARK: - StatView Component
+struct StatView: View {
+    let icon: String
+    let title: String
+    let value: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.blue)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            Text(value)
+                .font(.caption)
+                .fontWeight(.medium)
         }
     }
 }

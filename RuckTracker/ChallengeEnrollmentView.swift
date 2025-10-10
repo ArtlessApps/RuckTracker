@@ -341,28 +341,6 @@ struct ChallengeEnrollmentView: View {
 
 // MARK: - Supporting Views
 
-struct StatView: View {
-    let icon: String
-    let title: String
-    let value: String
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(.blue)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(value)
-                .font(.caption)
-                .fontWeight(.medium)
-        }
-    }
-}
-
 struct ExpectationRow: View {
     let icon: String
     let title: String
