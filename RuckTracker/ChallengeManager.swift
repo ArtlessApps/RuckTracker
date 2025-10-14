@@ -143,6 +143,20 @@ class ChallengeManager: ObservableObject {
         return workout.dayNumber <= currentDay
     }
     
+    func isWorkoutLocked(_ workout: ChallengeWorkout) -> Bool {
+        guard enrollment != nil else { return true }
+        
+        // Workout is locked if any previous workout is not completed
+        let previousWorkouts = workouts.filter { $0.dayNumber < workout.dayNumber }
+        for prevWorkout in previousWorkouts {
+            if !completedWorkouts.contains(prevWorkout.id) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
     func completeWorkout(_ workout: ChallengeWorkout) async {
         // Mark as completed locally
         completedWorkouts.insert(workout.id)

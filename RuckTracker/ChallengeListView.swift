@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ChallengeListView: View {
+    @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var challengeService = LocalChallengeService.shared
     @State private var selectedChallenge: Challenge?
     
@@ -31,7 +32,7 @@ struct ChallengeListView: View {
             .padding(.vertical)
         }
         .sheet(item: $selectedChallenge) { challenge in
-            ChallengeDetailView(challenge: challenge)
+            ChallengeDetailView(challenge: challenge, isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
                 .environmentObject(challengeService)
         }
         .onAppear {
@@ -341,7 +342,7 @@ struct AvailableChallengeCard: View {
 
 struct ChallengeListView_Previews: PreviewProvider {
     static var previews: some View {
-        ChallengeListView()
+        ChallengeListView(isPresentingWorkoutFlow: .constant(false))
             .environmentObject(PremiumManager.shared)
     }
 }

@@ -81,6 +81,9 @@ class LocalChallengeService: ObservableObject {
         enrolledChallenge = challenge
         challengeProgress = storage.getChallengeProgress(challengeId: challenge.id)
         
+        // Reload user challenges to include the new enrollment
+        loadUserChallenges()
+        
         // Trigger UI update
         objectWillChange.send()
         

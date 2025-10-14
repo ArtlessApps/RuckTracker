@@ -9,6 +9,7 @@ import SwiftUI
 
 // MARK: - Main Challenges Section
 struct ChallengesSection: View {
+    @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var challengeService = LocalChallengeService.shared
     @EnvironmentObject var premiumManager: PremiumManager
     @State private var selectedChallenge: Challenge?
@@ -48,7 +49,7 @@ struct ChallengesSection: View {
             }
         }
         .sheet(item: $selectedChallenge) { challenge in
-            ChallengeDetailView(challenge: challenge)
+            ChallengeDetailView(challenge: challenge, isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
                 .environmentObject(challengeService)
         }
         .sheet(isPresented: $showingEnrollment) {
@@ -249,11 +250,38 @@ struct ChallengeCardView: View {
 // MARK: - Challenge Detail View
 struct ChallengeDetailView: View {
     let challenge: Challenge
+    @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var challengeService: LocalChallengeService
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
+    @State private var isEnrolled = false
     
     var body: some View {
+        Group {
+            if isEnrolled {
+                // Show workouts if enrolled
+                UniversalChallengeView(challenge: challenge, isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
+            } else {
+                // Show challenge info if not enrolled
+                challengeInfoView
+            }
+        }
+        .sheet(isPresented: $showingEnrollment, onDismiss: {
+            // Re-check enrollment status when sheet dismisses
+            Task {
+                await checkEnrollmentStatus()
+            }
+        }) {
+            LocalChallengeEnrollmentView(challenge: challenge)
+                .environmentObject(challengeService)
+        }
+        .task {
+            // Check if user is already enrolled when view appears
+            await checkEnrollmentStatus()
+        }
+    }
+    
+    private var challengeInfoView: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -349,10 +377,17 @@ struct ChallengeDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingEnrollment) {
-            LocalChallengeEnrollmentView(challenge: challenge)
-                .environmentObject(challengeService)
-        }
+    }
+    
+    private func checkEnrollmentStatus() async {
+        // Check if user is enrolled in this challenge
+        isEnrolled = challengeService.isEnrolledIn(challengeId: challenge.id)
+    }
+    
+    private func enrollInChallenge(startingWeight: Double) {
+        challengeService.enrollInChallenge(challenge, startingWeight: startingWeight)
+        isEnrolled = true
+        showingEnrollment = false
     }
 }
 
@@ -506,7 +541,7 @@ private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
 // MARK: - Preview
 struct ChallengeViews_Previews: PreviewProvider {
     static var previews: some View {
-        ChallengesSection()
+        ChallengesSection(isPresentingWorkoutFlow: .constant(false))
             .environmentObject(PremiumManager())
     }
 }

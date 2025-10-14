@@ -9,12 +9,12 @@ import SwiftUI
 
 struct UniversalChallengeView: View {
     let challenge: Challenge
+    @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var challengeManager = ChallengeManager()
     @EnvironmentObject var premiumManager: PremiumManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
-    @State private var showingCompletionConfirmation = false
-    @State private var selectedWorkoutForCompletion: ChallengeWorkout?
+    @State private var selectedWorkout: ChallengeWorkout?
     
     var body: some View {
         NavigationView {
@@ -27,22 +27,31 @@ struct UniversalChallengeView: View {
                         headerSection
                         
                         // Challenge workouts list
-                        LazyVStack(spacing: 1) {
-                            ForEach(challengeManager.workouts, id: \.id) { workout in
+                        LazyVStack(spacing: 0) {
+                            ForEach(Array(challengeManager.workouts.enumerated()), id: \.element.id) { index, workout in
                                 UniversalWorkoutRowView(
                                     workout: workout,
                                     challenge: challenge,
+                                    index: workout.dayNumber,
                                     isCompleted: challengeManager.isWorkoutCompleted(workout.id),
-                                    isCurrent: challengeManager.currentWorkout?.id == workout.id,
-                                    canComplete: challengeManager.canCompleteWorkout(workout),
-                                    onComplete: {
-                                        selectedWorkoutForCompletion = workout
-                                        showingCompletionConfirmation = true
-                                    }
+                                    isLocked: challengeManager.isWorkoutLocked(workout)
                                 )
+                                .onTapGesture {
+                                    if !challengeManager.isWorkoutLocked(workout) {
+                                        selectedWorkout = workout
+                                        isPresentingWorkoutFlow = true
+                                    }
+                                }
+                                
+                                if index < challengeManager.workouts.count - 1 {
+                                    Divider()
+                                        .padding(.leading, 80)
+                                }
                             }
                         }
-                        .background(Color(.systemGroupedBackground))
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .padding()
                     }
                 }
             }
@@ -60,18 +69,14 @@ struct UniversalChallengeView: View {
         .sheet(isPresented: $showingEnrollment) {
             ChallengeEnrollmentView(challenge: challenge, challengeManager: challengeManager)
         }
-        .alert("Complete Workout?", isPresented: $showingCompletionConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Complete") {
-                if let workout = selectedWorkoutForCompletion {
-                    Task {
-                        await challengeManager.completeWorkout(workout)
-                    }
-                }
-            }
-        } message: {
-            if let workout = selectedWorkoutForCompletion {
-                Text("Mark Day \(workout.dayNumber) as completed and advance to the next workout.")
+        .sheet(isPresented: $isPresentingWorkoutFlow) {
+            if let workout = selectedWorkout {
+                ChallengeWorkoutDetailView(
+                    workout: workout,
+                    challenge: challenge,
+                    challengeManager: challengeManager,
+                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow
+                )
             }
         }
         .task {
@@ -86,15 +91,6 @@ struct UniversalChallengeView: View {
                 progressSection
             } else {
                 enrollmentPrompt
-            }
-            
-            // Current day callout
-            if let currentWorkout = challengeManager.currentWorkout,
-               challengeManager.enrollment != nil {
-                CurrentWorkoutCallout(
-                    workout: currentWorkout,
-                    challenge: challenge
-                )
             }
         }
         .padding()
@@ -175,222 +171,85 @@ struct UniversalChallengeView: View {
 struct UniversalWorkoutRowView: View {
     let workout: ChallengeWorkout
     let challenge: Challenge
+    let index: Int
     let isCompleted: Bool
-    let isCurrent: Bool
-    let canComplete: Bool
-    let onComplete: () -> Void
+    let isLocked: Bool
     
     var body: some View {
         HStack(spacing: 16) {
-            // Day indicator
-            WorkoutStatusIndicator(
-                dayNumber: workout.dayNumber,
-                isCompleted: isCompleted,
-                isCurrent: isCurrent,
-                canComplete: canComplete,
-                challenge: challenge
-            )
-            
-            // Workout details
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Image(systemName: workout.workoutType.iconName)
-                        .foregroundColor(Color(challenge.focusArea.color))
-                        .font(.title3)
-                    
-                    Text(workout.getWorkoutTitle(for: challenge))
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    Spacer()
-                    
-                    // Dynamic stats based on workout
-                    ChallengeWorkoutStatsView(workout: workout)
-                }
+            // Left: Status icon
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.15))
+                    .frame(width: 50, height: 50)
                 
-                Text(workout.getInstructions(for: challenge))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
+                if isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(statusColor)
+                } else if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                } else {
+                    Text("\(index)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(statusColor)
+                }
             }
             
-            // Complete button
-            if !isCompleted && canComplete {
-                Button(action: onComplete) {
-                    Text("Complete")
-                        .font(.callout)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(challenge.focusArea.color))
-                        )
+            // Middle: Workout info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(workout.getWorkoutTitle(for: challenge))
+                    .font(.headline)
+                    .foregroundColor(isLocked ? .secondary : .primary)
+                
+                Text(workout.displaySubtitle)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                if let instructions = workout.instructions {
+                    Text(instructions)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
-                .buttonStyle(.plain)
+            }
+            
+            Spacer()
+            
+            // Right: Chevron or lock
+            if isLocked {
+                Image(systemName: "lock.fill")
+                    .foregroundColor(.gray)
+                    .font(.caption)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+                    .fontWeight(.semibold)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .overlay(
-            // Current day highlight
-            isCurrent && !isCompleted ? 
-            RoundedRectangle(cornerRadius: 0)
-                .stroke(Color(challenge.focusArea.color), lineWidth: 3)
-            : nil
-        )
+        .background(isLocked ? Color.clear : Color(.systemBackground))
+        .contentShape(Rectangle())
+        .opacity(isLocked ? 0.6 : 1.0)
+    }
+    
+    private var statusColor: Color {
+        if isCompleted {
+            return .green
+        } else if isLocked {
+            return .gray
+        } else {
+            return .blue
+        }
     }
 }
 
 // MARK: - Supporting Views
-struct WorkoutStatusIndicator: View {
-    let dayNumber: Int
-    let isCompleted: Bool
-    let isCurrent: Bool
-    let canComplete: Bool
-    let challenge: Challenge
-    
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(circleColor)
-                .frame(width: 50, height: 50)
-            
-            if isCompleted {
-                Image(systemName: "checkmark")
-                    .foregroundColor(.white)
-                    .font(.title2)
-                    .fontWeight(.bold)
-            } else {
-                Text("\(dayNumber)")
-                    .foregroundColor(isCurrent ? .white : .primary)
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-        }
-    }
-    
-    private var circleColor: Color {
-        if isCompleted {
-            return .green
-        } else if isCurrent {
-            return Color(challenge.focusArea.color)
-        } else if canComplete {
-            return Color(.systemGray4)
-        } else {
-            return Color(.systemGray5)
-        }
-    }
-}
-
-struct ChallengeWorkoutStatsView: View {
-    let workout: ChallengeWorkout
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            if let distance = workout.distanceMiles, !workout.isRestDay {
-                StatLabel(
-                    icon: "location.fill",
-                    value: "\(String(format: "%.1f", distance)) mi"
-                )
-            }
-            
-            if let weight = workout.weightLbs, !workout.isRestDay {
-                StatLabel(
-                    icon: "scalemass.fill",
-                    value: "\(Int(weight)) lbs"
-                )
-            }
-            
-            if let pace = workout.targetPaceMinutes, !workout.isRestDay {
-                let minutes = Int(pace)
-                let seconds = Int((pace - Double(minutes)) * 60)
-                StatLabel(
-                    icon: "speedometer",
-                    value: "\(minutes):\(String(format: "%02d", seconds))/mi"
-                )
-            }
-            
-            if let duration = workout.durationMinutes {
-                StatLabel(
-                    icon: "timer",
-                    value: "\(duration) min"
-                )
-            }
-        }
-    }
-}
-
-struct StatLabel: View {
-    let icon: String
-    let value: String
-    
-    var body: some View {
-        Label(value, systemImage: icon)
-            .font(.caption)
-            .foregroundColor(.secondary)
-    }
-}
-
-struct CurrentWorkoutCallout: View {
-    let workout: ChallengeWorkout
-    let challenge: Challenge
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "target")
-                    .foregroundColor(Color(challenge.focusArea.color))
-                Text("Today's Challenge")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
-            
-            Text(workout.getWorkoutTitle(for: challenge))
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(workout.getInstructions(for: challenge))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            if !workout.isRestDay {
-                HStack(spacing: 16) {
-                    if let distance = workout.distanceMiles {
-                        HStack {
-                            Image(systemName: "location.fill")
-                                .foregroundColor(Color(challenge.focusArea.color))
-                            Text("\(String(format: "%.1f", distance)) miles")
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    if let weight = workout.weightLbs {
-                        HStack {
-                            Image(systemName: "scalemass.fill")
-                                .foregroundColor(Color(challenge.focusArea.color))
-                            Text("\(Int(weight)) lbs")
-                                .fontWeight(.medium)
-                        }
-                    }
-                }
-                .font(.subheadline)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(challenge.focusArea.color).opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(challenge.focusArea.color).opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-}
-
 struct LoadingView: View {
     var body: some View {
         VStack(spacing: 16) {
@@ -403,5 +262,239 @@ struct LoadingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, 100)
+    }
+}
+
+// MARK: - Challenge Workout Detail View
+struct ChallengeWorkoutDetailView: View {
+    let workout: ChallengeWorkout
+    let challenge: Challenge
+    @ObservedObject var challengeManager: ChallengeManager
+    @Binding var isPresentingWorkoutFlow: Bool
+    @EnvironmentObject private var workoutManager: WorkoutManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingCompletionConfirmation = false
+    @State private var isCompleting = false
+    
+    var isCompleted: Bool {
+        challengeManager.isWorkoutCompleted(workout.id)
+    }
+    
+    var isLocked: Bool {
+        challengeManager.isWorkoutLocked(workout)
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Workout header
+                    workoutHeader
+                    
+                    // Instructions
+                    if let instructions = workout.instructions {
+                        instructionsSection(instructions)
+                    }
+                    
+                    // Details
+                    detailsSection
+                    
+                    // Completion status
+                    if isCompleted {
+                        completedSection
+                    } else if !isLocked {
+                        actionSection
+                    }
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding()
+            }
+            .navigationTitle(workout.getWorkoutTitle(for: challenge))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Mark as Complete?", isPresented: $showingCompletionConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Complete") {
+                    Task {
+                        await completeWorkout()
+                    }
+                }
+            } message: {
+                Text("Mark this workout as completed and unlock the next workout.")
+            }
+        }
+    }
+    
+    private var workoutHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: workoutIcon)
+                    .font(.system(size: 40))
+                    .foregroundColor(Color(challenge.focusArea.color))
+                
+                Spacer()
+                
+                if isCompleted {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(.green)
+                }
+            }
+            
+            Text(workout.getWorkoutTitle(for: challenge))
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Text("Day \(workout.dayNumber)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private func instructionsSection(_ instructions: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Instructions", systemImage: "list.bullet.clipboard")
+                .font(.headline)
+            
+            Text(instructions)
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var detailsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Workout Details", systemImage: "info.circle")
+                .font(.headline)
+            
+            if let distance = workout.distanceMiles {
+                DetailRow(label: "Distance", value: "\(String(format: "%.1f", distance)) miles")
+            }
+            
+            if let pace = workout.targetPaceMinutes {
+                DetailRow(label: "Target Pace", value: "\(Int(pace)) min/mile")
+            }
+            
+            if let weight = workout.weightLbs {
+                DetailRow(label: "Ruck Weight", value: "\(Int(weight)) lbs")
+            }
+            
+            DetailRow(label: "Workout Type", value: workout.workoutType.displayName)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var completedSection: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.green)
+            
+            Text("Workout Completed!")
+                .font(.title3)
+                .fontWeight(.semibold)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.green.opacity(0.1))
+        .cornerRadius(12)
+    }
+    
+    private var actionSection: some View {
+        VStack(spacing: 16) {
+            if workout.isRestDay {
+                Button(action: {
+                    showingCompletionConfirmation = true
+                }) {
+                    HStack {
+                        if isCompleting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Mark as Complete")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                .disabled(isCompleting)
+            } else {
+                Button(action: {
+                    startWorkoutTracking()
+                }) {
+                    HStack {
+                        Image(systemName: "play.circle.fill")
+                        Text("Start Workout")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                
+                Text("Tip: After completing, return here to mark as complete and unlock next workout")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+    
+    private var workoutIcon: String {
+        switch workout.workoutType {
+        case .ruck:
+            return "figure.walk"
+        case .rest:
+            return "bed.double.fill"
+        case .run:
+            return "figure.run"
+        case .strength:
+            return "dumbbell.fill"
+        case .cardio:
+            return "heart.fill"
+        }
+    }
+    
+    private func startWorkoutTracking() {
+        // Get the weight from the workout
+        let weight = workout.weightLbs ?? 20.0
+        
+        // Start the workout with the challenge weight
+        workoutManager.startWorkout(weight: weight)
+        
+        // Dismiss all modal sheets by setting the shared binding to false
+        // This is the clean, Apple-recommended way to handle nested modal presentations
+        isPresentingWorkoutFlow = false
+    }
+    
+    private func completeWorkout() async {
+        isCompleting = true
+        defer { isCompleting = false }
+        
+        await challengeManager.completeWorkout(workout)
+        isPresentingWorkoutFlow = false
+        dismiss()
     }
 }

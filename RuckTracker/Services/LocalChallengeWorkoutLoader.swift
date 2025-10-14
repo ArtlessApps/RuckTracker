@@ -7,6 +7,18 @@ class LocalChallengeWorkoutLoader {
     private var cachedWorkouts: [ChallengeWorkout] = []
     private var workoutsByChallengeId: [UUID: [ChallengeWorkout]] = [:]
     
+    // Define all challenge workout files to load
+    private let challengeWorkoutFiles = [
+        "PowerWeekWorkouts",
+        "SpeedWeekWorkouts",
+        "DistanceWeekWorkouts",
+        "ActiveRecoveryWorkouts",
+        "LoadCarrierWorkouts",
+        "PacePusherWorkouts",
+        "DistanceMasterWorkouts",
+        "TacticalReadyWorkouts"
+    ]
+    
     private init() {
         loadWorkouts()
     }
@@ -14,23 +26,30 @@ class LocalChallengeWorkoutLoader {
     // MARK: - Loading
     
     func loadWorkouts() {
-        let result: Result<[ChallengeWorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("ChallengeWorkouts.json")
+        var allWorkouts: [ChallengeWorkout] = []
         
-        switch result {
-        case .success(let workoutsData):
-            // Convert JSON to ChallengeWorkout models
-            cachedWorkouts = workoutsData.map { $0.toChallengeWorkout() }
+        // Load each challenge workout file
+        for fileName in challengeWorkoutFiles {
+            let result: Result<[ChallengeWorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("\(fileName).json")
             
-            // Index by challenge_id for fast lookup
-            workoutsByChallengeId = Dictionary(grouping: cachedWorkouts) { $0.challengeId }
-            
-            print("✅ Loaded \(cachedWorkouts.count) challenge workouts from bundle")
-            
-        case .failure(let error):
-            print("❌ Failed to load challenge workouts: \(error)")
-            cachedWorkouts = []
-            workoutsByChallengeId = [:]
+            switch result {
+            case .success(let workoutsData):
+                let challengeWorkouts = workoutsData.map { $0.toChallengeWorkout() }
+                allWorkouts.append(contentsOf: challengeWorkouts)
+                print("✅ Loaded \(challengeWorkouts.count) workouts from \(fileName).json")
+                
+            case .failure(let error):
+                print("⚠️ Failed to load \(fileName).json: \(error)")
+                // Continue loading other files even if one fails
+            }
         }
+        
+        cachedWorkouts = allWorkouts
+        
+        // Index by challenge_id for fast lookup
+        workoutsByChallengeId = Dictionary(grouping: cachedWorkouts) { $0.challengeId }
+        
+        print("✅ Total challenge workouts loaded: \(cachedWorkouts.count)")
     }
     
     // MARK: - Querying

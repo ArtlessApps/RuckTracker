@@ -174,14 +174,16 @@ struct TrainingProgramsView: View {
 
 // MARK: - Updated Challenges View
 struct ChallengesView: View {
+    @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var premiumManager: PremiumManager
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
                     // Use the new Challenges Section
-                    ChallengesSection()
+                    ChallengesSection(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
                         .environmentObject(premiumManager)
                     
                     Spacer(minLength: 100)
@@ -192,6 +194,11 @@ struct ChallengesView: View {
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+        .onChange(of: isPresentingWorkoutFlow) { newValue in
+            if !newValue {
+                dismiss()
+            }
         }
     }
 }

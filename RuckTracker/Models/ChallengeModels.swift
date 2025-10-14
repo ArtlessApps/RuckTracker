@@ -112,50 +112,33 @@ struct ChallengeWorkout: Identifiable, Codable {
 extension ChallengeWorkout {
     func getWorkoutTitle(for challenge: Challenge) -> String {
         if isRestDay {
-            return "Day \(dayNumber) - Rest Day"
+            return "Rest Day"
         }
         
-        let baseTitle = "Day \(dayNumber) - \(workoutType.displayName)"
-        
-        // Add specific details based on workout type
-        switch workoutType {
-        case .ruck:
-            var title = baseTitle
-            if let distance = distanceMiles {
-                title += " (\(String(format: "%.1f", distance)) miles)"
-            }
-            if let weight = weightLbs {
-                title += " (\(String(format: "%.0f", weight)) lbs)"
-            }
-            return title
-            
-        case .run:
-            var title = baseTitle
-            if let distance = distanceMiles {
-                title += " (\(String(format: "%.1f", distance)) miles)"
-            }
-            if let pace = targetPaceMinutes {
-                title += " (\(String(format: "%.1f", pace)) min/mile pace)"
-            }
-            return title
-            
-        case .strength:
-            var title = baseTitle
-            if let duration = durationMinutes {
-                title += " (\(duration) minutes)"
-            }
-            return title
-            
-        case .cardio:
-            var title = baseTitle
-            if let duration = durationMinutes {
-                title += " (\(duration) minutes)"
-            }
-            return title
-            
-        case .rest:
-            return baseTitle
+        // Keep titles simple - detailed stats are shown separately
+        return workoutType.displayName
+    }
+    
+    var displaySubtitle: String {
+        if isRestDay {
+            return "Recovery day"
         }
+        
+        var parts: [String] = []
+        if let distance = distanceMiles {
+            parts.append("\(String(format: "%.1f", distance)) mi")
+        }
+        if let weight = weightLbs {
+            parts.append("\(Int(weight)) lbs")
+        }
+        if let pace = targetPaceMinutes {
+            parts.append("\(Int(pace)) min/mi")
+        }
+        if let duration = durationMinutes {
+            parts.append("\(duration) min")
+        }
+        
+        return parts.isEmpty ? "Workout" : parts.joined(separator: " • ")
     }
     
     func getInstructions(for challenge: Challenge) -> String {

@@ -64,7 +64,7 @@ struct ImprovedPhoneMainView: View {
             case .trainingPrograms:
                 TrainingProgramsView(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
             case .challenges:
-                ChallengesView()
+                ChallengesView(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
             case .dataExport:
                 DataExportView()
                     .environmentObject(workoutDataManager)
