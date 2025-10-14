@@ -80,17 +80,17 @@ class LocalChallengeStorage {
         )
     }
     
-    // MARK: - Challenge Completions
+    // MARK: - Challenge Workout Completions
     
-    private func getCompletedChallengeDays(challengeId: UUID) -> [WorkoutEntity] {
+    func getCompletedChallengeDays(challengeId: UUID) -> [WorkoutEntity] {
         return WorkoutDataManager.shared.workouts.filter { workout in
             workout.challengeId == challengeId.uuidString
         }
     }
     
-    private func getTotalChallengeDays(challengeId: UUID) -> Int {
-        // For now, assume challenges have 7 days
-        // This should be based on actual challenge data
-        return 7
+    func getTotalChallengeDays(challengeId: UUID) -> Int {
+        // Get total days from the challenge workout loader
+        let workouts = LocalChallengeWorkoutLoader.shared.getWorkouts(forChallengeId: challengeId)
+        return workouts.count
     }
 }

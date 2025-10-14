@@ -16,6 +16,10 @@ struct WorkoutTransferData: Codable {
     let calories: Double
     let ruckWeight: Double
     let heartRate: Double
+    let programId: String?
+    let programWorkoutDay: Int16
+    let challengeId: String?
+    let challengeDay: Int16
     
     // Convert from WorkoutEntity
     init(from workout: WorkoutEntity) {
@@ -25,6 +29,10 @@ struct WorkoutTransferData: Codable {
         self.calories = workout.calories
         self.ruckWeight = workout.ruckWeight
         self.heartRate = workout.heartRate
+        self.programId = workout.programId
+        self.programWorkoutDay = workout.programWorkoutDay
+        self.challengeId = workout.challengeId
+        self.challengeDay = workout.challengeDay
     }
     
     // Convert to WorkoutEntity context
@@ -36,6 +44,10 @@ struct WorkoutTransferData: Codable {
         workout.calories = self.calories
         workout.ruckWeight = self.ruckWeight
         workout.heartRate = self.heartRate
+        workout.programId = self.programId
+        workout.programWorkoutDay = self.programWorkoutDay
+        workout.challengeId = self.challengeId
+        workout.challengeDay = self.challengeDay
         return workout
     }
 }

@@ -523,9 +523,13 @@ extension WorkoutManager: CLLocationManagerDelegate {
         
         // Check if currently enrolled in a program
         let programId = LocalProgramService.shared.getEnrolledProgramId()
-        let workoutDay = calculateCurrentWorkoutDay()
+        let programWorkoutDay = calculateCurrentProgramWorkoutDay()
         
-        // Save to CoreData with program metadata
+        // Check if currently enrolled in a challenge
+        let challengeId = LocalChallengeService.shared.getEnrolledChallengeId()
+        let challengeWorkoutDay = calculateCurrentChallengeWorkoutDay()
+        
+        // Save to CoreData with program and challenge metadata
         WorkoutDataManager.shared.saveWorkout(
             date: startDate,
             duration: elapsedTime,
@@ -533,14 +537,16 @@ extension WorkoutManager: CLLocationManagerDelegate {
             calories: calories,
             ruckWeight: ruckWeight,
             heartRate: avgHeartRate,
-            programId: programId,           // NEW
-            programWorkoutDay: workoutDay   // NEW
+            programId: programId,
+            programWorkoutDay: programWorkoutDay,
+            challengeId: challengeId,
+            challengeDay: challengeWorkoutDay
         )
         
         print("💾 iPhone: Saved workout to local storage")
         
         // If this was a program workout, mark it complete
-        if let programId = programId, let day = workoutDay {
+        if let programId = programId, let day = programWorkoutDay {
             Task {
                 do {
                     try await LocalProgramService.shared.completeWorkout(
@@ -556,11 +562,30 @@ extension WorkoutManager: CLLocationManagerDelegate {
             }
         }
         
+        // If this was a challenge workout, mark it complete
+        if let challengeId = challengeId, let day = challengeWorkoutDay {
+            LocalChallengeService.shared.completeWorkout(
+                challengeId: challengeId,
+                workoutDay: day,
+                distanceMiles: distance,
+                weightLbs: ruckWeight,
+                durationMinutes: Int(elapsedTime / 60)
+            )
+        }
+        
     }
     
-    private func calculateCurrentWorkoutDay() -> Int? {
+    private func calculateCurrentProgramWorkoutDay() -> Int? {
         // Get the next workout day from program progress
         guard let progress = LocalProgramService.shared.programProgress else {
+            return nil
+        }
+        return progress.completed + 1
+    }
+    
+    private func calculateCurrentChallengeWorkoutDay() -> Int? {
+        // Get the next workout day from challenge progress
+        guard let progress = LocalChallengeService.shared.challengeProgress else {
             return nil
         }
         return progress.completed + 1

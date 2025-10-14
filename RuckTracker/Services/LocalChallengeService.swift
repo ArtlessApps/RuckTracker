@@ -186,6 +186,40 @@ class LocalChallengeService: ObservableObject {
         return workouts
     }
     
+    // MARK: - Challenge Workout Completion
+    
+    func completeWorkout(
+        challengeId: UUID,
+        workoutDay: Int,
+        distanceMiles: Double,
+        weightLbs: Double,
+        durationMinutes: Int,
+        notes: String? = nil
+    ) {
+        // Workout is already saved to CoreData by WorkoutManager
+        // Just need to link it to the challenge
+        
+        guard let enrolledChallengeId = storage.getEnrolledChallengeId() else {
+            print("❌ No enrolled challenge found")
+            return
+        }
+        
+        // Update the most recent workout with challenge metadata
+        if let recentWorkout = WorkoutDataManager.shared.workouts.first {
+            recentWorkout.challengeId = enrolledChallengeId.uuidString
+            recentWorkout.challengeDay = Int16(workoutDay)
+            WorkoutDataManager.shared.saveContext()
+        }
+        
+        // Recalculate progress
+        challengeProgress = storage.getChallengeProgress(challengeId: enrolledChallengeId)
+        
+        // Trigger UI update
+        objectWillChange.send()
+        
+        print("✅ Completed workout day \(workoutDay) for challenge")
+    }
+    
     // MARK: - Testing
     
     func testChallengeIntegration(challengeId: UUID) {

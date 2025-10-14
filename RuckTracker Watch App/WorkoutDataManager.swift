@@ -27,6 +27,14 @@ extension WorkoutEntity {
     @NSManaged public var duration: Double
     @NSManaged public var heartRate: Double
     @NSManaged public var ruckWeight: Double
+    
+    // Program tracking
+    @NSManaged public var programId: String?
+    @NSManaged public var programWorkoutDay: Int16
+    
+    // Challenge tracking
+    @NSManaged public var challengeId: String?
+    @NSManaged public var challengeDay: Int16
 }
 
 class WorkoutDataManager: ObservableObject {
@@ -80,7 +88,31 @@ class WorkoutDataManager: ObservableObject {
         heartRateAttribute.isOptional = false
         heartRateAttribute.defaultValue = 0.0
         
-        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute]
+        // Program tracking attributes
+        let programIdAttribute = NSAttributeDescription()
+        programIdAttribute.name = "programId"
+        programIdAttribute.attributeType = .stringAttributeType
+        programIdAttribute.isOptional = true
+        
+        let programWorkoutDayAttribute = NSAttributeDescription()
+        programWorkoutDayAttribute.name = "programWorkoutDay"
+        programWorkoutDayAttribute.attributeType = .integer16AttributeType
+        programWorkoutDayAttribute.isOptional = true
+        programWorkoutDayAttribute.defaultValue = 0
+        
+        // Challenge tracking attributes
+        let challengeIdAttribute = NSAttributeDescription()
+        challengeIdAttribute.name = "challengeId"
+        challengeIdAttribute.attributeType = .stringAttributeType
+        challengeIdAttribute.isOptional = true
+        
+        let challengeDayAttribute = NSAttributeDescription()
+        challengeDayAttribute.name = "challengeDay"
+        challengeDayAttribute.attributeType = .integer16AttributeType
+        challengeDayAttribute.isOptional = true
+        challengeDayAttribute.defaultValue = 0
+        
+        entity.properties = [dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, programIdAttribute, programWorkoutDayAttribute, challengeIdAttribute, challengeDayAttribute]
         model.entities = [entity]
         
         let container = NSPersistentContainer(name: "RuckTrackerData", managedObjectModel: model)
@@ -116,7 +148,11 @@ class WorkoutDataManager: ObservableObject {
         distance: Double,
         calories: Double,
         ruckWeight: Double,
-        heartRate: Double
+        heartRate: Double,
+        programId: UUID? = nil,
+        programWorkoutDay: Int? = nil,
+        challengeId: UUID? = nil,
+        challengeDay: Int? = nil
     ) {
         let workout = WorkoutEntity(context: context)
         workout.date = date
@@ -125,6 +161,22 @@ class WorkoutDataManager: ObservableObject {
         workout.calories = calories
         workout.ruckWeight = ruckWeight
         workout.heartRate = heartRate
+        
+        // Add program metadata if provided
+        if let programId = programId {
+            workout.programId = programId.uuidString
+        }
+        if let day = programWorkoutDay {
+            workout.programWorkoutDay = Int16(day)
+        }
+        
+        // Add challenge metadata if provided
+        if let challengeId = challengeId {
+            workout.challengeId = challengeId.uuidString
+        }
+        if let day = challengeDay {
+            workout.challengeDay = Int16(day)
+        }
         
         saveContext()
         fetchWorkouts() // Refresh the list

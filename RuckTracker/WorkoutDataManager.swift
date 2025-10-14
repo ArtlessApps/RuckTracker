@@ -146,7 +146,9 @@ class WorkoutDataManager: ObservableObject {
         ruckWeight: Double,
         heartRate: Double,
         programId: UUID? = nil,
-        programWorkoutDay: Int? = nil
+        programWorkoutDay: Int? = nil,
+        challengeId: UUID? = nil,
+        challengeDay: Int? = nil
     ) {
         let workout = WorkoutEntity(context: context)
         workout.date = date
@@ -162,6 +164,14 @@ class WorkoutDataManager: ObservableObject {
         }
         if let day = programWorkoutDay {
             workout.programWorkoutDay = Int16(day)
+        }
+        
+        // Add challenge metadata if provided
+        if let challengeId = challengeId {
+            workout.challengeId = challengeId.uuidString
+        }
+        if let day = challengeDay {
+            workout.challengeDay = Int16(day)
         }
         
         saveContext()
