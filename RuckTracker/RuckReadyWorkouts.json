@@ -2,7 +2,7 @@
   {
     "idx": 0,
     "id": "040923ca-07a1-4cad-8788-fedfb23293bd",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 6,
     "workout_type": "rest",
     "distance_miles": null,
@@ -13,7 +13,7 @@
   {
     "idx": 1,
     "id": "0554a36f-267c-4f74-9d4e-4b7038d9fe7a",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 4,
     "workout_type": "rest",
     "distance_miles": null,
@@ -24,7 +24,7 @@
   {
     "idx": 2,
     "id": "156bb796-130c-46a5-a207-311b14e59743",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 5,
     "workout_type": "ruck",
     "distance_miles": "3.50",
@@ -62,7 +62,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.50",
     "target_pace_minutes": "19.00",
-    "instructions": "Midweek Ruck\n\n• Pack weight: 15 lbs\n• Distance: 2.5 miles\n• Pace: Comfortable (19 min/mile)\n\nThis is your second ruck of the week. You're building consistency!",
+    "instructions": "Midweek Ruck\n\n\u2022 Pack weight: 15 lbs\n\u2022 Distance: 2.5 miles\n\u2022 Pace: Comfortable (19 min/mile)\n\nThis is your second ruck of the week. You're building consistency!",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -84,7 +84,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.00",
     "target_pace_minutes": "20.00",
-    "instructions": "Welcome to your first ruck!\n\n• Pack weight: 10 lbs\n• Distance: 2 miles\n• Pace: Easy (20 min/mile)\n\nForm Tips:\n- Keep shoulders back\n- Engage your core\n- Take natural strides\n- Breathe deeply\n\nToday is about getting comfortable with the ruck on your back. Don't worry about speed!",
+    "instructions": "Welcome to your first ruck!\n\n\u2022 Pack weight: 10 lbs\n\u2022 Distance: 2 miles\n\u2022 Pace: Easy (20 min/mile)\n\nForm Tips:\n- Keep shoulders back\n- Engage your core\n- Take natural strides\n- Breathe deeply\n\nToday is about getting comfortable with the ruck on your back. Don't worry about speed!",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -95,13 +95,13 @@
     "workout_type": "ruck",
     "distance_miles": "2.50",
     "target_pace_minutes": "20.00",
-    "instructions": "Second Ruck of the Week\n\n• Pack weight: 10 lbs\n• Distance: 2.5 miles\n• Pace: Easy (20 min/mile)\n\nToday we're adding just a bit more distance. Notice:\n- How does your posture feel?\n- Are your shoulders comfortable?\n- Is your breathing steady?\n\nFocus on maintaining good form for the full distance.",
+    "instructions": "Second Ruck of the Week\n\n\u2022 Pack weight: 10 lbs\n\u2022 Distance: 2.5 miles\n\u2022 Pace: Easy (20 min/mile)\n\nToday we're adding just a bit more distance. Notice:\n- How does your posture feel?\n- Are your shoulders comfortable?\n- Is your breathing steady?\n\nFocus on maintaining good form for the full distance.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
     "idx": 9,
     "id": "38aaefdb-dbb7-495e-af0a-2ddf0fbbfc6a",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 7,
     "workout_type": "rest",
     "distance_miles": null,
@@ -134,7 +134,7 @@
   {
     "idx": 12,
     "id": "407ed9fd-76f8-497c-9fcd-f537032522af",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 3,
     "workout_type": "ruck",
     "distance_miles": "3.00",
@@ -145,7 +145,7 @@
   {
     "idx": 13,
     "id": "5b2172d6-5fd0-4dfd-9ecc-6765729ad288",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 2,
     "workout_type": "rest",
     "distance_miles": null,
@@ -161,7 +161,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Graduation Ruck!\n\n• Weight: 20 lbs\n• Distance: 4 miles\n• Pace: Strong (17 min/mile)\n\nThis is your final test! You've come from 2 miles to 4 miles. Be proud of your progress!\n\nAfter this, consider moving to Foundation Builder or Endurance Build to keep progressing.",
+    "instructions": "Graduation Ruck!\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Strong (17 min/mile)\n\nThis is your final test! You've come from 2 miles to 4 miles. Be proud of your progress!\n\nAfter this, consider moving to Foundation Builder or Endurance Build to keep progressing.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -227,7 +227,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Midweek Ruck\n\n• Weight: 20 lbs\n• Distance: 3 miles\n• Pace: Steady (18 min/mile)",
+    "instructions": "Midweek Ruck\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (18 min/mile)",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -260,7 +260,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.50",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n• Weight: 20 lbs\n• Distance: 3.5 miles\n• Pace: Steady (18 min/mile)\n\nYour longest distance yet. You're almost done with the program!",
+    "instructions": "Long Ruck\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (18 min/mile)\n\nYour longest distance yet. You're almost done with the program!",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -271,7 +271,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.00",
     "target_pace_minutes": "19.00",
-    "instructions": "Week 2 Begins!\n\n• Pack weight: 15 lbs\n• Distance: 2 miles\n• Pace: Comfortable (19 min/mile)\n\nYou're adding 5 lbs this week. The weight should still feel manageable. Focus on maintaining good posture throughout.",
+    "instructions": "Week 2 Begins!\n\n\u2022 Pack weight: 15 lbs\n\u2022 Distance: 2 miles\n\u2022 Pace: Comfortable (19 min/mile)\n\nYou're adding 5 lbs this week. The weight should still feel manageable. Focus on maintaining good posture throughout.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -304,7 +304,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "19.00",
-    "instructions": "Weekend Long Ruck\n\n• Pack weight: 15 lbs\n• Distance: 3 miles\n• Pace: Comfortable (19 min/mile)\n\nYour longest ruck yet! Take your time and enjoy it.",
+    "instructions": "Weekend Long Ruck\n\n\u2022 Pack weight: 15 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Comfortable (19 min/mile)\n\nYour longest ruck yet! Take your time and enjoy it.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -326,7 +326,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Final Week!\n\n• Weight: 20 lbs\n• Distance: 3 miles\n• Pace: Strong (17 min/mile)\n\nLast week of the program. Notice how much easier this feels compared to Week 1!",
+    "instructions": "Final Week!\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Strong (17 min/mile)\n\nLast week of the program. Notice how much easier this feels compared to Week 1!",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -365,12 +365,12 @@
   {
     "idx": 33,
     "id": "f6556357-28fb-4863-bd34-68b0f62e02b6",
-    "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+    "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
     "day_number": 1,
     "workout_type": "ruck",
     "distance_miles": "2.50",
     "target_pace_minutes": "18.00",
-    "instructions": "Foundation Builder Week 1\n\n• Weight: 15 lbs\n• Distance: 2.5 miles\n• Pace: 18 min/mile\n\nWelcome! This program will take you from beginner to solid foundation.",
+    "instructions": "Foundation Builder Week 1\n\n\u2022 Weight: 15 lbs\n\u2022 Distance: 2.5 miles\n\u2022 Pace: 18 min/mile\n\nWelcome! This program will take you from beginner to solid foundation.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   },
   {
@@ -381,7 +381,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.50",
     "target_pace_minutes": "18.00",
-    "instructions": "Week 3 Start\n\n• Weight: 20 lbs\n• Distance: 2.5 miles\n• Pace: Steady (18 min/mile)\n\nYou're getting stronger! This weight should feel challenging but doable.",
+    "instructions": "Week 3 Start\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 2.5 miles\n\u2022 Pace: Steady (18 min/mile)\n\nYou're getting stronger! This weight should feel challenging but doable.",
     "created_at": "2025-10-06 20:30:46.061771+00"
   }
 ]

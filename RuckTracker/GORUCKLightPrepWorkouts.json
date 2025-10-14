@@ -6,7 +6,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Week 1: Foundation - Base Fitness Assessment\n\n• Weight: 20 lbs\n• Distance: 3 miles\n• Pace: Comfortable (18 min/mile)\n\nWelcome to GORUCK Light Prep! This program prepares you for 4-6 hours of continuous movement with 20+ lbs.",
+    "instructions": "Week 1: Foundation - Base Fitness Assessment\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\nWelcome to GORUCK Light Prep! This program prepares you for 4-6 hours of continuous movement with 20+ lbs.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -26,7 +26,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.00",
     "target_pace_minutes": "17.00",
-    "instructions": "PT + Ruck\n\n• Weight: 20 lbs\n• Distance: 2 miles\n• Workout: 3 rounds of 10 pushups, 15 squats, 20 crunches\n\nAfter rucking, do the PT circuit. GORUCK events always include PT!",
+    "instructions": "PT + Ruck\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 2 miles\n\u2022 Workout: 3 rounds of 10 pushups, 15 squats, 20 crunches\n\nAfter rucking, do the PT circuit. GORUCK events always include PT!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -46,7 +46,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n• Weight: 20 lbs\n• Distance: 4 miles\n• Pace: Steady (18 min/mile)\n\nBuilding time on feet. This is what GORUCK is all about.",
+    "instructions": "Long Ruck\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (18 min/mile)\n\nBuilding time on feet. This is what GORUCK is all about.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -76,7 +76,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 2: Building Volume - Increasing Work Capacity\n\n• Weight: 25 lbs\n• Distance: 3 miles\n• Pace: Steady (17 min/mile)\n\nAdding 5 lbs. Getting closer to event weight.",
+    "instructions": "Week 2: Building Volume - Increasing Work Capacity\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding 5 lbs. Getting closer to event weight.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -96,7 +96,7 @@
     "workout_type": "ruck",
     "distance_miles": "2.50",
     "target_pace_minutes": "17.00",
-    "instructions": "PT Circuit + Ruck\n\n• Weight: 25 lbs\n• Distance: 2.5 miles\n• Workout: 4 rounds of 15 pushups, 20 squats, 25 crunches, 10 burpees\n\nIncreasing PT volume. You'll do A LOT of this at GORUCK!",
+    "instructions": "PT Circuit + Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 2.5 miles\n\u2022 Workout: 4 rounds of 15 pushups, 20 squats, 25 crunches, 10 burpees\n\nIncreasing PT volume. You'll do A LOT of this at GORUCK!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -116,7 +116,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Tempo Ruck\n\n• Weight: 25 lbs\n• Distance: 3 miles\n• Pace: Brisk (17 min/mile)\n\nPick up the pace. GORUCK isn't a stroll!",
+    "instructions": "Tempo Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (17 min/mile)\n\nPick up the pace. GORUCK isn't a stroll!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -136,7 +136,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n• Weight: 25 lbs\n• Distance: 5 miles\n• Pace: Steady (18 min/mile)\n\nBuilding endurance. Week 2 total: 13.5 miles!",
+    "instructions": "Long Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (18 min/mile)\n\nBuilding endurance. Week 2 total: 13.5 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -146,7 +146,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 3: PT Integration - Adding Bodyweight Circuits\n\n• Weight: 25 lbs\n• Distance: 4 miles\n• Pace: Steady (17 min/mile)\n\nMore volume, building capacity.",
+    "instructions": "Week 3: PT Integration - Adding Bodyweight Circuits\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nMore volume, building capacity.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -166,7 +166,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Heavy PT + Ruck\n\n• Weight: 25 lbs\n• Distance: 3 miles\n• Workout: 5 rounds of 20 pushups, 25 squats, 30 crunches, 15 burpees, 1 min plank\n\nThis is getting real! Big PT volume.",
+    "instructions": "Heavy PT + Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Workout: 5 rounds of 20 pushups, 25 squats, 30 crunches, 15 burpees, 1 min plank\n\nThis is getting real! Big PT volume.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -186,7 +186,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Team Work Ruck\n\n• Weight: 25 lbs\n• Distance: 4 miles\n• Pace: Steady (17 min/mile)\n\nIf possible, ruck with a partner. GORUCK is all about teamwork!",
+    "instructions": "Team Work Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nIf possible, ruck with a partner. GORUCK is all about teamwork!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -206,22 +206,22 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n• Weight: 25 lbs\n• Distance: 6 miles\n• Pace: Easy (18 min/mile)\n\nWeek 3 total: 17 miles!",
+    "instructions": "Long Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 6 miles\n\u2022 Pace: Easy (18 min/mile)\n\nWeek 3 total: 17 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w4-d1-ruck-012",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 1,
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 4: Long Ruck Focus - Building Endurance\n\n• Weight: 30 lbs\n• Distance: 4 miles\n• Pace: Steady (17 min/mile)\n\nMoving to 30 lbs! Above minimum event weight.",
+    "instructions": "Week 4: Long Ruck Focus - Building Endurance\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nMoving to 30 lbs! Above minimum event weight.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w4-d2-rest-011",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 2,
     "workout_type": "rest",
     "distance_miles": null,
@@ -231,17 +231,17 @@
   },
   {
     "id": "gl-w4-d3-ruck-013",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 3,
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "16.00",
-    "instructions": "PT + Ruck\n\n• Weight: 30 lbs\n• Distance: 3 miles\n• Workout: 4 rounds of 25 pushups, 30 squats, 35 crunches, 20 burpees\n\nHeavier weight + big PT. This is GORUCK prep!",
+    "instructions": "PT + Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 3 miles\n\u2022 Workout: 4 rounds of 25 pushups, 30 squats, 35 crunches, 20 burpees\n\nHeavier weight + big PT. This is GORUCK prep!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w4-d4-rest-012",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 4,
     "workout_type": "rest",
     "distance_miles": null,
@@ -251,17 +251,17 @@
   },
   {
     "id": "gl-w4-d5-ruck-014",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 5,
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Endurance Ruck\n\n• Weight: 30 lbs\n• Distance: 5 miles\n• Pace: Steady (17 min/mile)\n\nGetting comfortable with heavier weight over distance.",
+    "instructions": "Endurance Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nGetting comfortable with heavier weight over distance.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w4-d6-rest-013",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 6,
     "workout_type": "rest",
     "distance_miles": null,
@@ -271,12 +271,12 @@
   },
   {
     "id": "gl-w4-d7-ruck-015",
-    "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+    "week_id": "94cd5848-e53c-48b8-b9be-e35e1d1145ed",
     "day_number": 7,
     "workout_type": "ruck",
     "distance_miles": "7.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n• Weight: 30 lbs\n• Distance: 7 miles\n• Pace: Comfortable (18 min/mile)\n\nYou're building serious endurance! Week 4 total: 19 miles!",
+    "instructions": "Long Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 7 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\nYou're building serious endurance! Week 4 total: 19 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -286,7 +286,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 5: Peak Week - Simulating Event Conditions\n\n• Weight: 30 lbs\n• Distance: 4 miles\n• Pace: Steady (17 min/mile)\n\nPeak week! This is where we test everything.",
+    "instructions": "Week 5: Peak Week - Simulating Event Conditions\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nPeak week! This is where we test everything.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -306,7 +306,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Max PT + Ruck\n\n• Weight: 30 lbs\n• Distance: 4 miles\n• Workout: 6 rounds of 30 pushups, 35 squats, 40 crunches, 25 burpees\n\nBIG PT session. This simulates event intensity!",
+    "instructions": "Max PT + Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 4 miles\n\u2022 Workout: 6 rounds of 30 pushups, 35 squats, 40 crunches, 25 burpees\n\nBIG PT session. This simulates event intensity!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -326,7 +326,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Pre-Event Simulation Prep\n\n• Weight: 30 lbs\n• Distance: 5 miles\n• Pace: Steady (17 min/mile)\n\nGetting ready for tomorrow's big test!",
+    "instructions": "Pre-Event Simulation Prep\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nGetting ready for tomorrow's big test!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -346,22 +346,22 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "18.00",
-    "instructions": "EVENT SIMULATION - 8 Mile Ruck + PT!\n\n• Weight: 30 lbs\n• Distance: 8 miles\n• Workout: Every 2 miles, stop and do 50 pushups, 75 squats, 100 crunches\n\nThis simulates GORUCK Light! 8 miles with PT breaks. You're ready! Week 5 total: 21 miles!",
+    "instructions": "EVENT SIMULATION - 8 Mile Ruck + PT!\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 8 miles\n\u2022 Workout: Every 2 miles, stop and do 50 pushups, 75 squats, 100 crunches\n\nThis simulates GORUCK Light! 8 miles with PT breaks. You're ready! Week 5 total: 21 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w6-d1-ruck-020",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 1,
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 6: Taper - Event Ready!\n\n• Weight: 25 lbs\n• Distance: 3 miles\n• Pace: Easy (17 min/mile)\n\nTaper week! Reducing volume, maintaining intensity. Let your body recover.",
+    "instructions": "Week 6: Taper - Event Ready!\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Easy (17 min/mile)\n\nTaper week! Reducing volume, maintaining intensity. Let your body recover.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w6-d2-rest-017",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 2,
     "workout_type": "rest",
     "distance_miles": null,
@@ -371,17 +371,17 @@
   },
   {
     "id": "gl-w6-d3-ruck-021",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 3,
     "workout_type": "ruck",
     "distance_miles": "2.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Light PT + Ruck\n\n• Weight: 25 lbs\n• Distance: 2 miles\n• Workout: 3 rounds of 15 pushups, 20 squats, 25 crunches\n\nKeeping sharp but not overdoing it.",
+    "instructions": "Light PT + Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 2 miles\n\u2022 Workout: 3 rounds of 15 pushups, 20 squats, 25 crunches\n\nKeeping sharp but not overdoing it.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w6-d4-rest-018",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 4,
     "workout_type": "rest",
     "distance_miles": null,
@@ -391,17 +391,17 @@
   },
   {
     "id": "gl-w6-d5-ruck-022",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 5,
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Confidence Builder\n\n• Weight: 20 lbs\n• Distance: 4 miles\n• Pace: Comfortable (17 min/mile)\n\nLight weight, feeling strong. You're ready!",
+    "instructions": "Confidence Builder\n\n\u2022 Weight: 20 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Comfortable (17 min/mile)\n\nLight weight, feeling strong. You're ready!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
     "id": "gl-w6-d6-rest-019",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 6,
     "workout_type": "rest",
     "distance_miles": null,
@@ -411,12 +411,12 @@
   },
   {
     "id": "gl-w6-d7-rest-020",
-    "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+    "week_id": "e03a15a7-b4d8-4d63-8570-c401b59c1ea4",
     "day_number": 7,
     "workout_type": "rest",
     "distance_miles": null,
     "target_pace_minutes": null,
-    "instructions": "PROGRAM COMPLETE! 🎉\n\nYou're GORUCK Light ready! In 6 weeks you:\n• Built from 20 lbs to 30+ lbs\n• Completed 8-mile rucks with PT\n• Trained for 4-6 hour events\n• Developed mental toughness\n\nGo crush your GORUCK Light Challenge!",
+    "instructions": "PROGRAM COMPLETE! \ud83c\udf89\n\nYou're GORUCK Light ready! In 6 weeks you:\n\u2022 Built from 20 lbs to 30+ lbs\n\u2022 Completed 8-mile rucks with PT\n\u2022 Trained for 4-6 hour events\n\u2022 Developed mental toughness\n\nGo crush your GORUCK Light Challenge!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   }
 ]

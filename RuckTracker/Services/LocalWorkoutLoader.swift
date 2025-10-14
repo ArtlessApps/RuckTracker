@@ -86,9 +86,12 @@ private struct WorkoutJSON: Codable {
     let targetPaceMinutes: Double?
     let instructions: String?
     let createdAt: String
+    let idx: Int?  // Optional index field (present in some JSONs like RuckReadyWorkouts)
     
     enum CodingKeys: String, CodingKey {
-        case id, dayNumber = "day_number"
+        case id
+        case idx
+        case dayNumber = "day_number"
         case weekId = "week_id"
         case workoutType = "workout_type"
         case distanceMiles = "distance_miles"
@@ -105,16 +108,25 @@ private struct WorkoutJSON: Codable {
         dayNumber = try container.decode(Int.self, forKey: .dayNumber)
         workoutType = try container.decode(String.self, forKey: .workoutType)
         
+        // Handle optional idx field (present in some workout files)
+        idx = try container.decodeIfPresent(Int.self, forKey: .idx)
+        
         // Handle distance_miles as string that needs to be converted to Double
-        if let distanceString = try container.decodeIfPresent(String.self, forKey: .distanceMiles) {
+        // Also handle case where it's already a Double
+        if let distanceString = try? container.decode(String.self, forKey: .distanceMiles) {
             distanceMiles = Double(distanceString)
+        } else if let distanceDouble = try? container.decode(Double.self, forKey: .distanceMiles) {
+            distanceMiles = distanceDouble
         } else {
             distanceMiles = nil
         }
         
         // Handle target_pace_minutes as string that needs to be converted to Double
-        if let paceString = try container.decodeIfPresent(String.self, forKey: .targetPaceMinutes) {
+        // Also handle case where it's already a Double
+        if let paceString = try? container.decode(String.self, forKey: .targetPaceMinutes) {
             targetPaceMinutes = Double(paceString)
+        } else if let paceDouble = try? container.decode(Double.self, forKey: .targetPaceMinutes) {
+            targetPaceMinutes = paceDouble
         } else {
             targetPaceMinutes = nil
         }
