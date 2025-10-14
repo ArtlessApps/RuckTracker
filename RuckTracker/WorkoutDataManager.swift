@@ -229,6 +229,78 @@ class WorkoutDataManager: ObservableObject {
         }
     }
     
+    // MARK: - Enrollment-Related Deletion
+    
+    /// Delete all workouts associated with a specific challenge
+    func deleteWorkoutsForChallenge(_ challengeId: UUID) {
+        let request: NSFetchRequest<WorkoutEntity> = WorkoutEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "challengeId == %@", challengeId.uuidString)
+        
+        do {
+            let workoutsToDelete = try context.fetch(request)
+            let count = workoutsToDelete.count
+            
+            for workout in workoutsToDelete {
+                context.delete(workout)
+            }
+            
+            saveContext()
+            fetchWorkouts()
+            
+            print("🗑️ Deleted \(count) workouts for challenge: \(challengeId)")
+        } catch {
+            print("❌ Failed to delete challenge workouts: \(error)")
+        }
+    }
+    
+    /// Delete all workouts associated with a specific program
+    func deleteWorkoutsForProgram(_ programId: UUID) {
+        let request: NSFetchRequest<WorkoutEntity> = WorkoutEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "programId == %@", programId.uuidString)
+        
+        do {
+            let workoutsToDelete = try context.fetch(request)
+            let count = workoutsToDelete.count
+            
+            for workout in workoutsToDelete {
+                context.delete(workout)
+            }
+            
+            saveContext()
+            fetchWorkouts()
+            
+            print("🗑️ Deleted \(count) workouts for program: \(programId)")
+        } catch {
+            print("❌ Failed to delete program workouts: \(error)")
+        }
+    }
+    
+    /// Get count of workouts for a specific challenge
+    func getWorkoutCount(forChallengeId challengeId: UUID) -> Int {
+        let request: NSFetchRequest<WorkoutEntity> = WorkoutEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "challengeId == %@", challengeId.uuidString)
+        
+        do {
+            return try context.count(for: request)
+        } catch {
+            print("❌ Failed to count challenge workouts: \(error)")
+            return 0
+        }
+    }
+    
+    /// Get count of workouts for a specific program
+    func getWorkoutCount(forProgramId programId: UUID) -> Int {
+        let request: NSFetchRequest<WorkoutEntity> = WorkoutEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "programId == %@", programId.uuidString)
+        
+        do {
+            return try context.count(for: request)
+        } catch {
+            print("❌ Failed to count program workouts: \(error)")
+            return 0
+        }
+    }
+    
     // MARK: - Computed Properties for UI
     
     /// Get recent workouts (last 10)

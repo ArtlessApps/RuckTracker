@@ -116,6 +116,12 @@ class LocalProgramService: ObservableObject {
         enrolledProgram = program
         programProgress = storage.getProgramProgress(programId: program.id)
         
+        // Update user programs to reflect enrollment
+        loadUserPrograms()
+        
+        // Send notification for enrollment change
+        NotificationCenter.default.post(name: .programEnrollmentCompleted, object: program)
+        
         // Trigger UI update
         objectWillChange.send()
         
@@ -126,6 +132,15 @@ class LocalProgramService: ObservableObject {
         storage.unenrollFromProgram()
         enrolledProgram = nil
         programProgress = nil
+        
+        // Update user programs to reflect unenrollment
+        loadUserPrograms()
+        
+        // Send notification for enrollment change
+        NotificationCenter.default.post(name: .programEnrollmentCompleted, object: nil)
+        
+        // Trigger UI update
+        objectWillChange.send()
         
         print("✅ Unenrolled from current program")
     }

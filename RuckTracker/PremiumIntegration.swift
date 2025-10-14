@@ -452,6 +452,7 @@ struct ProgramDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
+    @State private var showingConflict = false
     @State private var isEnrolled = false
     @State private var userProgram: UserProgram?
     
@@ -478,9 +479,38 @@ struct ProgramDetailView: View {
                 programInfoView
             }
         }
-        .sheet(isPresented: $showingEnrollment) {
+        .sheet(isPresented: $showingEnrollment, onDismiss: {
+            // Re-check enrollment status when sheet dismisses
+            Task {
+                await checkEnrollmentStatus()
+            }
+        }) {
             ProgramEnrollmentView(program: program) { startingWeight in
                 enrollInProgram(startingWeight: startingWeight)
+            }
+        }
+        .sheet(isPresented: $showingConflict) {
+            if let currentProgram = programService.enrolledProgram,
+               let progress = programService.programProgress {
+                let workoutCount = WorkoutDataManager.shared.getWorkoutCount(forProgramId: currentProgram.id)
+                
+                EnrollmentConflictDialog(
+                    type: .program,
+                    currentName: currentProgram.title,
+                    newName: program.title,
+                    completedCount: progress.currentWeek - 1,
+                    totalCount: currentProgram.durationWeeks,
+                    workoutCount: workoutCount,
+                    onSwitch: {
+                        // Unenroll from current and proceed with new enrollment
+                        programService.unenrollFromProgram()
+                        showingConflict = false
+                        showingEnrollment = true
+                    },
+                    onCancel: {
+                        showingConflict = false
+                    }
+                )
             }
         }
         .task {
@@ -526,7 +556,7 @@ struct ProgramDetailView: View {
                     
                     // Enrollment Section
                     EnrollmentSection {
-                        showingEnrollment = true
+                        handleEnrollmentTap()
                     }
                     
                     Spacer(minLength: 100)
@@ -544,8 +574,16 @@ struct ProgramDetailView: View {
         }
     }
     
+    private func handleEnrollmentTap() {
+        // Check for existing enrollment
+        if programService.enrolledProgram != nil {
+            showingConflict = true
+        } else {
+            showingEnrollment = true
+        }
+    }
+    
     private func enrollInProgram(startingWeight: Double) {
-        // Remove the async/await - now synchronous
         programService.enrollInProgram(program, startingWeight: startingWeight)
         
         Task {
@@ -560,15 +598,18 @@ struct ProgramDetailView: View {
     }
     
     private func checkEnrollmentStatus() async {
-        // Check if enrolled
-        let enrolled = programService.isEnrolledIn(programId: program.id)
+        // Refresh user programs to get latest enrollment status
+        programService.loadUserPrograms()
         
-        await MainActor.run {
-            self.isEnrolled = enrolled
-            if enrolled {
-                // Create a mock UserProgram when enrolled
-                self.userProgram = UserProgram(programId: program.id, targetWeight: 0.0)
-            }
+        // Check if user is enrolled in this program
+        if let enrolledProgramId = programService.getEnrolledProgramId(),
+           enrolledProgramId == program.id {
+            isEnrolled = true
+            // Load the user program data
+            userProgram = programService.userPrograms.first { $0.programId == program.id }
+        } else {
+            isEnrolled = false
+            userProgram = nil
         }
     }
 }
@@ -999,6 +1040,7 @@ struct ProgramWorkoutsView: View {
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
     @State private var showingWorkoutDetail = false
+    @State private var showingLeaveWarning = false
     
     init(userProgram: UserProgram?, program: Program?, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.userProgram = userProgram
@@ -1021,6 +1063,15 @@ struct ProgramWorkoutsView: View {
             .navigationTitle(program?.title ?? "Workouts")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingLeaveWarning = true
+                    } label: {
+                        Label("Leave", systemImage: "xmark.circle")
+                            .foregroundColor(.red)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         onDismiss?()
@@ -1042,10 +1093,37 @@ struct ProgramWorkoutsView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showingLeaveWarning) {
+                if let program = program,
+                   let progress = programService.programProgress {
+                    let workoutCount = WorkoutDataManager.shared.getWorkoutCount(forProgramId: program.id)
+                    
+                    LeaveWarningDialog(
+                        type: .program,
+                        name: program.title,
+                        completedCount: progress.currentWeek - 1,
+                        totalCount: program.durationWeeks,
+                        workoutCount: workoutCount,
+                        onLeave: {
+                            leaveProgram()
+                        },
+                        onCancel: {
+                            showingLeaveWarning = false
+                        }
+                    )
+                }
+            }
         }
         .task {
             await loadWorkouts()
         }
+    }
+    
+    private func leaveProgram() {
+        // Unenroll from the program
+        programService.unenrollFromProgram()
+        showingLeaveWarning = false
+        onDismiss?()
     }
     
     private var workoutListView: some View {

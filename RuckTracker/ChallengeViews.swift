@@ -254,6 +254,7 @@ struct ChallengeDetailView: View {
     @EnvironmentObject var challengeService: LocalChallengeService
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
+    @State private var showingConflict = false
     @State private var isEnrolled = false
     
     var body: some View {
@@ -274,6 +275,30 @@ struct ChallengeDetailView: View {
         }) {
             LocalChallengeEnrollmentView(challenge: challenge)
                 .environmentObject(challengeService)
+        }
+        .sheet(isPresented: $showingConflict) {
+            if let currentChallenge = challengeService.enrolledChallenge,
+               let progress = challengeService.challengeProgress {
+                let workoutCount = WorkoutDataManager.shared.getWorkoutCount(forChallengeId: currentChallenge.id)
+                
+                EnrollmentConflictDialog(
+                    type: .challenge,
+                    currentName: currentChallenge.title,
+                    newName: challenge.title,
+                    completedCount: progress.currentDay - 1,
+                    totalCount: currentChallenge.durationDays,
+                    workoutCount: workoutCount,
+                    onSwitch: {
+                        // Unenroll from current and proceed with new enrollment
+                        challengeService.unenrollFromChallenge()
+                        showingConflict = false
+                        showingEnrollment = true
+                    },
+                    onCancel: {
+                        showingConflict = false
+                    }
+                )
+            }
         }
         .task {
             // Check if user is already enrolled when view appears
@@ -304,20 +329,21 @@ struct ChallengeDetailView: View {
                             
                             Spacer()
                         }
+                        .padding(.horizontal, 20)
                         
                         if let description = challenge.description {
                             Text(description)
                                 .font(.body)
                                 .foregroundColor(.secondary)
+                                .padding(.horizontal, 20)
                         }
                     }
-                    .padding(.horizontal, 20)
                     
-                    // Challenge details
-                    VStack(alignment: .leading, spacing: 16) {
+                    // Challenge Details
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Challenge Details")
                             .font(.headline)
-                            .fontWeight(.semibold)
+                            .padding(.horizontal, 20)
                         
                         VStack(spacing: 12) {
                             DetailRowView(
@@ -326,21 +352,11 @@ struct ChallengeDetailView: View {
                                 value: "\(challenge.durationDays) days"
                             )
                             
-                            if let weightPercentage = challenge.weightPercentage {
-                                DetailRowView(
-                                    icon: "scalemass.fill",
-                                    title: "Weight Target",
-                                    value: "\(Int(weightPercentage))% of body weight"
-                                )
-                            }
-                            
-                            if let paceTarget = challenge.paceTarget {
-                                DetailRowView(
-                                    icon: "speedometer",
-                                    title: "Pace Target",
-                                    value: "\(String(format: "%.1f", paceTarget)) min/mile"
-                                )
-                            }
+                            DetailRowView(
+                                icon: "figure.walk",
+                                title: "Type",
+                                value: challenge.challengeType.displayName
+                            )
                             
                             DetailRowView(
                                 icon: challenge.distanceFocus ? "location.fill" : "location",
@@ -371,7 +387,7 @@ struct ChallengeDetailView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Enroll") {
-                        showingEnrollment = true
+                        handleEnrollmentTap()
                     }
                     .fontWeight(.semibold)
                 }
@@ -379,15 +395,18 @@ struct ChallengeDetailView: View {
         }
     }
     
+    private func handleEnrollmentTap() {
+        // Check for existing enrollment
+        if challengeService.enrolledChallenge != nil {
+            showingConflict = true
+        } else {
+            showingEnrollment = true
+        }
+    }
+    
     private func checkEnrollmentStatus() async {
         // Check if user is enrolled in this challenge
         isEnrolled = challengeService.isEnrolledIn(challengeId: challenge.id)
-    }
-    
-    private func enrollInChallenge(startingWeight: Double) {
-        challengeService.enrollInChallenge(challenge, startingWeight: startingWeight)
-        isEnrolled = true
-        showingEnrollment = false
     }
 }
 

@@ -11,9 +11,11 @@ struct UniversalChallengeView: View {
     let challenge: Challenge
     @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var challengeManager = ChallengeManager()
+    @EnvironmentObject var challengeService: LocalChallengeService
     @EnvironmentObject var premiumManager: PremiumManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
+    @State private var showingLeaveWarning = false
     @State private var selectedWorkout: ChallengeWorkout?
     
     var body: some View {
@@ -59,6 +61,15 @@ struct UniversalChallengeView: View {
             .navigationTitle(challenge.title)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingLeaveWarning = true
+                    } label: {
+                        Label("Leave", systemImage: "xmark.circle")
+                            .foregroundColor(.red)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
@@ -79,9 +90,34 @@ struct UniversalChallengeView: View {
                 )
             }
         }
+        .sheet(isPresented: $showingLeaveWarning) {
+            if let progress = challengeService.challengeProgress {
+                let workoutCount = WorkoutDataManager.shared.getWorkoutCount(forChallengeId: challenge.id)
+                
+                LeaveWarningDialog(
+                    type: .challenge,
+                    name: challenge.title,
+                    completedCount: progress.currentDay - 1,
+                    totalCount: challenge.durationDays,
+                    workoutCount: workoutCount,
+                    onLeave: {
+                        leaveChallenge()
+                    },
+                    onCancel: {
+                        showingLeaveWarning = false
+                    }
+                )
+            }
+        }
         .task {
             await challengeManager.loadChallenge(challenge)
         }
+    }
+    
+    private func leaveChallenge() {
+        challengeService.unenrollFromChallenge()
+        showingLeaveWarning = false
+        dismiss()
     }
     
     private var headerSection: some View {

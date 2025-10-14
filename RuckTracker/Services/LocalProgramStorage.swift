@@ -37,10 +37,21 @@ class LocalProgramStorage {
     }
     
     func unenrollFromProgram() {
+        // Get the enrolled program ID before clearing
+        if let programId = getEnrolledProgramId() {
+            // Delete all associated workouts
+            WorkoutDataManager.shared.deleteWorkoutsForProgram(programId)
+            
+            // Clear completion tracking
+            UserDefaults.standard.removeObject(forKey: "completed_workouts_\(programId)")
+        }
+        
+        // Clear enrollment data
         defaults.removeObject(forKey: enrollmentKey)
         defaults.removeObject(forKey: startingWeightKey)
         defaults.removeObject(forKey: enrollmentDateKey)
-        print("✅ Unenrolled from program")
+        
+        print("✅ Unenrolled from program and deleted all associated workouts")
     }
     
     func getAllUserPrograms() -> [UserProgram] {

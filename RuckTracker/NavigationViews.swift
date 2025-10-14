@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import Combine
 
 // Import required models and components
 // These are defined in other files in the project
@@ -96,6 +97,12 @@ struct TrainingProgramsView: View {
             // Load programs and enrollment status when view appears
             programService.loadPrograms()
             programService.loadEnrollmentStatus()
+            programService.loadUserPrograms()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .programEnrollmentCompleted)) { _ in
+            // Refresh enrollment status when enrollment changes
+            programService.loadEnrollmentStatus()
+            programService.loadUserPrograms()
         }
     }
     

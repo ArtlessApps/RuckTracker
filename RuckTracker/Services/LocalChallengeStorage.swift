@@ -37,10 +37,21 @@ class LocalChallengeStorage {
     }
     
     func unenrollFromChallenge() {
+        // Get the enrolled challenge ID before clearing
+        if let challengeId = getEnrolledChallengeId() {
+            // Delete all associated workouts
+            WorkoutDataManager.shared.deleteWorkoutsForChallenge(challengeId)
+            
+            // Clear completion tracking
+            UserDefaults.standard.removeObject(forKey: "completed_workouts_\(challengeId)")
+        }
+        
+        // Clear enrollment data
         defaults.removeObject(forKey: enrollmentKey)
         defaults.removeObject(forKey: startingWeightKey)
         defaults.removeObject(forKey: enrollmentDateKey)
-        print("✅ Unenrolled from challenge")
+        
+        print("✅ Unenrolled from challenge and deleted all associated workouts")
     }
     
     func getAllUserChallenges() -> [UserChallenge] {
