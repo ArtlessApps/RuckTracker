@@ -43,23 +43,9 @@
 		12C317702E7F7AA500DE131F /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		121857BE2E6FD69E00088A62 /* Exceptions for "RuckTracker" folder in "RuckTracker Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				CalorieCalculator.swift,
-				UserSettings.swift,
-			);
-			target = 1218574F2E6BE73F00088A62 /* RuckTracker Watch App */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1218572F2E6BE73D00088A62 /* RuckTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				121857BE2E6FD69E00088A62 /* Exceptions for "RuckTracker" folder in "RuckTracker Watch App" target */,
-			);
 			path = RuckTracker;
 			sourceTree = "<group>";
 		};

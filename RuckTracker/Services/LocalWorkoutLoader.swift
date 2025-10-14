@@ -6,6 +6,20 @@ class LocalWorkoutLoader {
     private var cachedWorkouts: [ProgramWorkout] = []
     private var workoutsByWeekId: [UUID: [ProgramWorkout]] = [:]
     
+    // Define all workout files to load
+    private let workoutFiles = [
+        "RuckReadyWorkouts",
+        "FoundationBuilderWorkouts",
+        "ActiveLifestyleWorkouts",
+        "EnduranceBuildWorkouts",
+        "GORUCKLightPrepWorkouts",
+        "GORUCKHeavyToughPrepWorkouts",
+        "ArmyACFTPrepWorkouts",
+        "StrengthConditioningWorkouts",
+        "MarathonRuckPrepWorkouts",
+        "GORUCKSelectionPrepWorkouts"
+    ]
+    
     private init() {
         loadWorkouts()
     }
@@ -13,29 +27,36 @@ class LocalWorkoutLoader {
     // MARK: - Loading
     
     func loadWorkouts() {
-        let result: Result<[WorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("Workouts.json")
+        var allWorkouts: [ProgramWorkout] = []
         
-        switch result {
-        case .success(let workoutsData):
-            // Convert JSON to ProgramWorkout models
-            cachedWorkouts = workoutsData.map { $0.toProgramWorkout() }
+        // Load each workout file
+        for fileName in workoutFiles {
+            let result: Result<[WorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("\(fileName).json")
             
-            // Index by week_id for fast lookup
-            workoutsByWeekId = Dictionary(grouping: cachedWorkouts) { $0.weekId }
-            
-            print("✅ Loaded \(cachedWorkouts.count) workouts from bundle")
-            
-        case .failure(let error):
-            print("❌ Failed to load workouts: \(error)")
-            cachedWorkouts = []
-            workoutsByWeekId = [:]
+            switch result {
+            case .success(let workoutsData):
+                let programWorkouts = workoutsData.map { $0.toProgramWorkout() }
+                allWorkouts.append(contentsOf: programWorkouts)
+                print("✅ Loaded \(programWorkouts.count) workouts from \(fileName).json")
+                
+            case .failure(let error):
+                print("⚠️ Failed to load \(fileName).json: \(error)")
+                // Continue loading other files even if one fails
+            }
         }
+        
+        cachedWorkouts = allWorkouts
+        
+        // Index by week_id for fast lookup
+        workoutsByWeekId = Dictionary(grouping: cachedWorkouts) { $0.weekId }
+        
+        print("✅ Total workouts loaded: \(cachedWorkouts.count)")
     }
     
     // MARK: - Querying
     
     func getWorkouts(forWeekId weekId: UUID) -> [ProgramWorkout] {
-        return workoutsByWeekId[weekId] ?? []
+        return workoutsByWeekId[weekId]?.sorted { $0.dayNumber < $1.dayNumber } ?? []
     }
     
     func getAllWorkouts(forProgramId programId: UUID, weeks: [LocalProgramWeek]) -> [ProgramWorkout] {
@@ -114,3 +135,4 @@ private struct WorkoutJSON: Codable {
         )
     }
 }
+

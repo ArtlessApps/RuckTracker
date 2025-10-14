@@ -1,0 +1,562 @@
+[
+  {
+    "id": "sc-w1-d1-ruck-001",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1: Strength Foundation - Establishing Baseline\n\n• Weight: 30 lbs\n• Distance: 4 miles\n\nWelcome to Strength & Conditioning! Building serious strength while maintaining rucking capacity.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d2-rest-001",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d5-ruck-024",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Final Test Ruck\n\n• Weight: 40 lbs\n• Distance: 8 miles\n\nShow what you've built!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d6-rest-031",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d7-rest-032",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "PROGRAM COMPLETE! 🎉\n\nYou finished Strength & Conditioning! In 8 weeks you:\n• Built to 42 lbs\n• Completed 12-mile heavy rucks\n• Developed serious strength\n• Total: 130+ miles\n\nYou're STRONG and have endurance!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  }
+]:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d3-ruck-002",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Strength Day\n\n• Weight: 30 lbs\n• Distance: 3 miles\n• Strength: Squats 5x5, Deadlifts 3x5, Overhead Press 3x8",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d4-rest-002",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d5-ruck-003",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Endurance Ruck\n\n• Weight: 30 lbs\n• Distance: 5 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d6-rest-003",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w1-d7-rest-004",
+    "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 1: 12 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d1-ruck-004",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2: Load Introduction - Adding Weight\n\n• Weight: 32 lbs\n• Distance: 4 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d2-rest-005",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d3-ruck-005",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Heavy Strength\n\n• Weight: 32 lbs\n• Distance: 3 miles\n• Strength: Squats 5x5 (heavier), Bench 3x5, Rows 3x8",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d4-rest-006",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d5-ruck-006",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck\n\n• Weight: 32 lbs\n• Distance: 6 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d6-rest-007",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w2-d7-rest-008",
+    "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 2: 13 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d1-ruck-007",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3: Power Development - Explosive Movements\n\n• Weight: 35 lbs\n• Distance: 5 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d2-rest-009",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d3-ruck-008",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Power Day\n\n• Weight: 35 lbs\n• Distance: 4 miles\n• Power: Box jumps, Power cleans, Med ball throws",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d4-rest-010",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d5-ruck-009",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "7.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Heavy Long Ruck\n\n• Weight: 35 lbs\n• Distance: 7 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d6-rest-011",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w3-d7-rest-012",
+    "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 3: 16 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d1-ruck-010",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4: Consolidation - Adapting to Load\n\n• Weight: 35 lbs\n• Distance: 5 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d2-rest-013",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d3-ruck-011",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Strength Maintenance\n\n• Weight: 35 lbs\n• Distance: 4 miles\n• Strength: Full body 3x8",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d4-rest-014",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d5-ruck-012",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck - 8 Miles\n\n• Weight: 35 lbs\n• Distance: 8 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d6-rest-015",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w4-d7-rest-016",
+    "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 4: 17 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d1-ruck-013",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5: Heavy Week - Maximum Load Work\n\n• Weight: 38 lbs\n• Distance: 6 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d2-rest-017",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d3-ruck-014",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Max Strength Day\n\n• Weight: 38 lbs\n• Distance: 4 miles\n• Strength: Heavy 3x3, testing limits",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d4-rest-018",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d5-ruck-015",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "9.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Heavy Long Ruck\n\n• Weight: 38 lbs\n• Distance: 9 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d6-rest-019",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w5-d7-rest-020",
+    "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 5: 19 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d1-ruck-016",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6: Peak Strength - Testing Limits\n\n• Weight: 40 lbs\n• Distance: 6 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d2-rest-021",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d3-ruck-017",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Peak Strength Test\n\n• Weight: 40 lbs\n• Distance: 5 miles\n• Strength: Test max lifts",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d4-rest-022",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d5-ruck-018",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Peak Long Ruck - 10 Miles!\n\n• Weight: 40 lbs\n• Distance: 10 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d6-rest-023",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w6-d7-rest-024",
+    "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 6: 21 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d1-ruck-019",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "7.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7: Overreach - Pushing Boundaries\n\n• Weight: 42 lbs\n• Distance: 7 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d2-rest-025",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d3-ruck-020",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Overreach Strength\n\n• Weight: 42 lbs\n• Distance: 5 miles\n• Strength: High volume, pushing limits",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d4-rest-026",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d5-ruck-021",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Maximum Long Ruck - 12 Miles!\n\n• Weight: 42 lbs\n• Distance: 12 miles\n\nPeak volume!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d6-rest-027",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w7-d7-rest-028",
+    "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 7: 24 miles! Peak week complete!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d1-ruck-022",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8: Deload & Test - Recovery and Assessment\n\n• Weight: 40 lbs\n• Distance: 4 miles\n\nDeload week! Recovery time.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d2-rest-029",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d3-ruck-023",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Strength Test\n\n• Weight: 40 lbs\n• Distance: 3 miles\n• Strength: Test all lifts, show your gains!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "sc-w8-d4-rest-030",
+    "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00
