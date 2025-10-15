@@ -119,25 +119,16 @@ class WorkoutManager: NSObject, ObservableObject {
         // Initialize ruck weight from user settings
         ruckWeight = userSettings.defaultRuckWeightInPounds()
         
-        // Subscribe to settings changes
-        userSettings.$defaultRuckWeight
-            .sink { [weak self] newWeight in
-                if !(self?.isActive ?? false) {
-                    self?.ruckWeight = self?.userSettings.defaultRuckWeightInPounds() ?? 20.0
-                }
-            }
-            .store(in: &cancellables)
     }
     
     // MARK: - Workout Control (Full HealthKit + GPS Implementation)
-    func startWorkout() {
-        startWorkout(weight: ruckWeight)
-    }
-    
     func startWorkout(weight: Double) {
+        print("\n🟢 ===== STARTING WORKOUT =====")
+        ruckWeight = weight  // Set from parameter
+        print("🟢 Ruck Weight: \(Int(weight)) lbs")
+        
         guard !isActive else { return }
         
-        self.ruckWeight = weight
         isActive = true
         isPaused = false
         startDate = Date()

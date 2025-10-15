@@ -238,8 +238,8 @@ struct QuickSetupCard: View {
         .padding()
         .background(cardBackground)
         .sheet(isPresented: $showingAdvancedSettings) {
-            QuickSettingsSheet()
-                .environmentObject(workoutManager)
+            // Settings sheet removed - weight selection now handled by WorkoutWeightSelector
+            EmptyView()
         }
     }
     
@@ -249,100 +249,6 @@ struct QuickSetupCard: View {
     }
 }
 
-// MARK: - Quick Settings Sheet (Progressive Disclosure)
-struct QuickSettingsSheet: View {
-    @EnvironmentObject var workoutManager: WorkoutManager
-    @Environment(\.dismiss) private var dismiss
-    @State private var tempRuckWeight: Double
-    
-    init() {
-        // Initialize with current weight - will be updated in onAppear
-        _tempRuckWeight = State(initialValue: 20.0)
-    }
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Weight setting
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Ruck Weight")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    HStack {
-                        Text("\(Int(tempRuckWeight)) lbs")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.blue)
-                        
-                        Spacer()
-                        
-                        Stepper("", value: $tempRuckWeight, in: 10...100, step: 5)
-                            .labelsHidden()
-                    }
-                    
-                    Slider(value: $tempRuckWeight, in: 10...100, step: 5)
-                        .accentColor(.blue)
-                    
-                    Text("Accurate weight tracking enables precise calorie calculations based on military research")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                // Watch integration info
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Apple Watch")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    HStack {
-                        Image(systemName: "applewatch")
-                            .foregroundColor(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Enhanced Experience")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Text("GPS tracking, heart rate monitoring, and notifications")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.blue.opacity(0.1))
-                    )
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Workout Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        workoutManager.ruckWeight = tempRuckWeight
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-        .onAppear {
-            tempRuckWeight = workoutManager.ruckWeight
-        }
-    }
-}
 
 
 

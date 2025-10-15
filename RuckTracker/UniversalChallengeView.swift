@@ -311,6 +311,8 @@ struct ChallengeWorkoutDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingCompletionConfirmation = false
     @State private var isCompleting = false
+    @State private var showingWeightSelector = false
+    @State private var selectedWorkoutWeight: Double = 0
     
     var isCompleted: Bool {
         challengeManager.isWorkoutCompleted(workout.id)
@@ -362,6 +364,18 @@ struct ChallengeWorkoutDetailView: View {
                 }
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
+            }
+            .sheet(isPresented: $showingWeightSelector) {
+                WorkoutWeightSelector(
+                    selectedWeight: $selectedWorkoutWeight,
+                    isPresented: $showingWeightSelector,
+                    recommendedWeight: workout.weightLbs,
+                    context: "Challenge Day \(workout.dayNumber)",
+                    onStart: {
+                        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+                        isPresentingWorkoutFlow = false
+                    }
+                )
             }
         }
     }
@@ -489,15 +503,8 @@ struct ChallengeWorkoutDetailView: View {
     }
     
     private func startWorkoutTracking() {
-        // Get the weight from the workout
-        let weight = workout.weightLbs ?? 20.0
-        
-        // Start the workout with the challenge weight
-        workoutManager.startWorkout(weight: weight)
-        
-        // Dismiss all modal sheets by setting the shared binding to false
-        // This is the clean, Apple-recommended way to handle nested modal presentations
-        isPresentingWorkoutFlow = false
+        selectedWorkoutWeight = workout.weightLbs ?? UserSettings.shared.defaultRuckWeight
+        showingWeightSelector = true
     }
     
     private func completeWorkout() async {

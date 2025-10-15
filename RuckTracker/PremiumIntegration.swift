@@ -1334,6 +1334,8 @@ struct WorkoutDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
+    @State private var showingWeightSelector = false
+    @State private var selectedWorkoutWeight: Double = 0
     
     init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.workout = workout
@@ -1385,6 +1387,17 @@ struct WorkoutDetailView: View {
                 }
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
+            }
+            .sheet(isPresented: $showingWeightSelector) {
+                WorkoutWeightSelector(
+                    selectedWeight: $selectedWorkoutWeight,
+                    isPresented: $showingWeightSelector,
+                    context: "\(workout.workout.workoutType.rawValue.capitalized) - Week \(workout.weekNumber)",
+                    onStart: {
+                        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+                        isPresentingWorkoutFlow = false
+                    }
+                )
             }
         }
     }
@@ -1514,15 +1527,8 @@ struct WorkoutDetailView: View {
     }
     
     private func startWorkoutTracking() {
-        // Get the ruck weight from the program
-        let weight = userProgram?.currentWeightLbs ?? 20.0
-        
-        // Start the workout with the program weight
-        workoutManager.startWorkout(weight: weight)
-        
-        // Dismiss all modal sheets by setting the shared binding to false
-        // This is the clean, Apple-recommended way to handle nested modal presentations
-        isPresentingWorkoutFlow = false
+        selectedWorkoutWeight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
+        showingWeightSelector = true
     }
     
     private func completeWorkout() async {

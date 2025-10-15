@@ -16,6 +16,8 @@ struct ImprovedPhoneMainView: View {
     @State private var showingDataExport = false
     @State private var activeSheet: ActiveSheet? = nil
     @State private var isPresentingWorkoutFlow = false
+    @State private var showingWeightSelector = false
+    @State private var selectedWorkoutWeight: Double = 0
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -82,6 +84,17 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
+        .sheet(isPresented: $showingWeightSelector) {
+            WorkoutWeightSelector(
+                selectedWeight: $selectedWorkoutWeight,
+                isPresented: $showingWeightSelector,
+                recommendedWeight: nil,
+                context: "Free Ruck",
+                onStart: {
+                    workoutManager.startWorkout(weight: selectedWorkoutWeight)
+                }
+            )
+        }
     }
     
     // MARK: - Main Content View
@@ -146,7 +159,8 @@ struct ImprovedPhoneMainView: View {
                     
                     // Main start button
                     Button(action: {
-                        workoutManager.startWorkout()
+                        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                        showingWeightSelector = true
                     }) {
                         HStack(spacing: 12) {
                             Image(systemName: "play.fill")
@@ -430,9 +444,11 @@ struct ClickableWeightPill: View {
     let weight: Double
     @EnvironmentObject var workoutManager: WorkoutManager
     @State private var showingWeightPicker = false
+    @State private var selectedWorkoutWeight: Double = 20.0
     
     var body: some View {
         Button(action: {
+            selectedWorkoutWeight = workoutManager.ruckWeight
             showingWeightPicker = true
         }) {
             HStack(spacing: 4) {
@@ -454,123 +470,16 @@ struct ClickableWeightPill: View {
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showingWeightPicker) {
-            WeightPickerSheet()
-                .environmentObject(workoutManager)
-        }
-    }
-}
-
-struct WeightPickerSheet: View {
-    @EnvironmentObject var workoutManager: WorkoutManager
-    @Environment(\.dismiss) private var dismiss
-    @State private var tempWeight: Double
-    
-    init() {
-        // Pre-fill with last workout weight
-        let lastWeight = WorkoutDataManager.shared.workouts.first?.ruckWeight ?? 20.0
-        _tempWeight = State(initialValue: lastWeight)
-    }
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Current weight display
-                VStack(spacing: 8) {
-                    Text("Ruck Weight")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    Text("\(Int(tempWeight)) lbs")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundColor(.blue)
+            WorkoutWeightSelector(
+                selectedWeight: $selectedWorkoutWeight,
+                isPresented: $showingWeightPicker,
+                recommendedWeight: nil,
+                context: "Adjust Weight",
+                onStart: {
+                    workoutManager.ruckWeight = selectedWorkoutWeight
+                    UserSettings.shared.defaultRuckWeight = selectedWorkoutWeight
                 }
-                
-                // Weight picker
-                VStack(spacing: 16) {
-                    // Slider
-                    VStack(spacing: 8) {
-                        Slider(value: $tempWeight, in: 5...100, step: 5)
-                            .accentColor(.blue)
-                        
-                        HStack {
-                            Text("5 lbs")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("100 lbs")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    // Quick weight buttons
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                        ForEach([5, 10, 15, 20, 25, 30, 35, 40], id: \.self) { weight in
-                            Button(action: {
-                                tempWeight = Double(weight)
-                            }) {
-                                Text("\(weight)")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(tempWeight == Double(weight) ? .white : .blue)
-                                    .frame(width: 60, height: 40)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(tempWeight == Double(weight) ? Color.blue : Color.blue.opacity(0.1))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                
-                // Info about weight tracking
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundColor(.orange)
-                        Text("Why Weight Matters")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    Text("RuckTracker uses military research to calculate accurate calories based on your pack weight. This makes your fitness data more precise than standard walking apps.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.orange.opacity(0.1))
-                )
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Ruck Weight")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        workoutManager.ruckWeight = tempWeight
-                        // Also save to UserSettings for persistence
-                        UserSettings.shared.defaultRuckWeight = tempWeight
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                    .foregroundColor(.blue)
-                }
-            }
-        }
-        .onAppear {
-            tempWeight = workoutManager.ruckWeight
+            )
         }
     }
 }
