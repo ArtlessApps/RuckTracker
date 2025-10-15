@@ -332,8 +332,6 @@ struct ChallengeWorkoutDetailView: View {
                         instructionsSection(instructions)
                     }
                     
-                    // Details
-                    detailsSection
                     
                     // Completion status
                     if isCompleted {
@@ -411,29 +409,6 @@ struct ChallengeWorkoutDetailView: View {
         .cornerRadius(12)
     }
     
-    private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Workout Details", systemImage: "info.circle")
-                .font(.headline)
-            
-            if let distance = workout.distanceMiles {
-                DetailRow(label: "Distance", value: "\(String(format: "%.1f", distance)) miles")
-            }
-            
-            if let pace = workout.targetPaceMinutes {
-                DetailRow(label: "Target Pace", value: "\(Int(pace)) min/mile")
-            }
-            
-            if let weight = workout.weightLbs {
-                DetailRow(label: "Ruck Weight", value: "\(Int(weight)) lbs")
-            }
-            
-            DetailRow(label: "Workout Type", value: workout.workoutType.displayName)
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
     
     private var completedSection: some View {
         VStack(spacing: 12) {

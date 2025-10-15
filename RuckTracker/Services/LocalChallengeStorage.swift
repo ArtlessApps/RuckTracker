@@ -6,16 +6,14 @@ class LocalChallengeStorage {
     
     private let defaults = UserDefaults.standard
     private let enrollmentKey = "enrolled_challenge_id"
-    private let startingWeightKey = "challenge_starting_weight"
     private let enrollmentDateKey = "challenge_enrollment_date"
     
     private init() {}
     
     // MARK: - Challenge Enrollment
     
-    func enrollInChallenge(_ challengeId: UUID, startingWeight: Double) {
+    func enrollInChallenge(_ challengeId: UUID) {
         defaults.set(challengeId.uuidString, forKey: enrollmentKey)
-        defaults.set(startingWeight, forKey: startingWeightKey)
         defaults.set(Date(), forKey: enrollmentDateKey)
         print("✅ Enrolled in challenge: \(challengeId)")
     }
@@ -26,10 +24,6 @@ class LocalChallengeStorage {
             return nil
         }
         return uuid
-    }
-    
-    func getStartingWeight() -> Double {
-        return defaults.double(forKey: startingWeightKey)
     }
     
     func getEnrollmentDate() -> Date? {
@@ -48,7 +42,6 @@ class LocalChallengeStorage {
         
         // Clear enrollment data
         defaults.removeObject(forKey: enrollmentKey)
-        defaults.removeObject(forKey: startingWeightKey)
         defaults.removeObject(forKey: enrollmentDateKey)
         
         print("✅ Unenrolled from challenge and deleted all associated workouts")
@@ -62,7 +55,6 @@ class LocalChallengeStorage {
         
         let userChallenge = UserChallenge(
             challengeId: challengeId,
-            targetWeight: getStartingWeight(),
             isActive: true
         )
         

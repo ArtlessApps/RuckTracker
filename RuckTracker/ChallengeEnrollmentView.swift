@@ -11,7 +11,6 @@ struct ChallengeEnrollmentView: View {
     let challenge: Challenge
     let challengeManager: ChallengeManager
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedWeight: Double = 20.0
     @State private var isEnrolling = false
     @State private var enrollmentError: String?
     
@@ -27,36 +26,7 @@ struct ChallengeEnrollmentView: View {
         }
     }
     
-    // Weight range based on challenge type
-    private var weightRange: ClosedRange<Double> {
-        switch challenge.focusArea {
-        case .recovery:
-            return 5.0...30.0 // Light weights for recovery
-        case .speed, .speedDevelopment:
-            return 5.0...35.0 // Moderate weights for speed
-        case .distance, .enduranceProgression:
-            return 5.0...45.0 // Standard range for distance
-        case .power, .progressiveWeight:
-            return 5.0...60.0 // Heavy weights for power
-        case .tacticalMixed:
-            return 5.0...50.0 // Tactical standard weights
-        }
-    }
-    
-    private var recommendedWeight: Double {
-        switch challenge.focusArea {
-        case .recovery:
-            return 15.0
-        case .speed, .speedDevelopment:
-            return 25.0
-        case .distance, .enduranceProgression:
-            return 30.0
-        case .power, .progressiveWeight:
-            return 40.0
-        case .tacticalMixed:
-            return 35.0
-        }
-    }
+    // Weight selection removed
     
     var body: some View {
         NavigationView {
@@ -66,8 +36,7 @@ struct ChallengeEnrollmentView: View {
                         // Challenge Info Header
                         challengeHeaderView
                         
-                        // Weight Selection
-                        weightSelectionView
+                        // Weight selection removed
                         
                         // Challenge Preview
                         challengePreviewView
@@ -92,9 +61,7 @@ struct ChallengeEnrollmentView: View {
                 }
             }
         }
-        .onAppear {
-            selectedWeight = recommendedWeight
-        }
+        .onAppear { }
     }
     
     private var challengeHeaderView: some View {
@@ -138,79 +105,7 @@ struct ChallengeEnrollmentView: View {
         )
     }
     
-    private var weightSelectionView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Select Your Starting Weight")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            Text("Choose a ruck weight that challenges you while maintaining proper form throughout the challenge.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Weight Slider
-            VStack(spacing: 12) {
-                HStack {
-                    Text("\(Int(weightRange.lowerBound)) lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("\(Int(selectedWeight)) lbs")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(focusColor)
-                    
-                    Spacer()
-                    
-                    Text("\(Int(weightRange.upperBound)) lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Slider(
-                    value: $selectedWeight,
-                    in: weightRange,
-                    step: 5.0
-                )
-                .accentColor(focusColor)
-            }
-            
-            // Weight Recommendation
-            if abs(selectedWeight - recommendedWeight) < 2.5 {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Recommended weight for \(challenge.focusArea.displayName.lowercased()) training")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                }
-            } else if selectedWeight < recommendedWeight - 5 {
-                HStack {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundColor(.blue)
-                    Text("Light weight - good for building endurance")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
-            } else if selectedWeight > recommendedWeight + 5 {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text("Heavy weight - ensure proper form")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
-    }
+    // Weight selection view removed
     
     private var challengePreviewView: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -303,10 +198,7 @@ struct ChallengeEnrollmentView: View {
             .disabled(isEnrolling)
             .buttonStyle(.plain)
             
-            Text("You can adjust your weight anytime during the challenge")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            // Note about weight removed
         }
     }
     
@@ -317,8 +209,8 @@ struct ChallengeEnrollmentView: View {
             enrollmentError = nil
             
             do {
-                print("📝 Attempting to enroll with weight: \(selectedWeight) lbs")
-                try await challengeManager.enrollInChallenge(weightLbs: selectedWeight)
+        print("📝 Attempting to enroll in challenge")
+        try await challengeManager.enrollInChallenge()
                 
                 print("✅ Enrollment successful - enrollment added to service")
                 // The enrollment is already added to the service in ChallengeManager

@@ -415,7 +415,7 @@ struct LocalChallengeEnrollmentView: View {
     let challenge: Challenge
     @EnvironmentObject var challengeService: LocalChallengeService
     @Environment(\.dismiss) private var dismiss
-    @State private var startingWeight: Double = 150.0
+    // startingWeight removed
     @State private var isEnrolling = false
     
     var body: some View {
@@ -439,26 +439,7 @@ struct LocalChallengeEnrollmentView: View {
                         .padding(.horizontal)
                 }
                 
-                // Weight input
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Starting Weight")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    HStack {
-                        TextField("Weight", value: $startingWeight, format: .number)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .keyboardType(.decimalPad)
-                        
-                        Text("lbs")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Text("This helps us calculate your target weight for the challenge.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 20)
+                // Weight input removed
                 
                 Spacer()
                 
@@ -480,7 +461,7 @@ struct LocalChallengeEnrollmentView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
-                .disabled(isEnrolling || startingWeight <= 0)
+                .disabled(isEnrolling)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
@@ -499,7 +480,7 @@ struct LocalChallengeEnrollmentView: View {
     private func enrollInChallenge() {
         isEnrolling = true
         
-        challengeService.enrollInChallenge(challenge, startingWeight: startingWeight)
+        challengeService.enrollInChallenge(challenge)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isEnrolling = false

@@ -211,17 +211,15 @@ struct UserChallengeEnrollment: Identifiable, Codable {
     let id: UUID
     let challengeId: UUID
     let enrolledAt: Date
-    let startingWeight: Double
     var completionPercentage: Double
     var currentDay: Int
     var isActive: Bool
     var completedAt: Date?
     
-    init(id: UUID = UUID(), challengeId: UUID, enrolledAt: Date = Date(), startingWeight: Double, completionPercentage: Double = 0.0, currentDay: Int = 1, isActive: Bool = true, completedAt: Date? = nil) {
+    init(id: UUID = UUID(), challengeId: UUID, enrolledAt: Date = Date(), completionPercentage: Double = 0.0, currentDay: Int = 1, isActive: Bool = true, completedAt: Date? = nil) {
         self.id = id
         self.challengeId = challengeId
         self.enrolledAt = enrolledAt
-        self.startingWeight = startingWeight
         self.completionPercentage = completionPercentage
         self.currentDay = currentDay
         self.isActive = isActive

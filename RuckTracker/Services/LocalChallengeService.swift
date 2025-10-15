@@ -76,8 +76,8 @@ class LocalChallengeService: ObservableObject {
     
     // MARK: - Challenge Enrollment
     
-    func enrollInChallenge(_ challenge: Challenge, startingWeight: Double) {
-        storage.enrollInChallenge(challenge.id, startingWeight: startingWeight)
+    func enrollInChallenge(_ challenge: Challenge) {
+        storage.enrollInChallenge(challenge.id)
         enrolledChallenge = challenge
         challengeProgress = storage.getChallengeProgress(challengeId: challenge.id)
         

@@ -52,7 +52,6 @@ class ChallengeManager: ObservableObject {
                     id: userChallenge.id,
                     challengeId: challenge.id,
                     enrolledAt: userChallenge.startDate,
-                    startingWeight: userChallenge.currentWeightLbs,
                     completionPercentage: userChallenge.completionPercentage,
                     currentDay: userChallenge.currentDay,
                     isActive: userChallenge.isActive,
@@ -64,8 +63,8 @@ class ChallengeManager: ObservableObject {
         return nil
     }
     
-    func enrollInChallenge(weightLbs: Double) async throws {
-        print("🔧 ChallengeManager.enrollInChallenge called with weight: \(weightLbs)")
+    func enrollInChallenge() async throws {
+        print("🔧 ChallengeManager.enrollInChallenge called")
         print("🔧 Current challenge is: \(String(describing: self.challenge?.title))")
         
         guard let challenge = self.challenge else { 
@@ -74,17 +73,16 @@ class ChallengeManager: ObservableObject {
         }
         
         print("🔧 Proceeding with enrollment for challenge: \(challenge.title)")
-        challengeService.enrollInChallenge(challenge, startingWeight: weightLbs)
+        challengeService.enrollInChallenge(challenge)
         
         // Create enrollment object
         let newEnrollment = UserChallengeEnrollment(
-            challengeId: challenge.id,
-            startingWeight: weightLbs
+            challengeId: challenge.id
         )
         enrollment = newEnrollment
         
-        // Generate personalized workouts based on user weight
-        workouts = await generatePersonalizedWorkouts(for: challenge, userWeight: weightLbs)
+        // Load workouts for the challenge
+        workouts = await getWorkouts(for: challenge)
         
         // Reset completion state for new enrollment
         completedWorkouts.removeAll()
@@ -98,36 +96,7 @@ class ChallengeManager: ObservableObject {
         return challengeService.getChallengeWorkouts(forChallengeId: challenge.id)
     }
     
-    private func generatePersonalizedWorkouts(for challenge: Challenge, userWeight: Double) async -> [ChallengeWorkout] {
-        // Load workouts from the challenge service
-        let workouts = challengeService.getChallengeWorkouts(forChallengeId: challenge.id)
-        
-        // Adjust weights based on user's actual weight if needed
-        return workouts.map { workout in
-            var adjustedWorkout = workout
-            
-            if let baseWeight = workout.weightLbs, !workout.isRestDay {
-                // Adjust weight based on user's actual weight vs base weight (180 lbs)
-                let weightRatio = userWeight / 180.0
-                adjustedWorkout = ChallengeWorkout(
-                    id: workout.id,
-                    challengeId: workout.challengeId,
-                    dayNumber: workout.dayNumber,
-                    workoutType: workout.workoutType,
-                    distanceMiles: workout.distanceMiles,
-                    targetPaceMinutes: workout.targetPaceMinutes,
-                    weightLbs: baseWeight * weightRatio,
-                    durationMinutes: workout.durationMinutes,
-                    instructions: workout.instructions,
-                    isRestDay: workout.isRestDay,
-                    createdAt: workout.createdAt,
-                    updatedAt: workout.updatedAt
-                )
-            }
-            
-            return adjustedWorkout
-        }
-    }
+    // Personalized workout generation removed: weights are no longer adjusted by enrollment weight
     
     // MARK: - Completion Tracking
     
