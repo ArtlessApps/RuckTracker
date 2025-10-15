@@ -211,6 +211,35 @@ class LocalProgramService: ObservableObject {
     
     // MARK: - Workout Completion
     
+    /// Refresh program progress after a workout is completed
+    /// Note: The workout is already saved to CoreData by WorkoutManager with program metadata
+    func refreshProgramProgress() {
+        print("\n🟠 ===== REFRESHING PROGRAM PROGRESS =====")
+        
+        guard let enrolledProgramId = storage.getEnrolledProgramId() else {
+            print("🟠 ❌ No enrolled program found")
+            print("🟠 ===== REFRESH ABORTED =====\n")
+            return
+        }
+        
+        print("🟠 Enrolled Program ID: \(enrolledProgramId.uuidString)")
+        print("🟠 About to call storage.getProgramProgress()...")
+        
+        // Recalculate progress based on workouts in CoreData
+        programProgress = storage.getProgramProgress(programId: enrolledProgramId)
+        
+        print("🟠 New progress: \(programProgress?.completed ?? 0)/\(programProgress?.total ?? 0) workouts")
+        print("🟠 Next workout day: \(programProgress?.nextWorkoutDay ?? 1)")
+        
+        // Trigger UI update
+        objectWillChange.send()
+        
+        print("🟠 ✅ UI update triggered")
+        print("🟠 ===== REFRESH COMPLETE =====\n")
+    }
+    
+    // DEPRECATED: Use refreshProgramProgress() instead
+    // This method is kept for backwards compatibility but should not be used
     func completeWorkout(
         programId: UUID,
         workoutDay: Int,
@@ -219,28 +248,8 @@ class LocalProgramService: ObservableObject {
         durationMinutes: Int,
         notes: String? = nil
     ) {
-        // Workout is already saved to CoreData by WorkoutManager
-        // Just need to link it to the program
-        
-        guard let enrolledProgramId = storage.getEnrolledProgramId() else {
-            print("❌ No enrolled program found")
-            return
-        }
-        
-        // Update the most recent workout with program metadata
-        if let recentWorkout = WorkoutDataManager.shared.workouts.first {
-            recentWorkout.programId = enrolledProgramId.uuidString
-            recentWorkout.programWorkoutDay = Int16(workoutDay)
-            WorkoutDataManager.shared.saveContext()
-        }
-        
-        // Recalculate progress
-        programProgress = storage.getProgramProgress(programId: enrolledProgramId)
-        
-        // Trigger UI update
-        objectWillChange.send()
-        
-        print("✅ Completed workout for program")
+        print("⚠️ completeWorkout() is deprecated. Use refreshProgramProgress() instead.")
+        refreshProgramProgress()
     }
     
     // MARK: - Helper Methods

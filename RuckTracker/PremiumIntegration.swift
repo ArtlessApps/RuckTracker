@@ -1235,18 +1235,26 @@ struct ProgramWorkoutsView: View {
             let programWorkouts = try await programService.loadProgramWorkouts(programId: program.id)
             
             // Get completions from CoreData (via local service)
-            let completedWorkoutDays = WorkoutDataManager.shared.workouts
+            // NOTE: programWorkoutDay in CoreData is the SEQUENTIAL workout number (1, 2, 3...),
+            // NOT the day_number within each week. We need to match by index in the workout list.
+            let completedWorkoutIndices = WorkoutDataManager.shared.workouts
                 .filter { $0.programId == program.id.uuidString }
-                .compactMap { Int($0.programWorkoutDay) }
+                .compactMap { Int($0.programWorkoutDay) - 1 } // Convert to 0-based index
+            
+            print("🔍 UI DEBUG: Program ID: \(program.id.uuidString)")
+            print("🔍 UI DEBUG: Total workouts in CoreData: \(WorkoutDataManager.shared.workouts.count)")
+            print("🔍 UI DEBUG: Workouts for this program: \(WorkoutDataManager.shared.workouts.filter { $0.programId == program.id.uuidString }.count)")
+            print("🔍 UI DEBUG: Completed workout indices: \(completedWorkoutIndices)")
             
             // Map workouts to state
             var lastCompletedIndex = -1
             
             workouts = programWorkouts.enumerated().map { index, workout in
-                let isCompleted = completedWorkoutDays.contains(workout.dayNumber)
+                let isCompleted = completedWorkoutIndices.contains(index)
                 
                 if isCompleted {
                     lastCompletedIndex = index
+                    print("🔍 UI DEBUG: Workout index \(index) (day \(workout.dayNumber)) marked as completed")
                 }
                 
                 // Unlock logic: first workout unlocked, rest unlock after previous completion
@@ -1266,7 +1274,7 @@ struct ProgramWorkoutsView: View {
                 )
             }
             
-            print("✅ Loaded \(workouts.count) workouts, \(completedWorkoutDays.count) completed")
+            print("✅ Loaded \(workouts.count) workouts, \(completedWorkoutIndices.count) completed")
         } catch {
             print("❌ Error loading workouts: \(error)")
         }

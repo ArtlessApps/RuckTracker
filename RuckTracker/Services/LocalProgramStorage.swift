@@ -14,10 +14,23 @@ class LocalProgramStorage {
     // MARK: - Program Enrollment
     
     func enrollInProgram(_ programId: UUID, startingWeight: Double) {
+        print("\n🟢 ===== ENROLLING IN PROGRAM =====")
+        print("🟢 Program ID: \(programId.uuidString)")
+        print("🟢 Starting Weight: \(startingWeight) lbs")
+        print("🟢 Enrollment Date: \(Date())")
+        
+        // Delete any existing workouts for this program FIRST
+        print("🟢 About to delete old workouts for this program...")
+        WorkoutDataManager.shared.deleteWorkoutsForProgram(programId)
+        print("🟢 Old workouts deleted")
+        
+        // Then set the new enrollment
         defaults.set(programId.uuidString, forKey: enrollmentKey)
         defaults.set(startingWeight, forKey: startingWeightKey)
         defaults.set(Date(), forKey: enrollmentDateKey)
-        print("✅ Enrolled in program: \(programId)")
+        
+        print("🟢 Enrollment data saved to UserDefaults")
+        print("🟢 ===== ENROLLMENT COMPLETE =====\n")
     }
     
     func getEnrolledProgramId() -> UUID? {
@@ -72,19 +85,29 @@ class LocalProgramStorage {
     // MARK: - Program Progress
     
     func getProgramProgress(programId: UUID) -> ProgramProgress {
+        print("\n🟡 ===== CALCULATING PROGRAM PROGRESS =====")
+        print("🟡 Program ID: \(programId.uuidString)")
+        
         let weekLoader = LocalWeekLoader.shared
         let weeks = weekLoader.getWeeks(forProgramId: programId)
         
         let completedWorkouts = getCompletedProgramWorkouts(programId: programId)
+        print("🟡 Found \(completedWorkouts.count) completed workouts in CoreData")
+        
         let totalWorkouts = getTotalWorkoutCount(programId: programId)
+        print("🟡 Total workouts expected: \(totalWorkouts)")
         
         // Calculate current week based on start date
         guard let startDate = getEnrollmentDate() else {
+            print("🟡 No enrollment date found")
+            print("🟡 ===== PROGRESS CALCULATION COMPLETE =====\n")
             return ProgramProgress(completed: 0, total: totalWorkouts, completionPercentage: 0, currentWeek: 1, nextWorkoutDay: 1)
         }
         
         let daysSinceStart = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
         let currentWeek = min((daysSinceStart / 7) + 1, weeks.count)
+        print("🟡 Days since enrollment: \(daysSinceStart)")
+        print("🟡 Current week: \(currentWeek)")
         
         // Get current week's base weight
         let currentWeekData = weeks.first { $0.weekNumber == currentWeek }
@@ -93,6 +116,10 @@ class LocalProgramStorage {
         let completionPercentage = totalWorkouts > 0 
             ? Double(completedWorkouts.count) / Double(totalWorkouts) * 100.0
             : 0.0
+        
+        print("🟡 Completion percentage: \(String(format: "%.1f", completionPercentage))%")
+        print("🟡 Next workout day: \(completedWorkouts.count + 1)")
+        print("🟡 ===== PROGRESS CALCULATION COMPLETE =====\n")
         
         return ProgramProgress(
             completed: completedWorkouts.count,
@@ -106,9 +133,18 @@ class LocalProgramStorage {
     // MARK: - Workout Completions
     
     private func getCompletedProgramWorkouts(programId: UUID) -> [WorkoutEntity] {
-        return WorkoutDataManager.shared.workouts.filter { workout in
+        let filtered = WorkoutDataManager.shared.workouts.filter { workout in
             workout.programId == programId.uuidString
         }
+        
+        print("🟡 Filtering workouts for programId: \(programId.uuidString)")
+        print("🟡 Total workouts in CoreData: \(WorkoutDataManager.shared.workouts.count)")
+        print("🟡 Workouts matching this program: \(filtered.count)")
+        for (index, workout) in filtered.enumerated() {
+            print("🟡   Workout \(index + 1): Day \(workout.programWorkoutDay), Date: \(workout.date?.formatted() ?? "nil")")
+        }
+        
+        return filtered
     }
     
     private func getTotalWorkoutCount(programId: UUID) -> Int {

@@ -518,18 +518,31 @@ extension WorkoutManager: CLLocationManagerDelegate {
     
     // MARK: - Local Data Storage
     private func saveWorkoutToLocalStorage(startDate: Date) {
+        print("\n🟣 ===== WORKOUT MANAGER: SAVING WORKOUT =====")
+        print("🟣 Start Date: \(startDate)")
+        print("🟣 Elapsed Time: \(Int(elapsedTime))s")
+        print("🟣 Distance: \(String(format: "%.2f", distance))mi")
+        print("🟣 Calories: \(Int(calories))")
+        print("🟣 Ruck Weight: \(Int(ruckWeight))lbs")
+        
         // Use actual heart rate if available, otherwise 0 (will show as N/A)
         let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 0
+        print("🟣 Heart Rate: \(Int(avgHeartRate)) bpm")
         
         // Check if currently enrolled in a program
         let programId = LocalProgramService.shared.getEnrolledProgramId()
         let programWorkoutDay = calculateCurrentProgramWorkoutDay()
+        print("🟣 Enrolled Program ID: \(programId?.uuidString ?? "NONE")")
+        print("🟣 Program Workout Day: \(programWorkoutDay?.description ?? "NONE")")
         
         // Check if currently enrolled in a challenge
         let challengeId = LocalChallengeService.shared.getEnrolledChallengeId()
         let challengeWorkoutDay = calculateCurrentChallengeWorkoutDay()
+        print("🟣 Enrolled Challenge ID: \(challengeId?.uuidString ?? "NONE")")
+        print("🟣 Challenge Workout Day: \(challengeWorkoutDay?.description ?? "NONE")")
         
         // Save to CoreData with program and challenge metadata
+        print("🟣 About to call WorkoutDataManager.saveWorkout()...")
         WorkoutDataManager.shared.saveWorkout(
             date: startDate,
             duration: elapsedTime,
@@ -542,28 +555,24 @@ extension WorkoutManager: CLLocationManagerDelegate {
             challengeId: challengeId,
             challengeDay: challengeWorkoutDay
         )
+        print("🟣 WorkoutDataManager.saveWorkout() completed")
         
-        print("💾 iPhone: Saved workout to local storage")
-        
-        // If this was a program workout, mark it complete
+        // If this was a program workout, update progress
         if let programId = programId, let day = programWorkoutDay {
-            Task {
-                do {
-                    try await LocalProgramService.shared.completeWorkout(
-                        programId: programId,
-                        workoutDay: day,
-                        distanceMiles: distance,
-                        weightLbs: ruckWeight,
-                        durationMinutes: Int(elapsedTime / 60)
-                    )
-                } catch {
-                    print("❌ Failed to complete program workout: \(error)")
-                }
+            print("🟣 This was a program workout - refreshing progress...")
+            // Workout is already saved with program metadata above
+            // Just need to refresh the program progress
+            Task { @MainActor in
+                LocalProgramService.shared.refreshProgramProgress()
             }
+            print("🟣 Program progress refresh initiated for day \(day)")
+        } else {
+            print("🟣 This was NOT a program workout (standalone workout)")
         }
         
         // If this was a challenge workout, mark it complete
         if let challengeId = challengeId, let day = challengeWorkoutDay {
+            print("🟣 This was a challenge workout - marking complete...")
             LocalChallengeService.shared.completeWorkout(
                 challengeId: challengeId,
                 workoutDay: day,
@@ -571,16 +580,21 @@ extension WorkoutManager: CLLocationManagerDelegate {
                 weightLbs: ruckWeight,
                 durationMinutes: Int(elapsedTime / 60)
             )
+            print("🟣 Challenge workout completion initiated")
         }
         
+        print("🟣 ===== WORKOUT MANAGER: SAVE COMPLETE =====\n")
     }
     
     private func calculateCurrentProgramWorkoutDay() -> Int? {
         // Get the next workout day from program progress
         guard let progress = LocalProgramService.shared.programProgress else {
+            print("🟣 calculateCurrentProgramWorkoutDay: No program progress found")
             return nil
         }
-        return progress.completed + 1
+        let nextDay = progress.completed + 1
+        print("🟣 calculateCurrentProgramWorkoutDay: Completed=\(progress.completed), NextDay=\(nextDay)")
+        return nextDay
     }
     
     private func calculateCurrentChallengeWorkoutDay() -> Int? {
@@ -593,43 +607,11 @@ extension WorkoutManager: CLLocationManagerDelegate {
     
     // MARK: - Program Progress Tracking
     private func updateProgramProgressIfActive() async {
-        // Check if user has any active programs
-        let programService = LocalProgramService.shared
-        let activeUserPrograms = programService.userPrograms.filter { $0.isActive }
+        // Program completion is now handled in saveWorkoutToLocalStorage()
+        // This method is kept for potential future use but currently does nothing
+        // to avoid duplicate program completion calls
         
-        guard !activeUserPrograms.isEmpty else {
-            print("📱 No active programs - skipping program progress update")
-            return
-        }
-        
-        print("📱 Found \(activeUserPrograms.count) active programs - updating progress")
-        
-        // For now, we'll update the first active program
-        // In a full implementation, we'd need to determine which program this workout belongs to
-        guard let activeProgram = activeUserPrograms.first else { return }
-        
-        do {
-            // Calculate duration in minutes
-            let durationMinutes = Int(elapsedTime / 60)
-            
-            // Update program progress
-            try await programService.completeWorkout(
-                programId: activeProgram.id,
-                workoutDay: 1, // Use day 1 as default for now
-                distanceMiles: distance,
-                weightLbs: ruckWeight,
-                durationMinutes: durationMinutes,
-                notes: "Workout completed via main workout flow"
-            )
-            
-            print("✅ Updated program progress for active program")
-            
-            // Reload user programs to get updated progress
-            await programService.loadUserPrograms()
-            
-        } catch {
-            print("❌ Failed to update program progress: \(error)")
-        }
+        print("📱 Program progress already updated in saveWorkoutToLocalStorage()")
     }
     
     

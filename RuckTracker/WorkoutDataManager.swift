@@ -150,6 +150,18 @@ class WorkoutDataManager: ObservableObject {
         challengeId: UUID? = nil,
         challengeDay: Int? = nil
     ) {
+        print("\n🔵 ===== SAVING NEW WORKOUT =====")
+        print("🔵 Date: \(date)")
+        print("🔵 Distance: \(String(format: "%.2f", distance))mi")
+        print("🔵 Duration: \(Int(duration))s")
+        print("🔵 Calories: \(Int(calories))")
+        print("🔵 Ruck Weight: \(Int(ruckWeight))lbs")
+        print("🔵 Program ID: \(programId?.uuidString ?? "NONE")")
+        print("🔵 Program Workout Day: \(programWorkoutDay?.description ?? "NONE")")
+        print("🔵 Challenge ID: \(challengeId?.uuidString ?? "NONE")")
+        print("🔵 Challenge Day: \(challengeDay?.description ?? "NONE")")
+        print("🔵 Current workout count BEFORE save: \(workouts.count)")
+        
         let workout = WorkoutEntity(context: context)
         workout.date = date
         workout.duration = duration
@@ -161,23 +173,29 @@ class WorkoutDataManager: ObservableObject {
         // Add program metadata if provided
         if let programId = programId {
             workout.programId = programId.uuidString
+            print("🔵 Set workout.programId = \(programId.uuidString)")
         }
         if let day = programWorkoutDay {
             workout.programWorkoutDay = Int16(day)
+            print("🔵 Set workout.programWorkoutDay = \(day)")
         }
         
         // Add challenge metadata if provided
         if let challengeId = challengeId {
             workout.challengeId = challengeId.uuidString
+            print("🔵 Set workout.challengeId = \(challengeId.uuidString)")
         }
         if let day = challengeDay {
             workout.challengeDay = Int16(day)
+            print("🔵 Set workout.challengeDay = \(day)")
         }
         
         saveContext()
-        fetchWorkouts() // Refresh the list
+        print("🔵 Context saved to CoreData")
         
-        print("💾 Saved workout: \(String(format: "%.2f", distance))mi, \(Int(calories))cal, \(Int(ruckWeight))lbs")
+        fetchWorkouts() // Refresh the list
+        print("🔵 Current workout count AFTER save: \(workouts.count)")
+        print("🔵 ===== WORKOUT SAVED =====\n")
     }
     
     /// Fetch all workouts ordered by date (newest first)
@@ -188,6 +206,15 @@ class WorkoutDataManager: ObservableObject {
         do {
             workouts = try context.fetch(request)
             print("📊 Fetched \(workouts.count) workouts from CoreData")
+            
+            // Log program workouts for debugging
+            let programWorkouts = workouts.filter { $0.programId != nil }
+            if !programWorkouts.isEmpty {
+                print("📊 Program workouts breakdown:")
+                for workout in programWorkouts {
+                    print("   - ProgramID: \(workout.programId ?? "nil"), Day: \(workout.programWorkoutDay), Date: \(workout.date?.formatted() ?? "nil")")
+                }
+            }
         } catch {
             print("❌ Failed to fetch workouts: \(error)")
             workouts = []
@@ -255,6 +282,10 @@ class WorkoutDataManager: ObservableObject {
     
     /// Delete all workouts associated with a specific program
     func deleteWorkoutsForProgram(_ programId: UUID) {
+        print("\n🔴 ===== DELETING PROGRAM WORKOUTS =====")
+        print("🔴 Program ID: \(programId.uuidString)")
+        print("🔴 Total workouts BEFORE delete: \(workouts.count)")
+        
         let request: NSFetchRequest<WorkoutEntity> = WorkoutEntity.fetchRequest()
         request.predicate = NSPredicate(format: "programId == %@", programId.uuidString)
         
@@ -262,14 +293,18 @@ class WorkoutDataManager: ObservableObject {
             let workoutsToDelete = try context.fetch(request)
             let count = workoutsToDelete.count
             
-            for workout in workoutsToDelete {
+            print("🔴 Found \(count) workouts to delete for this program")
+            for (index, workout) in workoutsToDelete.enumerated() {
+                print("🔴 Deleting workout \(index + 1): Day \(workout.programWorkoutDay), Date: \(workout.date?.formatted() ?? "nil")")
                 context.delete(workout)
             }
             
             saveContext()
-            fetchWorkouts()
+            print("🔴 Context saved after deletion")
             
-            print("🗑️ Deleted \(count) workouts for program: \(programId)")
+            fetchWorkouts()
+            print("🔴 Total workouts AFTER delete: \(workouts.count)")
+            print("🔴 ===== DELETION COMPLETE =====\n")
         } catch {
             print("❌ Failed to delete program workouts: \(error)")
         }
@@ -351,6 +386,31 @@ class WorkoutDataManager: ObservableObject {
             heartRate: 135  // 135 bpm
         )
         print("📝 Created sample workout for testing")
+    }
+    
+    /// Dump all workouts in CoreData for debugging
+    func dumpAllWorkouts() {
+        print("\n🔍 ===== DUMPING ALL WORKOUTS IN COREDATA =====")
+        print("🔍 Total workouts: \(workouts.count)")
+        
+        if workouts.isEmpty {
+            print("🔍 No workouts found in CoreData")
+        } else {
+            for (index, workout) in workouts.enumerated() {
+                print("🔍 [\(index + 1)] ----------------")
+                print("🔍   Date: \(workout.date?.formatted() ?? "nil")")
+                print("🔍   Distance: \(String(format: "%.2f", workout.distance))mi")
+                print("🔍   Duration: \(Int(workout.duration))s")
+                print("🔍   Calories: \(Int(workout.calories))")
+                print("🔍   Ruck Weight: \(Int(workout.ruckWeight))lbs")
+                print("🔍   Program ID: \(workout.programId ?? "NONE")")
+                print("🔍   Program Day: \(workout.programWorkoutDay)")
+                print("🔍   Challenge ID: \(workout.challengeId ?? "NONE")")
+                print("🔍   Challenge Day: \(workout.challengeDay)")
+            }
+        }
+        
+        print("🔍 ===== DUMP COMPLETE =====\n")
     }
     
     /// Get average pace across all workouts
