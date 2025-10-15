@@ -6,7 +6,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 1: Foundation - High Frequency\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 6 miles\n\nWelcome to Selection Prep! 48+ hour endurance events require extreme preparation. Multiple sessions daily.",
+    "instructions": "Week 1: Foundation - High Frequency\n\n\u2022 Distance: 6 miles\n\nWelcome to Selection Prep! 48+ hour endurance events require extreme preparation. Multiple sessions daily.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -26,7 +26,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 8 Mile Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 8 miles\n\nPM: 3 miles light + PT",
+    "instructions": "AM: 8 Mile Ruck\n\n\u2022 Distance: 8 miles\n\nPM: 3 miles light + PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -46,7 +46,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 10 miles",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 10 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -76,7 +76,7 @@
     "workout_type": "ruck",
     "distance_miles": "7.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 2: Foundation Build\n\n\u2022 Weight: 32 lbs\n\u2022 Distance: 7 miles",
+    "instructions": "Week 2: Foundation Build\n\n\u2022 Distance: 7 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -96,7 +96,7 @@
     "workout_type": "ruck",
     "distance_miles": "9.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 9 Mile Ruck\n\n\u2022 Weight: 32 lbs\n\u2022 Distance: 9 miles\n\nPM: 4 miles + heavy PT",
+    "instructions": "AM: 9 Mile Ruck\n\n\u2022 Distance: 9 miles\n\nPM: 4 miles + heavy PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -116,7 +116,7 @@
     "workout_type": "ruck",
     "distance_miles": "12.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck\n\n\u2022 Weight: 32 lbs\n\u2022 Distance: 12 miles",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 12 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -146,7 +146,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 3: Pace Development - Speed Work\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 8 miles",
+    "instructions": "Week 3: Pace Development - Speed Work\n\n\u2022 Distance: 8 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -166,7 +166,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "16.00",
-    "instructions": "AM: 10 Miles Fast\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 10 miles\n\u2022 Pace: 16 min/mile\n\nPM: 5 miles easy + PT",
+    "instructions": "AM: 10 Miles Fast\n\n\u2022 Distance: 10 miles\n\u2022 Pace: 16 min/mile\n\nPM: 5 miles easy + PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -186,7 +186,7 @@
     "workout_type": "ruck",
     "distance_miles": "14.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 14 miles",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 14 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -216,7 +216,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 4: Work Capacity - Multiple Sessions Daily\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 8 miles\n\nAM + PM sessions standard",
+    "instructions": "Week 4: Work Capacity - Multiple Sessions Daily\n\n\u2022 Distance: 8 miles\n\nAM + PM sessions standard",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -236,7 +236,7 @@
     "workout_type": "ruck",
     "distance_miles": "12.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 12 Mile Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 12 miles\n\nPM: 6 miles + max PT",
+    "instructions": "AM: 12 Mile Ruck\n\n\u2022 Distance: 12 miles\n\nPM: 6 miles + max PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -256,7 +256,7 @@
     "workout_type": "ruck",
     "distance_miles": "15.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck - 15 Miles\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 15 miles",
+    "instructions": "Long Ruck - 15 Miles\n\n\u2022 Distance: 15 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -286,7 +286,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 5: Load Progression - Heavy Rucks\n\n\u2022 Weight: 38 lbs\n\u2022 Distance: 10 miles",
+    "instructions": "Week 5: Load Progression - Heavy Rucks\n\n\u2022 Distance: 10 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -306,7 +306,7 @@
     "workout_type": "ruck",
     "distance_miles": "12.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 12 Miles Heavy\n\n\u2022 Weight: 38 lbs\n\u2022 Distance: 12 miles\n\nPM: 5 miles light + PT",
+    "instructions": "AM: 12 Miles Heavy\n\n\u2022 Distance: 12 miles\n\nPM: 5 miles light + PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -326,7 +326,7 @@
     "workout_type": "ruck",
     "distance_miles": "16.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Heavy Ruck\n\n\u2022 Weight: 38 lbs\n\u2022 Distance: 16 miles",
+    "instructions": "Long Heavy Ruck\n\n\u2022 Distance: 16 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -356,7 +356,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 6: Intensification - 2-a-Days Standard\n\n\u2022 Weight: 40 lbs\n\u2022 Distance: 10 miles",
+    "instructions": "Week 6: Intensification - 2-a-Days Standard\n\n\u2022 Distance: 10 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -376,7 +376,7 @@
     "workout_type": "ruck",
     "distance_miles": "14.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 14 Miles Max Weight\n\n\u2022 Weight: 40 lbs\n\u2022 Distance: 14 miles\n\nPM: 6 miles + max effort PT",
+    "instructions": "AM: 14 Miles Max Weight\n\n\u2022 Distance: 14 miles\n\nPM: 6 miles + max effort PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -396,7 +396,7 @@
     "workout_type": "ruck",
     "distance_miles": "18.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Heavy - 18 Miles!\n\n\u2022 Weight: 40 lbs\n\u2022 Distance: 18 miles",
+    "instructions": "Long Heavy - 18 Miles!\n\n\u2022 Distance: 18 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -426,7 +426,7 @@
     "workout_type": "ruck",
     "distance_miles": "12.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 7: Peak Volume - Maximum Workload\n\n\u2022 Weight: 42 lbs\n\u2022 Distance: 12 miles\n\nPeak week!",
+    "instructions": "Week 7: Peak Volume - Maximum Workload\n\n\u2022 Distance: 12 miles\n\nPeak week!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -446,7 +446,7 @@
     "workout_type": "ruck",
     "distance_miles": "15.00",
     "target_pace_minutes": "17.00",
-    "instructions": "AM: 15 Miles Peak\n\n\u2022 Weight: 42 lbs\n\u2022 Distance: 15 miles\n\nPM: 7 miles + brutal PT",
+    "instructions": "AM: 15 Miles Peak\n\n\u2022 Distance: 15 miles\n\nPM: 7 miles + brutal PT",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -466,7 +466,7 @@
     "workout_type": "ruck",
     "distance_miles": "20.00",
     "target_pace_minutes": "17.00",
-    "instructions": "PEAK LONG RUCK - 20 MILES!\n\n\u2022 Weight: 42 lbs\n\u2022 Distance: 20 miles\n\nThis is your peak!",
+    "instructions": "PEAK LONG RUCK - 20 MILES!\n\n\u2022 Distance: 20 miles\n\nThis is your peak!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -496,7 +496,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 8: Final Week - Event Ready\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 8 miles\n\nTaper and prep for selection!",
+    "instructions": "Week 8: Final Week - Event Ready\n\n\u2022 Distance: 8 miles\n\nTaper and prep for selection!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -516,7 +516,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Confidence Builder\n\n\u2022 Weight: 40 lbs\n\u2022 Distance: 10 miles\n\nFeeling strong!",
+    "instructions": "Confidence Builder\n\n\u2022 Distance: 10 miles\n\nFeeling strong!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -536,7 +536,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Final Sharpener\n\n\u2022 Weight: 40 lbs\n\u2022 Distance: 6 miles\n\u2022 Fast pace\n\nStaying sharp!",
+    "instructions": "Final Sharpener\n\n\u2022 Distance: 6 miles\n\u2022 Fast pace\n\nStaying sharp!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {

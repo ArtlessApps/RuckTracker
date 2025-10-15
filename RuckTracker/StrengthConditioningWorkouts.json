@@ -6,7 +6,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 1: Strength Foundation - Establishing Baseline\n\n• Weight: 30 lbs\n• Distance: 4 miles\n\nWelcome to Strength & Conditioning! Building serious strength while maintaining rucking capacity.",
+    "instructions": "Week 1: Strength Foundation - Establishing Baseline\n\n• Distance: 4 miles\n\nWelcome to Strength & Conditioning! Building serious strength while maintaining rucking capacity.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -26,7 +26,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Final Test Ruck\n\n• Weight: 40 lbs\n• Distance: 8 miles\n\nShow what you've built!",
+    "instructions": "Final Test Ruck\n\n• Distance: 8 miles\n\nShow what you've built!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {

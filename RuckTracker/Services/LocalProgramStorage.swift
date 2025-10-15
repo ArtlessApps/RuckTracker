@@ -6,17 +6,15 @@ class LocalProgramStorage {
     
     private let defaults = UserDefaults.standard
     private let enrollmentKey = "enrolled_program_id"
-    private let startingWeightKey = "program_starting_weight"
     private let enrollmentDateKey = "program_enrollment_date"
     
     private init() {}
     
     // MARK: - Program Enrollment
     
-    func enrollInProgram(_ programId: UUID, startingWeight: Double) {
+    func enrollInProgram(_ programId: UUID) {
         print("\n🟢 ===== ENROLLING IN PROGRAM =====")
         print("🟢 Program ID: \(programId.uuidString)")
-        print("🟢 Starting Weight: \(startingWeight) lbs")
         print("🟢 Enrollment Date: \(Date())")
         
         // Delete any existing workouts for this program FIRST
@@ -26,7 +24,6 @@ class LocalProgramStorage {
         
         // Then set the new enrollment
         defaults.set(programId.uuidString, forKey: enrollmentKey)
-        defaults.set(startingWeight, forKey: startingWeightKey)
         defaults.set(Date(), forKey: enrollmentDateKey)
         
         print("🟢 Enrollment data saved to UserDefaults")
@@ -41,9 +38,6 @@ class LocalProgramStorage {
         return uuid
     }
     
-    func getStartingWeight() -> Double {
-        return defaults.double(forKey: startingWeightKey)
-    }
     
     func getEnrollmentDate() -> Date? {
         return defaults.object(forKey: enrollmentDateKey) as? Date
@@ -61,7 +55,6 @@ class LocalProgramStorage {
         
         // Clear enrollment data
         defaults.removeObject(forKey: enrollmentKey)
-        defaults.removeObject(forKey: startingWeightKey)
         defaults.removeObject(forKey: enrollmentDateKey)
         
         print("✅ Unenrolled from program and deleted all associated workouts")
@@ -75,7 +68,7 @@ class LocalProgramStorage {
         
         let userProgram = UserProgram(
             programId: programId,
-            targetWeight: getStartingWeight(),
+            targetWeight: WorkoutDataManager.shared.workouts.first?.ruckWeight ?? 20.0,
             isActive: true
         )
         
@@ -111,7 +104,7 @@ class LocalProgramStorage {
         
         // Get current week's base weight
         let currentWeekData = weeks.first { $0.weekNumber == currentWeek }
-        let currentWeight = currentWeekData?.baseWeightLbs ?? getStartingWeight()
+        let currentWeight = currentWeekData?.baseWeightLbs ?? (WorkoutDataManager.shared.workouts.first?.ruckWeight ?? 20.0)
         
         let completionPercentage = totalWorkouts > 0 
             ? Double(completedWorkouts.count) / Double(totalWorkouts) * 100.0

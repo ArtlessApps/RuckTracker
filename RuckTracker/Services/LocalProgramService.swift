@@ -111,8 +111,8 @@ class LocalProgramService: ObservableObject {
     
     // MARK: - Program Enrollment
     
-    func enrollInProgram(_ program: Program, startingWeight: Double) {
-        storage.enrollInProgram(program.id, startingWeight: startingWeight)
+    func enrollInProgram(_ program: Program) {
+        storage.enrollInProgram(program.id)
         enrolledProgram = program
         programProgress = storage.getProgramProgress(programId: program.id)
         

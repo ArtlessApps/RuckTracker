@@ -466,7 +466,9 @@ struct WeightPickerSheet: View {
     @State private var tempWeight: Double
     
     init() {
-        _tempWeight = State(initialValue: 5.0)
+        // Pre-fill with last workout weight
+        let lastWeight = WorkoutDataManager.shared.workouts.first?.ruckWeight ?? 20.0
+        _tempWeight = State(initialValue: lastWeight)
     }
     
     var body: some View {

@@ -185,7 +185,7 @@ struct BodyWeightPickerView: View {
 struct RuckWeightPickerView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.presentationMode) var presentationMode
-    @State private var selectedWeight: Double = 20.0
+    @State private var selectedWeight: Double = UserSettings.shared.defaultRuckWeight
     
     var body: some View {
         VStack(spacing: 0) {
@@ -228,7 +228,12 @@ struct RuckWeightPickerView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            selectedWeight = userSettings.defaultRuckWeight
+            // On appear, load last workout weight
+            if let lastWorkout = WorkoutDataManager.shared.workouts.first {
+                selectedWeight = lastWorkout.ruckWeight
+            } else {
+                selectedWeight = userSettings.defaultRuckWeight
+            }
         }
     }
     

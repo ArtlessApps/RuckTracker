@@ -6,7 +6,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 1: Base Building - Establishing Weekly Mileage\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\nWelcome to Endurance Build! This program will take you to 10+ miles. Starting with solid base mileage.",
+    "instructions": "Week 1: Base Building - Establishing Weekly Mileage\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\nWelcome to Endurance Build! This program will take you to 10+ miles. Starting with solid base mileage.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -26,7 +26,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Midweek Volume\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nBuilding your weekly volume. Focus on maintaining consistent pace.",
+    "instructions": "Midweek Volume\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nBuilding your weekly volume. Focus on maintaining consistent pace.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -46,7 +46,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Speed Work\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nShorter distance, faster pace. Building different energy systems.",
+    "instructions": "Speed Work\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nShorter distance, faster pace. Building different energy systems.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -66,7 +66,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYour first long ruck! Take it easy, focus on time on feet. Week 1 total: 15 miles!",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYour first long ruck! Take it easy, focus on time on feet. Week 1 total: 15 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -76,7 +76,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.50",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 2: Volume Increase - Adding Distance\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding distance across all rucks this week.",
+    "instructions": "Week 2: Volume Increase - Adding Distance\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding distance across all rucks this week.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -96,7 +96,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.50",
     "target_pace_minutes": "17.00",
-    "instructions": "Midweek Builder\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 4.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nHalf mile more than last week. You're building capacity!",
+    "instructions": "Midweek Builder\n\n\u2022 Distance: 4.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nHalf mile more than last week. You're building capacity!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -116,7 +116,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.50",
     "target_pace_minutes": "16.00",
-    "instructions": "Tempo Ruck\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nFaster pace today. Push yourself while maintaining form.",
+    "instructions": "Tempo Ruck\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nFaster pace today. Push yourself while maintaining form.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -136,7 +136,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck - 6 Miles!\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 6 miles\n\u2022 Pace: Easy (18 min/mile)\n\nFirst 6-miler! Bring water and snacks. Week 2 total: 17.5 miles!",
+    "instructions": "Long Ruck - 6 Miles!\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Easy (18 min/mile)\n\nFirst 6-miler! Bring water and snacks. Week 2 total: 17.5 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -146,7 +146,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 3: Progressive Load - More Weight, Same Volume\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding 3 lbs this week. Notice the difference?",
+    "instructions": "Week 3: Progressive Load - More Weight, Same Volume\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding 3 lbs this week. Notice the difference?",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -166,7 +166,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Midweek Push\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nYou're getting stronger with heavier weight!",
+    "instructions": "Midweek Push\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nYou're getting stronger with heavier weight!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -186,7 +186,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Tempo Session\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nBuilding speed with heavier weight.",
+    "instructions": "Tempo Session\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nBuilding speed with heavier weight.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -206,7 +206,7 @@
     "workout_type": "ruck",
     "distance_miles": "7.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck - 7 Miles!\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 7 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into higher mileage! Week 3 total: 20 miles!",
+    "instructions": "Long Ruck - 7 Miles!\n\n\u2022 Distance: 7 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into higher mileage! Week 3 total: 20 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -216,7 +216,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 4: Consolidation\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nLetting your body adapt before the next push.",
+    "instructions": "Week 4: Consolidation\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nLetting your body adapt before the next push.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -236,7 +236,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Steady State\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nMaintaining consistent work.",
+    "instructions": "Steady State\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nMaintaining consistent work.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -256,7 +256,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "15.00",
-    "instructions": "Speed Work\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 3 miles\n\u2022 Pace: Fast (15 min/mile)\n\nPushing the pace! This should feel challenging.",
+    "instructions": "Speed Work\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Fast (15 min/mile)\n\nPushing the pace! This should feel challenging.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -276,7 +276,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck - 8 Miles!\n\n\u2022 Weight: 28 lbs\n\u2022 Distance: 8 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into serious distance! Week 4 total: 20 miles!",
+    "instructions": "Long Ruck - 8 Miles!\n\n\u2022 Distance: 8 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into serious distance! Week 4 total: 20 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -286,7 +286,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 5: Long Ruck Focus - Building Time on Feet\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding to 30 lbs! You're getting seriously strong.",
+    "instructions": "Week 5: Long Ruck Focus - Building Time on Feet\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding to 30 lbs! You're getting seriously strong.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -306,7 +306,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Midweek Volume\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\n6 miles is becoming routine for you!",
+    "instructions": "Midweek Volume\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\n6 miles is becoming routine for you!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -326,7 +326,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Recovery Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 4 miles\n\u2022 Pace: Moderate (16 min/mile)\n\nShorter distance before the big one.",
+    "instructions": "Recovery Ruck\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Moderate (16 min/mile)\n\nShorter distance before the big one.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -346,7 +346,7 @@
     "workout_type": "ruck",
     "distance_miles": "9.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Long Ruck - 9 Miles!\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 9 miles\n\u2022 Pace: Easy (18 min/mile)\n\nNearly double-digit miles! Week 5 total: 24 miles!",
+    "instructions": "Long Ruck - 9 Miles!\n\n\u2022 Distance: 9 miles\n\u2022 Pace: Easy (18 min/mile)\n\nNearly double-digit miles! Week 5 total: 24 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -356,7 +356,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 6: Peak Volume - Highest Weekly Mileage\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nPeak week! This is where champions are made.",
+    "instructions": "Week 6: Peak Volume - Highest Weekly Mileage\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nPeak week! This is where champions are made.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -376,7 +376,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Midweek Grind\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nStay strong. You can do this.",
+    "instructions": "Midweek Grind\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nStay strong. You can do this.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -396,7 +396,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Tempo Work\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nKeeping the legs fresh with pace work.",
+    "instructions": "Tempo Work\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nKeeping the legs fresh with pace work.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -416,7 +416,7 @@
     "workout_type": "ruck",
     "distance_miles": "10.00",
     "target_pace_minutes": "18.00",
-    "instructions": "DOUBLE DIGITS! 10 Mile Ruck!\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 10 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYOU DID IT! Double-digit miles! This is a HUGE milestone. Week 6 total: 26 miles!",
+    "instructions": "DOUBLE DIGITS! 10 Mile Ruck!\n\n\u2022 Distance: 10 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYOU DID IT! Double-digit miles! This is a HUGE milestone. Week 6 total: 26 miles!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -426,7 +426,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 7: Peak Load - Testing Your Limits\n\n\u2022 Weight: 32 lbs\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFinal weight increase to 32 lbs. You're an endurance machine now!",
+    "instructions": "Week 7: Peak Load - Testing Your Limits\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFinal weight increase to 32 lbs. You're an endurance machine now!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -446,7 +446,7 @@
     "workout_type": "ruck",
     "distance_miles": "6.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Heavy Midweek\n\n\u2022 Weight: 32 lbs\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFeeling the heavier weight? You're adapting!",
+    "instructions": "Heavy Midweek\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFeeling the heavier weight? You're adapting!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {

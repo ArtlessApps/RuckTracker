@@ -485,8 +485,8 @@ struct ProgramDetailView: View {
                 await checkEnrollmentStatus()
             }
         }) {
-            ProgramEnrollmentView(program: program) { startingWeight in
-                enrollInProgram(startingWeight: startingWeight)
+            ProgramEnrollmentView(program: program) {
+                enrollInProgram()
             }
         }
         .sheet(isPresented: $showingConflict) {
@@ -583,8 +583,8 @@ struct ProgramDetailView: View {
         }
     }
     
-    private func enrollInProgram(startingWeight: Double) {
-        programService.enrollInProgram(program, startingWeight: startingWeight)
+    private func enrollInProgram() {
+        programService.enrollInProgram(program)
         
         Task {
             await MainActor.run {
@@ -832,22 +832,18 @@ struct EnrolledSection: View {
 // MARK: - Program Enrollment View
 struct ProgramEnrollmentView: View {
     let program: Program
-    let onEnroll: (Double) -> Void
+    let onEnroll: () -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var startingWeight: Double = 20
     
     var body: some View {
         NavigationView {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Challenge Info Header - NEW
+                        // Challenge Info Header
                         challengeHeaderView
                         
-                        // Weight Selection - KEEP EXISTING
-                        weightSelectionView
-                        
-                        // Enrollment Button - UPDATE
+                        // Enrollment Button
                         enrollmentButtonView
                         
                         // Extra padding to ensure button is visible
@@ -912,74 +908,10 @@ struct ProgramEnrollmentView: View {
         )
     }
     
-    private var weightSelectionView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Select Your Starting Weight")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            Text("Choose a ruck weight that challenges you while maintaining proper form throughout the program.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Weight display
-            VStack(spacing: 8) {
-                Text("\(Int(startingWeight)) lbs")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.blue)
-                
-                Text("Starting Weight")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.blue.opacity(0.1))
-            )
-            
-            // Slider
-            HStack {
-                Text("10 lbs")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                
-                Slider(value: $startingWeight, in: 10...80, step: 5)
-                    .tint(.blue)
-                
-                Text("80 lbs")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Recommendations
-            VStack(alignment: .leading, spacing: 8) {
-                Text("💡 Recommendations")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                
-                Text("Beginner: 10-25 lbs • Intermediate: 25-45 lbs • Advanced: 45+ lbs")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.systemBackground))
-            )
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
-    }
     
     private var enrollmentButtonView: some View {
         VStack(spacing: 12) {
-            Button(action: { onEnroll(startingWeight) }) {
+            Button(action: { onEnroll() }) {
                 HStack {
                     Image(systemName: "checkmark.circle")
                     Text("Enroll in Program")

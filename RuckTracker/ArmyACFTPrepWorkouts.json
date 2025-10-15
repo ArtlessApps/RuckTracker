@@ -6,7 +6,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "18.00",
-    "instructions": "Week 1: Foundation - Baseline Fitness Test\n\n\u2022 Weight: 25 lbs\n\u2022 Distance: 3 miles\n\nWelcome to Army ACFT Prep! Training for the 12K ruck event and overall combat readiness.",
+    "instructions": "Week 1: Foundation - Baseline Fitness Test\n\n\u2022 Distance: 3 miles\n\nWelcome to Army ACFT Prep! Training for the 12K ruck event and overall combat readiness.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -36,7 +36,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 4: Strength Phase - Adding Deadlifts\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 4 miles",
+    "instructions": "Week 4: Strength Phase - Adding Deadlifts\n\n\u2022 Distance: 4 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -56,7 +56,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.50",
     "target_pace_minutes": "16.00",
-    "instructions": "Deadlift + Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 3.5 miles\n\u2022 PT: Deadlift practice (3x max deadlift)",
+    "instructions": "Deadlift + Ruck\n\n\u2022 Distance: 3.5 miles\n\u2022 PT: Deadlift practice (3x max deadlift)",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -76,7 +76,7 @@
     "workout_type": "ruck",
     "distance_miles": "7.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 7 miles",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 7 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -106,7 +106,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 5: Ruck & Run - Combined Cardio Work\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 5 miles",
+    "instructions": "Week 5: Ruck & Run - Combined Cardio Work\n\n\u2022 Distance: 5 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -146,7 +146,7 @@
     "workout_type": "ruck",
     "distance_miles": "8.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Long Ruck - 8 Miles\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 8 miles\n\n12K is 7.5 miles - you're ready!",
+    "instructions": "Long Ruck - 8 Miles\n\n\u2022 Distance: 8 miles\n\n12K is 7.5 miles - you're ready!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -176,7 +176,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 6: Integration Week\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 5 miles",
+    "instructions": "Week 6: Integration Week\n\n\u2022 Distance: 5 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -196,7 +196,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Full ACFT Practice\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 4 miles\n\u2022 PT: Complete ACFT circuit",
+    "instructions": "Full ACFT Practice\n\n\u2022 Distance: 4 miles\n\u2022 PT: Complete ACFT circuit",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -216,7 +216,7 @@
     "workout_type": "ruck",
     "distance_miles": "9.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Peak Long Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 9 miles",
+    "instructions": "Peak Long Ruck\n\n\u2022 Distance: 9 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -246,7 +246,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 7: Test Prep - Standards Practice\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 4 miles",
+    "instructions": "Week 7: Test Prep - Standards Practice\n\n\u2022 Distance: 4 miles",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -266,7 +266,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "16.00",
-    "instructions": "12K Practice\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Under 2 hours\n\nOfficial ACFT ruck distance!",
+    "instructions": "12K Practice\n\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Under 2 hours\n\nOfficial ACFT ruck distance!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -286,7 +286,7 @@
     "workout_type": "ruck",
     "distance_miles": "5.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Tempo Ruck\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 5 miles\n\u2022 Fast pace practice",
+    "instructions": "Tempo Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Fast pace practice",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -316,7 +316,7 @@
     "workout_type": "ruck",
     "distance_miles": "3.00",
     "target_pace_minutes": "17.00",
-    "instructions": "Week 8: Final Test - ACFT Simulation\n\n\u2022 Weight: 30 lbs\n\u2022 Distance: 3 miles\n\nTaper week! Staying sharp.",
+    "instructions": "Week 8: Final Test - ACFT Simulation\n\n\u2022 Distance: 3 miles\n\nTaper week! Staying sharp.",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -336,7 +336,7 @@
     "workout_type": "ruck",
     "distance_miles": "4.00",
     "target_pace_minutes": "16.00",
-    "instructions": "Sharpener\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 4 miles\n\nFinal confidence builder!",
+    "instructions": "Sharpener\n\n\u2022 Distance: 4 miles\n\nFinal confidence builder!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {
@@ -356,7 +356,7 @@
     "workout_type": "ruck",
     "distance_miles": "7.50",
     "target_pace_minutes": "15.00",
-    "instructions": "FINAL ACFT 12K TEST!\n\n\u2022 Weight: 35 lbs\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Sub-2 hour time\n\nGive it everything you've got!",
+    "instructions": "FINAL ACFT 12K TEST!\n\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Sub-2 hour time\n\nGive it everything you've got!",
     "created_at": "2025-10-10 12:00:00.000000+00"
   },
   {

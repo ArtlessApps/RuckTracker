@@ -57,25 +57,21 @@ private struct WeekJSON: Codable {
     let id: String
     let programId: String
     let weekNumber: Int
-    let baseWeightLbs: String
     let description: String
     
     enum CodingKeys: String, CodingKey {
         case id, description
         case programId = "program_id"
         case weekNumber = "week_number"
-        case baseWeightLbs = "base_weight_lbs"
     }
     
     func toLocalProgramWeek() -> LocalProgramWeek {
         let weekId = UUID(uuidString: id) ?? UUID()
-        let weight = Double(baseWeightLbs)
         
         // Create with empty workouts - will be loaded separately
         return LocalProgramWeek(
             id: weekId,
             weekNumber: weekNumber,
-            baseWeightLbs: weight,
             description: description,
             workouts: []
         )
@@ -88,6 +84,15 @@ extension LocalProgramWeek {
         self.id = id
         self.weekNumber = weekNumber
         self.baseWeightLbs = baseWeightLbs
+        self.description = description
+        self.workouts = workouts
+    }
+    
+    // Convenience initializer without base weight reference
+    init(id: UUID, weekNumber: Int, description: String?, workouts: [LocalProgramWorkout]) {
+        self.id = id
+        self.weekNumber = weekNumber
+        self.baseWeightLbs = nil
         self.description = description
         self.workouts = workouts
     }
