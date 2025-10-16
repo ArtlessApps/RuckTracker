@@ -18,6 +18,7 @@ struct ImprovedPhoneMainView: View {
     @State private var isPresentingWorkoutFlow = false
     @State private var showingWeightSelector = false
     @State private var selectedWorkoutWeight: Double = 0
+    @State private var activeTab: ActiveTab = .home
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -41,6 +42,13 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
+    enum ActiveTab {
+        case home
+        case profile
+        case analytics
+        case settings
+    }
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -50,6 +58,12 @@ struct ImprovedPhoneMainView: View {
                 bottomNavigationBar
             }
             .navigationBarHidden(true)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                WatchConnectivityBadge()
+                    .environmentObject(watchConnectivityManager)
+            }
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
@@ -106,7 +120,7 @@ struct ImprovedPhoneMainView: View {
                 justRuckCard
                 programsCard
                 challengesCard
-                dataCard
+                // dataCard  // Moved to Activity view
                 
                 // Preserve existing functionality sections
                 
@@ -116,7 +130,24 @@ struct ImprovedPhoneMainView: View {
             .padding(.top, 20)
             .padding(.bottom, 20)
         }
-        .background(Color.white)
+        .background(
+            ZStack {
+                Color("OffWhite")
+                
+                // Subtle noise texture
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color("AccentCream").opacity(0.3),
+                                Color.clear
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+        )
     }
     
     // MARK: - Main Action Cards
@@ -124,40 +155,28 @@ struct ImprovedPhoneMainView: View {
     private var justRuckCard: some View {
         VStack(spacing: 0) {
             if workoutManager.isActive {
-                // Active workout status
                 ActiveWorkoutStatusCard()
                     .environmentObject(workoutManager)
             } else {
-                // Start Rucking Card
                 VStack(spacing: 20) {
-                    // Header with unique value proposition
+                    // Header
                     VStack(spacing: 12) {
                         HStack {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("MARCH")
-                                    .font(.title)
-                                    .fontWeight(.bold)
+                                    .font(.system(size: 32, weight: .heavy, design: .default))  // Bigger, bolder
                                     .foregroundColor(.white)
                                 
-                                Text("Ruck Tracker with Guided Workouts")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white.opacity(0.9))
+                                Text("Your Ruck Training Partner")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
                             }
                             
                             Spacer()
-
-                        }
-                        
-                        // Key differentiators
-                        HStack(spacing: 16) {
-                            ClickableWeightPill(weight: workoutManager.ruckWeight)
-                                .environmentObject(workoutManager)
-                            FeaturePill(icon: "flame.fill", text: "Smart Calories")
-                            FeaturePill(icon: "target", text: "Pace Zone")
                         }
                     }
                     
-                    // Main start button
+                    // Main start button - CREAM WITH TERRACOTTA TEXT
                     Button(action: {
                         selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
                         showingWeightSelector = true
@@ -169,52 +188,37 @@ struct ImprovedPhoneMainView: View {
                                 .font(.title2)
                                 .fontWeight(.semibold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(Color("PrimaryMain"))  // Terracotta
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, 18)  // Slightly more padding
                         .background(
-                            Color("PrimaryMain").opacity(0.2)
-                                .background(.ultraThinMaterial)
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color("AccentCream"))  // Cream
                         )
-                        .cornerRadius(12)
                     }
-                    .buttonStyle(.plain)
-                    
-                    // Device integration note
-                    HStack {
-                        Image(systemName: "iphone")
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("Works great on phone")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Spacer()
-                        
-                        Image(systemName: "plus")
-                            .foregroundColor(.white.opacity(0.7))
-                            .font(.caption)
-                        
-                        Image(systemName: "applewatch")
-                            .foregroundColor(.white.opacity(0.7))
-                        Text("enhanced with watch")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
+                    .buttonStyle(HeroButtonStyle())
                 }
-                .padding()
+                .padding(24)  // More generous padding
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    Color("PrimaryMain"),
-                                    Color("PrimaryMedium"),
-                                    Color("BackgroundDark")
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                    ZStack {
+                        // Simplified gradient - fewer stops
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color("Clay"),           // Lighter at top
+                                Color("PrimaryMain")     // Main terracotta at bottom
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
+                        
+                        // Very subtle texture
+                        Image(systemName: "circle.grid.cross.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .opacity(0.02)  // Even more subtle
+                            .blendMode(.overlay)
+                    }
+                    .cornerRadius(16)
                 )
             }
         }
@@ -228,13 +232,23 @@ struct ImprovedPhoneMainView: View {
                 premiumManager.showPaywall(context: .programAccess)
             }
         }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                // Icon with sage background
+                ZStack {
+                    Circle()
+                        .fill(Color("AccentGreen").opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "figure.hiking")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color("AccentGreen"))
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Training Programs")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
+                            .font(.system(size: 22, weight: .bold, design: .default))
+                            .foregroundColor(Color("BackgroundDark"))  // Charcoal, not black
                         
                         Spacer()
                         
@@ -243,21 +257,26 @@ struct ImprovedPhoneMainView: View {
                         }
                     }
                     
-                    Text("Multi-Week Structured Training Plans")
-                        .font(.subheadline)
-                        .foregroundColor(Color("TextSecondary"))
+                    Text("Multi-Week Structured Plans")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))  // Not .secondary
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(Color("WarmGray"))
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.05))
+                    .fill(Color.white)  // Pure white, not off-white
+                    .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -271,13 +290,23 @@ struct ImprovedPhoneMainView: View {
                 premiumManager.showPaywall(context: .featureUpsell)
             }
         }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                // Icon with dusty teal background
+                ZStack {
+                    Circle()
+                        .fill(Color("AccentTeal").opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color("AccentTeal"))
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Weekly Challenges")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
+                            .font(.system(size: 22, weight: .bold, design: .default))
+                            .foregroundColor(Color("BackgroundDark"))  // Charcoal, not black
                         
                         Spacer()
                         
@@ -285,21 +314,27 @@ struct ImprovedPhoneMainView: View {
                             PremiumBadge(size: .small)
                         }
                     }
+                    
                     Text("7-Day Focused Challenges")
-                        .font(.subheadline)
-                        .foregroundColor(Color("TextSecondary"))
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))  // Not .secondary
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(Color("WarmGray"))
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.05))
+                    .fill(Color.white)  // Pure white, not off-white
+                    .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -337,7 +372,7 @@ struct ImprovedPhoneMainView: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(Color("WarmGray"))
             }
             .padding()
             .background(
@@ -355,15 +390,22 @@ struct ImprovedPhoneMainView: View {
             // Profile Button
             Button(action: {
                 activeSheet = .profile
+                activeTab = .profile
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "person.circle")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .foregroundColor(activeTab == .profile ? Color("PrimaryMain") : Color("WarmGray"))
                     
                     Text("Profile")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(activeTab == .profile ? Color("PrimaryMain") : Color("WarmGray"))
+                    
+                    if activeTab == .profile {
+                        Capsule()
+                            .fill(Color("PrimaryMain"))
+                            .frame(width: 40, height: 3)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -373,15 +415,22 @@ struct ImprovedPhoneMainView: View {
             // Activity Button
             Button(action: {
                 activeSheet = .analytics
+                activeTab = .analytics
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .foregroundColor(activeTab == .analytics ? Color("PrimaryMain") : Color("WarmGray"))
                     
                     Text("Activity")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(activeTab == .analytics ? Color("PrimaryMain") : Color("WarmGray"))
+                    
+                    if activeTab == .analytics {
+                        Capsule()
+                            .fill(Color("PrimaryMain"))
+                            .frame(width: 40, height: 3)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -391,15 +440,22 @@ struct ImprovedPhoneMainView: View {
             // Settings Button
             Button(action: {
                 activeSheet = .settings
+                activeTab = .settings
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "gearshape")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .foregroundColor(activeTab == .settings ? Color("PrimaryMain") : Color("WarmGray"))
                     
                     Text("Settings")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(activeTab == .settings ? Color("PrimaryMain") : Color("WarmGray"))
+                    
+                    if activeTab == .settings {
+                        Capsule()
+                            .fill(Color("PrimaryMain"))
+                            .frame(width: 40, height: 3)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
