@@ -971,7 +971,6 @@ struct ProgramWorkoutsView: View {
     @State private var workouts: [ProgramWorkoutWithState] = []
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
-    @State private var showingWorkoutDetail = false
     @State private var showingLeaveWarning = false
     
     init(userProgram: UserProgram?, program: Program?, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -1334,7 +1333,6 @@ struct WorkoutDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
-    @State private var showingWeightSelector = false
     @State private var selectedWorkoutWeight: Double = 0
     
     init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -1343,6 +1341,8 @@ struct WorkoutDetailView: View {
         self.onComplete = onComplete
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
         self.onDismiss = onDismiss
+        // Initialize with recommended or default weight
+        self._selectedWorkoutWeight = State(initialValue: userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight)
     }
     
     var body: some View {
@@ -1352,13 +1352,17 @@ struct WorkoutDetailView: View {
                     // Workout header
                     workoutHeader
                     
+                    // Weight Selector (only for ruck workouts, not rest days)
+                    if workout.workout.workoutType == .ruck {
+                        weightSelectorSection
+                    }
+                    
                     // Instructions
                     if let instructions = workout.workout.instructions {
                         instructionsSection(instructions)
                     }
                     
-                    
-                    // Completion status
+                    // Completion status or action
                     if workout.isCompleted {
                         completedSection
                     } else if !workout.isLocked {
@@ -1387,17 +1391,6 @@ struct WorkoutDetailView: View {
                 }
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
-            }
-            .sheet(isPresented: $showingWeightSelector) {
-                WorkoutWeightSelector(
-                    selectedWeight: $selectedWorkoutWeight,
-                    isPresented: $showingWeightSelector,
-                    context: "\(workout.workout.workoutType.rawValue.capitalized) - Week \(workout.weekNumber)",
-                    onStart: {
-                        workoutManager.startWorkout(weight: selectedWorkoutWeight)
-                        isPresentingWorkoutFlow = false
-                    }
-                )
             }
         }
     }
@@ -1431,6 +1424,89 @@ struct WorkoutDetailView: View {
         .cornerRadius(12)
     }
     
+    private var weightSelectorSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Set Ruck Weight")
+                .font(.headline)
+            
+            // Recommended hint
+            if let recommended = userProgram?.currentWeightLbs {
+                Button(action: {
+                    selectedWorkoutWeight = recommended
+                }) {
+                    HStack {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundColor(.orange)
+                        Text("Recommended: \(Int(recommended)) lbs - Tap to Use")
+                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                        Spacer()
+                        Text("Use")
+                            .fontWeight(.semibold)
+                    }
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(12)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // Weight display
+            Text("\(Int(selectedWorkoutWeight)) lbs")
+                .font(.system(size: 56, weight: .bold, design: .rounded))
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical)
+            
+            // Slider
+            VStack(spacing: 8) {
+                Slider(value: $selectedWorkoutWeight, in: 5...100, step: 5)
+                    .accentColor(.blue)
+                
+                HStack {
+                    Text("5 lbs")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("100 lbs")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            // Quick weight buttons
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Quick Select")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                    ForEach([10, 15, 20, 25, 30, 35, 40, 45], id: \.self) { weight in
+                        Button(action: {
+                            selectedWorkoutWeight = Double(weight)
+                        }) {
+                            Text("\(weight)")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(selectedWorkoutWeight == Double(weight) ? .white : .blue)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedWorkoutWeight == Double(weight) ? Color.blue : Color.blue.opacity(0.1))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+    
     private func instructionsSection(_ instructions: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Instructions", systemImage: "list.bullet.clipboard")
@@ -1444,7 +1520,6 @@ struct WorkoutDetailView: View {
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
     }
-    
     
     private var completedSection: some View {
         VStack(spacing: 12) {
@@ -1527,8 +1602,8 @@ struct WorkoutDetailView: View {
     }
     
     private func startWorkoutTracking() {
-        selectedWorkoutWeight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
-        showingWeightSelector = true
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        isPresentingWorkoutFlow = false
     }
     
     private func completeWorkout() async {
