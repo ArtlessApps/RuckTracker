@@ -52,14 +52,14 @@ struct ActiveWorkoutStatusCard: View {
             HStack {
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(workoutManager.isPaused ? Color.orange : Color.green)
+                        .fill(workoutManager.isPaused ? Color("PrimaryMain") : Color("AccentGreen"))
                         .frame(width: 8, height: 8)
                         .scaleEffect(workoutManager.isPaused ? 1.0 : 1.2)
                         .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: workoutManager.isPaused)
                     
                     Text(workoutManager.isPaused ? "Workout Paused" : "Workout Active")
                         .font(.headline)
-                        .foregroundColor(workoutManager.isPaused ? .orange : .green)
+                        .foregroundColor(workoutManager.isPaused ? Color("PrimaryMain") : Color("AccentGreen"))
                 }
                 
                 Spacer()
@@ -134,7 +134,7 @@ struct ActiveWorkoutStatusCard: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(workoutManager.isPaused ? Color.green : Color.orange)
+                            .fill(workoutManager.isPaused ? Color("AccentGreen") : Color("PrimaryMain"))
                     )
                 }
                 .buttonStyle(.plain)
@@ -224,7 +224,7 @@ struct QuickSetupCard: View {
             // Quick tips (replacing 3-step instructions)
             HStack {
                 Image(systemName: "lightbulb")
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color("PrimaryMain"))
                     .font(.caption)
                 
                 Text("Tap start to begin - watch pairing & weight can be adjusted anytime")
@@ -357,7 +357,7 @@ struct TrainingInsightsSection: View {
             distance >= distances[index - 1]
         }
         
-        return isIncreasing ? .green : .orange
+        return isIncreasing ? Color("AccentGreen") : Color("PrimaryMain")
     }
 }
 

@@ -148,7 +148,7 @@ struct ChallengeWorkoutCard: View {
                     ForEach(workouts.prefix(3)) { workout in
                         HStack {
                             Image(systemName: workout.workoutType.iconName)
-                                .foregroundColor(workout.isRestDay ? .orange : .blue)
+                                .foregroundColor(workout.isRestDay ? Color("PrimaryMain") : .blue)
                             
                             Text("Day \(workout.dayNumber): \(workout.workoutType.displayName)")
                                 .font(.caption)

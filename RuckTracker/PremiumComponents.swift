@@ -29,7 +29,7 @@ struct PremiumStatusBanner: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(
                     LinearGradient(
-                        colors: [Color.yellow.opacity(0.1), Color.orange.opacity(0.1)],
+                        colors: [Color.yellow.opacity(0.1), Color("PrimaryMain").opacity(0.1)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -293,7 +293,7 @@ struct PremiumFeatureCard: View {
                         if isLocked {
                             Image(systemName: "lock.fill")
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                         }
                     }
                     

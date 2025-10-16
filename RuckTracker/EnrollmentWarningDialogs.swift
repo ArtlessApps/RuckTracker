@@ -23,7 +23,7 @@ struct LeaveWarningDialog: View {
             // Icon
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 50))
-                .foregroundColor(.orange)
+                .foregroundColor(Color("PrimaryMain"))
             
             // Title
             Text("Leave \(name)?")
@@ -109,7 +109,7 @@ struct EnrollmentConflictDialog: View {
             // Icon
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 50))
-                .foregroundColor(.orange)
+                .foregroundColor(Color("PrimaryMain"))
             
             // Title
             Text("Already Enrolled")

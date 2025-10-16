@@ -87,8 +87,8 @@ class WorkoutManager: NSObject, ObservableObject {
         guard let pace = currentPaceMinutesPerMile else { return .gray }
         
         switch pace {
-        case 0..<14: return .orange   // Too fast
-        case 14..<18: return .green   // Good pace
+        case 0..<14: return Color("PrimaryMain")   // Too fast
+        case 14..<18: return Color("AccentGreen")   // Good pace
         case 18..<25: return .yellow  // Acceptable
         default: return .red          // Too slow
         }

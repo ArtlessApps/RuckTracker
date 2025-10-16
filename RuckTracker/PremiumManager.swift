@@ -263,7 +263,7 @@ struct PremiumOverlay: View {
             VStack(spacing: 8) {
                 Image(systemName: "crown.fill")
                     .font(.title2)
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color("PrimaryMain"))
                 
                 Text("Premium Feature")
                     .font(.headline)
@@ -279,7 +279,7 @@ struct PremiumOverlay: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.orange, lineWidth: 2)
+                            .stroke(Color("PrimaryMain"), lineWidth: 2)
                     )
             )
         }
@@ -325,7 +325,7 @@ struct PremiumBadge: View {
         .padding(.vertical, size.padding.vertical)
         .background(
             LinearGradient(
-                colors: [.orange, .red],
+                colors: [Color("PrimaryMain"), Color("PrimaryMedium")],
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -400,7 +400,7 @@ struct PremiumStatusView: View {
                 if let daysRemaining = premiumManager.freeTrialDaysRemaining {
                     Text("\(daysRemaining) days left in free trial")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color("PrimaryMain"))
                         .fontWeight(.medium)
                 }
             }
@@ -425,7 +425,7 @@ struct PremiumStatusView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Image(systemName: "crown.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color("PrimaryMain"))
                         Text("Upgrade to Pro")
                             .fontWeight(.semibold)
                         Spacer()
@@ -442,10 +442,10 @@ struct PremiumStatusView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.orange.opacity(0.1))
+                    .fill(Color("PrimaryMain").opacity(0.1))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                            .stroke(Color("PrimaryMain").opacity(0.3), lineWidth: 1)
                     )
             )
         }

@@ -166,7 +166,7 @@ struct EnrolledChallengeCard: View {
                         Text("\(Int(userChallenge.currentWeightLbs)) lbs")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color("PrimaryMain"))
                     }
                     
                     // Progress bar
@@ -212,10 +212,10 @@ struct EnrolledChallengeCard: View {
     
     private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
         switch focusArea {
-        case .power, .progressiveWeight: return .red
+        case .power, .progressiveWeight: return Color("PrimaryMedium")
         case .speed, .speedDevelopment: return .blue
-        case .distance, .enduranceProgression: return .green
-        case .recovery: return .orange
+        case .distance, .enduranceProgression: return Color("AccentGreen")
+        case .recovery: return Color("PrimaryMain")
         case .tacticalMixed: return .purple
         }
     }
@@ -295,7 +295,7 @@ struct AvailableChallengeCard: View {
                         HStack {
                             Image(systemName: "scalemass.fill")
                                 .font(.caption2)
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                             Text("\(Int(weightPercentage))% body weight")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
@@ -329,10 +329,10 @@ struct AvailableChallengeCard: View {
     
     private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
         switch focusArea {
-        case .power, .progressiveWeight: return .red
+        case .power, .progressiveWeight: return Color("PrimaryMedium")
         case .speed, .speedDevelopment: return .blue
-        case .distance, .enduranceProgression: return .green
-        case .recovery: return .orange
+        case .distance, .enduranceProgression: return Color("AccentGreen")
+        case .recovery: return Color("PrimaryMain")
         case .tacticalMixed: return .purple
         }
     }

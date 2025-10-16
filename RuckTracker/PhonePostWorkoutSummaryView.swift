@@ -74,7 +74,7 @@ struct PhonePostWorkoutSummaryView: View {
                             icon: "flame.fill",
                             title: "Calories",
                             value: "\(Int(finalCalories))",
-                            color: .orange
+                            color: Color("PrimaryMain")
                         )
                         
                         // Ruck Weight

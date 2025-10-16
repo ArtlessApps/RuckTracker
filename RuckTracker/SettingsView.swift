@@ -102,8 +102,8 @@ struct SettingsView: View {
                 // MARK: - Weight Recommendations Section
                 Section(header: Text("Rucking Guidelines"), footer: Text("Military and fitness recommendations for safe rucking")) {
                     VStack(alignment: .leading, spacing: 8) {
-                        RecommendationRow(title: "Beginner", weight: "10-15% body weight", color: .green)
-                        RecommendationRow(title: "Intermediate", weight: "15-20% body weight", color: .orange)
+                        RecommendationRow(title: "Beginner", weight: "10-15% body weight", color: Color("AccentGreen"))
+                        RecommendationRow(title: "Intermediate", weight: "15-20% body weight", color: Color("PrimaryMain"))
                         RecommendationRow(title: "Advanced", weight: "20-25% body weight", color: .red)
                         RecommendationRow(title: "Military Standard", weight: "35+ lbs", color: .blue)
                     }
@@ -114,7 +114,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundColor(healthManager.isAuthorized ? .green : .orange)
+                                .foregroundColor(healthManager.isAuthorized ? Color("AccentGreen") : Color("PrimaryMain"))
                                 .font(.system(size: 18))
                             
                             VStack(alignment: .leading, spacing: 2) {

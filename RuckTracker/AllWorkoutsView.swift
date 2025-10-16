@@ -24,7 +24,7 @@ struct AllWorkoutsView: View {
                         VStack(spacing: 20) {
                             Image(systemName: "figure.walk.motion")
                                 .font(.system(size: 50))
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                             
                             Text("No Workouts Yet")
                                 .font(.headline)
@@ -167,7 +167,7 @@ struct WorkoutDetailRowView: View {
                     .fontWeight(.semibold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.2))
+                    .background(Color("PrimaryMain").opacity(0.2))
                     .cornerRadius(6)
             }
             

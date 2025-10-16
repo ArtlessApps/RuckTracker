@@ -174,7 +174,7 @@ enum ErrorSeverity {
     var color: Color {
         switch self {
         case .info: return .blue
-        case .warning: return .orange
+        case .warning: return Color("PrimaryMain")
         case .error: return .red
         case .critical: return .purple
         }

@@ -39,7 +39,7 @@ struct AnalyticsView: View {
                     Button("Done") {
                         presentationMode.wrappedValue.dismiss()
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
             .alert("Delete Workout", isPresented: $showingDeleteAlert) {
@@ -64,7 +64,7 @@ struct AnalyticsView: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(.orange.opacity(0.6))
+                .foregroundColor(Color("PrimaryMain").opacity(0.6))
             
             Text("No Activity Data Yet")
                 .font(.title2)
@@ -143,7 +143,7 @@ struct AnalyticsView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "crown.fill")
                                 .font(.title2)
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                             
                             Text("Premium Analytics")
                                 .font(.headline)
@@ -213,11 +213,11 @@ struct AnalyticsView: View {
                             Image(systemName: "chevron.right")
                                 .font(.caption)
                         }
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color("PrimaryMain"))
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.orange.opacity(0.1))
+                                .fill(Color("PrimaryMain").opacity(0.1))
                         )
                     }
                     .buttonStyle(.plain)
@@ -244,7 +244,7 @@ struct WorkoutStatsCardView: View {
                 StatItemView(
                     value: "\(workoutDataManager.totalWorkouts)",
                     label: "Workouts",
-                    color: .orange
+                    color: Color("PrimaryMain")
                 )
                 
                 StatItemView(
@@ -338,7 +338,7 @@ struct WorkoutDetailCardView: View {
                     Text("\(Int(workout.ruckWeight)) lbs")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color("PrimaryMain"))
                 }
                 
                 Spacer()
@@ -371,7 +371,7 @@ struct WorkoutDetailCardView: View {
                 MetricView(
                     value: "\(Int(workout.calories))",
                     label: "Calories",
-                    color: .orange
+                    color: Color("PrimaryMain")
                 )
                 
                 MetricView(

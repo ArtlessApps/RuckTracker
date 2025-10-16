@@ -178,7 +178,7 @@ struct HealthKitStatusBanner: View {
                 } else if !healthManager.isAuthorized {
                     HStack(spacing: 8) {
                         Image(systemName: "heart.circle")
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color("PrimaryMain"))
                             .font(.system(size: isCompact ? 16 : 20))
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -205,10 +205,10 @@ struct HealthKitStatusBanner: View {
                     .padding(isCompact ? 8 : 12)
                     .background(
                         RoundedRectangle(cornerRadius: isCompact ? 6 : 10)
-                            .fill(Color.orange.opacity(0.08))
+                            .fill(Color("PrimaryMain").opacity(0.08))
                             .overlay(
                                 RoundedRectangle(cornerRadius: isCompact ? 6 : 10)
-                                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color("PrimaryMain").opacity(0.3), lineWidth: 1)
                             )
                     )
                 }

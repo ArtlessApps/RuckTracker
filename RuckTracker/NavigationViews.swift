@@ -304,7 +304,7 @@ struct FixedSizeProgramCard: View {
                             Spacer()
                             Image(systemName: "lock.fill")
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                             Spacer()
                         }
                     } else {
@@ -322,7 +322,7 @@ struct FixedSizeProgramCard: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isLocked ? Color.orange.opacity(0.3) : Color.blue.opacity(0.2), 
+                                isLocked ? Color("PrimaryMain").opacity(0.3) : Color.blue.opacity(0.2), 
                                 lineWidth: 1
                             )
                     )
@@ -333,10 +333,10 @@ struct FixedSizeProgramCard: View {
     
     private var difficultyColor: Color {
         switch difficulty.lowercased() {
-        case "beginner": return .green
+        case "beginner": return Color("AccentGreen")
         case "intermediate": return .yellow
-        case "advanced": return .orange
-        case "elite": return .red
+        case "advanced": return Color("PrimaryMain")
+        case "elite": return Color("PrimaryMedium")
         default: return .blue
         }
     }
@@ -418,7 +418,7 @@ struct DatabaseProgramCard: View {
                             Spacer()
                             Image(systemName: "lock.fill")
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundColor(Color("PrimaryMain"))
                             Spacer()
                         }
                     } else {
@@ -436,7 +436,7 @@ struct DatabaseProgramCard: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isLocked ? Color.orange.opacity(0.3) : Color.blue.opacity(0.2), 
+                                isLocked ? Color("PrimaryMain").opacity(0.3) : Color.blue.opacity(0.2), 
                                 lineWidth: 1
                             )
                     )
@@ -447,10 +447,10 @@ struct DatabaseProgramCard: View {
     
     private var difficultyColor: Color {
         switch program.difficulty {
-        case .beginner: return .green
+        case .beginner: return Color("AccentGreen")
         case .intermediate: return .yellow
-        case .advanced: return .orange
-        case .elite: return .red
+        case .advanced: return Color("PrimaryMain")
+        case .elite: return Color("PrimaryMedium")
         }
     }
     

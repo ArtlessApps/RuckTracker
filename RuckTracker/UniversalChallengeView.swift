@@ -421,7 +421,7 @@ struct ChallengeWorkoutDetailView: View {
                 }) {
                     HStack {
                         Image(systemName: "lightbulb.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color("PrimaryMain"))
                         Text("Recommended: \(Int(recommended)) lbs - Tap to Use")
                             .foregroundColor(.secondary)
                             .font(.subheadline)

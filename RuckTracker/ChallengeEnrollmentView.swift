@@ -19,8 +19,8 @@ struct ChallengeEnrollmentView: View {
         switch challenge.focusArea.color {
         case "red": return .red
         case "blue": return .blue
-        case "green": return .green
-        case "orange": return .orange
+        case "green": return Color("AccentGreen")
+        case "orange": return Color("PrimaryMain")
         case "purple": return .purple
         default: return .blue
         }

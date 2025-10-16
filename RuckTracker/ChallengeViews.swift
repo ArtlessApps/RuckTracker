@@ -529,7 +529,7 @@ private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
     case "green":
         return .green
     case "orange":
-        return .orange
+        return Color("PrimaryMain")
     case "purple":
         return .purple
     default:

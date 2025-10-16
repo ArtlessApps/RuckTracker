@@ -75,7 +75,7 @@ struct PremiumFeatureRow: View {
         Button(action: action) {
             HStack {
                 Image(systemName: feature.iconName)
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color("PrimaryMain"))
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -162,7 +162,7 @@ struct PremiumAnalyticsSection: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "crown.fill")
                                     .font(.title2)
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(Color("PrimaryMain"))
                                 
                                 Text("Premium Analytics")
                                     .font(.headline)
@@ -184,7 +184,7 @@ struct AnalyticsEmptyState: View {
         VStack(spacing: 12) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 32))
-                .foregroundColor(.orange.opacity(0.6))
+                .foregroundColor(Color("PrimaryMain").opacity(0.6))
             
             Text("Advanced Analytics")
                 .font(.headline)
@@ -342,7 +342,7 @@ struct PerformanceInsightsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color("PrimaryMain"))
                 
                 Text("Performance Insights")
                     .font(.subheadline)
@@ -365,7 +365,7 @@ struct PerformanceInsightsCard: View {
                 InsightRow(
                     icon: "calendar",
                     text: "3 days since last workout - consider scheduling",
-                    color: .orange
+                    color: Color("PrimaryMain")
                 )
             }
         }
@@ -631,10 +631,10 @@ struct DifficultyBadge: View {
     
     private var difficultyColor: Color {
         switch difficulty {
-        case .beginner: return .green
+        case .beginner: return Color("AccentGreen")
         case .intermediate: return .yellow
-        case .advanced: return .orange
-        case .elite: return .red
+        case .advanced: return Color("PrimaryMain")
+        case .elite: return Color("PrimaryMedium")
         }
     }
 }
@@ -679,7 +679,7 @@ struct OverviewItem: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.orange)
+                .foregroundColor(Color("PrimaryMain"))
                 .frame(width: 24)
             
             Text(title)
@@ -1398,11 +1398,6 @@ struct WorkoutDetailView: View {
     private var workoutHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: workoutIcon)
-                    .font(.system(size: 40))
-                    .foregroundColor(.blue)
-                
-                Spacer()
                 
                 if workout.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
@@ -1429,28 +1424,6 @@ struct WorkoutDetailView: View {
             Text("Set Ruck Weight")
                 .font(.headline)
             
-            // Recommended hint
-            if let recommended = userProgram?.currentWeightLbs {
-                Button(action: {
-                    selectedWorkoutWeight = recommended
-                }) {
-                    HStack {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundColor(.orange)
-                        Text("Recommended: \(Int(recommended)) lbs - Tap to Use")
-                            .foregroundColor(.secondary)
-                            .font(.subheadline)
-                        Spacer()
-                        Text("Use")
-                            .fontWeight(.semibold)
-                    }
-                    .padding()
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
-            }
-            
             // Weight display
             Text("\(Int(selectedWorkoutWeight)) lbs")
                 .font(.system(size: 56, weight: .bold, design: .rounded))
@@ -1460,45 +1433,17 @@ struct WorkoutDetailView: View {
             
             // Slider
             VStack(spacing: 8) {
-                Slider(value: $selectedWorkoutWeight, in: 5...100, step: 5)
+                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
                     .accentColor(.blue)
                 
                 HStack {
-                    Text("5 lbs")
+                    Text("0 lbs")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
                     Text("100 lbs")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                }
-            }
-            
-            // Quick weight buttons
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Quick Select")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.secondary)
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                    ForEach([10, 15, 20, 25, 30, 35, 40, 45], id: \.self) { weight in
-                        Button(action: {
-                            selectedWorkoutWeight = Double(weight)
-                        }) {
-                            Text("\(weight)")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(selectedWorkoutWeight == Double(weight) ? .white : .blue)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedWorkoutWeight == Double(weight) ? Color.blue : Color.blue.opacity(0.1))
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
                 }
             }
         }
@@ -1542,7 +1487,7 @@ struct WorkoutDetailView: View {
         .background(Color.green.opacity(0.1))
         .cornerRadius(12)
     }
-    
+
     private var actionSection: some View {
         VStack(spacing: 16) {
             if workout.workout.workoutType == .rest {
@@ -1670,7 +1615,7 @@ struct ProgressStatsSection: View {
                     value: "\(Int(currentWeight)) lbs",
                     subtitle: "ruck weight",
                     icon: "backpack.fill",
-                    color: .orange
+                    color: Color("PrimaryMain")
                 )
             }
         }

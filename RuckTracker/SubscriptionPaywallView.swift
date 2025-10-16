@@ -24,7 +24,7 @@ struct SubscriptionPaywallView: View {
             ZStack {
                 // Background gradient
                 LinearGradient(
-                    colors: [.orange.opacity(0.1), .blue.opacity(0.1)],
+                    colors: [Color("PrimaryMain").opacity(0.1), .blue.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -79,7 +79,7 @@ struct SubscriptionPaywallView: View {
         VStack(spacing: 16) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 48))
-                .foregroundColor(.orange)
+                .foregroundColor(Color("PrimaryMain"))
                 .symbolEffect(.pulse)
             
             Text("Upgrade to Pro")
@@ -245,7 +245,7 @@ struct SubscriptionPaywallView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.orange)
+                    .background(Color("PrimaryMain"))
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
@@ -306,7 +306,7 @@ private struct FeatureRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(.orange)
+                .foregroundColor(Color("PrimaryMain"))
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -339,10 +339,10 @@ struct SubscriptionOptionCard: View {
                     Text("Save \(discount)")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color("PrimaryMain"))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.2))
+                        .background(Color("PrimaryMain").opacity(0.2))
                         .cornerRadius(6)
                 } else {
                     // Spacer to maintain consistent height
@@ -391,7 +391,7 @@ struct SubscriptionOptionCard: View {
                     .fill(Color.gray.opacity(0.1))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
+                            .stroke(isSelected ? Color("PrimaryMain") : Color.clear, lineWidth: 2)
                     )
             )
         }

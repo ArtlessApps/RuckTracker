@@ -134,12 +134,12 @@ struct ImprovedPhoneMainView: View {
                     VStack(spacing: 12) {
                         HStack {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("RuckTracker")
+                                Text("MARCH")
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                                 
-                                Text("Military-grade tracking with accurate load calculations")
+                                Text("Ruck Tracker with Guided Workouts")
                                     .font(.subheadline)
                                     .foregroundColor(.white.opacity(0.9))
                             }
@@ -173,7 +173,7 @@ struct ImprovedPhoneMainView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
-                            Color.green.opacity(0.2)
+                            Color("PrimaryMain").opacity(0.2)
                                 .background(.ultraThinMaterial)
                         )
                         .cornerRadius(12)
@@ -207,9 +207,9 @@ struct ImprovedPhoneMainView: View {
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
-                                    Color(red: 0.173, green: 0.325, blue: 0.392), // #2C5364
-                                    Color(red: 0.125, green: 0.227, blue: 0.263), // #203A43
-                                    Color(red: 0.059, green: 0.125, blue: 0.153)  // #0F2027
+                                    Color("PrimaryMain"),
+                                    Color("PrimaryMedium"),
+                                    Color("BackgroundDark")
                                 ]),
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -245,14 +245,14 @@ struct ImprovedPhoneMainView: View {
                     
                     Text("Multi-Week Structured Training Plans")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color("TextSecondary"))
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color("PrimaryMain"))
             }
             .padding()
             .background(
@@ -287,14 +287,14 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("7-Day Focused Challenges")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color("TextSecondary"))
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color("PrimaryMain"))
             }
             .padding()
             .background(
@@ -330,14 +330,14 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("Export your workout data")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color("TextSecondary"))
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color("PrimaryMain"))
             }
             .padding()
             .background(
