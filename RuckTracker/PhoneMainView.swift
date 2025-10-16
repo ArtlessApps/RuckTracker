@@ -59,12 +59,6 @@ struct ImprovedPhoneMainView: View {
             }
             .navigationBarHidden(true)
         }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                WatchConnectivityBadge()
-                    .environmentObject(watchConnectivityManager)
-            }
-        }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .profile:
@@ -127,7 +121,7 @@ struct ImprovedPhoneMainView: View {
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 20)
+            .padding(.top, 60)  // Accounts for status bar + breathing room
             .padding(.bottom, 20)
         }
         .background(
@@ -158,67 +152,86 @@ struct ImprovedPhoneMainView: View {
                 ActiveWorkoutStatusCard()
                     .environmentObject(workoutManager)
             } else {
-                VStack(spacing: 20) {
-                    // Header
-                    VStack(spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("MARCH")
-                                    .font(.system(size: 32, weight: .heavy, design: .default))  // Bigger, bolder
-                                    .foregroundColor(.white)
+                ZStack {
+                    VStack(spacing: 20) {
+                        // Header
+                        VStack(spacing: 12) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("MARCH")
+                                        .font(.system(size: 46, weight: .heavy, design: .default))
+                                        .foregroundColor(.white)
+                                        .tracking(2)
+                                    
+                                    Text("Your Ruck Training Partner")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.90))
+                                }
                                 
-                                Text("Your Ruck Training Partner")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
+                                Spacer()
                             }
-                            
-                            Spacer()
                         }
-                    }
                     
-                    // Main start button - CREAM WITH TERRACOTTA TEXT
-                    Button(action: {
-                        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                        showingWeightSelector = true
-                    }) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "play.fill")
-                                .font(.title2)
-                            Text("Start Rucking Now")
-                                .font(.title2)
-                                .fontWeight(.semibold)
+                        // BOLD TERRACOTTA BUTTON
+                        Button(action: {
+                            selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                            showingWeightSelector = true
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "play.fill")
+                                    .font(.title2)
+                                Text("Start Rucking Now")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color("PrimaryMain"))  // Terracotta
+                            )
                         }
-                        .foregroundColor(Color("PrimaryMain"))  // Terracotta
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)  // Slightly more padding
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color("AccentCream"))  // Cream
-                        )
+                        .buttonStyle(HeroButtonStyle())
                     }
-                    .buttonStyle(HeroButtonStyle())
+                    .padding(28)
+                    
+                    // Watch connectivity badge positioned at top right
+                    VStack {
+                        HStack {
+                            Spacer()
+                            WatchConnectivityBadge()
+                                .environmentObject(watchConnectivityManager)
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 10)
+                    .padding(.trailing, 20)
                 }
-                .padding(24)  // More generous padding
                 .background(
                     ZStack {
-                        // Simplified gradient - fewer stops
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color("Clay"),           // Lighter at top
-                                Color("PrimaryMain")     // Main terracotta at bottom
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                        // Base dark color (solid, no gradient needed)
+                        Color("BackgroundDark")
                         
-                        // Very subtle texture
-                        Image(systemName: "circle.grid.cross.fill")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .opacity(0.02)  // Even more subtle
-                            .blendMode(.overlay)
+                        // Warm terracotta glow - REFINED
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    gradient: Gradient(colors: [
+                                        Color("PrimaryMain").opacity(0.18),  // Slightly more visible at center
+                                        Color("PrimaryMain").opacity(0.08),  // Fades to almost nothing
+                                        Color.clear
+                                    ]),
+                                    center: .topTrailing,
+                                    startRadius: 20,
+                                    endRadius: 180
+                                )
+                            )
+                            .frame(width: 300, height: 300)
+                            .offset(x: 120, y: -80)  // Adjusted position
                     }
                     .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)  // Slightly stronger shadow
                 )
             }
         }
