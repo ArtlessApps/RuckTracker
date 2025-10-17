@@ -972,7 +972,6 @@ struct ProgramWorkoutsView: View {
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
     @State private var showingLeaveWarning = false
-    @State private var showingActiveWorkoutFullScreen = false
     @EnvironmentObject var workoutManager: WorkoutManager
     
     init(userProgram: UserProgram?, program: Program?, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -1022,7 +1021,6 @@ struct ProgramWorkoutsView: View {
                             }
                         },
                         isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
-                        showingActiveWorkoutFullScreen: $showingActiveWorkoutFullScreen,
                         onDismiss: onDismiss
                     )
                     .environmentObject(workoutManager)
@@ -1047,10 +1045,6 @@ struct ProgramWorkoutsView: View {
                         }
                     )
                 }
-            }
-            .fullScreenCover(isPresented: $showingActiveWorkoutFullScreen) {
-                ActiveWorkoutFullScreenView()
-                    .environmentObject(workoutManager)
             }
         }
         .task {
@@ -1334,7 +1328,6 @@ struct WorkoutDetailView: View {
     let userProgram: UserProgram?
     let onComplete: () -> Void
     @Binding var isPresentingWorkoutFlow: Bool
-    @Binding var showingActiveWorkoutFullScreen: Bool
     let onDismiss: (() -> Void)?
     
     @Environment(\.dismiss) private var dismiss
@@ -1344,12 +1337,11 @@ struct WorkoutDetailView: View {
     @State private var showingCompletionConfirmation = false
     @State private var selectedWorkoutWeight: Double = 0
     
-    init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, showingActiveWorkoutFullScreen: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
+    init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.workout = workout
         self.userProgram = userProgram
         self.onComplete = onComplete
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
-        self._showingActiveWorkoutFullScreen = showingActiveWorkoutFullScreen
         self.onDismiss = onDismiss
         // Initialize with recommended or default weight
         self._selectedWorkoutWeight = State(initialValue: userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight)
@@ -1558,7 +1550,7 @@ struct WorkoutDetailView: View {
     
     private func startWorkoutTracking() {
         workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        showingActiveWorkoutFullScreen = true
+        // That's it! PhoneMainView handles the rest automatically
     }
     
     private func completeWorkout() async {
