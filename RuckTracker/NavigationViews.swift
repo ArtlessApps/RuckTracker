@@ -2,14 +2,13 @@ import SwiftUI
 import Foundation
 import Combine
 
-// Import required models and components
-// These are defined in other files in the project
+// TrainingProgramsView.swift
+// Premium training programs view with clean, minimal aesthetic
+import SwiftUI
 
-// MARK: - Training Programs View
 struct TrainingProgramsView: View {
     @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var premiumManager: PremiumManager
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @StateObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
     @Environment(\.dismiss) private var dismiss
@@ -17,66 +16,53 @@ struct TrainingProgramsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Header section
-                    VStack(alignment: .leading, spacing: 16) {
-
-                        Text("Military-designed structured training plans to build strength, endurance, and mental toughness.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Training Programs")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(Color("BackgroundDark"))
+                        
+                        Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 40)
                     
-                    // Program cards section
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Training Programs")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                            
-                            Spacer()
-                            
-                            if !premiumManager.isPremiumUser {
-                                PremiumBadge(size: .small)
-                            }
-                        }
-                        
-                        // Dynamic program cards from database
-                        if programService.isLoading {
-                            ProgressView("Loading programs...")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                        } else if programService.programs.isEmpty {
-                            Text("No programs available")
-                                .foregroundColor(.secondary)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                        } else {
-                            VStack(spacing: 16) {
-                                // ENROLLED PROGRAMS SECTION (NEW)
-                                if !enrolledPrograms.isEmpty {
-                                    enrolledProgramsSection
-                                }
+                    // Programs List
+                    if programService.isLoading {
+                        ProgressView()
+                            .padding()
+                    } else if programService.programs.isEmpty {
+                        emptyStateView
+                    } else {
+                        VStack(spacing: 0) {
+                            // Active Programs Section
+                            if !enrolledPrograms.isEmpty {
+                                activeProgramsSection
                                 
-                                // AVAILABLE PROGRAMS SECTION
-                                availableProgramsSection
+                                Spacer()
+                                    .frame(height: 40)
                             }
+                            
+                            // Available Programs Section
+                            availableProgramsSection
                         }
                     }
-                    .padding(.horizontal, 20)
                     
                     Spacer(minLength: 100)
                 }
             }
-            .navigationTitle("Training Programs")
-            .navigationBarTitleDisplayMode(.large)
+            .background(Color.white)
+            .navigationBarHidden(true)
         }
         .sheet(item: $selectedProgram) { program in
             ProgramDetailView(
-                program: program, 
+                program: program,
                 isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
                 onDismiss: {
                     selectedProgram = nil
@@ -84,23 +70,8 @@ struct TrainingProgramsView: View {
             )
             .environmentObject(programService)
         }
-        // Note: workoutManager is inherited from parent environment
-        .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
-        }
-        .onChange(of: isPresentingWorkoutFlow) { newValue in
-            if !newValue {
-                dismiss()
-            }
-        }
         .onAppear {
-            // Load programs and enrollment status when view appears
             programService.loadPrograms()
-            programService.loadEnrollmentStatus()
-            programService.loadUserPrograms()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .programEnrollmentCompleted)) { _ in
-            // Refresh enrollment status when enrollment changes
             programService.loadEnrollmentStatus()
             programService.loadUserPrograms()
         }
@@ -117,57 +88,56 @@ struct TrainingProgramsView: View {
                 }
                 return nil
             }
-            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
     }
     
     private var availablePrograms: [Program] {
-        let enrolledIds = Set(programService.userPrograms.map { $0.programId })
-        return programService.programs
-            .filter { !enrolledIds.contains($0.id) }
-            .sorted { $0.isFeatured && !$1.isFeatured } // Featured first
+        let enrolledIds = Set(enrolledPrograms.map { $0.1.id })
+        return programService.programs.filter { !enrolledIds.contains($0.id) }
     }
     
-    // MARK: - Enrolled Section
+    // MARK: - Active Programs Section
     
-    private var enrolledProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var activeProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Active Programs")
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color("TextSecondary"))
+                .padding(.horizontal, 24)
             
-            ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
-                DatabaseProgramCard(
-                    program: program,
-                    isLocked: false // Enrolled programs are never locked
-                ) {
-                    selectedProgram = program
+            VStack(spacing: 12) {
+                ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
+                    ProgramRowView(
+                        program: program,
+                        isActive: true,
+                        progress: calculateProgress(userProgram: userProgram)
+                    )
+                    .onTapGesture {
+                        selectedProgram = program
+                    }
                 }
-                .padding(.horizontal)
             }
-            
-            Divider()
-                .padding(.vertical, 8)
-                .padding(.horizontal)
+            .padding(.horizontal, 24)
         }
     }
     
-    // MARK: - Available Section
+    // MARK: - Available Programs Section
     
     private var availableProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Available Programs")
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color("TextSecondary"))
+                .padding(.horizontal, 24)
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 2), spacing: 16) {
+            VStack(spacing: 12) {
                 ForEach(availablePrograms) { program in
-                    DatabaseProgramCard(
+                    ProgramRowView(
                         program: program,
-                        isLocked: !premiumManager.isPremiumUser && program.category != .fitness
-                    ) {
-                        if premiumManager.isPremiumUser || program.category == .fitness {
+                        isActive: false,
+                        progress: nil
+                    )
+                    .onTapGesture {
+                        if premiumManager.isPremiumUser {
                             selectedProgram = program
                         } else {
                             premiumManager.showPaywall(context: .programAccess)
@@ -175,38 +145,344 @@ struct TrainingProgramsView: View {
                     }
                 }
             }
+            .padding(.horizontal, 24)
         }
+    }
+    
+    // MARK: - Empty State
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Text("No programs available")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(Color("BackgroundDark"))
+            
+            Text("Check back soon for new training programs")
+                .font(.system(size: 14))
+                .foregroundColor(Color("TextSecondary"))
+        }
+        .padding(.top, 60)
+    }
+    
+    // MARK: - Helpers
+    
+    private func calculateProgress(userProgram: UserProgram) -> Double {
+        // Use the programProgress property from the service
+        if let progress = programService.programProgress {
+            return progress.completionPercentage / 100.0
+        }
+        return 0.0
     }
 }
 
+// MARK: - Program Row Component
+
+struct ProgramRowView: View {
+    let program: Program
+    let isActive: Bool
+    let progress: Double?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Title & Duration
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program.title)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    if let description = program.description {
+                        Text(description)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                            .lineLimit(2)
+                    }
+                }
+                
+                Spacer()
+                
+                // Duration badge
+                Text("\(program.durationWeeks)w")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+            }
+            
+            // Progress bar (if active)
+            if let progress = progress {
+                VStack(alignment: .leading, spacing: 6) {
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            // Background
+                            Rectangle()
+                                .fill(Color("BackgroundDark").opacity(0.1))
+                                .frame(height: 4)
+                            
+                            // Progress
+                            Rectangle()
+                                .fill(Color("PrimaryMain"))
+                                .frame(width: geometry.size.width * progress, height: 4)
+                        }
+                    }
+                    .frame(height: 4)
+                    
+                    Text("\(Int(progress * 100))% complete")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    TrainingProgramsView(isPresentingWorkoutFlow: .constant(false))
+        .environmentObject(PremiumManager.shared)
+}
 // MARK: - Updated Challenges View
 struct ChallengesView: View {
     @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var premiumManager: PremiumManager
+    @StateObject private var challengeService = LocalChallengeService.shared
+    @State private var selectedChallenge: Challenge?
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Use the new Challenges Section
-                    ChallengesSection(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
-                        .environmentObject(premiumManager)
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Challenges")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(Color("BackgroundDark"))
+                        
+                        Text("7-day focused challenges designed to build specific skills and push your limits.")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 40)
+                    
+                    // Challenges List
+                    if challengeService.isLoading {
+                        ProgressView()
+                            .padding()
+                    } else if challengeService.challenges.isEmpty {
+                        emptyStateView
+                    } else {
+                        VStack(spacing: 0) {
+                            // Active Challenges Section
+                            if !enrolledChallenges.isEmpty {
+                                activeChallengesSection
+                                
+                                Spacer()
+                                    .frame(height: 40)
+                            }
+                            
+                            // Available Challenges Section
+                            availableChallengesSection
+                        }
+                    }
                     
                     Spacer(minLength: 100)
                 }
             }
-            .navigationTitle("Challenges")
-            .navigationBarTitleDisplayMode(.large)
+            .background(Color.white)
+            .navigationBarHidden(true)
+        }
+        .sheet(item: $selectedChallenge) { challenge in
+            ChallengeDetailView(
+                challenge: challenge,
+                isPresentingWorkoutFlow: $isPresentingWorkoutFlow
+            )
+            .environmentObject(challengeService)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+        .onAppear {
+            challengeService.loadChallenges()
+            challengeService.loadEnrollmentStatus()
+            challengeService.loadUserChallenges()
         }
         .onChange(of: isPresentingWorkoutFlow) { newValue in
             if !newValue {
                 dismiss()
             }
         }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var enrolledChallenges: [(UserChallenge, Challenge)] {
+        challengeService.userChallenges
+            .filter { $0.isActive }
+            .compactMap { userChallenge in
+                if let challenge = challengeService.challenges.first(where: { $0.id == userChallenge.challengeId }) {
+                    return (userChallenge, challenge)
+                }
+                return nil
+            }
+    }
+    
+    private var availableChallenges: [Challenge] {
+        let enrolledIds = Set(enrolledChallenges.map { $0.1.id })
+        return challengeService.challenges.filter { !enrolledIds.contains($0.id) }
+    }
+    
+    // MARK: - Active Challenges Section
+    
+    private var activeChallengesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Active Challenges")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color("TextSecondary"))
+                .padding(.horizontal, 24)
+            
+            VStack(spacing: 12) {
+                ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
+                    ChallengeRowView(
+                        challenge: challenge,
+                        isActive: true,
+                        progress: calculateProgress(userChallenge: userChallenge)
+                    )
+                    .onTapGesture {
+                        selectedChallenge = challenge
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+        }
+    }
+    
+    // MARK: - Available Challenges Section
+    
+    private var availableChallengesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Available Challenges")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color("TextSecondary"))
+                .padding(.horizontal, 24)
+            
+            VStack(spacing: 12) {
+                ForEach(availableChallenges, id: \.id) { (challenge: Challenge) in
+                    ChallengeRowView(
+                        challenge: challenge,
+                        isActive: false,
+                        progress: nil
+                    )
+                    .onTapGesture {
+                        if premiumManager.isPremiumUser {
+                            selectedChallenge = challenge
+                        } else {
+                            premiumManager.showPaywall(context: .programAccess)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+        }
+    }
+    
+    // MARK: - Empty State
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Text("No challenges available")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(Color("BackgroundDark"))
+            
+            Text("Check back soon for new challenges")
+                .font(.system(size: 14))
+                .foregroundColor(Color("TextSecondary"))
+        }
+        .padding(.top, 60)
+    }
+    
+    // MARK: - Helpers
+    
+    private func calculateProgress(userChallenge: UserChallenge) -> Double {
+        // Use the challengeProgress property from the service
+        if let progress = challengeService.challengeProgress {
+            return progress.completionPercentage / 100.0
+        }
+        return 0.0
+    }
+}
+
+// MARK: - Challenge Row Component
+
+struct ChallengeRowView: View {
+    let challenge: Challenge
+    let isActive: Bool
+    let progress: Double?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Title & Duration
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(challenge.title)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    if let description = challenge.description {
+                        Text(description)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                            .lineLimit(2)
+                    }
+                }
+                
+                Spacer()
+                
+                // Duration badge
+                Text("\(challenge.durationDays)d")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+            }
+            
+            // Progress bar (if active)
+            if let progress = progress {
+                VStack(alignment: .leading, spacing: 6) {
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            // Background
+                            Rectangle()
+                                .fill(Color("BackgroundDark").opacity(0.1))
+                                .frame(height: 4)
+                            
+                            // Progress
+                            Rectangle()
+                                .fill(Color("PrimaryMain"))
+                                .frame(width: geometry.size.width * progress, height: 4)
+                        }
+                    }
+                    .frame(height: 4)
+                    
+                    Text("\(Int(progress * 100))% complete")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
     }
 }
 

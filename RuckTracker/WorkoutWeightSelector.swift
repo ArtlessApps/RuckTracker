@@ -1,11 +1,14 @@
+
+// WorkoutWeightSelector.swift
+// Premium weight selector matching the workout view aesthetic
 import SwiftUI
 
 struct WorkoutWeightSelector: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @Binding var selectedWeight: Double
     @Binding var isPresented: Bool
-    let recommendedWeight: Double?  // Optional - from program/challenge
-    let context: String  // "Free Ruck", "Program Workout", "Challenge Day X"
+    let recommendedWeight: Double?
+    let context: String
     let onStart: () -> Void
     
     init(
@@ -21,144 +24,118 @@ struct WorkoutWeightSelector: View {
         self.context = context
         self.onStart = onStart
         
-        // Initialize with recommended weight if available, otherwise use default
+        // Initialize with recommended weight if available
         if selectedWeight.wrappedValue == 0 {
             selectedWeight.wrappedValue = recommendedWeight ?? UserSettings.shared.defaultRuckWeight
         }
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Context header
+        ZStack {
+            // Clean white background
+            Color.white
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Top section with context
                 VStack(spacing: 8) {
                     Text(context)
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
                     
                     Text("Set Ruck Weight")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color("BackgroundDark"))
                 }
-                .padding(.top)
+                .padding(.top, 60)
+                .padding(.bottom, 40)
                 
-                // Recommended weight hint (if available and different from selected)
-                if let recommended = recommendedWeight, recommended != selectedWeight {
-                    Button(action: {
-                        selectedWeight = recommended
-                    }) {
-                        HStack {
-                            Image(systemName: "lightbulb.fill")
-                            Text("Recommended: \(Int(recommended)) lbs")
-                            Spacer()
-                            Text("Use")
-                                .fontWeight(.semibold)
-                        }
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(12)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal)
-                }
+                // HERO - Selected Weight
+                Text("\(Int(selectedWeight))")
+                    .font(.system(size: 100, weight: .medium))
+                    .foregroundColor(Color("BackgroundDark"))
+                + Text(" lbs")
+                    .font(.system(size: 36, weight: .regular))
+                    .foregroundColor(Color("BackgroundDark"))
                 
-                // Weight display
-                Text("\(Int(selectedWeight)) lbs")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
-                    .foregroundColor(.blue)
-                    .padding(.vertical)
+                Spacer()
+                    .frame(height: 60)
                 
                 // Slider
-                VStack(spacing: 8) {
-                    Slider(value: $selectedWeight, in: 5...100, step: 5)
-                        .accentColor(.blue)
+                VStack(spacing: 16) {
+                    Slider(value: $selectedWeight, in: 0...100, step: 1)
+                        .tint(Color("BackgroundDark"))
                     
                     HStack {
-                        Text("5 lbs")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text("0 lbs")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                        
                         Spacer()
+                        
                         Text("100 lbs")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
                     }
                 }
-                .padding(.horizontal)
-                
-                // Quick weight buttons
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Quick Select")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
-                    
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                        ForEach([10, 15, 20, 25, 30, 35, 40, 45], id: \.self) { weight in
-                            Button(action: {
-                                selectedWeight = Double(weight)
-                            }) {
-                                Text("\(weight)")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(selectedWeight == Double(weight) ? .white : .blue)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 44)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(selectedWeight == Double(weight) ? Color.blue : Color.blue.opacity(0.1))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .padding(.horizontal)
+                .padding(.horizontal, 40)
                 
                 Spacer()
                 
-                // Action buttons
+                // Action Buttons
                 HStack(spacing: 16) {
-                    Button("Cancel") {
+                    // Cancel Button
+                    Button(action: {
                         isPresented = false
+                    }) {
+                        Text("Cancel")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(Color("BackgroundDark"))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color("BackgroundDark").opacity(0.08))
+                            )
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .foregroundColor(.primary)
-                    .cornerRadius(12)
+                    .buttonStyle(.plain)
                     
+                    // Start Button
                     Button(action: {
                         onStart()
                         isPresented = false
                     }) {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "play.fill")
+                                .font(.system(size: 16))
                             Text("Start Workout")
+                                .font(.system(size: 17, weight: .semibold))
                         }
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color("PrimaryMain"))
+                        )
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding(.horizontal, 40)
+                .padding(.bottom, 40)
             }
-            .navigationBarHidden(true)
         }
     }
 }
+
+// MARK: - Preview
 
 #Preview {
     WorkoutWeightSelector(
         selectedWeight: .constant(20),
         isPresented: .constant(true),
         recommendedWeight: 25,
-        context: "GORUCK Selection - Week 1",
+        context: "Free Ruck",
         onStart: { print("Start workout") }
     )
 }
