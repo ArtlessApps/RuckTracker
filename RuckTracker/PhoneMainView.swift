@@ -19,6 +19,7 @@ struct ImprovedPhoneMainView: View {
     @State private var showingWeightSelector = false
     @State private var selectedWorkoutWeight: Double = 0
     @State private var activeTab: ActiveTab = .home
+    @State private var showingActiveWorkout = false
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -103,6 +104,16 @@ struct ImprovedPhoneMainView: View {
                 }
             )
         }
+        .sheet(isPresented: $showingActiveWorkout) {
+            ActiveWorkoutFullScreenView()
+                .environmentObject(workoutManager)
+        }
+        .onChange(of: workoutManager.isActive) { oldValue, newValue in
+            if newValue && !oldValue {
+                // Workout just started
+                showingActiveWorkout = true
+            }
+        }
     }
     
     // MARK: - Main Content View
@@ -149,8 +160,41 @@ struct ImprovedPhoneMainView: View {
     private var justRuckCard: some View {
         VStack(spacing: 0) {
             if workoutManager.isActive {
-                ActiveWorkoutStatusCard()
-                    .environmentObject(workoutManager)
+                // Show compact status button
+                Button {
+                    showingActiveWorkout = true
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(workoutManager.isPaused ? Color.red : Color.green)
+                                    .frame(width: 10, height: 10)
+                                
+                                Text(workoutManager.isPaused ? "Workout Paused" : "Workout Active")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            Text("Tap to view workout")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.up.right")
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color("BackgroundDark"))
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    )
+                }
+                .buttonStyle(.plain)
             } else {
                 ZStack {
                     VStack(spacing: 20) {
