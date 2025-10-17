@@ -110,8 +110,13 @@ struct ImprovedPhoneMainView: View {
         }
         .onChange(of: workoutManager.isActive) { oldValue, newValue in
             if newValue && !oldValue {
-                // Workout just started
-                showingActiveWorkout = true
+                // Workout just started - dismiss all sheets first
+                activeSheet = nil
+                
+                // Then show the active workout view
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showingActiveWorkout = true
+                }
             }
         }
     }

@@ -1010,21 +1010,19 @@ struct ProgramWorkoutsView: View {
                     }
                 }
             }
-            .sheet(isPresented: $isPresentingWorkoutFlow) {
-                if let workout = selectedWorkout {
-                    WorkoutDetailView(
-                        workout: workout,
-                        userProgram: userProgram,
-                        onComplete: {
-                            Task {
-                                await loadWorkouts()
-                            }
-                        },
-                        isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
-                        onDismiss: onDismiss
-                    )
-                    .environmentObject(workoutManager)
-                }
+            .sheet(item: $selectedWorkout) { workout in
+                WorkoutDetailView(
+                    workout: workout,
+                    userProgram: userProgram,
+                    onComplete: {
+                        Task {
+                            await loadWorkouts()
+                        }
+                    },
+                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
+                    onDismiss: onDismiss
+                )
+                .environmentObject(workoutManager)
             }
             .sheet(isPresented: $showingLeaveWarning) {
                 if let program = program,
@@ -1075,7 +1073,6 @@ struct ProgramWorkoutsView: View {
                         .onTapGesture {
                             if !workout.isLocked {
                                 selectedWorkout = workout
-                                isPresentingWorkoutFlow = true
                             }
                         }
                         
@@ -1549,8 +1546,9 @@ struct WorkoutDetailView: View {
     }
     
     private func startWorkoutTracking() {
+        // Start the workout - PhoneMainView will handle dismissing all sheets
+        // and presenting the ActiveWorkoutFullScreenView automatically
         workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        // That's it! PhoneMainView handles the rest automatically
     }
     
     private func completeWorkout() async {
