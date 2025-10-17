@@ -398,15 +398,14 @@ struct MetricView: View {
     var body: some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
+                .font(.system(size: 48, weight: .semibold))
                 .foregroundColor(color)
             
             Text(label)
-                .font(.caption)
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.secondary)
         }
-        .frame(maxWidth: .infinity)
+        .frame(minWidth: 140, maxWidth: .infinity)
     }
 }
 

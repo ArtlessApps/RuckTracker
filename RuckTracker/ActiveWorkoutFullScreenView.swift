@@ -40,23 +40,23 @@ struct ActiveWorkoutFullScreenView: View {
                 
                 // HERO METRIC - Distance
                 Text(String(format: "%.2f", workoutManager.distance))
-                    .font(.system(size: 120, weight: .medium))
+                    .font(.system(size: 100, weight: .medium))
                     .foregroundColor(Color("BackgroundDark"))
                 + Text("mi")
                     .font(.system(size: 40, weight: .regular))
                     .foregroundColor(Color("BackgroundDark"))
                 
                 Spacer()
-                    .frame(height: 80)
+                    .frame(height: 50)
                 
                 // SECONDARY METRICS - 2x2 Grid
-                VStack(spacing: 40) {
-                    HStack(spacing: 60) {
+                VStack(spacing: 36) {
+                    HStack(spacing: 50) {
                         // Pace
                         MetricView(
                             value: formatPace(),
                             label: "min/mi",
-                            color: Color("AccentCream")
+                            color: Color("BackgroundDark")
                         )
                         
                         // Calories
@@ -67,12 +67,12 @@ struct ActiveWorkoutFullScreenView: View {
                         )
                     }
                     
-                    HStack(spacing: 60) {
+                    HStack(spacing: 50) {
                         // Workout Time
                         MetricView(
                             value: formatElapsedTime(workoutManager.elapsedTime),
                             label: "Workout Time",
-                            color: Color("AccentCream")
+                            color: Color("BackgroundDark")
                         )
                         
                         // Ruck Weight
