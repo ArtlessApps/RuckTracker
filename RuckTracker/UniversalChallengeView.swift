@@ -41,7 +41,6 @@ struct UniversalChallengeView: View {
                                 .onTapGesture {
                                     if !challengeManager.isWorkoutLocked(workout) {
                                         selectedWorkout = workout
-                                        isPresentingWorkoutFlow = true
                                     }
                                 }
                                 
@@ -80,15 +79,13 @@ struct UniversalChallengeView: View {
         .sheet(isPresented: $showingEnrollment) {
             ChallengeEnrollmentView(challenge: challenge, challengeManager: challengeManager)
         }
-        .sheet(isPresented: $isPresentingWorkoutFlow) {
-            if let workout = selectedWorkout {
-                ChallengeWorkoutDetailView(
-                    workout: workout,
-                    challenge: challenge,
-                    challengeManager: challengeManager,
-                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow
-                )
-            }
+        .sheet(item: $selectedWorkout) { workout in
+            ChallengeWorkoutDetailView(
+                workout: workout,
+                challenge: challenge,
+                challengeManager: challengeManager,
+                isPresentingWorkoutFlow: $isPresentingWorkoutFlow
+            )
         }
         .sheet(isPresented: $showingLeaveWarning) {
             if let progress = challengeService.challengeProgress {
@@ -585,8 +582,9 @@ struct ChallengeWorkoutDetailView: View {
     }
     
     private func startWorkoutTracking() {
+        // Start the workout - PhoneMainView will handle dismissing all sheets
+        // and presenting the ActiveWorkoutFullScreenView automatically
         workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        isPresentingWorkoutFlow = false
     }
     
     private func completeWorkout() async {
