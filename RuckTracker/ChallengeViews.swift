@@ -13,7 +13,6 @@ struct ChallengesSection: View {
     @StateObject private var challengeService = LocalChallengeService.shared
     @EnvironmentObject var premiumManager: PremiumManager
     @State private var selectedChallenge: Challenge?
-    @State private var showingEnrollment = false
     
     var body: some View {
         VStack(spacing: 24) {
@@ -51,12 +50,6 @@ struct ChallengesSection: View {
         .sheet(item: $selectedChallenge) { challenge in
             ChallengeDetailView(challenge: challenge, isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
                 .environmentObject(challengeService)
-        }
-        .sheet(isPresented: $showingEnrollment) {
-            if let challenge = selectedChallenge {
-                LocalChallengeEnrollmentView(challenge: challenge)
-                    .environmentObject(challengeService)
-            }
         }
         .onAppear {
             challengeService.loadChallenges()
@@ -253,7 +246,6 @@ struct ChallengeDetailView: View {
     @Binding var isPresentingWorkoutFlow: Bool
     @EnvironmentObject var challengeService: LocalChallengeService
     @Environment(\.dismiss) private var dismiss
-    @State private var showingEnrollment = false
     @State private var showingConflict = false
     @State private var isEnrolled = false
     
@@ -266,15 +258,6 @@ struct ChallengeDetailView: View {
                 // Show challenge info if not enrolled
                 challengeInfoView
             }
-        }
-        .sheet(isPresented: $showingEnrollment, onDismiss: {
-            // Re-check enrollment status when sheet dismisses
-            Task {
-                await checkEnrollmentStatus()
-            }
-        }) {
-            LocalChallengeEnrollmentView(challenge: challenge)
-                .environmentObject(challengeService)
         }
         .sheet(isPresented: $showingConflict) {
             if let currentChallenge = challengeService.enrolledChallenge,
@@ -292,7 +275,8 @@ struct ChallengeDetailView: View {
                         // Unenroll from current and proceed with new enrollment
                         challengeService.unenrollFromChallenge()
                         showingConflict = false
-                        showingEnrollment = true
+                        // Enroll in new challenge directly
+                        enrollInChallenge()
                     },
                     onCancel: {
                         showingConflict = false
@@ -400,7 +384,17 @@ struct ChallengeDetailView: View {
         if challengeService.enrolledChallenge != nil {
             showingConflict = true
         } else {
-            showingEnrollment = true
+            // Skip the enrollment modal and enroll directly
+            enrollInChallenge()
+        }
+    }
+    
+    private func enrollInChallenge() {
+        challengeService.enrollInChallenge(challenge)
+        
+        Task {
+            // Reload enrollment status to trigger view transition
+            await checkEnrollmentStatus()
         }
     }
     
@@ -410,84 +404,6 @@ struct ChallengeDetailView: View {
     }
 }
 
-// MARK: - Challenge Enrollment View
-struct LocalChallengeEnrollmentView: View {
-    let challenge: Challenge
-    @EnvironmentObject var challengeService: LocalChallengeService
-    @Environment(\.dismiss) private var dismiss
-    // startingWeight removed
-    @State private var isEnrolling = false
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 16) {
-                    Image(systemName: challenge.focusArea.iconName)
-                        .font(.system(size: 60))
-                        .foregroundColor(focusAreaColor(challenge.focusArea))
-                    
-                    Text("Enroll in \(challenge.title)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Ready to push your limits? This \(challenge.durationDays)-day challenge will test your \(challenge.focusArea.displayName.lowercased()) skills.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                // Weight input removed
-                
-                Spacer()
-                
-                // Enroll button
-                Button(action: enrollInChallenge) {
-                    HStack {
-                        if isEnrolling {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        }
-                        
-                        Text(isEnrolling ? "Enrolling..." : "Start Challenge")
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                }
-                .disabled(isEnrolling)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
-            }
-            .navigationTitle("Enroll")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-    
-    private func enrollInChallenge() {
-        isEnrolling = true
-        
-        challengeService.enrollInChallenge(challenge)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isEnrolling = false
-            dismiss()
-        }
-    }
-}
 
 // MARK: - Detail Row View
 struct DetailRowView: View {
