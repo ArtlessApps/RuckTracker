@@ -31,20 +31,13 @@ struct TrainingProgramsView: View {
                     .padding(.top, 24)
                     .padding(.bottom, 40)
                     
-                    // Programs List
-                    VStack(spacing: 20) {
-                        ForEach(programService.programs, id: \.id) { program in
-                            ProgramCard(
-                                program: program,
-                                accentColor: getAccentColor(for: program),
-                                onTap: {
-                                    selectedProgram = program
-                                }
-                            )
-                        }
+                    // ENROLLED PROGRAMS SECTION
+                    if !enrolledPrograms.isEmpty {
+                        enrolledProgramsSection
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
+                    
+                    // AVAILABLE PROGRAMS SECTION
+                    availableProgramsSection
                 }
             }
         }
@@ -56,26 +49,96 @@ struct TrainingProgramsView: View {
                     selectedProgram = nil
                 }
             )
-            .environmentObject(programService)
+        }
+        .onAppear {
+            programService.loadPrograms()
+            programService.loadUserPrograms()
+            programService.loadEnrollmentStatus()
         }
     }
     
+    // MARK: - Computed Properties
+    
+    private var enrolledPrograms: [(UserProgram, Program)] {
+        programService.userPrograms
+            .filter { $0.isActive }
+            .compactMap { userProgram in
+                if let program = programService.programs.first(where: { $0.id == userProgram.programId }) {
+                    return (userProgram, program)
+                }
+                return nil
+            }
+            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
+    }
+    
+    private var availablePrograms: [Program] {
+        let enrolledIds = Set(programService.userPrograms.map { $0.programId })
+        return programService.programs
+            .filter { !enrolledIds.contains($0.id) }
+    }
+    
+    // MARK: - Enrolled Section
+    
+    private var enrolledProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Active")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.horizontal, 24)
+            
+            VStack(spacing: 20) {
+                ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
+                    ProgramCard(
+                        program: program,
+                        accentColor: getAccentColor(for: program),
+                        onTap: {
+                            selectedProgram = program
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal, 24)
+        }
+        .padding(.bottom, 40)
+    }
+    
+    // MARK: - Available Section
+    
+    private var availableProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Available")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.6))
+                .padding(.horizontal, 24)
+            
+            VStack(spacing: 20) {
+                ForEach(availablePrograms, id: \.id) { program in
+                    ProgramCard(
+                        program: program,
+                        accentColor: getAccentColor(for: program),
+                        onTap: {
+                            selectedProgram = program
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
     private func getAccentColor(for program: Program) -> Color {
-        switch program.title {
-        case "Ruck Ready":
+        switch program.difficulty {
+        case .beginner:
             return Color("AccentGreen")
-        case "Foundation Builder":
-            return Color("AccentTeal")
-        case "Active Lifestyle":
-            return Color("Clay")
-        case "Endurance Build":
-            return Color("AccentGreen")
-        case "GORUCK Light Prep":
+        case .intermediate:
+            return .yellow
+        case .advanced:
             return Color("PrimaryMain")
-        case "GORUCK Heavy/Tough Prep":
-            return Color("PrimaryMain")
-        default:
-            return Color("PrimaryMain")
+        case .elite:
+            return Color("PrimaryMedium")
         }
     }
 }
