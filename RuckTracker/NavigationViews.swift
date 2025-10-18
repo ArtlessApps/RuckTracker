@@ -2,63 +2,51 @@ import SwiftUI
 import Foundation
 import Combine
 
-// TrainingProgramsView.swift
-// Premium training programs view with clean, minimal aesthetic
-import SwiftUI
 
 struct TrainingProgramsView: View {
     @Binding var isPresentingWorkoutFlow: Bool
-    @EnvironmentObject var premiumManager: PremiumManager
     @StateObject private var programService = LocalProgramService.shared
     @State private var selectedProgram: Program?
-    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header
+        ZStack {
+            // Background
+            Color("BackgroundDark")
+                .ignoresSafeArea()
+            
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Header Section with generous top padding
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Training Programs")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .font(.system(size: 34, weight: .bold, design: .default))
+                            .foregroundColor(.white)
                         
                         Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
-                            .fixedSize(horizontal: false, vertical: true)
+                            .font(.system(size: 15, weight: .regular, design: .default))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineSpacing(4)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 40)
                     
                     // Programs List
-                    if programService.isLoading {
-                        ProgressView()
-                            .padding()
-                    } else if programService.programs.isEmpty {
-                        emptyStateView
-                    } else {
-                        VStack(spacing: 0) {
-                            // Active Programs Section
-                            if !enrolledPrograms.isEmpty {
-                                activeProgramsSection
-                                
-                                Spacer()
-                                    .frame(height: 40)
-                            }
-                            
-                            // Available Programs Section
-                            availableProgramsSection
+                    VStack(spacing: 20) {
+                        ForEach(programService.programs, id: \.id) { program in
+                            ProgramCard(
+                                program: program,
+                                accentColor: getAccentColor(for: program),
+                                onTap: {
+                                    selectedProgram = program
+                                }
+                            )
                         }
                     }
-                    
-                    Spacer(minLength: 100)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
                 }
             }
-            .background(Color.white)
-            .navigationBarHidden(true)
         }
         .sheet(item: $selectedProgram) { program in
             ProgramDetailView(
@@ -70,109 +58,130 @@ struct TrainingProgramsView: View {
             )
             .environmentObject(programService)
         }
-        .onAppear {
-            programService.loadPrograms()
-            programService.loadEnrollmentStatus()
-            programService.loadUserPrograms()
+    }
+    
+    private func getAccentColor(for program: Program) -> Color {
+        switch program.title {
+        case "Ruck Ready":
+            return Color("AccentGreen")
+        case "Foundation Builder":
+            return Color("AccentTeal")
+        case "Active Lifestyle":
+            return Color("Clay")
+        case "Endurance Build":
+            return Color("AccentGreen")
+        case "GORUCK Light Prep":
+            return Color("PrimaryMain")
+        case "GORUCK Heavy/Tough Prep":
+            return Color("PrimaryMain")
+        default:
+            return Color("PrimaryMain")
         }
     }
+}
+
+struct ProgramCard: View {
+    let program: Program
+    let accentColor: Color
+    let onTap: () -> Void
     
-    // MARK: - Computed Properties
-    
-    private var enrolledPrograms: [(UserProgram, Program)] {
-        programService.userPrograms
-            .filter { $0.isActive }
-            .compactMap { userProgram in
-                if let program = programService.programs.first(where: { $0.id == userProgram.programId }) {
-                    return (userProgram, program)
-                }
-                return nil
-            }
-    }
-    
-    private var availablePrograms: [Program] {
-        let enrolledIds = Set(enrolledPrograms.map { $0.1.id })
-        return programService.programs.filter { !enrolledIds.contains($0.id) }
-    }
-    
-    // MARK: - Active Programs Section
-    
-    private var activeProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Active Programs")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color("TextSecondary"))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 12) {
-                ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
-                    ProgramRowView(
-                        program: program,
-                        isActive: true,
-                        progress: calculateProgress(userProgram: userProgram)
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 0) {
+                // Accent bar on left - bold with glow
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [accentColor, accentColor.opacity(0.8)]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                     )
-                    .onTapGesture {
-                        selectedProgram = program
+                    .frame(width: 6)
+                    .shadow(color: accentColor.opacity(0.5), radius: 6, x: 3, y: 0)
+                
+                // Content
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(program.title)
+                            .font(.system(size: 19, weight: .semibold, design: .default))
+                            .foregroundColor(.white)
+                        
+                        Text(program.description ?? "")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(.white.opacity(0.72))
+                            .lineSpacing(4)
+                            .lineLimit(3)
                     }
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-    }
-    
-    // MARK: - Available Programs Section
-    
-    private var availableProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Available Programs")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color("TextSecondary"))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 12) {
-                ForEach(availablePrograms) { program in
-                    ProgramRowView(
-                        program: program,
-                        isActive: false,
-                        progress: nil
-                    )
-                    .onTapGesture {
-                        if premiumManager.isPremiumUser {
-                            selectedProgram = program
-                        } else {
-                            premiumManager.showPaywall(context: .programAccess)
+                    .padding(.leading, 20)
+                    
+                    Spacer()
+                    
+                    // Right side: duration badge and chevron with perfect vertical centering
+                    HStack(alignment: .center, spacing: 0) {
+                        VStack(alignment: .trailing, spacing: 20) {
+                            // Duration badge - softer brightness
+                            Text("\(program.durationWeeks)w")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.black.opacity(0.85))
+                                .padding(.horizontal, 13)
+                                .padding(.vertical, 7)
+                                .background(
+                                    Capsule()
+                                        .fill(.white.opacity(0.85))
+                                )
                         }
+                        
+                        // Chevron indicator - perfectly centered vertically
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.4))
+                            .padding(.leading, 16)
                     }
+                    .padding(.trailing, 20)
                 }
+                .padding(.vertical, 24)
             }
-            .padding(.horizontal, 24)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.white.opacity(0.11))
+                    .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 8)
+                    .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
+                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                .white.opacity(0.2),
+                                .white.opacity(0.05)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+            )
         }
+        .buttonStyle(ProgramCardButtonStyle())
     }
-    
-    // MARK: - Empty State
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Text("No programs available")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(Color("BackgroundDark"))
-            
-            Text("Check back soon for new training programs")
-                .font(.system(size: 14))
-                .foregroundColor(Color("TextSecondary"))
-        }
-        .padding(.top, 60)
+}
+
+// Custom button style for subtle press effect
+struct ProgramCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
-    
-    // MARK: - Helpers
-    
-    private func calculateProgress(userProgram: UserProgram) -> Double {
-        // Use the programProgress property from the service
-        if let progress = programService.programProgress {
-            return progress.completionPercentage / 100.0
-        }
-        return 0.0
-    }
+}
+
+// Preview
+#Preview {
+    TrainingProgramsView(isPresentingWorkoutFlow: .constant(false))
+        .environmentObject(PremiumManager.shared)
 }
 
 // MARK: - Program Row Component
