@@ -451,7 +451,6 @@ struct ProgramDetailView: View {
     let onDismiss: (() -> Void)?
     @ObservedObject private var programService = LocalProgramService.shared
     @Environment(\.dismiss) private var dismiss
-    @State private var showingEnrollment = false
     @State private var showingConflict = false
     @State private var isEnrolled = false
     @State private var userProgram: UserProgram?
@@ -479,16 +478,6 @@ struct ProgramDetailView: View {
                 programInfoView
             }
         }
-        .sheet(isPresented: $showingEnrollment, onDismiss: {
-            // Re-check enrollment status when sheet dismisses
-            Task {
-                await checkEnrollmentStatus()
-            }
-        }) {
-            ProgramEnrollmentView(program: program) {
-                enrollInProgram()
-            }
-        }
         .sheet(isPresented: $showingConflict) {
             if let currentProgram = programService.enrolledProgram,
                let progress = programService.programProgress {
@@ -505,7 +494,8 @@ struct ProgramDetailView: View {
                         // Unenroll from current and proceed with new enrollment
                         programService.unenrollFromProgram()
                         showingConflict = false
-                        showingEnrollment = true
+                        // Enroll in new program directly
+                        enrollInProgram()
                     },
                     onCancel: {
                         showingConflict = false
@@ -579,7 +569,8 @@ struct ProgramDetailView: View {
         if programService.enrolledProgram != nil {
             showingConflict = true
         } else {
-            showingEnrollment = true
+            // Skip the enrollment modal and enroll directly
+            enrollInProgram()
         }
     }
     
@@ -587,13 +578,8 @@ struct ProgramDetailView: View {
         programService.enrollInProgram(program)
         
         Task {
-            await MainActor.run {
-                showingEnrollment = false
-                // Reload enrollment status
-                Task {
-                    await checkEnrollmentStatus()
-                }
-            }
+            // Reload enrollment status to trigger view transition
+            await checkEnrollmentStatus()
         }
     }
     
@@ -829,114 +815,6 @@ struct EnrolledSection: View {
     }
 }
 
-// MARK: - Program Enrollment View
-struct ProgramEnrollmentView: View {
-    let program: Program
-    let onEnroll: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            GeometryReader { geometry in
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Challenge Info Header
-                        challengeHeaderView
-                        
-                        // Enrollment Button
-                        enrollmentButtonView
-                        
-                        // Extra padding to ensure button is visible
-                        Color.clear.frame(height: 50)
-                    }
-                    .padding()
-                    .frame(minHeight: geometry.size.height)
-                }
-            }
-            .navigationTitle("Enroll in Program")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Computed Views
-    
-    private var challengeHeaderView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 50))
-                .foregroundColor(.blue)
-            
-            Text(program.title)
-                .font(.title)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-            
-            if let description = program.description {
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            // Program stats
-            HStack(spacing: 20) {
-                StatView(
-                    icon: "calendar",
-                    title: "Duration",
-                    value: "\(program.durationWeeks) weeks"
-                )
-                
-                StatView(
-                    icon: "star.fill",
-                    title: "Difficulty",
-                    value: program.difficulty.rawValue.capitalized
-                )
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        )
-    }
-    
-    
-    private var enrollmentButtonView: some View {
-        VStack(spacing: 12) {
-            Button(action: { onEnroll() }) {
-                HStack {
-                    Image(systemName: "checkmark.circle")
-                    Text("Enroll in Program")
-                }
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .padding(.horizontal, 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
-                )
-            }
-            .buttonStyle(.plain)
-            
-            Text("You can adjust your weight anytime during the program")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-    }
-}
 
 // MARK: - StatView Component
 struct StatView: View {
