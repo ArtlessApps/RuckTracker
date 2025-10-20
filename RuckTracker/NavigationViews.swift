@@ -327,51 +327,37 @@ struct ChallengesView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header
+        ZStack {
+            // Background
+            Color("BackgroundDark")
+                .ignoresSafeArea()
+            
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Header Section with generous top padding
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Challenges")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .font(.system(size: 34, weight: .bold, design: .default))
+                            .foregroundColor(.white)
                         
-                        Text("7-day focused challenges designed to build specific skills and push your limits.")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
-                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Test your limits with focused challenges designed to build specific skills and mental toughness.")
+                            .font(.system(size: 15, weight: .regular, design: .default))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineSpacing(4)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 40)
                     
-                    // Challenges List
-                    if challengeService.isLoading {
-                        ProgressView()
-                            .padding()
-                    } else if challengeService.challenges.isEmpty {
-                        emptyStateView
-                    } else {
-                        VStack(spacing: 0) {
-                            // Active Challenges Section
-                            if !enrolledChallenges.isEmpty {
-                                activeChallengesSection
-                                
-                                Spacer()
-                                    .frame(height: 40)
-                            }
-                            
-                            // Available Challenges Section
-                            availableChallengesSection
-                        }
+                    // ENROLLED CHALLENGES SECTION
+                    if !enrolledChallenges.isEmpty {
+                        activeChallengesSection
                     }
                     
-                    Spacer(minLength: 100)
+                    // AVAILABLE CHALLENGES SECTION
+                    availableChallengesSection
                 }
             }
-            .background(Color.white)
-            .navigationBarHidden(true)
         }
         .sheet(item: $selectedChallenge) { challenge in
             ChallengeDetailView(
@@ -417,12 +403,14 @@ struct ChallengesView: View {
     
     private var activeChallengesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Active Challenges")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color("TextSecondary"))
+            // Section header
+            Text("ACTIVE CHALLENGES")
+                .font(.system(size: 13, weight: .semibold, design: .default))
+                .foregroundColor(.white.opacity(0.5))
+                .tracking(1)
                 .padding(.horizontal, 24)
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
                     ChallengeRowView(
                         challenge: challenge,
@@ -436,18 +424,21 @@ struct ChallengesView: View {
             }
             .padding(.horizontal, 24)
         }
+        .padding(.bottom, 32)
     }
     
     // MARK: - Available Challenges Section
     
     private var availableChallengesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Available Challenges")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color("TextSecondary"))
+            // Section header
+            Text("AVAILABLE CHALLENGES")
+                .font(.system(size: 13, weight: .semibold, design: .default))
+                .foregroundColor(.white.opacity(0.5))
+                .tracking(1)
                 .padding(.horizontal, 24)
             
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 ForEach(availableChallenges, id: \.id) { (challenge: Challenge) in
                     ChallengeRowView(
                         challenge: challenge,
@@ -465,6 +456,7 @@ struct ChallengesView: View {
             }
             .padding(.horizontal, 24)
         }
+        .padding(.bottom, 32)
     }
     
     // MARK: - Empty State
@@ -501,60 +493,84 @@ struct ChallengeRowView: View {
     let progress: Double?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Title & Duration
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(challenge.title)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(Color("BackgroundDark"))
-                    
-                    if let description = challenge.description {
-                        Text(description)
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
-                            .lineLimit(2)
+        Button(action: {}) {
+            HStack(spacing: 0) {
+                // Content
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(challenge.title)
+                            .font(.system(size: 19, weight: .semibold, design: .default))
+                            .foregroundColor(.white)
+                        
+                        Text(challenge.description ?? "")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(.white.opacity(0.72))
+                            .lineSpacing(4)
+                            .lineLimit(3)
                     }
-                }
-                
-                Spacer()
-                
-                // Duration badge
-                Text("\(challenge.durationDays)d")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
-            }
-            
-            // Progress bar (if active)
-            if let progress = progress {
-                VStack(alignment: .leading, spacing: 6) {
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            // Background
-                            Rectangle()
-                                .fill(Color("BackgroundDark").opacity(0.1))
-                                .frame(height: 4)
-                            
-                            // Progress
-                            Rectangle()
-                                .fill(Color("PrimaryMain"))
-                                .frame(width: geometry.size.width * progress, height: 4)
+                    .padding(.leading, 20)
+                    
+                    Spacer()
+                    
+                    // Right side: duration badge and chevron with perfect vertical centering
+                    HStack(alignment: .center, spacing: 0) {
+                        VStack(alignment: .trailing, spacing: 20) {
+                            // Duration badge - softer brightness
+                            Text("\(challenge.durationDays)d")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.black.opacity(0.85))
+                                .padding(.horizontal, 13)
+                                .padding(.vertical, 7)
+                                .background(
+                                    Capsule()
+                                        .fill(.white.opacity(0.85))
+                                )
                         }
+                        
+                        // Chevron indicator
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.4))
+                            .padding(.leading, 16)
                     }
-                    .frame(height: 4)
-                    
-                    Text("\(Int(progress * 100))% complete")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                    .padding(.trailing, 20)
                 }
             }
+            .padding(.vertical, 24)
         }
-        .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+                .fill(.white.opacity(0.11))
+                .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 8)
+                .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .white.opacity(0.2),
+                            .white.opacity(0.05)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
+        .buttonStyle(ChallengeCardButtonStyle())
+    }
+}
+
+// MARK: - Button Style
+
+struct ChallengeCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
