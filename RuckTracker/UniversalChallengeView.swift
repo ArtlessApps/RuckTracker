@@ -20,52 +20,26 @@ struct UniversalChallengeView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    if challengeManager.isLoading {
-                        LoadingView()
-                    } else {
-                        // Header with progress
-                        headerSection
-                        
-                        // Challenge workouts list
-                        LazyVStack(spacing: 0) {
-                            ForEach(Array(challengeManager.workouts.enumerated()), id: \.element.id) { index, workout in
-                                UniversalWorkoutRowView(
-                                    workout: workout,
-                                    challenge: challenge,
-                                    index: workout.dayNumber,
-                                    isCompleted: challengeManager.isWorkoutCompleted(workout.id),
-                                    isLocked: challengeManager.isWorkoutLocked(workout)
-                                )
-                                .onTapGesture {
-                                    if !challengeManager.isWorkoutLocked(workout) {
-                                        selectedWorkout = workout
-                                    }
-                                }
-                                
-                                if index < challengeManager.workouts.count - 1 {
-                                    Divider()
-                                        .padding(.leading, 80)
-                                }
-                            }
-                        }
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .padding()
-                    }
+            ZStack {
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                if challengeManager.isLoading {
+                    loadingView
+                } else {
+                    challengeListView
                 }
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(challenge.title)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
+                    Button(action: {
                         showingLeaveWarning = true
-                    } label: {
-                        Label("Leave", systemImage: "xmark.circle")
-                            .foregroundColor(.red)
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(Color("TextSecondary"))
                     }
                 }
                 
@@ -73,6 +47,7 @@ struct UniversalChallengeView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
         }
@@ -117,6 +92,66 @@ struct UniversalChallengeView: View {
         dismiss()
     }
     
+    // MARK: - Subviews
+    
+    private var challengeListView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                // Progress Header Card
+                progressHeader
+                
+                // Challenge Workout Cards
+                LazyVStack(spacing: 12) {
+                    ForEach(Array(challengeManager.workouts.enumerated()), id: \.element.id) { index, workout in
+                        UniversalWorkoutRowView(
+                            workout: workout,
+                            challenge: challenge,
+                            index: workout.dayNumber,
+                            isCompleted: challengeManager.isWorkoutCompleted(workout.id),
+                            isLocked: challengeManager.isWorkoutLocked(workout)
+                        )
+                        .onTapGesture {
+                            if !challengeManager.isWorkoutLocked(workout) {
+                                selectedWorkout = workout
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
+            }
+            .padding(.vertical, 12)
+        }
+    }
+    
+    private var progressHeader: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if challengeManager.enrollment != nil {
+                progressSection
+            } else {
+                enrollmentPrompt
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("Loading challenge...")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+        }
+    }
+    
     private var headerSection: some View {
         VStack(spacing: 16) {
             // Progress indicator
@@ -130,30 +165,39 @@ struct UniversalChallengeView: View {
     }
     
     private var progressSection: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text("\(challengeManager.completedWorkoutCount)/\(challengeManager.totalWorkoutCount) Workouts Complete")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(challenge.title)
+                        .font(.system(size: 28, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    Text("\(challengeManager.completedWorkoutCount) of \(challengeManager.totalWorkoutCount) workouts")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                }
                 
                 Spacer()
                 
-                Text("\(Int(challengeManager.progressPercentage * 100))%")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color(challenge.focusArea.color))
+                // Progress Ring
+                ZStack {
+                    Circle()
+                        .stroke(Color("WarmGray").opacity(0.2), lineWidth: 6)
+                        .frame(width: 64, height: 64)
+                    
+                    Circle()
+                        .trim(from: 0, to: challengeManager.progressPercentage)
+                        .stroke(Color(challenge.focusArea.color), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .frame(width: 64, height: 64)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeInOut(duration: 0.5), value: challengeManager.progressPercentage)
+                    
+                    Text("\(Int(challengeManager.progressPercentage * 100))%")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color("BackgroundDark"))
+                }
             }
-            
-            ProgressView(value: challengeManager.progressPercentage)
-                .progressViewStyle(LinearProgressViewStyle(tint: Color(challenge.focusArea.color)))
-                .scaleEffect(y: 2)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
     }
     
     private var enrollmentPrompt: some View {
@@ -200,7 +244,7 @@ struct UniversalChallengeView: View {
     }
 }
 
-// MARK: - Universal Workout Row View
+// MARK: - Universal Workout Row View (Updated Card Style)
 struct UniversalWorkoutRowView: View {
     let workout: ChallengeWorkout
     let challenge: Challenge
@@ -210,74 +254,77 @@ struct UniversalWorkoutRowView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Left: Status icon
+            // Numbered Badge (Icon-less)
             ZStack {
                 Circle()
                     .fill(statusColor.opacity(0.15))
-                    .frame(width: 50, height: 50)
+                    .frame(width: 44, height: 44)
                 
                 if isCompleted {
                     Image(systemName: "checkmark")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(statusColor)
                 } else if isLocked {
                     Image(systemName: "lock.fill")
-                        .font(.title3)
-                        .foregroundColor(.gray)
+                        .font(.system(size: 14))
+                        .foregroundColor(statusColor)
                 } else {
                     Text("\(index)")
-                        .font(.headline)
-                        .fontWeight(.bold)
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(statusColor)
                 }
             }
             
-            // Middle: Workout info
+            // Workout Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.getWorkoutTitle(for: challenge))
-                    .font(.headline)
-                    .foregroundColor(isLocked ? .secondary : .primary)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(isLocked ? Color("TextSecondary").opacity(0.5) : Color("BackgroundDark"))
                 
                 Text(workout.displaySubtitle)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(isLocked ? Color("TextSecondary").opacity(0.4) : Color("TextSecondary"))
                 
-                if let instructions = workout.instructions {
-                    Text(instructions)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                if let instructions = workout.instructions?.prefix(50) {
+                    Text(String(instructions) + "...")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(Color("TextSecondary").opacity(0.7))
                         .lineLimit(1)
                 }
             }
             
             Spacer()
             
-            // Right: Chevron or lock
-            if isLocked {
-                Image(systemName: "lock.fill")
-                    .foregroundColor(.gray)
-                    .font(.caption)
-            } else {
+            // Status Icon
+            if !isCompleted && !isLocked {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color("TextSecondary"))
             }
         }
-        .padding()
-        .background(isLocked ? Color.clear : Color(.systemBackground))
-        .contentShape(Rectangle())
-        .opacity(isLocked ? 0.6 : 1.0)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isLocked ? Color.white.opacity(0.6) : Color.white)
+                .shadow(
+                    color: isLocked ? Color.black.opacity(0.02) : Color.black.opacity(0.06),
+                    radius: 8,
+                    x: 0,
+                    y: 2
+                )
+        )
+        .opacity(isLocked ? 0.7 : 1.0)
     }
     
     private var statusColor: Color {
         if isCompleted {
-            return .green
+            return Color("AccentGreen")
         } else if isLocked {
-            return .gray
+            return Color("TextSecondary")
+        } else if workout.isRestDay {
+            return Color("AccentTeal")
         } else {
-            return .blue
+            return Color("PrimaryMain")
         }
     }
 }

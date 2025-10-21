@@ -884,7 +884,7 @@ struct StatView: View {
     }
 }
 
-// MARK: - Program Workouts View (Peloton-style)
+// MARK: - Program Workouts View (Updated Card Style)
 struct ProgramWorkoutsView: View {
     let userProgram: UserProgram?
     let program: Program?
@@ -907,23 +907,27 @@ struct ProgramWorkoutsView: View {
     var body: some View {
         NavigationView {
             ZStack {
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
                 if isLoading {
-                    ProgressView("Loading workouts...")
+                    loadingView
                 } else if workouts.isEmpty {
                     emptyStateView
                 } else {
                     workoutListView
                 }
             }
-            .navigationTitle(program?.title ?? "Workouts")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
+                    Button(action: {
                         showingLeaveWarning = true
-                    } label: {
-                        Label("Leave", systemImage: "xmark.circle")
-                            .foregroundColor(.red)
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(Color("TextSecondary"))
                     }
                 }
                 
@@ -931,6 +935,7 @@ struct ProgramWorkoutsView: View {
                     Button("Done") {
                         onDismiss?()
                     }
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
             .sheet(item: $selectedWorkout) { workout in
@@ -967,9 +972,9 @@ struct ProgramWorkoutsView: View {
                     )
                 }
             }
-        }
-        .task {
-            await loadWorkouts()
+            .task {
+                await loadWorkouts()
+            }
         }
     }
     
@@ -980,14 +985,16 @@ struct ProgramWorkoutsView: View {
         onDismiss?()
     }
     
+    // MARK: - Subviews
+    
     private var workoutListView: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Progress header
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                // Progress Header Card
                 progressHeader
                 
-                // Workout list
-                LazyVStack(spacing: 0) {
+                // Workout Cards
+                LazyVStack(spacing: 12) {
                     ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
                         WorkoutRowView(
                             workout: workout,
@@ -998,72 +1005,88 @@ struct ProgramWorkoutsView: View {
                                 selectedWorkout = workout
                             }
                         }
-                        
-                        if index < workouts.count - 1 {
-                            Divider()
-                                .padding(.leading, 80)
-                        }
                     }
                 }
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
+            .padding(.vertical, 12)
         }
-        .background(Color(.systemGroupedBackground))
     }
     
     private var progressHeader: some View {
-        VStack(spacing: 12) {
-            // Overall progress
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(program?.title ?? "Program")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.system(size: 28, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
                     
                     Text("\(completedCount) of \(workouts.count) workouts")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
                 }
                 
                 Spacer()
                 
-                CircularProgressView(
-                    progress: progressPercentage,
-                    lineWidth: 8
-                )
-                .frame(width: 60, height: 60)
+                // Progress Ring
+                ZStack {
+                    Circle()
+                        .stroke(Color("WarmGray").opacity(0.2), lineWidth: 6)
+                        .frame(width: 64, height: 64)
+                    
+                    Circle()
+                        .trim(from: 0, to: progressPercentage)
+                        .stroke(Color("PrimaryMain"), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .frame(width: 64, height: 64)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeInOut(duration: 0.5), value: progressPercentage)
+                    
+                    Text("\(Int(progressPercentage * 100))%")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Color("BackgroundDark"))
+                }
             }
-            
-            // Progress bar
-            ProgressView(value: progressPercentage)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                .scaleEffect(y: 2)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .padding()
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("Loading workouts...")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+        }
     }
     
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "list.bullet.clipboard")
+            Image(systemName: "figure.walk.circle")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color("TextSecondary"))
             
             Text("No Workouts Found")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
             
             Text("This program doesn't have any workouts yet.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
         }
-        .padding()
     }
+    
+    // MARK: - Computed Properties
     
     private var completedCount: Int {
         workouts.filter { $0.isCompleted }.count
@@ -1073,6 +1096,8 @@ struct ProgramWorkoutsView: View {
         guard !workouts.isEmpty else { return 0 }
         return Double(completedCount) / Double(workouts.count)
     }
+    
+    // MARK: - Methods
     
     private func loadWorkouts() async {
         isLoading = true
@@ -1088,16 +1113,9 @@ struct ProgramWorkoutsView: View {
             let programWorkouts = try await programService.loadProgramWorkouts(programId: program.id)
             
             // Get completions from CoreData (via local service)
-            // NOTE: programWorkoutDay in CoreData is the SEQUENTIAL workout number (1, 2, 3...),
-            // NOT the day_number within each week. We need to match by index in the workout list.
             let completedWorkoutIndices = WorkoutDataManager.shared.workouts
                 .filter { $0.programId == program.id.uuidString }
                 .compactMap { Int($0.programWorkoutDay) - 1 } // Convert to 0-based index
-            
-            print("🔍 UI DEBUG: Program ID: \(program.id.uuidString)")
-            print("🔍 UI DEBUG: Total workouts in CoreData: \(WorkoutDataManager.shared.workouts.count)")
-            print("🔍 UI DEBUG: Workouts for this program: \(WorkoutDataManager.shared.workouts.filter { $0.programId == program.id.uuidString }.count)")
-            print("🔍 UI DEBUG: Completed workout indices: \(completedWorkoutIndices)")
             
             // Map workouts to state
             var lastCompletedIndex = -1
@@ -1107,7 +1125,6 @@ struct ProgramWorkoutsView: View {
                 
                 if isCompleted {
                     lastCompletedIndex = index
-                    print("🔍 UI DEBUG: Workout index \(index) (day \(workout.dayNumber)) marked as completed")
                 }
                 
                 // Unlock logic: first workout unlocked, rest unlock after previous completion
@@ -1126,89 +1143,90 @@ struct ProgramWorkoutsView: View {
                     completionDate: nil
                 )
             }
-            
-            print("✅ Loaded \(workouts.count) workouts, \(completedWorkoutIndices.count) completed")
         } catch {
             print("❌ Error loading workouts: \(error)")
         }
     }
 }
 
-// MARK: - Workout Row View (Peloton-style)
+// MARK: - Workout Row View (Updated Card Style)
 struct WorkoutRowView: View {
     let workout: ProgramWorkoutWithState
     let index: Int
     
     var body: some View {
         HStack(spacing: 16) {
-            // Left: Status icon
+            // Numbered Badge (Icon-less)
             ZStack {
                 Circle()
                     .fill(statusColor.opacity(0.15))
-                    .frame(width: 50, height: 50)
+                    .frame(width: 44, height: 44)
                 
                 if workout.isCompleted {
                     Image(systemName: "checkmark")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(statusColor)
                 } else if workout.isLocked {
                     Image(systemName: "lock.fill")
-                        .font(.title3)
-                        .foregroundColor(.gray)
+                        .font(.system(size: 14))
+                        .foregroundColor(statusColor)
                 } else {
                     Text("\(index)")
-                        .font(.headline)
-                        .fontWeight(.bold)
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(statusColor)
                 }
             }
             
-            // Middle: Workout info
+            // Workout Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.displayTitle)
-                    .font(.headline)
-                    .foregroundColor(workout.isLocked ? .secondary : .primary)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(workout.isLocked ? Color("TextSecondary").opacity(0.5) : Color("BackgroundDark"))
                 
                 Text(workout.displaySubtitle)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(workout.isLocked ? Color("TextSecondary").opacity(0.4) : Color("TextSecondary"))
                 
-                if let instructions = workout.workout.instructions {
-                    Text(instructions)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                if let instructions = workout.workout.instructions?.prefix(50) {
+                    Text(String(instructions) + "...")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(Color("TextSecondary").opacity(0.7))
                         .lineLimit(1)
                 }
             }
             
             Spacer()
             
-            // Right: Chevron or lock
-            if workout.isLocked {
-                Image(systemName: "lock.fill")
-                    .foregroundColor(.gray)
-                    .font(.caption)
-            } else {
+            // Status Icon
+            if !workout.isCompleted && !workout.isLocked {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color("TextSecondary"))
             }
         }
-        .padding()
-        .background(workout.isLocked ? Color.clear : Color(.systemBackground))
-        .contentShape(Rectangle())
-        .opacity(workout.isLocked ? 0.6 : 1.0)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(workout.isLocked ? Color.white.opacity(0.6) : Color.white)
+                .shadow(
+                    color: workout.isLocked ? Color.black.opacity(0.02) : Color.black.opacity(0.06),
+                    radius: 8,
+                    x: 0,
+                    y: 2
+                )
+        )
+        .opacity(workout.isLocked ? 0.7 : 1.0)
     }
     
     private var statusColor: Color {
         if workout.isCompleted {
-            return .green
+            return Color("AccentGreen")
         } else if workout.isLocked {
-            return .gray
+            return Color("TextSecondary")
+        } else if workout.workout.workoutType == .rest {
+            return Color("AccentTeal")
         } else {
-            return .blue
+            return Color("PrimaryMain")
         }
     }
 }
