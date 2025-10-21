@@ -1260,7 +1260,7 @@ struct CircularProgressView: View {
     }
 }
 
-// MARK: - Workout Detail View (Updated Card Style)
+// MARK: - Workout Detail View (Simplified Weight Selector Style)
 struct WorkoutDetailView: View {
     let workout: ProgramWorkoutWithState
     let userProgram: UserProgram?
@@ -1288,69 +1288,40 @@ struct WorkoutDetailView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color(.systemGroupedBackground)
+                // Clean white background
+                Color.white
                     .ignoresSafeArea()
                 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Workout Header Card
-                        workoutHeader
+                VStack(spacing: 0) {
+                    // Top section with context
+                    VStack(spacing: 8) {
+                        Text(workout.displayTitle)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(Color("BackgroundDark"))
                         
-                        // Weight Selector Card (only for ruck workouts, not rest days)
-                        if workout.workout.workoutType == .ruck {
-                            weightSelectorSection
-                        }
-                        
-                        // Instructions Card
-                        if let instructions = workout.workout.instructions {
-                            instructionsSection(instructions)
-                        }
-                        
-                        // Completion status or action
-                        if workout.isCompleted {
-                            completedSection
-                        } else if !workout.isLocked {
-                            Spacer(minLength: 80)
-                        }
+                        Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                }
-                
-                // Floating Action Button
-                if !workout.isCompleted && !workout.isLocked {
-                    VStack {
-                        Spacer()
-                        
-                        Button(action: {
-                            startWorkout()
-                        }) {
-                            HStack {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Start Workout")
-                                    .font(.system(size: 17, weight: .semibold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color("PrimaryMain"))
-                            .cornerRadius(16)
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
-                        .background(
-                            LinearGradient(
-                                colors: [Color(.systemGroupedBackground).opacity(0), Color(.systemGroupedBackground)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .frame(height: 100)
-                            .offset(y: 50)
-                        )
+                    .padding(.top, 60)
+                    .padding(.bottom, 40)
+                    
+                    // Weight Selector (only for ruck workouts)
+                    if workout.workout.workoutType == .ruck {
+                        weightSelectorSection
+                    } else {
+                        restDaySection
                     }
+                    
+                    Spacer()
+                    
+                    // Instructions at bottom
+                    if let instructions = workout.workout.instructions {
+                        instructionsSection(instructions)
+                    }
+                    
+                    // Action Buttons
+                    actionButtons
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -1377,107 +1348,149 @@ struct WorkoutDetailView: View {
     
     // MARK: - Subviews
     
-    private var workoutHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(workout.displayTitle)
-                .font(.system(size: 28, weight: .bold, design: .default))
-                .foregroundColor(Color("BackgroundDark"))
-            
-            Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(Color("TextSecondary"))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-        )
-    }
-    
     private var weightSelectorSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 0) {
             Text("Set Ruck Weight")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+                .padding(.bottom, 20)
+            
+            // HERO - Selected Weight
+            (Text("\(Int(selectedWorkoutWeight))")
+                .font(.system(size: 100, weight: .medium))
+             + Text(" lbs")
+                .font(.system(size: 36, weight: .regular)))
                 .foregroundColor(Color("BackgroundDark"))
+                .padding(.bottom, 60)
             
-            // Large Weight Display
-            Text("\(Int(selectedWorkoutWeight)) lbs")
-                .font(.system(size: 56, weight: .bold))
-                .foregroundColor(Color("PrimaryMain"))
-                .frame(maxWidth: .infinity)
-            
-            // Weight Slider
-            VStack(spacing: 8) {
-                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 5)
-                    .tint(Color("PrimaryMain"))
+            // Slider
+            VStack(spacing: 16) {
+                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
+                    .tint(Color("BackgroundDark"))
                 
                 HStack {
                     Text("0 lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                    
                     Spacer()
+                    
                     Text("100 lbs")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
                 }
             }
+            .padding(.horizontal, 40)
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-        )
+    }
+    
+    private var restDaySection: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "bed.double.fill")
+                .font(.system(size: 60))
+                .foregroundColor(Color("AccentTeal"))
+            
+            Text("Rest Day")
+                .font(.system(size: 32, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
+            
+            Text("Recovery is essential")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+        }
+        .padding(.vertical, 40)
     }
     
     private func instructionsSection(_ instructions: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "list.bullet.clipboard")
-                    .font(.system(size: 16))
+                    .font(.system(size: 14))
                     .foregroundColor(Color("PrimaryMain"))
                 
                 Text("Instructions")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(Color("BackgroundDark"))
             }
             
             Text(instructions)
-                .font(.system(size: 15, weight: .regular))
+                .font(.system(size: 14, weight: .regular))
                 .foregroundColor(Color("TextSecondary"))
-                .lineSpacing(6)
+                .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color("AccentTeal").opacity(0.1))
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color("AccentTeal").opacity(0.08))
         )
+        .padding(.horizontal, 40)
+        .padding(.bottom, 20)
     }
     
-    private var completedSection: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(Color("AccentGreen"))
-            
-            Text("Workout Completed!")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
-            
-            Text("Great work! Keep up the momentum.")
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
-                .multilineTextAlignment(.center)
+    private var actionButtons: some View {
+        HStack(spacing: 16) {
+            if workout.isCompleted {
+                // Completed state - just close button
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16))
+                        Text("Completed")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(Color("AccentGreen"))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color("AccentGreen").opacity(0.1))
+                    )
+                }
+                .buttonStyle(.plain)
+            } else if !workout.isLocked {
+                // Cancel Button
+                Button(action: {
+                    dismiss()
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Color("BackgroundDark"))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color("BackgroundDark").opacity(0.08))
+                        )
+                }
+                .buttonStyle(.plain)
+                
+                // Start Button
+                Button(action: {
+                    startWorkout()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 16))
+                        Text("Start Workout")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color("PrimaryMain"))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(32)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color("AccentGreen").opacity(0.1))
-        )
+        .padding(.horizontal, 40)
+        .padding(.bottom, 40)
     }
     
     // MARK: - Methods
