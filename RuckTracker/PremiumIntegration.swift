@@ -1260,7 +1260,7 @@ struct CircularProgressView: View {
     }
 }
 
-// MARK: - Workout Detail View
+// MARK: - Workout Detail View (Updated Card Style)
 struct WorkoutDetailView: View {
     let workout: ProgramWorkoutWithState
     let userProgram: UserProgram?
@@ -1287,39 +1287,79 @@ struct WorkoutDetailView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Workout header
-                    workoutHeader
-                    
-                    // Weight Selector (only for ruck workouts, not rest days)
-                    if workout.workout.workoutType == .ruck {
-                        weightSelectorSection
+            ZStack {
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Workout Header Card
+                        workoutHeader
+                        
+                        // Weight Selector Card (only for ruck workouts, not rest days)
+                        if workout.workout.workoutType == .ruck {
+                            weightSelectorSection
+                        }
+                        
+                        // Instructions Card
+                        if let instructions = workout.workout.instructions {
+                            instructionsSection(instructions)
+                        }
+                        
+                        // Completion status or action
+                        if workout.isCompleted {
+                            completedSection
+                        } else if !workout.isLocked {
+                            Spacer(minLength: 80)
+                        }
                     }
-                    
-                    // Instructions
-                    if let instructions = workout.workout.instructions {
-                        instructionsSection(instructions)
-                    }
-                    
-                    // Completion status or action
-                    if workout.isCompleted {
-                        completedSection
-                    } else if !workout.isLocked {
-                        actionSection
-                    }
-                    
-                    Spacer(minLength: 100)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
                 }
-                .padding()
+                
+                // Floating Action Button
+                if !workout.isCompleted && !workout.isLocked {
+                    VStack {
+                        Spacer()
+                        
+                        Button(action: {
+                            startWorkout()
+                        }) {
+                            HStack {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                Text("Start Workout")
+                                    .font(.system(size: 17, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color("PrimaryMain"))
+                            .cornerRadius(16)
+                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(.systemGroupedBackground).opacity(0), Color(.systemGroupedBackground)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 100)
+                            .offset(y: 50)
+                        )
+                    }
+                }
             }
-            .navigationTitle(workout.displayTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
             .alert("Mark as Complete?", isPresented: $showingCompletionConfirmation) {
@@ -1335,46 +1375,43 @@ struct WorkoutDetailView: View {
         }
     }
     
+    // MARK: - Subviews
+    
     private var workoutHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                
-                if workout.isCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(.green)
-                }
-            }
-            
             Text(workout.displayTitle)
-                .font(.title)
-                .fontWeight(.bold)
+                .font(.system(size: 28, weight: .bold, design: .default))
+                .foregroundColor(Color("BackgroundDark"))
             
             Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(Color("TextSecondary"))
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
     }
     
     private var weightSelectorSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Set Ruck Weight")
-                .font(.headline)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
             
-            // Weight display
+            // Large Weight Display
             Text("\(Int(selectedWorkoutWeight)) lbs")
-                .font(.system(size: 56, weight: .bold, design: .rounded))
-                .foregroundColor(.blue)
+                .font(.system(size: 56, weight: .bold))
+                .foregroundColor(Color("PrimaryMain"))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical)
             
-            // Slider
+            // Weight Slider
             VStack(spacing: 8) {
-                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
-                    .accentColor(.blue)
+                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 5)
+                    .tint(Color("PrimaryMain"))
                 
                 HStack {
                     Text("0 lbs")
@@ -1387,131 +1424,103 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
     }
     
     private func instructionsSection(_ instructions: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Instructions", systemImage: "list.bullet.clipboard")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "list.bullet.clipboard")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color("PrimaryMain"))
+                
+                Text("Instructions")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color("BackgroundDark"))
+            }
             
             Text(instructions)
-                .font(.body)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+                .lineSpacing(6)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color("AccentTeal").opacity(0.1))
+        )
     }
     
     private var completedSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.green)
+                .foregroundColor(Color("AccentGreen"))
             
             Text("Workout Completed!")
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
             
-            if let completionDate = workout.completionDate {
-                Text("Completed on \(completionDate, style: .date)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+            Text("Great work! Keep up the momentum.")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color.green.opacity(0.1))
-        .cornerRadius(12)
-    }
-
-    private var actionSection: some View {
-        VStack(spacing: 16) {
-            if workout.workout.workoutType == .rest {
-                Button(action: {
-                    showingCompletionConfirmation = true
-                }) {
-                    HStack {
-                        if isCompleting {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Image(systemName: "checkmark.circle.fill")
-                            Text("Mark as Complete")
-                                .fontWeight(.semibold)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                }
-                .disabled(isCompleting)
-            } else {
-                Button(action: {
-                    startWorkoutTracking()
-                }) {
-                    HStack {
-                        Image(systemName: "play.circle.fill")
-                        Text("Start Workout")
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                }
-                
-                Text("Tip: After completing, return here to mark as complete and unlock next workout")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
+        .padding(32)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color("AccentGreen").opacity(0.1))
+        )
     }
     
-    private var workoutIcon: String {
-        switch workout.workout.workoutType {
-        case .ruck:
-            return "figure.walk"
-        case .rest:
-            return "bed.double.fill"
-        case .crossTraining:
-            return "figure.run"
-        }
-    }
+    // MARK: - Methods
     
-    private func startWorkoutTracking() {
-        // Start the workout - PhoneMainView will handle dismissing all sheets
-        // and presenting the ActiveWorkoutFullScreenView automatically
+    private func startWorkout() {
+        // Set the weight in workout manager
+        workoutManager.ruckWeight = selectedWorkoutWeight
+        
+        // Start the workout
         workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        
+        // Trigger the workout flow presentation
+        isPresentingWorkoutFlow = true
+        
+        // Dismiss this view
+        dismiss()
     }
     
     private func completeWorkout() async {
-        guard let programId = programService.getEnrolledProgramId() else { return }
-        
         isCompleting = true
         defer { isCompleting = false }
         
-        let distance = workout.workout.distanceMiles ?? 0.0
-        let weight = userProgram?.currentWeightLbs ?? 20.0
-        let duration = Int((distance * (workout.workout.targetPaceMinutes ?? 15.0)))
-        
-        // This is now synchronous
-        programService.completeWorkout(
-            programId: programId,
-            workoutDay: workout.workout.dayNumber,
-            distanceMiles: distance,
-            weightLbs: weight,
-            durationMinutes: duration
+        // Record the completion in CoreData
+        WorkoutDataManager.shared.saveWorkout(
+            date: Date(),
+            duration: 0,
+            distance: workout.workout.distanceMiles ?? 0,
+            calories: 0,
+            ruckWeight: selectedWorkoutWeight,
+            heartRate: 0,
+            programId: userProgram?.programId,
+            programWorkoutDay: workout.workout.dayNumber,
+            challengeId: nil,
+            challengeDay: nil
         )
         
+        // Refresh program progress
+        programService.refreshProgramProgress()
+        
+        // Call the completion handler to refresh the list
         onComplete()
+        
+        // Dismiss the view
         dismiss()
     }
 }
