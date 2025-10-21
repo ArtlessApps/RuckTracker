@@ -511,54 +511,114 @@ struct ProgramDetailView: View {
     
     private var programInfoView: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Header
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(program.title)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        if let description = program.description {
-                            Text(description)
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        HStack {
+            ZStack {
+                // Background
+                Color(.systemBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Header Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(program.title)
+                                .font(.system(size: 34, weight: .bold, design: .default))
+                                .foregroundColor(Color("BackgroundDark"))
+                            
+                            if let description = program.description {
+                                Text(description)
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundColor(Color("TextSecondary"))
+                                    .lineLimit(3)
+                            }
+                            
+                            // Difficulty Badge
                             DifficultyBadge(difficulty: program.difficulty)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                        
+                        // Program Overview Card
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Program Overview")
+                                .font(.system(size: 22, weight: .bold, design: .default))
+                                .foregroundColor(Color("BackgroundDark"))
                             
-                            Spacer()
-                            
-                            if program.durationWeeks > 0 {
-                                Text("\(program.durationWeeks) weeks")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                            VStack(spacing: 0) {
+                                OverviewItemCard(
+                                    icon: "calendar",
+                                    title: "Duration",
+                                    value: program.durationWeeks > 0 ? "\(program.durationWeeks) weeks" : "Ongoing",
+                                    iconColor: .blue,
+                                    isFirst: true
+                                )
+                                
+                                OverviewItemCard(
+                                    icon: "figure.walk",
+                                    title: "Difficulty",
+                                    value: program.difficulty.rawValue.capitalized,
+                                    iconColor: difficultyIconColor,
+                                    isFirst: false
+                                )
+                                
+                                OverviewItemCard(
+                                    icon: "target",
+                                    title: "Category",
+                                    value: program.category.rawValue.capitalized,
+                                    iconColor: Color("PrimaryMain"),
+                                    isFirst: false,
+                                    isLast: true
+                                )
                             }
                         }
+                        .padding(.horizontal, 20)
+                        
+                        
+                        // Bottom spacing for button
+                        Spacer(minLength: 80)
                     }
-                    
-                    // Program Overview
-                    ProgramOverviewSection(program: program)
-                    
-                    // Sample Week Preview
-                    SampleWeekSection()
-                    
-                    // Enrollment Section
-                    EnrollmentSection {
-                        handleEnrollmentTap()
-                    }
-                    
-                    Spacer(minLength: 100)
+                    .padding(.vertical, 12)
                 }
-                .padding()
+                
+                // Floating CTA Button
+                VStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        handleEnrollmentTap()
+                    }) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Enroll in Program")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color("PrimaryMain"))
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(.systemBackground).opacity(0), Color(.systemBackground)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 100)
+                        .offset(y: 50)
+                    )
+                }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        dismiss()
+                        onDismiss?()
                     }
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
         }
@@ -580,6 +640,15 @@ struct ProgramDetailView: View {
         Task {
             // Reload enrollment status to trigger view transition
             await checkEnrollmentStatus()
+        }
+    }
+    
+    private var difficultyIconColor: Color {
+        switch program.difficulty {
+        case .beginner: return Color("AccentGreen")
+        case .intermediate: return .yellow
+        case .advanced: return Color("PrimaryMain")
+        case .elite: return Color("PrimaryMedium")
         }
     }
     
@@ -606,13 +675,12 @@ struct DifficultyBadge: View {
     
     var body: some View {
         Text(difficulty.rawValue.capitalized)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .font(.system(size: 13, weight: .medium))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(difficultyColor.opacity(0.2))
             .foregroundColor(difficultyColor)
-            .cornerRadius(6)
+            .cornerRadius(8)
     }
     
     private var difficultyColor: Color {
@@ -625,133 +693,110 @@ struct DifficultyBadge: View {
     }
 }
 
-struct ProgramOverviewSection: View {
-    let program: Program
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Program Overview")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 12) {
-                OverviewItem(
-                    icon: "calendar",
-                    title: "Duration",
-                    value: program.durationWeeks > 0 ? "\(program.durationWeeks) weeks" : "Ongoing"
-                )
-                
-                OverviewItem(
-                    icon: "figure.walk",
-                    title: "Difficulty",
-                    value: program.difficulty.rawValue.capitalized
-                )
-                
-                OverviewItem(
-                    icon: "target",
-                    title: "Category",
-                    value: program.category.rawValue.capitalized
-                )
-            }
-        }
-    }
-}
+// MARK: - Card Components
 
-struct OverviewItem: View {
+struct OverviewItemCard: View {
     let icon: String
     let title: String
     let value: String
+    let iconColor: Color
+    var isFirst: Bool = false
+    var isLast: Bool = false
     
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(Color("PrimaryMain"))
-                .frame(width: 24)
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(iconColor)
+            }
             
+            // Title
             Text(title)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
             
             Spacer()
             
+            // Value
             Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
         }
-    }
-}
-
-struct SampleWeekSection: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Sample Week")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 8) {
-                SampleWorkoutRow(day: "Monday", workout: "3 mile ruck @ 25lbs")
-                SampleWorkoutRow(day: "Tuesday", workout: "Rest day")
-                SampleWorkoutRow(day: "Wednesday", workout: "5 mile ruck @ 25lbs")
-                SampleWorkoutRow(day: "Thursday", workout: "Cross training")
-                SampleWorkoutRow(day: "Friday", workout: "4 mile ruck @ 30lbs")
-                SampleWorkoutRow(day: "Weekend", workout: "Long ruck or rest")
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.white)
+        .overlay(
+            Group {
+                if !isLast {
+                    Divider()
+                        .padding(.leading, 68)
+                        .offset(y: 16)
+                }
             }
-        }
+        )
+        .cornerRadius(isFirst ? 16 : 0, corners: [.topLeft, .topRight])
+        .cornerRadius(isLast ? 16 : 0, corners: [.bottomLeft, .bottomRight])
+        .shadow(color: isFirst ? Color.black.opacity(0.06) : .clear, radius: 8, x: 0, y: 2)
     }
 }
 
-struct SampleWorkoutRow: View {
+struct SampleWorkoutCard: View {
     let day: String
     let workout: String
+    let icon: String
+    var isFirst: Bool = false
+    var isLast: Bool = false
     
     var body: some View {
-        HStack {
-            Text(day)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .frame(width: 80, alignment: .leading)
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(Color("PrimaryMain").opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(Color("PrimaryMain"))
+            }
             
+            // Day
+            Text(day)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
+                .frame(width: 90, alignment: .leading)
+            
+            // Workout
             Text(workout)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.white)
+        .overlay(
+            Group {
+                if !isLast {
+                    Divider()
+                        .padding(.leading, 68)
+                        .offset(y: 16)
+                }
+            }
+        )
+        .cornerRadius(isFirst ? 16 : 0, corners: [.topLeft, .topRight])
+        .cornerRadius(isLast ? 16 : 0, corners: [.bottomLeft, .bottomRight])
+        .shadow(color: isFirst ? Color.black.opacity(0.06) : .clear, radius: 8, x: 0, y: 2)
     }
 }
 
-struct EnrollmentSection: View {
-    let action: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Button(action: action) {
-                HStack {
-                    Image(systemName: "checkmark.circle")
-                    Text("Enroll in Program")
-                }
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .padding(.horizontal, 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
-                )
-            }
-            .buttonStyle(.plain)
-            
-            Text("You can adjust your weight anytime during the program")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-    }
-}
 
 struct EnrolledSection: View {
     let userProgram: UserProgram?
@@ -1684,5 +1729,27 @@ struct RecentWorkoutRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Rounded Corner Extension
+
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
     }
 }
