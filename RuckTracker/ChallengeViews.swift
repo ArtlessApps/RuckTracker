@@ -7,244 +7,193 @@
 
 import SwiftUI
 
-// MARK: - Main Challenges Section
-struct ChallengesSection: View {
-    @Binding var isPresentingWorkoutFlow: Bool
-    @StateObject private var challengeService = LocalChallengeService.shared
-    @EnvironmentObject var premiumManager: PremiumManager
-    @State private var selectedChallenge: Challenge?
+
+// MARK: - Active Challenge Card
+
+struct ActiveChallengeCard: View {
+    let challenge: Challenge
+    let progress: Double
     
     var body: some View {
-        ZStack {
-            // Background
-            Color("BackgroundDark")
-                .ignoresSafeArea()
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with icon and duration
+            HStack {
+                // Dynamic accent circle with icon based on focus area
+                ZStack {
+                    Circle()
+                        .fill(focusAreaColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: challenge.focusArea.iconName)
+                        .font(.system(size: 20))
+                        .foregroundColor(focusAreaColor)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(challenge.title)
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    if let description = challenge.description {
+                        Text(description)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                            .lineLimit(2)
+                    }
+                }
+                
+                Spacer()
+                
+                // Duration badge
+                Text("\(challenge.durationDays)d")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color("WarmGray").opacity(0.1))
+                    )
+            }
             
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    // Header section
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Weekly Challenges")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
+            // Progress section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("\(Int(progress * 100))% complete")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color("TextSecondary"))
                     
                     Spacer()
                     
-                    if !premiumManager.isPremiumUser {
-                        PremiumBadge(size: .small)
-                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color("WarmGray"))
                 }
                 
-                    Text("7-day focused challenges designed to build specific skills and push your limits.")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.6))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                
-                if challengeService.isLoading {
-                    ProgressView("Loading challenges...")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                } else {
-                    challengesView
-                }
-            }
-            }
-        }
-        .sheet(item: $selectedChallenge) { challenge in
-            ChallengeDetailView(challenge: challenge, isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
-                .environmentObject(challengeService)
-                .environmentObject(premiumManager)
-        }
-        .onAppear {
-            challengeService.loadChallenges()
-        }
-    }
-    
-    @ViewBuilder
-    private var challengesView: some View {
-        if challengeService.challenges.isEmpty {
-            EmptyStateView(
-                icon: "target",
-                title: "No Challenges Available",
-                description: "Check back later for new challenges to test your skills."
-            )
-            .padding()
-        } else {
-            VStack(spacing: 16) {
-                // ENROLLED CHALLENGES SECTION (NEW)
-                if !enrolledChallenges.isEmpty {
-                    enrolledChallengesSection
-                }
-                
-                // AVAILABLE CHALLENGES SECTION
-                availableChallengesSection
-            }
-        }
-    }
-    
-    // MARK: - Computed Properties
-    
-    private var enrolledChallenges: [(UserChallenge, Challenge)] {
-        challengeService.userChallenges
-            .filter { $0.isActive }
-            .compactMap { userChallenge in
-                if let challenge = challengeService.challenges.first(where: { $0.id == userChallenge.challengeId }) {
-                    return (userChallenge, challenge)
-                }
-                return nil
-            }
-            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
-    }
-    
-    private var availableChallenges: [Challenge] {
-        let enrolledIds = Set(challengeService.userChallenges.map { $0.challengeId })
-        return challengeService.challenges
-            .filter { !enrolledIds.contains($0.id) && $0.isActive }
-            .sorted { challenge1, challenge2 in
-                // Sort by focus area, then alphabetically
-                if challenge1.focusArea.rawValue != challenge2.focusArea.rawValue {
-                    return challenge1.focusArea.rawValue < challenge2.focusArea.rawValue
-                }
-                return challenge1.title < challenge2.title
-            }
-    }
-    
-    // MARK: - Enrolled Section
-    
-    private var enrolledChallengesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Active")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 20) {
-                ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
-                    ChallengeCardView(challenge: challenge) {
-                        selectedChallenge = challenge
+                // Progress bar with focus area color
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color("WarmGray").opacity(0.15))
+                            .frame(height: 6)
+                        
+                        // Progress - using muted terracotta color
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color("PrimaryMain"))
+                            .frame(width: geometry.size.width * progress, height: 6)
                     }
                 }
+                .frame(height: 6)
             }
-            .padding(.horizontal, 24)
-            
-            Divider()
-                .padding(.vertical, 8)
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                )
+        )
     }
     
-    // MARK: - Available Section
-    
-    private var availableChallengesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Available Challenges")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 20) {
-                ForEach(availableChallenges) { challenge in
-                    ChallengeCardView(challenge: challenge) {
-                        selectedChallenge = challenge
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+    // Helper to determine color based on challenge focus area
+    private var focusAreaColor: Color {
+        switch challenge.focusArea {
+        case .enduranceProgression:
+            return Color("AccentTeal") // Dusty Teal
+        case .power, .progressiveWeight:
+            return Color("AccentGreen") // Sage Green
+        case .tacticalMixed:
+            return Color("BackgroundDark") // Charcoal
+        case .recovery:
+            return Color("PrimaryMain") // Terracotta
+        case .distance:
+            return Color("AccentTeal") // Dusty Teal
+        case .speed, .speedDevelopment:
+            return Color("AccentGreen") // Sage Green
         }
     }
 }
 
-// MARK: - Challenge Card View
-struct ChallengeCardView: View {
+// MARK: - Available Challenge Card
+
+struct AvailableChallengeCard: View {
     let challenge: Challenge
-    let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 0) {
-                // Accent bar on left - bold with glow
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [focusAreaColor(challenge.focusArea), focusAreaColor(challenge.focusArea).opacity(0.8)]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 6)
-                    .shadow(color: focusAreaColor(challenge.focusArea).opacity(0.5), radius: 6, x: 3, y: 0)
+        HStack(spacing: 12) {
+            // Icon with dynamic accent color based on focus area
+            ZStack {
+                Circle()
+                    .fill(focusAreaColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
                 
-                // Content
-                HStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(challenge.title)
-                            .font(.system(size: 19, weight: .semibold, design: .default))
-                            .foregroundColor(.white)
-                        
-                        Text(challenge.description ?? "")
-                            .font(.system(size: 14, weight: .regular, design: .default))
-                            .foregroundColor(.white.opacity(0.72))
-                            .lineSpacing(4)
-                            .lineLimit(3)
-                    }
-                    .padding(.leading, 20)
+                Image(systemName: challenge.focusArea.iconName)
+                    .font(.system(size: 20))
+                    .foregroundColor(focusAreaColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(challenge.title)
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
                     
                     Spacer()
-                    
-                    // Right side: duration badge and chevron with perfect vertical centering
-                    HStack(alignment: .center, spacing: 0) {
-                        VStack(alignment: .trailing, spacing: 20) {
-                            // Duration badge - softer brightness
-                            Text("\(challenge.durationDays)d")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundColor(.black.opacity(0.85))
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 7)
-                                .background(
-                                    Capsule()
-                                        .fill(.white.opacity(0.85))
-                                )
-                        }
-                        
-                        // Chevron indicator - perfectly centered vertically
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
-                            .padding(.leading, 16)
-                    }
-                    .padding(.trailing, 20)
                 }
-                .padding(.vertical, 24)
+                
+                if let description = challenge.description {
+                    Text(description)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                        .lineLimit(2)
+                }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.white.opacity(0.11))
-                    .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 8)
-                    .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .white.opacity(0.2),
-                                .white.opacity(0.05)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
+            
+            Spacer()
+            
+            // Duration and chevron
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(challenge.durationDays)d")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color("WarmGray"))
+            }
         }
-        .buttonStyle(ProgramCardButtonStyle())
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                )
+        )
+    }
+    
+    // Helper to determine color based on challenge focus area
+    private var focusAreaColor: Color {
+        switch challenge.focusArea {
+        case .enduranceProgression:
+            return Color("AccentTeal") // Dusty Teal
+        case .power, .progressiveWeight:
+            return Color("AccentGreen") // Sage Green
+        case .tacticalMixed:
+            return Color("BackgroundDark") // Charcoal
+        case .recovery:
+            return Color("PrimaryMain") // Terracotta
+        case .distance:
+            return Color("AccentTeal") // Dusty Teal
+        case .speed, .speedDevelopment:
+            return Color("AccentGreen") // Sage Green
+        }
     }
 }
 
@@ -466,7 +415,28 @@ private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
 // MARK: - Preview
 struct ChallengeViews_Previews: PreviewProvider {
     static var previews: some View {
-        ChallengesSection(isPresentingWorkoutFlow: .constant(false))
-            .environmentObject(PremiumManager())
+        // Preview for ActiveChallengeCard
+        ActiveChallengeCard(
+            challenge: Challenge(
+                id: UUID(),
+                title: "Sample Challenge",
+                description: "A sample challenge for preview",
+                challengeType: .weekly,
+                focusArea: .enduranceProgression,
+                durationDays: 7,
+                weightPercentage: 0.0,
+                paceTarget: 12.0,
+                distanceFocus: true,
+                recoveryFocus: false,
+                isSeasonal: false,
+                season: nil,
+                isActive: true,
+                sortOrder: 1,
+                createdAt: Date(),
+                updatedAt: Date()
+            ),
+            progress: 0.6
+        )
+        .padding()
     }
 }

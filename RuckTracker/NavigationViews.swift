@@ -146,15 +146,15 @@ struct ActiveProgramCard: View {
         VStack(alignment: .leading, spacing: 16) {
             // Header with icon and duration
             HStack {
-                // Terracotta accent circle with icon
+                // Dynamic accent circle with icon based on program type
                 ZStack {
                     Circle()
-                        .fill(Color("PrimaryMain").opacity(0.15))
+                        .fill(iconColor.opacity(0.15))
                         .frame(width: 44, height: 44)
                     
-                    Image(systemName: "figure.walk")
+                    Image(systemName: iconName)
                         .font(.system(size: 20))
-                        .foregroundColor(Color("PrimaryMain"))
+                        .foregroundColor(iconColor)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -226,6 +226,47 @@ struct ActiveProgramCard: View {
                 )
         )
     }
+    
+    // Helper to determine icon and color based on program type
+    private var iconName: String {
+        let title = program.title.lowercased()
+        if title.contains("ruck ready") {
+            return "figure.walk"
+        } else if title.contains("foundation builder") {
+            return "square.stack.3d.up"
+        } else if title.contains("active lifestyle") {
+            return "heart.fill"
+        } else if title.contains("endurance build") {
+            return "bolt.fill"
+        } else if title.contains("goruck light") {
+            return "flame.fill"
+        } else if title.contains("goruck heavy") || title.contains("goruck tough") {
+            return "flame.fill"
+        } else if title.contains("army acft") {
+            return "figure.strengthtraining.traditional"
+        } else if title.contains("strength") && title.contains("conditioning") {
+            return "dumbbell.fill"
+        } else if title.contains("marathon ruck") {
+            return "figure.run"
+        } else if title.contains("goruck selection") {
+            return "star.fill"
+        }
+        return "figure.walk"
+    }
+    
+    private var iconColor: Color {
+        let title = program.title.lowercased()
+        if title.contains("ruck ready") || title.contains("foundation builder") {
+            return Color("PrimaryMain") // Terracotta
+        } else if title.contains("active lifestyle") || title.contains("endurance build") {
+            return Color("AccentTeal") // Dusty Teal
+        } else if title.contains("goruck light") || title.contains("goruck heavy") || title.contains("goruck tough") || title.contains("army acft") {
+            return Color("AccentGreen") // Sage Green
+        } else if title.contains("strength") && title.contains("conditioning") || title.contains("marathon ruck") || title.contains("goruck selection") {
+            return Color("BackgroundDark") // Charcoal
+        }
+        return Color("PrimaryMain")
+    }
 }
 
 // MARK: - Available Program Card
@@ -291,28 +332,40 @@ struct AvailableProgramCard: View {
     // Helper to determine icon and color based on program type
     private var iconName: String {
         let title = program.title.lowercased()
-        if title.contains("ready") || title.contains("beginner") {
+        if title.contains("ruck ready") {
             return "figure.walk"
-        } else if title.contains("foundation") || title.contains("builder") {
+        } else if title.contains("foundation builder") {
             return "square.stack.3d.up"
-        } else if title.contains("lifestyle") || title.contains("active") {
+        } else if title.contains("active lifestyle") {
             return "heart.fill"
-        } else if title.contains("endurance") {
+        } else if title.contains("endurance build") {
             return "bolt.fill"
+        } else if title.contains("goruck light") {
+            return "flame.fill"
+        } else if title.contains("goruck heavy") || title.contains("goruck tough") {
+            return "flame.fill"
+        } else if title.contains("army acft") {
+            return "figure.strengthtraining.traditional"
+        } else if title.contains("strength") && title.contains("conditioning") {
+            return "dumbbell.fill"
+        } else if title.contains("marathon ruck") {
+            return "figure.run"
+        } else if title.contains("goruck selection") {
+            return "star.fill"
         }
         return "figure.walk"
     }
     
     private var iconColor: Color {
         let title = program.title.lowercased()
-        if title.contains("ready") || title.contains("beginner") {
-            return Color("PrimaryMain")
-        } else if title.contains("foundation") || title.contains("builder") {
-            return Color("AccentTeal")
-        } else if title.contains("lifestyle") || title.contains("active") {
-            return Color("AccentTeal")
-        } else if title.contains("endurance") {
-            return Color("AccentTeal").opacity(0.8)
+        if title.contains("ruck ready") || title.contains("foundation builder") {
+            return Color("PrimaryMain") // Terracotta
+        } else if title.contains("active lifestyle") || title.contains("endurance build") {
+            return Color("AccentTeal") // Dusty Teal
+        } else if title.contains("goruck light") || title.contains("goruck heavy") || title.contains("goruck tough") || title.contains("army acft") {
+            return Color("AccentGreen") // Sage Green
+        } else if title.contains("strength") && title.contains("conditioning") || title.contains("marathon ruck") || title.contains("goruck selection") {
+            return Color("BackgroundDark") // Charcoal
         }
         return Color("PrimaryMain")
     }
@@ -415,34 +468,69 @@ struct ChallengesView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color("BackgroundDark")
+            // Background - Match PhoneMainView
+            Color(.systemBackground)
                 .ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Header Section with generous top padding
+                    // Header Section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Challenges")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color("BackgroundDark"))
                         
                         Text("Test your limits with focused challenges designed to build specific skills and mental toughness.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(Color("TextSecondary"))
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 32)
                     
-                    // ENROLLED CHALLENGES SECTION
+                    // ACTIVE CHALLENGES SECTION
                     if !enrolledChallenges.isEmpty {
-                        activeChallengesSection
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Active")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(Color("TextSecondary"))
+                                .padding(.horizontal, 24)
+                            
+                            ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
+                                Button(action: {
+                                    selectedChallenge = challenge
+                                }) {
+                                    ActiveChallengeCard(
+                                        challenge: challenge,
+                                        progress: calculateChallengeProgress(userChallenge: userChallenge, challenge: challenge)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, 24)
+                            }
+                        }
+                        .padding(.bottom, 32)
                     }
                     
                     // AVAILABLE CHALLENGES SECTION
-                    availableChallengesSection
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Available")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Color("TextSecondary"))
+                            .padding(.horizontal, 24)
+                        
+                        ForEach(availableChallenges) { challenge in
+                            Button(action: {
+                                selectedChallenge = challenge
+                            }) {
+                                AvailableChallengeCard(challenge: challenge)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 24)
+                        }
+                    }
+                    .padding(.bottom, 40)
                 }
             }
         }
@@ -486,180 +574,19 @@ struct ChallengesView: View {
         return challengeService.challenges.filter { !enrolledIds.contains($0.id) }
     }
     
-    // MARK: - Active Challenges Section
-    
-    private var activeChallengesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            Text("ACTIVE CHALLENGES")
-                .font(.system(size: 13, weight: .semibold, design: .default))
-                .foregroundColor(.white.opacity(0.5))
-                .tracking(1)
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 16) {
-                ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
-                    ChallengeRowView(
-                        challenge: challenge,
-                        isActive: true,
-                        progress: calculateProgress(userChallenge: userChallenge)
-                    )
-                    .onTapGesture {
-                        selectedChallenge = challenge
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-        .padding(.bottom, 32)
+    private func calculateChallengeProgress(userChallenge: UserChallenge, challenge: Challenge) -> Double {
+        let totalDays = challenge.durationDays
+        guard totalDays > 0 else { return 0 }
+        
+        let completedWorkouts = WorkoutDataManager.shared.workouts.filter {
+            $0.challengeId == userChallenge.id.uuidString
+        }.count
+        
+        return Double(completedWorkouts) / Double(totalDays)
     }
     
-    // MARK: - Available Challenges Section
-    
-    private var availableChallengesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            Text("AVAILABLE CHALLENGES")
-                .font(.system(size: 13, weight: .semibold, design: .default))
-                .foregroundColor(.white.opacity(0.5))
-                .tracking(1)
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 16) {
-                ForEach(availableChallenges, id: \.id) { (challenge: Challenge) in
-                    ChallengeRowView(
-                        challenge: challenge,
-                        isActive: false,
-                        progress: nil
-                    )
-                    .onTapGesture {
-                        if premiumManager.isPremiumUser {
-                            selectedChallenge = challenge
-                        } else {
-                            premiumManager.showPaywall(context: .programAccess)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-        .padding(.bottom, 32)
-    }
-    
-    // MARK: - Empty State
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Text("No challenges available")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(Color("BackgroundDark"))
-            
-            Text("Check back soon for new challenges")
-                .font(.system(size: 14))
-                .foregroundColor(Color("TextSecondary"))
-        }
-        .padding(.top, 60)
-    }
-    
-    // MARK: - Helpers
-    
-    private func calculateProgress(userChallenge: UserChallenge) -> Double {
-        // Use the challengeProgress property from the service
-        if let progress = challengeService.challengeProgress {
-            return progress.completionPercentage / 100.0
-        }
-        return 0.0
-    }
 }
 
-// MARK: - Challenge Row Component
-
-struct ChallengeRowView: View {
-    let challenge: Challenge
-    let isActive: Bool
-    let progress: Double?
-    
-    var body: some View {
-        Button(action: {}) {
-            HStack(spacing: 0) {
-                // Content
-                HStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(challenge.title)
-                            .font(.system(size: 19, weight: .semibold, design: .default))
-                            .foregroundColor(.white)
-                        
-                        Text(challenge.description ?? "")
-                            .font(.system(size: 14, weight: .regular, design: .default))
-                            .foregroundColor(.white.opacity(0.72))
-                            .lineSpacing(4)
-                            .lineLimit(3)
-                    }
-                    .padding(.leading, 20)
-                    
-                    Spacer()
-                    
-                    // Right side: duration badge and chevron with perfect vertical centering
-                    HStack(alignment: .center, spacing: 0) {
-                        VStack(alignment: .trailing, spacing: 20) {
-                            // Duration badge - softer brightness
-                            Text("\(challenge.durationDays)d")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundColor(.black.opacity(0.85))
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 7)
-                                .background(
-                                    Capsule()
-                                        .fill(.white.opacity(0.85))
-                                )
-                        }
-                        
-                        // Chevron indicator
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
-                            .padding(.leading, 16)
-                    }
-                    .padding(.trailing, 20)
-                }
-            }
-            .padding(.vertical, 24)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.11))
-                .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 8)
-                .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            .white.opacity(0.2),
-                            .white.opacity(0.05)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
-        .buttonStyle(ChallengeCardButtonStyle())
-    }
-}
-
-// MARK: - Button Style
-
-struct ChallengeCardButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .opacity(configuration.isPressed ? 0.8 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
-    }
-}
 
 // MARK: - Data Export View
 struct DataExportView: View {
