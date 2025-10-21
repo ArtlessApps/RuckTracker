@@ -10,34 +10,69 @@ struct TrainingProgramsView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color("BackgroundDark")
+            // Background - Match PhoneMainView
+            Color(.systemBackground)
                 .ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Header Section with generous top padding
+                    // Header Section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Training Programs")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color("BackgroundDark"))
                         
                         Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(Color("TextSecondary"))
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 32)
                     
-                    // ENROLLED PROGRAMS SECTION
+                    // ACTIVE PROGRAMS SECTION
                     if !enrolledPrograms.isEmpty {
-                        enrolledProgramsSection
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Active")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(Color("TextSecondary"))
+                                .padding(.horizontal, 24)
+                            
+                            ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
+                                Button(action: {
+                                    selectedProgram = program
+                                }) {
+                                    ActiveProgramCard(
+                                        program: program,
+                                        progress: calculateProgress(userProgram: userProgram, program: program)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, 24)
+                            }
+                        }
+                        .padding(.bottom, 32)
                     }
                     
                     // AVAILABLE PROGRAMS SECTION
-                    availableProgramsSection
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Available")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Color("TextSecondary"))
+                            .padding(.horizontal, 24)
+                        
+                        ForEach(availablePrograms) { program in
+                            Button(action: {
+                                selectedProgram = program
+                            }) {
+                                AvailableProgramCard(program: program)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 24)
+                        }
+                    }
+                    .padding(.bottom, 40)
                 }
             }
         }
@@ -68,166 +103,218 @@ struct TrainingProgramsView: View {
                 }
                 return nil
             }
-            .sorted { $0.0.startDate > $1.0.startDate } // Most recent first
+            .sorted { $0.0.startDate > $1.0.startDate }
     }
     
     private var availablePrograms: [Program] {
-        let enrolledIds = Set(programService.userPrograms.map { $0.programId })
-        return programService.programs
-            .filter { !enrolledIds.contains($0.id) }
+        let enrolledProgramIds = Set(enrolledPrograms.map { $0.1.id })
+        return programService.programs.filter { !enrolledProgramIds.contains($0.id) }
     }
     
-    // MARK: - Enrolled Section
-    
-    private var enrolledProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Active")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 20) {
-                ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
-                    ProgramCard(
-                        program: program,
-                        accentColor: getAccentColor(for: program),
-                        onTap: {
-                            selectedProgram = program
-                        }
-                    )
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-        .padding(.bottom, 40)
+    private func calculateProgress(userProgram: UserProgram, program: Program) -> Double {
+        // Get total workouts from program JSON data
+        let totalWorkouts = getTotalWorkoutsFromProgram(programId: program.id)
+        guard totalWorkouts > 0 else { return 0 }
+        
+        let completedWorkouts = WorkoutDataManager.shared.workouts.filter {
+            $0.programId == userProgram.id.uuidString
+        }.count
+        
+        return Double(completedWorkouts) / Double(totalWorkouts)
     }
     
-    // MARK: - Available Section
-    
-    private var availableProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Available")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.horizontal, 24)
-            
-            VStack(spacing: 20) {
-                ForEach(availablePrograms, id: \.id) { program in
-                    ProgramCard(
-                        program: program,
-                        accentColor: getAccentColor(for: program),
-                        onTap: {
-                            selectedProgram = program
-                        }
-                    )
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
-        }
+    private func getTotalWorkoutsFromProgram(programId: UUID) -> Int {
+        // Get weeks for this program
+        let weeks = LocalWeekLoader.shared.getWeeks(forProgramId: programId)
+        
+        // Get all workouts for this program using the workout loader
+        let workoutLoader = LocalWorkoutLoader.shared
+        let allWorkouts = workoutLoader.getAllWorkouts(forProgramId: programId, weeks: weeks)
+        
+        return allWorkouts.count
     }
     
-    // MARK: - Helper Methods
-    
-    private func getAccentColor(for program: Program) -> Color {
-        switch program.difficulty {
-        case .beginner:
-            return Color("AccentGreen")
-        case .intermediate:
-            return .yellow
-        case .advanced:
-            return Color("PrimaryMain")
-        case .elite:
-            return Color("PrimaryMedium")
-        }
-    }
 }
 
-struct ProgramCard: View {
+// MARK: - Active Program Card
+
+struct ActiveProgramCard: View {
     let program: Program
-    let accentColor: Color
-    let onTap: () -> Void
+    let progress: Double
     
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 0) {
-                // Accent bar on left - bold with glow
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [accentColor, accentColor.opacity(0.8)]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 6)
-                    .shadow(color: accentColor.opacity(0.5), radius: 6, x: 3, y: 0)
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with icon and duration
+            HStack {
+                // Terracotta accent circle with icon
+                ZStack {
+                    Circle()
+                        .fill(Color("PrimaryMain").opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color("PrimaryMain"))
+                }
                 
-                // Content
-                HStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(program.title)
-                            .font(.system(size: 19, weight: .semibold, design: .default))
-                            .foregroundColor(.white)
-                        
-                        Text(program.description ?? "")
-                            .font(.system(size: 14, weight: .regular, design: .default))
-                            .foregroundColor(.white.opacity(0.72))
-                            .lineSpacing(4)
-                            .lineLimit(3)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program.title)
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    if let description = program.description {
+                        Text(description)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color("TextSecondary"))
+                            .lineLimit(2)
                     }
-                    .padding(.leading, 20)
+                }
+                
+                Spacer()
+                
+                // Duration badge
+                Text("\(program.durationWeeks)w")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color("WarmGray").opacity(0.1))
+                    )
+            }
+            
+            // Progress section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("\(Int(progress * 100))% complete")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color("TextSecondary"))
                     
                     Spacer()
                     
-                    // Right side: duration badge and chevron with perfect vertical centering
-                    HStack(alignment: .center, spacing: 0) {
-                        VStack(alignment: .trailing, spacing: 20) {
-                            // Duration badge - softer brightness
-                            Text("\(program.durationWeeks)w")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundColor(.black.opacity(0.85))
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 7)
-                                .background(
-                                    Capsule()
-                                        .fill(.white.opacity(0.85))
-                                )
-                        }
-                        
-                        // Chevron indicator - perfectly centered vertically
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.4))
-                            .padding(.leading, 16)
-                    }
-                    .padding(.trailing, 20)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color("WarmGray"))
                 }
-                .padding(.vertical, 24)
+                
+                // Progress bar with terracotta
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color("WarmGray").opacity(0.15))
+                            .frame(height: 6)
+                        
+                        // Progress - using PrimaryMain (terracotta)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color("PrimaryMain"))
+                            .frame(width: geometry.size.width * progress, height: 6)
+                    }
+                }
+                .frame(height: 6)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.white.opacity(0.11))
-                    .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 8)
-                    .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                .white.opacity(0.2),
-                                .white.opacity(0.05)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
         }
-        .buttonStyle(ProgramCardButtonStyle())
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Available Program Card
+
+struct AvailableProgramCard: View {
+    let program: Program
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon with accent color based on program type
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: iconName)
+                    .font(.system(size: 20))
+                    .foregroundColor(iconColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(program.title)
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    Spacer()
+                }
+                
+                if let description = program.description {
+                    Text(description)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color("TextSecondary"))
+                        .lineLimit(2)
+                }
+            }
+            
+            Spacer()
+            
+            // Duration and chevron
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(program.durationWeeks)w")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color("TextSecondary"))
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color("WarmGray"))
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                )
+        )
+    }
+    
+    // Helper to determine icon and color based on program type
+    private var iconName: String {
+        let title = program.title.lowercased()
+        if title.contains("ready") || title.contains("beginner") {
+            return "figure.walk"
+        } else if title.contains("foundation") || title.contains("builder") {
+            return "square.stack.3d.up"
+        } else if title.contains("lifestyle") || title.contains("active") {
+            return "heart.fill"
+        } else if title.contains("endurance") {
+            return "bolt.fill"
+        }
+        return "figure.walk"
+    }
+    
+    private var iconColor: Color {
+        let title = program.title.lowercased()
+        if title.contains("ready") || title.contains("beginner") {
+            return Color("PrimaryMain")
+        } else if title.contains("foundation") || title.contains("builder") {
+            return Color("AccentTeal")
+        } else if title.contains("lifestyle") || title.contains("active") {
+            return Color("AccentTeal")
+        } else if title.contains("endurance") {
+            return Color("AccentTeal").opacity(0.8)
+        }
+        return Color("PrimaryMain")
     }
 }
 
