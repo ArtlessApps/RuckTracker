@@ -250,88 +250,105 @@ struct ChallengeDetailView: View {
     
     private var challengeInfoView: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Header
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Image(systemName: challenge.focusArea.iconName)
-                                .font(.largeTitle)
-                                .foregroundColor(focusAreaColor(challenge.focusArea))
+            ZStack {
+                // Background
+                Color(.systemBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Header Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(challenge.title)
+                                .font(.system(size: 34, weight: .bold, design: .default))
+                                .foregroundColor(Color("BackgroundDark"))
                             
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(challenge.title)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                
-                                Text(challenge.focusArea.displayName)
-                                    .font(.subheadline)
-                                    .foregroundColor(focusAreaColor(challenge.focusArea))
+                            if let description = challenge.description {
+                                Text(description)
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundColor(Color("TextSecondary"))
+                                    .lineLimit(3)
                             }
                             
-                            Spacer()
+                            // Focus Area Badge
+                            ChallengeFocusBadge(focusArea: challenge.focusArea)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                        
+                        // Challenge Overview Card
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Challenge Overview")
+                                .font(.system(size: 22, weight: .bold, design: .default))
+                                .foregroundColor(Color("BackgroundDark"))
+                            
+                            VStack(spacing: 0) {
+                                ChallengeOverviewCard(
+                                    icon: "calendar",
+                                    title: "Duration",
+                                    value: "\(challenge.durationDays) days",
+                                    iconColor: .blue,
+                                    isFirst: true
+                                )
+                                
+                                ChallengeOverviewCard(
+                                    icon: "figure.walk",
+                                    title: "Type",
+                                    value: challenge.challengeType.displayName,
+                                    iconColor: Color("PrimaryMain"),
+                                    isFirst: false,
+                                    isLast: true
+                                )
+                            }
                         }
                         .padding(.horizontal, 20)
                         
-                        if let description = challenge.description {
-                            Text(description)
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 20)
-                        }
+                        // Bottom spacing for button
+                        Spacer(minLength: 80)
                     }
-                    
-                    // Challenge Details
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Challenge Details")
-                            .font(.headline)
-                            .padding(.horizontal, 20)
-                        
-                        VStack(spacing: 12) {
-                            DetailRowView(
-                                icon: "calendar",
-                                title: "Duration",
-                                value: "\(challenge.durationDays) days"
-                            )
-                            
-                            DetailRowView(
-                                icon: "figure.walk",
-                                title: "Type",
-                                value: challenge.challengeType.displayName
-                            )
-                            
-                            DetailRowView(
-                                icon: challenge.distanceFocus ? "location.fill" : "location",
-                                title: "Distance Focus",
-                                value: challenge.distanceFocus ? "Yes" : "No"
-                            )
-                            
-                            DetailRowView(
-                                icon: challenge.recoveryFocus ? "heart.fill" : "heart",
-                                title: "Recovery Focus",
-                                value: challenge.recoveryFocus ? "Yes" : "No"
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    Spacer()
-                }
-            }
-            .navigationTitle("Challenge Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    .padding(.vertical, 12)
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Enroll") {
+                // Floating CTA Button
+                VStack {
+                    Spacer()
+                    
+                    Button(action: {
                         handleEnrollmentTap()
+                    }) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Enroll in Challenge")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color("PrimaryMain"))
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     }
-                    .fontWeight(.semibold)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(.systemBackground).opacity(0), Color(.systemBackground)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 100)
+                        .offset(y: 50)
+                    )
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(Color("PrimaryMain"))
                 }
             }
         }
@@ -363,31 +380,87 @@ struct ChallengeDetailView: View {
 }
 
 
-// MARK: - Detail Row View
-struct DetailRowView: View {
+// MARK: - Challenge Card Components
+
+struct ChallengeOverviewCard: View {
     let icon: String
     let title: String
     let value: String
+    let iconColor: Color
+    var isFirst: Bool = false
+    var isLast: Bool = false
     
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.body)
-                .foregroundColor(.blue)
-                .frame(width: 20)
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(iconColor)
+            }
             
+            // Title
             Text(title)
-                .font(.body)
-                .foregroundColor(.primary)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
             
             Spacer()
             
+            // Value
             Text(value)
-                .font(.body)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.white)
+        .overlay(
+            Group {
+                if !isLast {
+                    Divider()
+                        .padding(.leading, 68)
+                        .offset(y: 16)
+                }
+            }
+        )
+        .cornerRadius(isFirst ? 16 : 0, corners: [.topLeft, .topRight])
+        .cornerRadius(isLast ? 16 : 0, corners: [.bottomLeft, .bottomRight])
+        .shadow(color: isFirst ? Color.black.opacity(0.06) : .clear, radius: 8, x: 0, y: 2)
+    }
+}
+
+struct ChallengeFocusBadge: View {
+    let focusArea: Challenge.FocusArea
+    
+    var body: some View {
+        Text(focusArea.displayName)
+            .font(.system(size: 13, weight: .medium))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(focusAreaColor.opacity(0.2))
+            .foregroundColor(focusAreaColor)
+            .cornerRadius(8)
+    }
+    
+    private var focusAreaColor: Color {
+        switch focusArea {
+        case .enduranceProgression:
+            return Color("AccentTeal")
+        case .power, .progressiveWeight:
+            return Color("AccentGreen")
+        case .tacticalMixed:
+            return Color("BackgroundDark")
+        case .recovery:
+            return Color("PrimaryMain")
+        case .distance:
+            return Color("AccentTeal")
+        case .speed, .speedDevelopment:
+            return Color("AccentGreen")
+        }
     }
 }
 
@@ -440,3 +513,4 @@ struct ChallengeViews_Previews: PreviewProvider {
         .padding()
     }
 }
+
