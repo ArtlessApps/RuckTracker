@@ -20,17 +20,22 @@ struct AnalyticsView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack(spacing: 20) {
-                    if workoutDataManager.workouts.isEmpty {
-                        emptyStateView
-                    } else {
-                        analyticsContentView
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 20) {
+                        if workoutDataManager.workouts.isEmpty {
+                            emptyStateView
+                        } else {
+                            analyticsContentView
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 20)
             }
             .navigationTitle("Activity")
             .navigationBarTitleDisplayMode(.large)
@@ -64,15 +69,15 @@ struct AnalyticsView: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(Color("PrimaryMain").opacity(0.6))
+                .foregroundColor(Color("TextSecondary"))
             
             Text("No Activity Data Yet")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(Color("BackgroundDark"))
             
             Text("Start your first rucking workout to see detailed analytics, progress charts, and performance insights here.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
         }
@@ -83,17 +88,14 @@ struct AnalyticsView: View {
     // MARK: - Analytics Content
     
     private var analyticsContentView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             // Advanced Analytics Section
             if workoutDataManager.totalWorkouts >= 3 {
                 advancedAnalyticsSection
             }
             
-            // Quick Stats Dashboard
-            quickStatsSection
-            
-            // Workout History Section
-            workoutHistorySection
+            // Summary Stats Card
+            summaryStatsCard
         }
     }
     
@@ -101,10 +103,11 @@ struct AnalyticsView: View {
     
     private var advancedAnalyticsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // Header
             HStack {
                 Text("Advanced Analytics")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 22, weight: .bold, design: .default))
+                    .foregroundColor(Color("BackgroundDark"))
                 
                 Spacer()
                 
@@ -118,6 +121,7 @@ struct AnalyticsView: View {
                 }
             }
             
+            // Use existing WeeklyProgressChart and PerformanceInsightsCard
             if premiumManager.isPremiumUser {
                 VStack(spacing: 16) {
                     WeeklyProgressChart()
@@ -127,10 +131,11 @@ struct AnalyticsView: View {
                 lockedAnalyticsView
             }
         }
-        .padding()
+        .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.gray.opacity(0.05))
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         )
     }
     
@@ -158,237 +163,119 @@ struct AnalyticsView: View {
             )
     }
     
-    // MARK: - Quick Stats Section
+    // MARK: - Summary Stats Card
     
-    private var quickStatsSection: some View {
+    private var summaryStatsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Summary")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 22, weight: .bold, design: .default))
+                .foregroundColor(Color("BackgroundDark"))
             
-            WorkoutStatsCardView()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.gray.opacity(0.05))
-        )
-    }
-    
-    // MARK: - Workout History Section
-    
-    private var workoutHistorySection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Recent Workouts")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Text("(\(workoutDataManager.totalWorkouts))")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            LazyVStack(spacing: 12) {
-                ForEach(workoutDataManager.workouts.prefix(10), id: \.objectID) { workout in
-                    WorkoutDetailCardView(workout: workout) {
-                        workoutToDelete = workout
-                        showingDeleteAlert = true
-                    }
-                }
-                
-                if workoutDataManager.totalWorkouts > 10 {
-                    Button(action: {
-                        showAllWorkouts = true
-                    }) {
-                        HStack {
-                            Text("View All Workouts")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                        }
-                        .foregroundColor(Color("PrimaryMain"))
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color("PrimaryMain").opacity(0.1))
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.gray.opacity(0.05))
-        )
-    }
-}
-
-// MARK: - Supporting Views
-
-struct WorkoutStatsCardView: View {
-    @EnvironmentObject var workoutDataManager: WorkoutDataManager
-    @ObservedObject private var userSettings = UserSettings.shared
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 20) {
-                StatItemView(
+            // Stats Grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                SummaryStatBox(
                     value: "\(workoutDataManager.totalWorkouts)",
                     label: "Workouts",
                     color: Color("PrimaryMain")
                 )
                 
-                StatItemView(
-                    value: {
-                        let displayDistance = userSettings.preferredDistanceUnit == .miles ? 
-                            workoutDataManager.totalDistance : 
-                            workoutDataManager.totalDistance / userSettings.preferredDistanceUnit.conversionToMiles
-                        return String(format: "%.1f", displayDistance)
-                    }(),
-                    label: userSettings.preferredDistanceUnit.rawValue,
-                    color: .blue
+                SummaryStatBox(
+                    value: String(format: "%.1f", totalDistance),
+                    label: "mi",
+                    color: Color("PrimaryMain")
                 )
                 
-                StatItemView(
-                    value: "\(Int(workoutDataManager.totalCalories))",
+                SummaryStatBox(
+                    value: "\(totalCalories)",
                     label: "Calories",
-                    color: .green
+                    color: Color("AccentGreen")
+                )
+                
+                SummaryStatBox(
+                    value: formattedTotalTime,
+                    label: "Total Time",
+                    color: Color("AccentTeal")
                 )
             }
             
-            HStack(spacing: 20) {
-                StatItemView(
-                    value: {
-                        let hours = Int(workoutDataManager.totalDuration / 3600)
-                        let minutes = Int(workoutDataManager.totalDuration.truncatingRemainder(dividingBy: 3600) / 60)
-                        return "\(hours)h \(minutes)m"
-                    }(),
-                    label: "Total Time",
-                    color: .purple
-                )
-                
-                if let avgPace = workoutDataManager.averagePace {
-                    StatItemView(
-                        value: {
-                            let minutes = Int(avgPace)
-                            let seconds = Int((avgPace - Double(minutes)) * 60)
-                            return String(format: "%d:%02d", minutes, seconds)
-                        }(),
-                        label: "Avg Pace",
-                        color: .red
-                    )
-                } else {
-                    StatItemView(
-                        value: "--",
-                        label: "Avg Pace",
-                        color: .red
-                    )
-                }
-                
-                Spacer()
-            }
+            // Avg Pace - centered below
+            SummaryStatBox(
+                value: formattedAvgPace,
+                label: "Avg Pace",
+                color: .orange,
+                fullWidth: true
+            )
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        )
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var totalDistance: Double {
+        workoutDataManager.workouts.reduce(0) { $0 + $1.distance }
+    }
+    
+    private var totalCalories: Int {
+        Int(workoutDataManager.workouts.reduce(0) { $0 + $1.calories })
+    }
+    
+    private var formattedTotalTime: String {
+        let totalSeconds = workoutDataManager.workouts.reduce(0) { $0 + $1.duration }
+        let hours = Int(totalSeconds) / 3600
+        let minutes = (Int(totalSeconds) % 3600) / 60
+        return "\(hours)h \(minutes)m"
+    }
+    
+    private var formattedAvgPace: String {
+        let totalDistance = workoutDataManager.workouts.reduce(0) { $0 + $1.distance }
+        let totalTime = workoutDataManager.workouts.reduce(0) { $0 + $1.duration }
+        
+        guard totalDistance > 0 else { return "--" }
+        
+        let avgPaceSeconds = totalTime / totalDistance
+        let minutes = Int(avgPaceSeconds) / 60
+        let seconds = Int(avgPaceSeconds) % 60
+        
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 
-struct StatItemView: View {
+// MARK: - Summary Stat Box Component (New)
+
+struct SummaryStatBox: View {
     let value: String
     let label: String
     let color: Color
+    var fullWidth: Bool = false
     
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: fullWidth ? 32 : 28, weight: .bold))
                 .foregroundColor(color)
             
             Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(Color("TextSecondary"))
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-struct WorkoutDetailCardView: View {
-    let workout: WorkoutEntity
-    let onDelete: () -> Void
-    @ObservedObject private var userSettings = UserSettings.shared
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header with date and weight
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(workout.formattedDate)
-                        .font(.headline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                    
-                    Text("\(Int(workout.ruckWeight)) lbs")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color("PrimaryMain"))
-                }
-                
-                Spacer()
-                
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(8)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(6)
-                }
-                .buttonStyle(.plain)
-            }
-            
-            // Main metrics
-            HStack(spacing: 16) {
-                MetricView(
-                    value: workout.formattedDuration,
-                    label: "Duration",
-                    color: .blue
-                )
-                
-                MetricView(
-                    value: workout.formattedDistance(unit: userSettings.preferredDistanceUnit),
-                    label: "Distance",
-                    color: .green
-                )
-                
-                MetricView(
-                    value: "\(Int(workout.calories))",
-                    label: "Calories",
-                    color: Color("PrimaryMain")
-                )
-                
-                MetricView(
-                    value: workout.formattedPace,
-                    label: "Pace",
-                    color: Color(workout.paceColor)
-                )
-            }
-        }
-        .padding()
+        .padding(.vertical, fullWidth ? 16 : 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                .fill(color.opacity(0.08))
         )
     }
 }
+
+// MARK: - MetricView Component (Used by other views)
 
 struct MetricView: View {
     let value: String
