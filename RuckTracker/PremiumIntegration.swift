@@ -1274,6 +1274,7 @@ struct WorkoutDetailView: View {
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
     @State private var selectedWorkoutWeight: Double = 0
+    @State private var showingGuidelines = false
     
     init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.workout = workout
@@ -1343,6 +1344,9 @@ struct WorkoutDetailView: View {
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
             }
+            .sheet(isPresented: $showingGuidelines) {
+                RuckingGuidelinesSheet()
+            }
         }
     }
     
@@ -1350,10 +1354,25 @@ struct WorkoutDetailView: View {
     
     private var weightSelectorSection: some View {
         VStack(spacing: 0) {
-            Text("Set Ruck Weight")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
-                .padding(.bottom, 20)
+            HStack {
+                Spacer()
+                
+                Text("Set Ruck Weight")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color("TextSecondary"))
+                
+                Spacer()
+                
+                Button {
+                    showingGuidelines = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color("TextSecondary"))
+                }
+                .padding(.trailing, 24)
+            }
+            .padding(.bottom, 20)
             
             // HERO - Selected Weight
             (Text("\(Int(selectedWorkoutWeight))")

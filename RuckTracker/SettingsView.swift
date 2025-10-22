@@ -99,16 +99,6 @@ struct SettingsView: View {
                     }
                 }
                 
-                // MARK: - Weight Recommendations Section
-                Section(header: Text("Rucking Guidelines"), footer: Text("Military and fitness recommendations for safe rucking")) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        RecommendationRow(title: "Beginner", weight: "10-15% body weight", color: Color("AccentGreen"))
-                        RecommendationRow(title: "Intermediate", weight: "15-20% body weight", color: Color("PrimaryMain"))
-                        RecommendationRow(title: "Advanced", weight: "20-25% body weight", color: .red)
-                        RecommendationRow(title: "Military Standard", weight: "35+ lbs", color: .blue)
-                    }
-                }
-                
                 // MARK: - HealthKit Section
                 Section(header: Text("HealthKit Integration"), footer: Text("HealthKit enables workout tracking and integration with the Health app")) {
                     VStack(alignment: .leading, spacing: 12) {
@@ -294,29 +284,6 @@ struct PermissionRow: View {
             Text(granted ? "Granted" : "Denied")
                 .font(.caption)
                 .foregroundColor(granted ? .green : .red)
-        }
-    }
-}
-
-struct RecommendationRow: View {
-    let title: String
-    let weight: String
-    let color: Color
-    
-    var body: some View {
-        HStack {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            
-            Text(title)
-                .fontWeight(.medium)
-            
-            Spacer()
-            
-            Text(weight)
-                .foregroundColor(.secondary)
-                .font(.caption)
         }
     }
 }

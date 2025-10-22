@@ -356,6 +356,7 @@ struct ChallengeWorkoutDetailView: View {
     @State private var showingCompletionConfirmation = false
     @State private var isCompleting = false
     @State private var selectedWorkoutWeight: Double = 0
+    @State private var showingGuidelines = false
     
     var isCompleted: Bool {
         challengeManager.isWorkoutCompleted(workout.id)
@@ -432,16 +433,34 @@ struct ChallengeWorkoutDetailView: View {
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
             }
+            .sheet(isPresented: $showingGuidelines) {
+                RuckingGuidelinesSheet()
+            }
         }
     }
     
     
     private var weightSelectorSection: some View {
         VStack(spacing: 0) {
-            Text("Set Ruck Weight")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
-                .padding(.bottom, 20)
+            HStack {
+                Spacer()
+                
+                Text("Set Ruck Weight")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color("TextSecondary"))
+                
+                Spacer()
+                
+                Button {
+                    showingGuidelines = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color("TextSecondary"))
+                }
+                .padding(.trailing, 24)
+            }
+            .padding(.bottom, 20)
             
             // HERO - Selected Weight
             (Text("\(Int(selectedWorkoutWeight))")

@@ -1,4 +1,3 @@
-
 // WorkoutWeightSelector.swift
 // Premium weight selector matching the workout view aesthetic
 import SwiftUI
@@ -10,6 +9,8 @@ struct WorkoutWeightSelector: View {
     let recommendedWeight: Double?
     let context: String
     let onStart: () -> Void
+    
+    @State private var showingGuidelines = false
     
     init(
         selectedWeight: Binding<Double>,
@@ -38,17 +39,29 @@ struct WorkoutWeightSelector: View {
             
             VStack(spacing: 0) {
                 // Top section with context
-                VStack(spacing: 8) {
+                HStack {
                     Text(context)
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(Color("TextSecondary"))
                     
-                    Text("Set Ruck Weight")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(Color("BackgroundDark"))
+                    Spacer()
+                    
+                    Button {
+                        showingGuidelines = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color("TextSecondary"))
+                    }
                 }
+                .padding(.horizontal, 24)
                 .padding(.top, 60)
-                .padding(.bottom, 40)
+                
+                Text("Set Ruck Weight")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(Color("BackgroundDark"))
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 
                 // HERO - Selected Weight
                 Text("\(Int(selectedWeight))")
@@ -125,6 +138,138 @@ struct WorkoutWeightSelector: View {
                 .padding(.bottom, 40)
             }
         }
+        .sheet(isPresented: $showingGuidelines) {
+            RuckingGuidelinesSheet()
+        }
+    }
+}
+
+// MARK: - Rucking Guidelines Sheet
+struct RuckingGuidelinesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Rucking Guidelines")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(Color("BackgroundDark"))
+                        
+                        Text("Safe weight recommendations based on experience level")
+                            .font(.system(size: 15))
+                            .foregroundColor(Color("TextSecondary"))
+                    }
+                    .padding(.top, 8)
+                    
+                    // Guidelines
+                    VStack(spacing: 16) {
+                        GuidelineRow(
+                            title: "Beginner",
+                            weight: "10-15% body weight",
+                            description: "Start light and focus on form",
+                            color: Color("AccentGreen")
+                        )
+                        
+                        GuidelineRow(
+                            title: "Intermediate",
+                            weight: "15-20% body weight",
+                            description: "Build endurance and distance",
+                            color: Color("PrimaryMain")
+                        )
+                        
+                        GuidelineRow(
+                            title: "Advanced",
+                            weight: "20-25% body weight",
+                            description: "Experienced ruckers only",
+                            color: .orange
+                        )
+                        
+                        GuidelineRow(
+                            title: "Military Standard",
+                            weight: "35+ lbs",
+                            description: "Tactical and event training",
+                            color: .red
+                        )
+                    }
+                    
+                    // Safety Note
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 16))
+                            Text("Important")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        
+                        Text("Always start lighter than you think you need. Gradually increase weight as your body adapts. Listen to your body and prioritize proper form over heavier loads.")
+                            .font(.system(size: 15))
+                            .foregroundColor(Color("TextSecondary"))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.1))
+                    )
+                }
+                .padding(24)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(Color("PrimaryMain"))
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Guideline Row
+struct GuidelineRow: View {
+    let title: String
+    let weight: String
+    let description: String
+    let color: Color
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            // Color indicator
+            Circle()
+                .fill(color)
+                .frame(width: 12, height: 12)
+                .padding(.top, 4)
+            
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Color("BackgroundDark"))
+                    
+                    Spacer()
+                    
+                    Text(weight)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(color)
+                }
+                
+                Text(description)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color("TextSecondary"))
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.05))
+        )
     }
 }
 
