@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var premiumManager = PremiumManager.shared
     @StateObject private var userSettings = UserSettings.shared
     @State private var showingLogoutAlert = false
@@ -40,13 +40,13 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
             }

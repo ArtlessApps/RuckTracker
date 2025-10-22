@@ -9,11 +9,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var userSettings = UserSettings.shared
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var healthManager: HealthManager
     
-    @State private var tempBodyWeight: String = ""
-    @State private var tempDefaultRuckWeight: String = ""
+    @State private var bodyWeightInput: String = ""
+    @State private var defaultRuckWeightInput: String = ""
     @State private var showingResetAlert = false
     @State private var showingValidationError = false
     @State private var validationMessage = ""
@@ -26,7 +26,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Weight")
                         Spacer()
-                        TextField("Enter weight", text: $tempBodyWeight)
+                        TextField("Enter weight", text: $bodyWeightInput)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
@@ -40,7 +40,7 @@ struct SettingsView: View {
                         .frame(width: 100)
                     }
                     
-                    if !tempBodyWeight.isEmpty {
+                    if !bodyWeightInput.isEmpty {
                         HStack {
                             Text("Current:")
                             Spacer()
@@ -55,7 +55,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Ruck Weight")
                         Spacer()
-                        TextField("Enter weight", text: $tempDefaultRuckWeight)
+                        TextField("Enter weight", text: $defaultRuckWeightInput)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
@@ -64,7 +64,7 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    if !tempDefaultRuckWeight.isEmpty {
+                    if !defaultRuckWeightInput.isEmpty {
                         HStack {
                             Text("Current:")
                             Spacer()
@@ -190,7 +190,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
                 
@@ -199,7 +199,7 @@ struct SettingsView: View {
                         if hasChanges() {
                             saveSettings()
                         }
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .fontWeight(.semibold)
                 }
@@ -226,13 +226,13 @@ struct SettingsView: View {
     
     // MARK: - Helper Functions
     private func loadCurrentValues() {
-        tempBodyWeight = String(format: "%.1f", userSettings.bodyWeight)
-        tempDefaultRuckWeight = String(format: "%.1f", userSettings.defaultRuckWeight)
+        bodyWeightInput = String(format: "%.1f", userSettings.bodyWeight)
+        defaultRuckWeightInput = String(format: "%.1f", userSettings.defaultRuckWeight)
     }
     
     private func hasChanges() -> Bool {
-        guard let bodyWeight = Double(tempBodyWeight),
-              let ruckWeight = Double(tempDefaultRuckWeight) else {
+        guard let bodyWeight = Double(bodyWeightInput),
+              let ruckWeight = Double(defaultRuckWeightInput) else {
             return false
         }
         
@@ -241,8 +241,8 @@ struct SettingsView: View {
     }
     
     private func saveSettings() {
-        guard let bodyWeight = Double(tempBodyWeight),
-              let ruckWeight = Double(tempDefaultRuckWeight) else {
+        guard let bodyWeight = Double(bodyWeightInput),
+              let ruckWeight = Double(defaultRuckWeightInput) else {
             validationMessage = "Please enter valid numbers for both weights."
             showingValidationError = true
             return

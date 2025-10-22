@@ -131,21 +131,9 @@ struct SubscriptionPaywallView: View {
                 )
                 
                 FeatureRow(
-                    icon: "person.2.fill",
-                    title: "Community Challenges",
-                    description: "Join events and compete with other ruckers"
-                )
-                
-                FeatureRow(
                     icon: "trophy.fill",
                     title: "Achievement System",
                     description: "Unlock badges and track your accomplishments"
-                )
-                
-                FeatureRow(
-                    icon: "icloud.and.arrow.down",
-                    title: "Cloud Sync",
-                    description: "Access your data across all devices"
                 )
                 
                 FeatureRow(

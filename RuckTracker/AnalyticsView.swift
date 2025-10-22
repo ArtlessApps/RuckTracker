@@ -12,7 +12,7 @@ struct AnalyticsView: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
     @ObservedObject private var userSettings = UserSettings.shared
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Binding var showAllWorkouts: Bool
     
     @State private var showingDeleteAlert = false
@@ -42,7 +42,7 @@ struct AnalyticsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .foregroundColor(Color("PrimaryMain"))
                 }

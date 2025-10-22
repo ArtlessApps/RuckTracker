@@ -145,8 +145,6 @@ class ChallengeManager: ObservableObject {
         let completedArray = Array(completedWorkouts).map { $0.uuidString }
         UserDefaults.standard.set(completedArray, forKey: "completed_workouts_\(workout.challengeId)")
         
-        // TODO: Also save to server via challengeService when available
-        print("✅ Saved completion for workout \(workout.dayNumber)")
     }
     
     private func loadCompletionState() async {
@@ -156,7 +154,6 @@ class ChallengeManager: ObservableObject {
         let completedArray = UserDefaults.standard.stringArray(forKey: "completed_workouts_\(challenge.id)") ?? []
         completedWorkouts = Set(completedArray.compactMap { UUID(uuidString: $0) })
         
-        print("📱 Loaded \(completedWorkouts.count) completed workouts for challenge")
     }
     
     private func updateEnrollmentProgress() async {
@@ -168,8 +165,6 @@ class ChallengeManager: ObservableObject {
         self.enrollment?.completionPercentage = completionPercentage
         
         // Update local storage
-        // TODO: Update server when available
-        print("✅ Updated enrollment progress to \(completionPercentage)%")
     }
     
     // MARK: - Current Day Logic

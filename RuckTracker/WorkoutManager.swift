@@ -123,9 +123,7 @@ class WorkoutManager: NSObject, ObservableObject {
     
     // MARK: - Workout Control (Full HealthKit + GPS Implementation)
     func startWorkout(weight: Double) {
-        print("\n🟢 ===== STARTING WORKOUT =====")
         ruckWeight = weight  // Set from parameter
-        print("🟢 Ruck Weight: \(Int(weight)) lbs")
         
         guard !isActive else { return }
         
@@ -142,11 +140,6 @@ class WorkoutManager: NSObject, ObservableObject {
         startLocation = nil
         lastLocation = nil
         
-        print("🏁 ========== WORKOUT STARTING ==========")
-        print("🏁 Weight: \(weight) lbs")
-        print("🏁 Location auth status: \(locationAuthorizationStatus)")
-        print("🏁 HealthKit available: \(HKHealthStore.isHealthDataAvailable())")
-        
         // Request location permission if needed
         requestLocationPermissionIfNeeded()
         
@@ -158,8 +151,6 @@ class WorkoutManager: NSObject, ObservableObject {
         
         // Start timer
         startTimer()
-        
-        print("📱 Phone: Started full workout with \(weight) lbs - GPS + HealthKit")
     }
     
     func togglePause() {
@@ -180,7 +171,6 @@ class WorkoutManager: NSObject, ObservableObject {
         // Pause location updates
         locationManager.stopUpdatingLocation()
         
-        print("📱 iPhone: Workout paused")
     }
     
     func resumeWorkout() {
@@ -193,17 +183,9 @@ class WorkoutManager: NSObject, ObservableObject {
             locationManager.startUpdatingLocation()
         }
         
-        print("📱 iPhone: Workout resumed")
     }
     
     func endWorkout() {
-        print("🏁 ========== ENDING WORKOUT ==========")
-        print("🏁 Final Stats:")
-        print("🏁   Distance: \(String(format: "%.3f", distance)) mi")
-        print("🏁   GPS Total Distance (backup): \(String(format: "%.3f", totalGPSDistance * 0.000621371)) mi")
-        print("🏁   Duration: \(formattedElapsedTime)")
-        print("🏁   Calories: \(Int(calories))")
-        
         // Capture final stats before resetting
         finalElapsedTime = elapsedTime
         finalDistance = distance
@@ -216,7 +198,6 @@ class WorkoutManager: NSObject, ObservableObject {
         
         // Stop location tracking
         locationManager.stopUpdatingLocation()
-        print("🏁 Stopped location tracking")
         
         // Update UI state
         isActive = false
@@ -235,7 +216,6 @@ class WorkoutManager: NSObject, ObservableObject {
             await updateProgramProgressIfActive()
         }
         
-        print("📱 Phone: Workout ended - \(formattedElapsedTime)")
         
         // Show post-workout summary
         showingPostWorkoutSummary = true
@@ -275,34 +255,26 @@ class WorkoutManager: NSObject, ObservableObject {
     
     // MARK: - Location Management
     private func requestLocationPermissionIfNeeded() {
-        print("📍 Checking location permission... Current status: \(locationAuthorizationStatus)")
         
         switch locationAuthorizationStatus {
         case .notDetermined:
-            print("📍 🔔 Requesting location permission from user...")
             locationManager.requestWhenInUseAuthorization()
         case .denied, .restricted:
-            print("⚠️ ❌ Location access denied/restricted - workout will use HealthKit data only")
+            break
         case .authorizedWhenInUse, .authorizedAlways:
-            print("✅ Location access already granted")
+            break
         @unknown default:
-            print("⚠️ Unknown location authorization status")
             break
         }
     }
     
     func requestLocationPermission() {
-        print("📍 Requesting location permission from onboarding...")
         locationManager.requestWhenInUseAuthorization()
     }
     
     private func startLocationTracking() {
-        print("📍 Attempting to start location tracking...")
-        print("📍 Current auth status: \(locationAuthorizationStatus)")
         
         guard locationAuthorizationStatus == .authorizedWhenInUse || locationAuthorizationStatus == .authorizedAlways else {
-            print("⚠️ ❌ Location not authorized - using HealthKit motion data only")
-            print("⚠️ Status is: \(locationAuthorizationStatus.rawValue)")
             return
         }
         
@@ -312,7 +284,6 @@ class WorkoutManager: NSObject, ObservableObject {
         locationManager.pausesLocationUpdatesAutomatically = false
         
         locationManager.startUpdatingLocation()
-        print("📍 ✅ GPS tracking started with desiredAccuracy=Best, distanceFilter=5m")
     }
     
     // MARK: - CLLocationManagerDelegate
@@ -322,40 +293,33 @@ class WorkoutManager: NSObject, ObservableObject {
 extension WorkoutManager: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         Task { @MainActor in
-            print("📍 Location update received - count: \(locations.count)")
             
             guard let location = locations.last else {
-                print("📍 ❌ No location in array")
                 return
             }
             
             if self.isPaused {
-                print("📍 ⏸️ Ignoring - workout is paused")
                 return
             }
             
             let age = abs(location.timestamp.timeIntervalSinceNow)
             let accuracy = location.horizontalAccuracy
             
-            print("📍 Location: age=\(String(format: "%.1f", age))s, accuracy=\(String(format: "%.1f", accuracy))m")
             
             // Filter out old or inaccurate readings
             guard location.timestamp.timeIntervalSinceNow > -5.0,
                   location.horizontalAccuracy < 50.0 else {
-                print("📍 ❌ Location filtered out (age: \(String(format: "%.1f", age))s, accuracy: \(String(format: "%.1f", accuracy))m)")
                 return
             }
             
             if self.startLocation == nil {
                 self.startLocation = location
                 self.lastLocation = location
-                print("📍 ✅ Starting location set")
                 return
             }
             
             if let lastLoc = self.lastLocation {
                 let distanceMeters = location.distance(from: lastLoc)
-                print("📍 Distance from last: \(String(format: "%.1f", distanceMeters))m")
                 
                 if distanceMeters > 5.0 { // Only update for significant movement
                     self.totalGPSDistance += distanceMeters
@@ -363,11 +327,9 @@ extension WorkoutManager: CLLocationManagerDelegate {
                     
                     // Always update distance with GPS data (HealthKit doesn't auto-collect on iPhone)
                     self.distance = gpsDistanceMiles
-                    print("📍 GPS Distance: \(String(format: "%.3f", gpsDistanceMiles)) mi")
                     
                     self.lastLocation = location
                 } else {
-                    print("📍 ⏭️ Movement too small (<5m), not counting")
                 }
             }
         }
@@ -375,18 +337,15 @@ extension WorkoutManager: CLLocationManagerDelegate {
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            print("❌ Location error: \(error.localizedDescription)")
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         Task { @MainActor in
             self.locationAuthorizationStatus = status
-            print("📍 Location authorization changed to: \(status)")
             
             // If we just got authorized and workout is active, start GPS tracking now!
             if (status == .authorizedWhenInUse || status == .authorizedAlways) && self.isActive && !self.isPaused {
-                print("📍 ✅ Authorization granted during active workout - starting GPS tracking now!")
                 self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 self.locationManager.distanceFilter = 5.0
                 self.locationManager.allowsBackgroundLocationUpdates = false
@@ -400,7 +359,6 @@ extension WorkoutManager: CLLocationManagerDelegate {
     // MARK: - HealthKit Workout Builder Setup (Simple API for iPhone)
     private func prepareHealthKitWorkout() {
         guard HKHealthStore.isHealthDataAvailable() else {
-            print("❌ HealthKit not available on this device")
             return
         }
         
@@ -414,16 +372,13 @@ extension WorkoutManager: CLLocationManagerDelegate {
         if let startDate = startDate {
             workoutBuilder?.beginCollection(withStart: startDate) { [weak self] success, error in
                 if let error = error {
-                    print("❌ Failed to begin HealthKit collection: \(error.localizedDescription)")
                     return
                 }
                 
                 guard success else {
-                    print("❌ Failed to begin HealthKit collection")
                     return
                 }
                 
-                print("✅ HealthKit workout builder started collecting data")
             }
         }
     }
@@ -443,7 +398,6 @@ extension WorkoutManager: CLLocationManagerDelegate {
     private func saveHealthKitWorkout() {
         guard let workoutBuilder = workoutBuilder,
               let startDate = startDate else {
-            print("❌ No workout builder or start date available")
             return
         }
         
@@ -478,20 +432,16 @@ extension WorkoutManager: CLLocationManagerDelegate {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Failed to end HealthKit collection: \(error.localizedDescription)")
                 return
             }
             
             guard success else {
-                print("❌ HealthKit collection unsuccessful")
                 return
             }
             
             workoutBuilder.finishWorkout { workout, error in
                 if let error = error {
-                    print("❌ Failed to save HealthKit workout: \(error.localizedDescription)")
                 } else if let workout = workout {
-                    print("✅ Workout saved to HealthKit from iPhone")
                     print("📊 Saved: \(String(format: "%.2f", self.distance)) mi, \(Int(self.calories)) cal")
                 }
             }

@@ -6,7 +6,6 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
-    @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @State private var showingProfile = false
     @State private var showingSettings = false
     @State private var showingAnalytics = false
@@ -117,6 +116,12 @@ struct ImprovedPhoneMainView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showingActiveWorkout = true
                 }
+            }
+        }
+        .onChange(of: activeSheet) { oldValue, newValue in
+            // Reset active tab when sheet is dismissed
+            if oldValue != nil && newValue == nil {
+                activeTab = .home
             }
         }
     }
@@ -244,18 +249,6 @@ struct ImprovedPhoneMainView: View {
                         .buttonStyle(HeroButtonStyle())
                     }
                     .padding(28)
-                    
-                    // Watch connectivity badge positioned at top right
-                    VStack {
-                        HStack {
-                            Spacer()
-                            WatchConnectivityBadge()
-                                .environmentObject(watchConnectivityManager)
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 10)
-                    .padding(.trailing, 20)
                 }
                 .background(
                     ZStack {
@@ -451,8 +444,13 @@ struct ImprovedPhoneMainView: View {
         HStack(spacing: 0) {
             // Profile Button
             Button(action: {
-                activeSheet = .profile
-                activeTab = .profile
+                if activeSheet == .profile {
+                    activeSheet = nil
+                    activeTab = .home
+                } else {
+                    activeSheet = .profile
+                    activeTab = .profile
+                }
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "person.circle")
@@ -476,8 +474,13 @@ struct ImprovedPhoneMainView: View {
             
             // Activity Button
             Button(action: {
-                activeSheet = .analytics
-                activeTab = .analytics
+                if activeSheet == .analytics {
+                    activeSheet = nil
+                    activeTab = .home
+                } else {
+                    activeSheet = .analytics
+                    activeTab = .analytics
+                }
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
@@ -501,8 +504,13 @@ struct ImprovedPhoneMainView: View {
             
             // Settings Button
             Button(action: {
-                activeSheet = .settings
-                activeTab = .settings
+                if activeSheet == .settings {
+                    activeSheet = nil
+                    activeTab = .home
+                } else {
+                    activeSheet = .settings
+                    activeTab = .settings
+                }
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "gearshape")
@@ -601,6 +609,7 @@ struct ClickableWeightPill: View {
         }
     }
 }
+
 
 // MARK: - Preview
 #Preview {

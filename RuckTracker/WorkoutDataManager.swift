@@ -114,9 +114,7 @@ class WorkoutDataManager: ObservableObject {
         let container = NSPersistentContainer(name: "RuckTrackerData", managedObjectModel: model)
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                print("❌ CoreData error: \(error), \(error.userInfo)")
             } else {
-                print("✅ CoreData loaded successfully")
             }
         }
         
@@ -150,13 +148,6 @@ class WorkoutDataManager: ObservableObject {
         challengeId: UUID? = nil,
         challengeDay: Int? = nil
     ) {
-        print("\n🔵 ===== SAVING NEW WORKOUT =====")
-        print("🔵 Date: \(date)")
-        print("🔵 Distance: \(String(format: "%.2f", distance))mi")
-        print("🔵 Duration: \(Int(duration))s")
-        print("🔵 Calories: \(Int(calories))")
-        print("🔵 Ruck Weight: \(Int(ruckWeight))lbs")
-        print("🔵 Program ID: \(programId?.uuidString ?? "NONE")")
         print("🔵 Program Workout Day: \(programWorkoutDay?.description ?? "NONE")")
         print("🔵 Challenge ID: \(challengeId?.uuidString ?? "NONE")")
         print("🔵 Challenge Day: \(challengeDay?.description ?? "NONE")")
@@ -205,18 +196,7 @@ class WorkoutDataManager: ObservableObject {
         
         do {
             workouts = try context.fetch(request)
-            print("📊 Fetched \(workouts.count) workouts from CoreData")
-            
-            // Log program workouts for debugging
-            let programWorkouts = workouts.filter { $0.programId != nil }
-            if !programWorkouts.isEmpty {
-                print("📊 Program workouts breakdown:")
-                for workout in programWorkouts {
-                    print("   - ProgramID: \(workout.programId ?? "nil"), Day: \(workout.programWorkoutDay), Date: \(workout.date?.formatted() ?? "nil")")
-                }
-            }
         } catch {
-            print("❌ Failed to fetch workouts: \(error)")
             workouts = []
         }
     }
@@ -388,30 +368,6 @@ class WorkoutDataManager: ObservableObject {
         print("📝 Created sample workout for testing")
     }
     
-    /// Dump all workouts in CoreData for debugging
-    func dumpAllWorkouts() {
-        print("\n🔍 ===== DUMPING ALL WORKOUTS IN COREDATA =====")
-        print("🔍 Total workouts: \(workouts.count)")
-        
-        if workouts.isEmpty {
-            print("🔍 No workouts found in CoreData")
-        } else {
-            for (index, workout) in workouts.enumerated() {
-                print("🔍 [\(index + 1)] ----------------")
-                print("🔍   Date: \(workout.date?.formatted() ?? "nil")")
-                print("🔍   Distance: \(String(format: "%.2f", workout.distance))mi")
-                print("🔍   Duration: \(Int(workout.duration))s")
-                print("🔍   Calories: \(Int(workout.calories))")
-                print("🔍   Ruck Weight: \(Int(workout.ruckWeight))lbs")
-                print("🔍   Program ID: \(workout.programId ?? "NONE")")
-                print("🔍   Program Day: \(workout.programWorkoutDay)")
-                print("🔍   Challenge ID: \(workout.challengeId ?? "NONE")")
-                print("🔍   Challenge Day: \(workout.challengeDay)")
-            }
-        }
-        
-        print("🔍 ===== DUMP COMPLETE =====\n")
-    }
     
     /// Get average pace across all workouts
     var averagePace: Double? {
