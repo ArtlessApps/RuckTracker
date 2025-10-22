@@ -24,6 +24,7 @@ struct PhoneOnboardingView: View {
             VStack(spacing: 0) {
                 // Progress indicator
                 progressBar
+                    .padding(.top)
                 
                 // Content
                 TabView(selection: $currentStep) {
@@ -58,7 +59,7 @@ struct PhoneOnboardingView: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 60)
+        .padding(.top, 20)
         .padding(.bottom, 20)
     }
     
@@ -89,63 +90,70 @@ struct WelcomeStep: View {
     let nextAction: () -> Void
     
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            // MARCH branding (matches splash screen)
-            VStack(spacing: 8) {
-                Text("MARCH")
-                    .font(.system(size: 72, weight: .black, design: .default))
-                    .foregroundColor(Color("PrimaryMain"))
-                    .tracking(2)
-                
-                Text("WALK STRONGER")
-                    .font(.system(size: 18, weight: .medium, design: .default))
-                    .foregroundColor(.white)
-                    .tracking(4)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(height: 40)
+                    
+                    // MARCH branding (matches splash screen)
+                    VStack(spacing: 8) {
+                        Text("MARCH")
+                            .font(.system(size: 72, weight: .black, design: .default))
+                            .foregroundColor(Color("PrimaryMain"))
+                            .tracking(2)
+                        
+                        Text("WALK STRONGER")
+                            .font(.system(size: 18, weight: .medium, design: .default))
+                            .foregroundColor(.white)
+                            .tracking(4)
+                    }
+                    .padding(.bottom, 40)
+                    
+                    // Subtitle
+                    Text("Track your rucking workouts with\naccurate distance, calories, and heart rate.")
+                        .font(.system(size: 17))
+                        .foregroundColor(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    
+                    Spacer()
+                        .frame(height: 60)
+                    
+                    // Feature highlights
+                    VStack(spacing: 16) {
+                        FeatureHighlight(
+                            icon: "figure.walk",
+                            text: "Weight-adjusted calorie tracking"
+                        )
+                        
+                        FeatureHighlight(
+                            icon: "location.fill",
+                            text: "GPS distance tracking"
+                        )
+                        
+                        FeatureHighlight(
+                            icon: "heart.fill",
+                            text: "HealthKit integration"
+                        )
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 40)
+                    
+                    Button(action: nextAction) {
+                        Text("Get Started")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color("PrimaryMain"))
+                            .cornerRadius(16)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, max(20, geometry.safeAreaInsets.bottom + 20))
+                }
+                .frame(minHeight: geometry.size.height)
             }
-            .padding(.bottom, 40)
-            
-            // Subtitle
-            Text("Track your rucking workouts with\naccurate distance, calories, and heart rate.")
-                .font(.system(size: 17))
-                .foregroundColor(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Spacer()
-            
-            // Feature highlights
-            VStack(spacing: 16) {
-                FeatureHighlight(
-                    icon: "figure.walk",
-                    text: "Weight-adjusted calorie tracking"
-                )
-                
-                FeatureHighlight(
-                    icon: "location.fill",
-                    text: "GPS distance tracking"
-                )
-                
-                FeatureHighlight(
-                    icon: "heart.fill",
-                    text: "HealthKit integration"
-                )
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 40)
-            
-            Button(action: nextAction) {
-                Text("Get Started")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color("PrimaryMain"))
-                    .cornerRadius(16)
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
         }
     }
 }
@@ -178,119 +186,126 @@ struct HealthKitPermissionStep: View {
     let backAction: () -> Void
     
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            // Icon with circle background (like your screenshots)
-            ZStack {
-                Circle()
-                    .fill(Color.red.opacity(0.3))
-                    .frame(width: 140, height: 140)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 90, height: 90)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 30) {
+                    Spacer()
+                        .frame(height: 40)
                     
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(Color("BackgroundDark"))
-                }
-            }
-            
-            VStack(spacing: 12) {
-                Text("Health Integration")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Text("RuckTracker saves your workouts to the Health app for complete fitness tracking.")
-                    .font(.system(size: 17))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
-            
-            Spacer()
-            
-            // Permissions list with green checkmarks
-            VStack(spacing: 16) {
-                OnboardingPermissionRow(
-                    icon: "figure.walk",
-                    title: "Workouts",
-                    description: "Save your ruck sessions",
-                    isGranted: healthManager.isAuthorized
-                )
-                
-                OnboardingPermissionRow(
-                    icon: "flame.fill",
-                    title: "Calories",
-                    description: "Track energy burned",
-                    isGranted: healthManager.isAuthorized
-                )
-                
-                OnboardingPermissionRow(
-                    icon: "location.fill",
-                    title: "Distance",
-                    description: "Record miles traveled",
-                    isGranted: healthManager.isAuthorized
-                )
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
-            
-            // Status and action buttons
-            VStack(spacing: 12) {
-                if healthManager.isAuthorized {
-                    // Success state
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("HealthKit Connected")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white)
+                    // Icon with circle background (like your screenshots)
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.3))
+                            .frame(width: 140, height: 140)
+                        
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 90, height: 90)
+                            
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(Color("BackgroundDark"))
+                        }
                     }
-                    .padding(.vertical, 12)
                     
-                    Button(action: nextAction) {
-                        Text("Continue")
-                            .font(.system(size: 17, weight: .semibold))
+                    VStack(spacing: 12) {
+                        Text("Health Integration")
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color("PrimaryMain"))
-                            .cornerRadius(16)
-                    }
-                } else {
-                    // Needs permission state
-                    Button(action: {
-                        healthManager.requestAuthorization()
-                    }) {
-                        Text(healthManager.authorizationInProgress ? "Requesting..." : "Enable HealthKit")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(healthManager.authorizationInProgress ? Color.gray : Color.red)
-                            .cornerRadius(16)
-                    }
-                    .disabled(healthManager.authorizationInProgress)
-                    
-                    if healthManager.authorizationInProgress {
-                        Text("Check the Health app for the permission prompt")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("RuckTracker saves your workouts to the Health app for complete fitness tracking.")
+                            .font(.system(size: 17))
+                            .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
                     }
+                    
+                    Spacer()
+                        .frame(height: 40)
+                    
+                    // Permissions list with green checkmarks
+                    VStack(spacing: 16) {
+                        OnboardingPermissionRow(
+                            icon: "figure.walk",
+                            title: "Workouts",
+                            description: "Save your ruck sessions",
+                            isGranted: healthManager.isAuthorized
+                        )
+                        
+                        OnboardingPermissionRow(
+                            icon: "flame.fill",
+                            title: "Calories",
+                            description: "Track energy burned",
+                            isGranted: healthManager.isAuthorized
+                        )
+                        
+                        OnboardingPermissionRow(
+                            icon: "location.fill",
+                            title: "Distance",
+                            description: "Record miles traveled",
+                            isGranted: healthManager.isAuthorized
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
+                    
+                    // Status and action buttons
+                    VStack(spacing: 12) {
+                        if healthManager.isAuthorized {
+                            // Success state
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("HealthKit Connected")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.vertical, 12)
+                            
+                            Button(action: nextAction) {
+                                Text("Continue")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 56)
+                                    .background(Color("PrimaryMain"))
+                                    .cornerRadius(16)
+                            }
+                        } else {
+                            // Needs permission state
+                            Button(action: {
+                                healthManager.requestAuthorization()
+                            }) {
+                                Text(healthManager.authorizationInProgress ? "Requesting..." : "Enable HealthKit")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 56)
+                                    .background(healthManager.authorizationInProgress ? Color.gray : Color.red)
+                                    .cornerRadius(16)
+                            }
+                            .disabled(healthManager.authorizationInProgress)
+                            
+                            if healthManager.authorizationInProgress {
+                                Text("Check the Health app for the permission prompt")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.6))
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        
+                        Button(action: backAction) {
+                            Text("Back")
+                                .font(.system(size: 15))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, max(20, geometry.safeAreaInsets.bottom + 20))
                 }
-                
-                Button(action: backAction) {
-                    Text("Back")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.7))
-                }
+                .frame(minHeight: geometry.size.height)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
         }
     }
 }
@@ -307,118 +322,125 @@ struct LocationPermissionStep: View {
     }
     
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-            
-            // Icon with circle background (like your screenshots)
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.3))
-                    .frame(width: 140, height: 140)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.blue)
-                        .frame(width: 90, height: 90)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 30) {
+                    Spacer()
+                        .frame(height: 40)
                     
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(.white)
-                }
-            }
-            
-            VStack(spacing: 12) {
-                Text("GPS Tracking")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Text("Enable location services for accurate distance tracking during your rucks.")
-                    .font(.system(size: 17))
-                    .foregroundColor(.white.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
-            
-            Spacer()
-            
-            // Permissions list with green checkmarks
-            VStack(spacing: 16) {
-                OnboardingPermissionRow(
-                    icon: "map.fill",
-                    title: "Route Mapping",
-                    description: "Track your path",
-                    isGranted: isLocationAuthorized
-                )
-                
-                OnboardingPermissionRow(
-                    icon: "ruler.fill",
-                    title: "Distance Accuracy",
-                    description: "Precise GPS measurements",
-                    isGranted: isLocationAuthorized
-                )
-                
-                OnboardingPermissionRow(
-                    icon: "speedometer",
-                    title: "Pace Tracking",
-                    description: "Real-time speed data",
-                    isGranted: isLocationAuthorized
-                )
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
-            
-            // Status and action buttons
-            VStack(spacing: 12) {
-                if isLocationAuthorized {
-                    // Success state
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Location Access Granted")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.vertical, 12)
-                    
-                    Button(action: onComplete) {
-                        Text("Start Rucking")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color("PrimaryMain"))
-                            .cornerRadius(16)
-                    }
-                } else {
-                    // Needs permission state
-                    Button(action: {
-                        workoutManager.requestLocationPermission()
-                    }) {
-                        Text("Enable Location")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.blue)
-                            .cornerRadius(16)
+                    // Icon with circle background (like your screenshots)
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.3))
+                            .frame(width: 140, height: 140)
+                        
+                        ZStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 90, height: 90)
+                            
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.white)
+                        }
                     }
                     
-                    Text("Select 'Allow While Using App' when prompted")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.6))
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 8)
-                    
-                    Button(action: onComplete) {
-                        Text("Skip for Now")
-                            .font(.system(size: 15))
+                    VStack(spacing: 12) {
+                        Text("GPS Tracking")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("Enable location services for accurate distance tracking during your rucks.")
+                            .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
                     }
-                    .padding(.top, 8)
+                    
+                    Spacer()
+                        .frame(height: 40)
+                    
+                    // Permissions list with green checkmarks
+                    VStack(spacing: 16) {
+                        OnboardingPermissionRow(
+                            icon: "map.fill",
+                            title: "Route Mapping",
+                            description: "Track your path",
+                            isGranted: isLocationAuthorized
+                        )
+                        
+                        OnboardingPermissionRow(
+                            icon: "ruler.fill",
+                            title: "Distance Accuracy",
+                            description: "Precise GPS measurements",
+                            isGranted: isLocationAuthorized
+                        )
+                        
+                        OnboardingPermissionRow(
+                            icon: "speedometer",
+                            title: "Pace Tracking",
+                            description: "Real-time speed data",
+                            isGranted: isLocationAuthorized
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
+                    
+                    // Status and action buttons
+                    VStack(spacing: 12) {
+                        if isLocationAuthorized {
+                            // Success state
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Location Access Granted")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.vertical, 12)
+                            
+                            Button(action: onComplete) {
+                                Text("Start Rucking")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 56)
+                                    .background(Color("PrimaryMain"))
+                                    .cornerRadius(16)
+                            }
+                        } else {
+                            // Needs permission state
+                            Button(action: {
+                                workoutManager.requestLocationPermission()
+                            }) {
+                                Text("Enable Location")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 56)
+                                    .background(Color.blue)
+                                    .cornerRadius(16)
+                            }
+                            
+                            Text("Select 'Allow While Using App' when prompted")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 8)
+                            
+                            Button(action: onComplete) {
+                                Text("Skip for Now")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .padding(.top, 8)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, max(20, geometry.safeAreaInsets.bottom + 20))
                 }
+                .frame(minHeight: geometry.size.height)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
         }
     }
 }
