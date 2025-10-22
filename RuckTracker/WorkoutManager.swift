@@ -291,6 +291,11 @@ class WorkoutManager: NSObject, ObservableObject {
         }
     }
     
+    func requestLocationPermission() {
+        print("📍 Requesting location permission from onboarding...")
+        locationManager.requestWhenInUseAuthorization()
+    }
+    
     private func startLocationTracking() {
         print("📍 Attempting to start location tracking...")
         print("📍 Current auth status: \(locationAuthorizationStatus)")

@@ -300,6 +300,22 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     // MARK: - HKLiveWorkoutBuilder Integration
     private func startWorkoutSession() {
+        // ⚠️ DEFENSIVE CLEANUP - Always clean up before creating new session
+        // This prevents double-beginCollection() calls if session/builder weren't properly cleaned up
+        if session != nil || builder != nil {
+            print("⚠️ Found existing workout session/builder - cleaning up before starting new workout")
+            print("   Session exists: \(session != nil), Builder exists: \(builder != nil)")
+            
+            // Attempt to end the old session gracefully
+            session?.end()
+            
+            // Force cleanup to prevent any lingering references
+            session = nil
+            builder = nil
+            
+            print("✅ Cleanup complete - safe to create new workout session")
+        }
+        
         // Clear any previous workout session errors
         errorManager.clearError()
         
