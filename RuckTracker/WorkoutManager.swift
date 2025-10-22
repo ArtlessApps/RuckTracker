@@ -280,7 +280,7 @@ class WorkoutManager: NSObject, ObservableObject {
         
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 5.0 // Update every 5 meters
-        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
         
         locationManager.startUpdatingLocation()
@@ -348,7 +348,7 @@ extension WorkoutManager: CLLocationManagerDelegate {
             if (status == .authorizedWhenInUse || status == .authorizedAlways) && self.isActive && !self.isPaused {
                 self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 self.locationManager.distanceFilter = 5.0
-                self.locationManager.allowsBackgroundLocationUpdates = false
+                self.locationManager.allowsBackgroundLocationUpdates = true
                 self.locationManager.pausesLocationUpdatesAutomatically = false
                 self.locationManager.startUpdatingLocation()
             }
