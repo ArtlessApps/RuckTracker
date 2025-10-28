@@ -38,10 +38,10 @@ struct UpdatedSettingsView: View {
                     )
                     
                     PremiumFeatureRow(
-                        feature: .advancedAnalytics,
+                        feature: .weeklyChallenges,
                         action: {
-                            if premiumManager.checkAccess(to: .advancedAnalytics, context: .featureUpsell) {
-                                // Navigate to analytics
+                            if premiumManager.checkAccess(to: .weeklyChallenges, context: .featureUpsell) {
+                                // Navigate to challenges
                             }
                         }
                     )
@@ -60,7 +60,13 @@ struct UpdatedSettingsView: View {
             }
             .navigationTitle("Settings")
             .sheet(isPresented: $premiumManager.showingPaywall) {
-                SubscriptionPaywallView(context: premiumManager.paywallContext)
+                if premiumManager.useOneTimePurchase {
+                    OneTimePurchasePaywallView(
+                        context: premiumManager.convertContext(premiumManager.paywallContext)
+                    )
+                } else {
+                    SubscriptionPaywallView(context: premiumManager.paywallContext)
+                }
             }
         }
     }

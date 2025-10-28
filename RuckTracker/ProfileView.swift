@@ -60,7 +60,13 @@ struct ProfileView: View {
             }
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
+            if premiumManager.useOneTimePurchase {
+                OneTimePurchasePaywallView(
+                    context: premiumManager.convertContext(premiumManager.paywallContext)
+                )
+            } else {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
         .onAppear {
             print("📱 ProfileView appeared - local mode")

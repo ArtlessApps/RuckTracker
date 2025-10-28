@@ -542,7 +542,13 @@ struct ChallengesView: View {
             .environmentObject(challengeService)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
+            if premiumManager.useOneTimePurchase {
+                OneTimePurchasePaywallView(
+                    context: premiumManager.convertContext(premiumManager.paywallContext)
+                )
+            } else {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
         .onAppear {
             challengeService.loadChallenges()
@@ -619,7 +625,13 @@ struct DataExportView: View {
             .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
+            if premiumManager.useOneTimePurchase {
+                OneTimePurchasePaywallView(
+                    context: premiumManager.convertContext(premiumManager.paywallContext)
+                )
+            } else {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
     }
 }

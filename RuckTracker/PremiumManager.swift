@@ -14,6 +14,9 @@ import Combine
 class PremiumManager: ObservableObject {
     static let shared = PremiumManager()
     
+    // Feature flag to switch between subscription and one-time purchase
+    public let useOneTimePurchase = true  // Toggle this to switch models
+    
     @Published var isPremiumUser = false
     @Published var subscriptionExpiryDate: Date?
     @Published var showingPaywall = false
@@ -99,6 +102,7 @@ class PremiumManager: ObservableObject {
     func showPaywall(context: SubscriptionPaywallView.PaywallContext) {
         paywallContext = context
         showingPaywall = true
+        print("🔐 Showing paywall - Using one-time purchase: \(useOneTimePurchase)")
     }
     
     func dismissPostPurchasePrompt() {
@@ -108,6 +112,15 @@ class PremiumManager: ObservableObject {
     
     func dismissPaywall() {
         showingPaywall = false
+    }
+    
+    func convertContext(_ context: SubscriptionPaywallView.PaywallContext) -> OneTimePurchasePaywallView.PaywallContext {
+        switch context {
+        case .onboarding: return .onboarding
+        case .programAccess: return .programAccess
+        case .settings: return .settings
+        case .featureUpsell, .profileUpgrade: return .featureUpsell
+        }
     }
     
     // MARK: - Sign Out Handling
@@ -153,20 +166,14 @@ class PremiumManager: ObservableObject {
 
 enum PremiumFeature {
     case trainingPrograms
-    case advancedAnalytics
-    case communityFeatures
-    case cloudSync
-    case unlimitedWorkouts
-    case exportData
-    case customTrainingPlans
-    case nutritionTracking
+    case weeklyChallenges
+    case achievementSystem
+    case exportData  // Only if you built this
     
     var requiresPremium: Bool {
         switch self {
-        case .trainingPrograms, .advancedAnalytics, .communityFeatures, .cloudSync, .exportData, .customTrainingPlans, .nutritionTracking:
+        case .trainingPrograms, .weeklyChallenges, .achievementSystem, .exportData:
             return true
-        case .unlimitedWorkouts:
-            return false // Free users get unlimited workouts for now
         }
     }
     
@@ -174,41 +181,25 @@ enum PremiumFeature {
         switch self {
         case .trainingPrograms:
             return "Training Programs"
-        case .advancedAnalytics:
-            return "Advanced Analytics"
-        case .communityFeatures:
-            return "Community Features"
-        case .cloudSync:
-            return "Cloud Sync"
-        case .unlimitedWorkouts:
-            return "Unlimited Workouts"
+        case .weeklyChallenges:
+            return "Weekly Challenges"
+        case .achievementSystem:
+            return "Achievement System"
         case .exportData:
             return "Export Data"
-        case .customTrainingPlans:
-            return "Custom Training Plans"
-        case .nutritionTracking:
-            return "Nutrition Tracking"
         }
     }
     
     var description: String {
         switch self {
         case .trainingPrograms:
-            return "Access structured 8-16 week programs designed by military professionals"
-        case .advancedAnalytics:
-            return "Detailed progress charts, performance insights, and workout analysis"
-        case .communityFeatures:
-            return "Join challenges, compete with others, and share achievements"
-        case .cloudSync:
-            return "Sync your data across all devices and never lose your progress"
-        case .unlimitedWorkouts:
-            return "Track as many workouts as you want without limits"
+            return "Access all 10 structured training programs (4-12 weeks)"
+        case .weeklyChallenges:
+            return "Access all 8 focused weekly challenges"
+        case .achievementSystem:
+            return "Unlock badges and track accomplishments"
         case .exportData:
-            return "Export your workout data to CSV or other fitness apps"
-        case .customTrainingPlans:
-            return "Create personalized training plans based on your goals"
-        case .nutritionTracking:
-            return "Track nutrition and hydration for optimal performance"
+            return "Export workout data to CSV"
         }
     }
     
@@ -216,20 +207,12 @@ enum PremiumFeature {
         switch self {
         case .trainingPrograms:
             return "figure.hiking"
-        case .advancedAnalytics:
-            return "chart.line.uptrend.xyaxis"
-        case .communityFeatures:
-            return "person.2.fill"
-        case .cloudSync:
-            return "icloud.and.arrow.up"
-        case .unlimitedWorkouts:
-            return "infinity"
+        case .weeklyChallenges:
+            return "trophy.fill"
+        case .achievementSystem:
+            return "star.fill"
         case .exportData:
             return "square.and.arrow.up"
-        case .customTrainingPlans:
-            return "doc.text"
-        case .nutritionTracking:
-            return "fork.knife"
         }
     }
 }
@@ -369,7 +352,13 @@ struct PremiumStatusView: View {
             }
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
+            if premiumManager.useOneTimePurchase {
+                OneTimePurchasePaywallView(
+                    context: premiumManager.convertContext(premiumManager.paywallContext)
+                )
+            } else {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
     }
     

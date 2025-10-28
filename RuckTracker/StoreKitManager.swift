@@ -7,16 +7,21 @@ class StoreKitManager: NSObject, ObservableObject {
     static let shared = StoreKitManager()
     
     // MARK: - Published Properties
+    // MARK: - DEPRECATED: Subscription Support (Remove after migration)
     @Published var subscriptionStatus: SubscriptionStatus = .notSubscribed
     @Published var availableSubscriptions: [Product] = []
+    @Published var proUnlockProduct: Product?
+    @Published var hasProUnlock: Bool = false
     @Published var isLoading = false
     @Published var purchaseError: PurchaseError?
     @Published var showingPurchaseError = false
     @Published var showingPostPurchasePrompt = false
     
     // Product IDs - these must match your App Store Connect configuration
+    // MARK: - DEPRECATED: Subscription Support (Remove after migration)
     private let monthlySubscriptionID = "com.artless.rucktracker.premium.monthly"
     private let yearlySubscriptionID = "com.artless.rucktracker.premium.yearly"
+    private let proUnlockID = "com.artless.rucktracker.pro.unlock"
     
     // Current subscription info
     @Published var currentSubscription: Product?
@@ -43,6 +48,7 @@ class StoreKitManager: NSObject, ObservableObject {
         Task {
             await loadProducts()
             await checkSubscriptionStatus()
+            await checkProUnlockStatus()  // Check for one-time purchase
         }
     }
     
@@ -57,9 +63,23 @@ class StoreKitManager: NSObject, ObservableObject {
         defer { isLoading = false }
         
         do {
-            let products = try await Product.products(for: [monthlySubscriptionID, yearlySubscriptionID])
-            self.availableSubscriptions = products.sorted { $0.price < $1.price }
-            print("✅ Loaded \(products.count) subscription products")
+            let products = try await Product.products(for: [
+                monthlySubscriptionID,
+                yearlySubscriptionID,
+                proUnlockID  // ADD THIS
+            ])
+            
+            DispatchQueue.main.async {
+                self.availableSubscriptions = products.filter {
+                    $0.type == .autoRenewable
+                }.sorted { $0.price < $1.price }
+                
+                // ADD THIS:
+                self.proUnlockProduct = products.first { 
+                    $0.id == self.proUnlockID 
+                }
+            }
+            print("✅ Loaded \(products.count) products")
         } catch {
             print("❌ Failed to load products: \(error)")
             handlePurchaseError(.productLoadFailed(error))
@@ -110,6 +130,8 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Subscription Status
     
+    // TODO: Remove subscription loading after migration complete
+    // func checkSubscriptionStatus() async { ... }
     func checkSubscriptionStatus() async {
         // Prevent multiple simultaneous status checks
         guard !isCheckingStatus else { 
@@ -177,6 +199,29 @@ class StoreKitManager: NSObject, ObservableObject {
         }
     }
     
+    private func checkProUnlockStatus() async {
+        print("🔍 Checking Pro Unlock status...")
+        // Check if user has purchased the one-time unlock
+        for await result in Transaction.currentEntitlements {
+            guard case .verified(let transaction) = result else {
+                continue
+            }
+            
+            if transaction.productID == proUnlockID {
+                print("✅ Pro Unlock found! Setting hasProUnlock = true")
+                DispatchQueue.main.async {
+                    self.hasProUnlock = true
+                }
+                return
+            }
+        }
+        
+        print("❌ No Pro Unlock found - setting hasProUnlock = false")
+        DispatchQueue.main.async {
+            self.hasProUnlock = false
+        }
+    }
+    
     // MARK: - Restore Purchases
     
     func restorePurchases() async {
@@ -222,6 +267,7 @@ class StoreKitManager: NSObject, ObservableObject {
         
         lastStatusCheck = now
         await checkSubscriptionStatus()
+        await checkProUnlockStatus()  // ADD THIS LINE
         
         // Note: Removed notification posting since PremiumManager already listens to 
         // subscriptionStatus changes directly via @Published property
@@ -271,12 +317,17 @@ class StoreKitManager: NSObject, ObservableObject {
     // MARK: - Convenience Properties
     
     var isSubscribed: Bool {
-        switch subscriptionStatus {
-        case .subscribed, .inGracePeriod:
-            return true
-        case .loading, .notSubscribed, .expired:
-            return false
-        }
+        // User has premium if they have EITHER subscription OR one-time unlock
+        let hasSubscription: Bool = {
+            switch subscriptionStatus {
+            case .subscribed, .inGracePeriod:
+                return true
+            case .loading, .notSubscribed, .expired:
+                return false
+            }
+        }()
+        
+        return hasSubscription || hasProUnlock
     }
     
     var subscriptionExpiryDate: Date? {

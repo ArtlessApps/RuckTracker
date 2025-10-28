@@ -81,7 +81,13 @@ struct ImprovedPhoneMainView: View {
             }
         }
         .sheet(isPresented: $premiumManager.showingPaywall) {
-            SubscriptionPaywallView(context: premiumManager.paywallContext)
+            if premiumManager.useOneTimePurchase {
+                OneTimePurchasePaywallView(
+                    context: premiumManager.convertContext(premiumManager.paywallContext)
+                )
+            } else {
+                SubscriptionPaywallView(context: premiumManager.paywallContext)
+            }
         }
         .sheet(isPresented: $workoutManager.showingPostWorkoutSummary) {
             PhonePostWorkoutSummaryView(
