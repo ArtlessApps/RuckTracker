@@ -367,6 +367,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -401,6 +402,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "RuckTracker needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
 				LD_RUNPATH_SEARCH_PATHS = (

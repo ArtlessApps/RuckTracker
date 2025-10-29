@@ -268,6 +268,14 @@ class WorkoutManager: NSObject, ObservableObject {
         }
     }
     
+    private func hasBackgroundLocationCapability() -> Bool {
+        guard let infoPlist = Bundle.main.infoDictionary,
+              let backgroundModes = infoPlist["UIBackgroundModes"] as? [String] else {
+            return false
+        }
+        return backgroundModes.contains("location")
+    }
+    
     func requestLocationPermission() {
         locationManager.requestWhenInUseAuthorization()
     }
@@ -280,7 +288,12 @@ class WorkoutManager: NSObject, ObservableObject {
         
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 5.0 // Update every 5 meters
-        locationManager.allowsBackgroundLocationUpdates = true
+        
+        // Only set background location updates if the app has the capability
+        if hasBackgroundLocationCapability() {
+            locationManager.allowsBackgroundLocationUpdates = true
+        }
+        
         locationManager.pausesLocationUpdatesAutomatically = false
         
         locationManager.startUpdatingLocation()
@@ -348,7 +361,12 @@ extension WorkoutManager: CLLocationManagerDelegate {
             if (status == .authorizedWhenInUse || status == .authorizedAlways) && self.isActive && !self.isPaused {
                 self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 self.locationManager.distanceFilter = 5.0
-                self.locationManager.allowsBackgroundLocationUpdates = true
+                
+                // Only set background location updates if the app has the capability
+                if self.hasBackgroundLocationCapability() {
+                    self.locationManager.allowsBackgroundLocationUpdates = true
+                }
+                
                 self.locationManager.pausesLocationUpdatesAutomatically = false
                 self.locationManager.startUpdatingLocation()
             }
