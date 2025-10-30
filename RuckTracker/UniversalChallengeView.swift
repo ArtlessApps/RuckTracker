@@ -39,7 +39,7 @@ struct UniversalChallengeView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(.secondary)
                     }
                 }
                 
@@ -148,7 +148,7 @@ struct UniversalChallengeView: View {
                 .scaleEffect(1.2)
             Text("Loading challenge...")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(.secondary)
         }
     }
     
@@ -170,11 +170,11 @@ struct UniversalChallengeView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(challenge.title)
                         .font(.system(size: 28, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(.primary)
                     
                     Text("\(challengeManager.completedWorkoutCount) of \(challengeManager.totalWorkoutCount) workouts")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()

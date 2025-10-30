@@ -20,11 +20,11 @@ struct TrainingProgramsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Training Programs")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .foregroundColor(.primary)
                         
                         Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(.secondary)
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
@@ -36,7 +36,7 @@ struct TrainingProgramsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Active")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(Color("TextSecondary"))
+                                .foregroundColor(.secondary)
                                 .padding(.horizontal, 24)
                             
                             ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
@@ -59,7 +59,7 @@ struct TrainingProgramsView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Available")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 24)
                         
                         ForEach(availablePrograms) { program in
@@ -478,11 +478,11 @@ struct ChallengesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Challenges")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .foregroundColor(.primary)
                         
                         Text("Test your limits with focused challenges designed to build specific skills and mental toughness.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(.secondary)
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
@@ -494,7 +494,7 @@ struct ChallengesView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Active")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(Color("TextSecondary"))
+                                .foregroundColor(.secondary)
                                 .padding(.horizontal, 24)
                             
                             ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
@@ -517,7 +517,7 @@ struct ChallengesView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Available")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 24)
                         
                         ForEach(availableChallenges) { challenge in

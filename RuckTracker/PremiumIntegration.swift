@@ -528,12 +528,12 @@ struct ProgramDetailView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(program.title)
                                 .font(.system(size: 34, weight: .bold, design: .default))
-                                .foregroundColor(Color("BackgroundDark"))
+                                .foregroundColor(.primary)
                             
                             if let description = program.description {
                                 Text(description)
                                     .font(.system(size: 16, weight: .regular))
-                                    .foregroundColor(Color("TextSecondary"))
+                                    .foregroundColor(.secondary)
                                     .lineLimit(3)
                             }
                             

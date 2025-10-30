@@ -75,15 +75,15 @@ struct AnalyticsView: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(.secondary)
             
             Text("No Activity Data Yet")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(.primary)
             
             Text("Start your first rucking workout to see detailed analytics, progress charts, and performance insights here.")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
         }
