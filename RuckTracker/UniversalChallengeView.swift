@@ -355,7 +355,7 @@ struct ChallengeWorkoutDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingCompletionConfirmation = false
     @State private var isCompleting = false
-    @State private var selectedWorkoutWeight: Double = 0
+    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
     @State private var showingGuidelines = false
     
     var isCompleted: Bool {
@@ -382,36 +382,39 @@ struct ChallengeWorkoutDetailView: View {
                 Color.white
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // Top section with context
-                    VStack(spacing: 8) {
-                        Text(workout.getWorkoutTitle(for: challenge))
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(Color("BackgroundDark"))
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Top section with context
+                        VStack(spacing: 8) {
+                            Text(workout.getWorkoutTitle(for: challenge))
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(Color("BackgroundDark"))
+                            
+                            Text("Day \(workout.dayNumber)")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(Color("TextSecondary"))
+                        }
+                        .padding(.top, 60)
+                        .padding(.bottom, 40)
                         
-                        Text("Day \(workout.dayNumber)")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                        // Weight Selector (only for ruck workouts)
+                        if !workout.isRestDay {
+                            weightSelectorSection
+                        } else {
+                            restDaySection
+                        }
+                        
+                        Spacer()
+                            .frame(minHeight: 20)
+                        
+                        // Instructions at bottom
+                        if let instructions = workout.instructions {
+                            instructionsSection(instructions)
+                        }
+                        
+                        // Action Buttons
+                        actionButtons
                     }
-                    .padding(.top, 60)
-                    .padding(.bottom, 40)
-                    
-                    // Weight Selector (only for ruck workouts)
-                    if !workout.isRestDay {
-                        weightSelectorSection
-                    } else {
-                        restDaySection
-                    }
-                    
-                    Spacer()
-                    
-                    // Instructions at bottom
-                    if let instructions = workout.instructions {
-                        instructionsSection(instructions)
-                    }
-                    
-                    // Action Buttons
-                    actionButtons
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

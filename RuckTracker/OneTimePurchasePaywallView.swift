@@ -148,7 +148,7 @@ struct OneTimePurchasePaywallView: View {
                 VStack(spacing: 8) {
                     Text("One-Time Unlock")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color("TextSecondary"))
                     
                     Text(product.displayPrice)
                         .font(.system(size: 48, weight: .bold))
@@ -156,11 +156,11 @@ struct OneTimePurchasePaywallView: View {
                     
                     Text("Pay once, own forever")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color("TextSecondary"))
                     
                     Text("All programs & challenges included")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color("TextSecondary"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()

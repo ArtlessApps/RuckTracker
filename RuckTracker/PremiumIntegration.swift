@@ -547,7 +547,7 @@ struct ProgramDetailView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Program Overview")
                                 .font(.system(size: 22, weight: .bold, design: .default))
-                                .foregroundColor(Color("BackgroundDark"))
+                                .foregroundColor(.primary)
                             
                             VStack(spacing: 0) {
                                 OverviewItemCard(
@@ -1095,12 +1095,13 @@ struct ProgramWorkoutsView: View {
     // MARK: - Computed Properties
     
     private var completedCount: Int {
-        workouts.filter { $0.isCompleted }.count
+        guard let program = program else { return 0 }
+        return ProgramProgressCalculator.getCompletedCount(for: program)
     }
     
     private var progressPercentage: Double {
-        guard !workouts.isEmpty else { return 0 }
-        return Double(completedCount) / Double(workouts.count)
+        guard let program = program else { return 0 }
+        return ProgramProgressCalculator.calculateProgress(for: program)
     }
     
     // MARK: - Methods
@@ -1279,7 +1280,7 @@ struct WorkoutDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
-    @State private var selectedWorkoutWeight: Double = 0
+    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
     @State private var showingGuidelines = false
     
     init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -1289,7 +1290,8 @@ struct WorkoutDetailView: View {
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
         self.onDismiss = onDismiss
         // Initialize with recommended or default weight
-        self._selectedWorkoutWeight = State(initialValue: userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight)
+        let initialWeight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
+        self._selectedWorkoutWeight = State(initialValue: max(initialWeight, UserSettings.shared.defaultRuckWeight))
     }
     
     var body: some View {
@@ -1299,36 +1301,39 @@ struct WorkoutDetailView: View {
                 Color.white
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // Top section with context
-                    VStack(spacing: 8) {
-                        Text(workout.displayTitle)
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(Color("BackgroundDark"))
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Top section with context
+                        VStack(spacing: 8) {
+                            Text(workout.displayTitle)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(Color("BackgroundDark"))
+                            
+                            Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(Color("TextSecondary"))
+                        }
+                        .padding(.top, 60)
+                        .padding(.bottom, 40)
                         
-                        Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                        // Weight Selector (only for ruck workouts)
+                        if workout.workout.workoutType == .ruck {
+                            weightSelectorSection
+                        } else {
+                            restDaySection
+                        }
+                        
+                        Spacer()
+                            .frame(minHeight: 20)
+                        
+                        // Instructions at bottom
+                        if let instructions = workout.workout.instructions {
+                            instructionsSection(instructions)
+                        }
+                        
+                        // Action Buttons
+                        actionButtons
                     }
-                    .padding(.top, 60)
-                    .padding(.bottom, 40)
-                    
-                    // Weight Selector (only for ruck workouts)
-                    if workout.workout.workoutType == .ruck {
-                        weightSelectorSection
-                    } else {
-                        restDaySection
-                    }
-                    
-                    Spacer()
-                    
-                    // Instructions at bottom
-                    if let instructions = workout.workout.instructions {
-                        instructionsSection(instructions)
-                    }
-                    
-                    // Action Buttons
-                    actionButtons
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

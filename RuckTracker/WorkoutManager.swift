@@ -38,6 +38,7 @@ class WorkoutManager: NSObject, ObservableObject {
     // Location and workout session data
     private var startDate: Date?
     private var timer: Timer?
+    private var lastCalorieUpdate: TimeInterval = 0
     private let healthStore = HKHealthStore()
     private let locationManager = CLLocationManager()
     
@@ -48,6 +49,10 @@ class WorkoutManager: NSObject, ObservableObject {
     private var startLocation: CLLocation?
     private var lastLocation: CLLocation?
     private var totalGPSDistance: Double = 0
+    
+    // Movement detection for calorie validation
+    private var lastDistanceUpdateTime: Date?
+    private var lastDistanceValue: Double = 0
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -123,9 +128,26 @@ class WorkoutManager: NSObject, ObservableObject {
     
     // MARK: - Workout Control (Full HealthKit + GPS Implementation)
     func startWorkout(weight: Double) {
+        let startMsg = "\n🏋️‍♀️ ===== STARTING WORKOUT ====="
+        print(startMsg)
+        DebugLogger.shared.log(startMsg)
+        
+        let weightMsg = "🏋️‍♀️ Weight: \(weight) lbs"
+        print(weightMsg)
+        DebugLogger.shared.log(weightMsg)
+        
+        let callerMsg = "🏋️‍♀️ Called from: \(Thread.callStackSymbols[1])"
+        print(callerMsg)
+        DebugLogger.shared.log(callerMsg)
+        
         ruckWeight = weight  // Set from parameter
         
-        guard !isActive else { return }
+        guard !isActive else { 
+            let msg = "⚠️ Workout already active - ignoring start request"
+            print(msg)
+            DebugLogger.shared.log(msg)
+            return 
+        }
         
         isActive = true
         isPaused = false
@@ -140,10 +162,21 @@ class WorkoutManager: NSObject, ObservableObject {
         startLocation = nil
         lastLocation = nil
         
+        // Reset movement detection
+        lastDistanceUpdateTime = nil
+        lastDistanceValue = 0
+        
+        let authMsg = "🏋️‍♀️ Location authorization status: \(locationAuthorizationStatus.rawValue)"
+        print(authMsg)
+        DebugLogger.shared.log(authMsg)
+        
         // Request location permission if needed
         requestLocationPermissionIfNeeded()
         
         // Start location tracking
+        let trackMsg = "🏋️‍♀️ Starting location tracking..."
+        print(trackMsg)
+        DebugLogger.shared.log(trackMsg)
         startLocationTracking()
         
         // Prepare HealthKit workout builder
@@ -151,6 +184,10 @@ class WorkoutManager: NSObject, ObservableObject {
         
         // Start timer
         startTimer()
+        
+        let completeMsg = "🏋️‍♀️ ===== WORKOUT START COMPLETE =====\n"
+        print(completeMsg)
+        DebugLogger.shared.log(completeMsg)
     }
     
     func togglePause() {
@@ -186,6 +223,9 @@ class WorkoutManager: NSObject, ObservableObject {
     }
     
     func endWorkout() {
+        // Update calories one final time before saving
+        updateCalories()
+        
         // Capture final stats before resetting
         finalElapsedTime = elapsedTime
         finalDistance = distance
@@ -225,9 +265,14 @@ class WorkoutManager: NSObject, ObservableObject {
     }
     
     // MARK: - Timer
+    private var lastCalorieUpdate: TimeInterval = 0
+    
     private func startTimer() {
         // Stop any existing timer
         timer?.invalidate()
+        
+        // Reset calorie update tracker
+        lastCalorieUpdate = 0
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timerInstance in
             guard let self = self else {
@@ -239,9 +284,14 @@ class WorkoutManager: NSObject, ObservableObject {
                 if let startDate = self.startDate {
                     self.elapsedTime = Date().timeIntervalSince(startDate)
                     
-                    // Update calories every 10 seconds
-                    if Int(self.elapsedTime) % 10 == 0 {
+                    // Update calories every 5 seconds (more responsive for user)
+                    let timeSinceLastCalorieUpdate = self.elapsedTime - self.lastCalorieUpdate
+                    if timeSinceLastCalorieUpdate >= 5.0 {
                         self.updateCalories()
+                        self.lastCalorieUpdate = self.elapsedTime
+                        let msg = "🔥 Real-time calorie update: \(Int(self.calories)) cal"
+                        print(msg)
+                        DebugLogger.shared.log(msg)
                     }
                 }
             }
@@ -283,18 +333,38 @@ class WorkoutManager: NSObject, ObservableObject {
     private func startLocationTracking() {
         
         guard locationAuthorizationStatus == .authorizedWhenInUse || locationAuthorizationStatus == .authorizedAlways else {
+            let msg = "⚠️ Cannot start location tracking - authorization status: \(locationAuthorizationStatus.rawValue)"
+            print(msg)
+            DebugLogger.shared.log(msg)
             return
         }
         
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 5.0 // Update every 5 meters
         
-        // Only set background location updates if the app has the capability
-        if hasBackgroundLocationCapability() {
+        // CRITICAL: Enable background location updates to prevent GPS suspension
+        // This allows continuous tracking even when screen is locked
+        let hasCapability = hasBackgroundLocationCapability()
+        let msg1 = "📍 Background location capability: \(hasCapability)"
+        print(msg1)
+        DebugLogger.shared.log(msg1)
+        
+        if hasCapability {
             locationManager.allowsBackgroundLocationUpdates = true
+            let msg2 = "✅ Background location updates ENABLED"
+            print(msg2)
+            DebugLogger.shared.log(msg2)
+        } else {
+            let msg2 = "⚠️ Background location NOT configured in app - GPS will suspend when screen locks!"
+            print(msg2)
+            DebugLogger.shared.log(msg2)
         }
         
         locationManager.pausesLocationUpdatesAutomatically = false
+        
+        let msg3 = "📍 Starting continuous location updates..."
+        print(msg3)
+        DebugLogger.shared.log(msg3)
         
         locationManager.startUpdatingLocation()
     }
@@ -328,6 +398,9 @@ extension WorkoutManager: CLLocationManagerDelegate {
             if self.startLocation == nil {
                 self.startLocation = location
                 self.lastLocation = location
+                let msg = "📍 GPS: First location acquired | Accuracy: \(String(format: "%.1f", location.horizontalAccuracy))m"
+                print(msg)
+                DebugLogger.shared.log(msg)
                 return
             }
             
@@ -341,8 +414,18 @@ extension WorkoutManager: CLLocationManagerDelegate {
                     // Always update distance with GPS data (HealthKit doesn't auto-collect on iPhone)
                     self.distance = gpsDistanceMiles
                     
+                    // Track when distance was last updated (for movement detection)
+                    self.lastDistanceUpdateTime = Date()
+                    self.lastDistanceValue = self.distance
+                    
                     self.lastLocation = location
+                    let msg = "📍 GPS update: +\(String(format: "%.1f", distanceMeters))m | Total: \(String(format: "%.3f", gpsDistanceMiles)) mi | Accuracy: \(String(format: "%.1f", location.horizontalAccuracy))m"
+                    print(msg)
+                    DebugLogger.shared.log(msg)
                 } else {
+                    let msg = "📍 GPS update: movement < 5m (ignored)"
+                    print(msg)
+                    DebugLogger.shared.log(msg)
                 }
             }
         }
@@ -468,16 +551,57 @@ extension WorkoutManager: CLLocationManagerDelegate {
     
     // MARK: - Calorie Calculation
     private func updateCalories() {
-        // Calculate calories based on distance and ruck weight
+        guard elapsedTime > 0 else { return }
+        
+        // Check if we're actually moving or just forgot to stop the workout
+        let isMoving = isUserMoving()
+        
         if distance > 0.01 {
+            // PRIMARY: Distance-based calculation (most accurate)
             calories = CalorieCalculator.calculateRuckingCalories(
                 bodyWeightKg: userSettings.bodyWeightInKg,
                 ruckWeightPounds: ruckWeight,
                 timeMinutes: elapsedTime / 60.0,
                 distanceMiles: distance
             )
-            print("📊 Using fallback calorie calculation: \(Int(calories))")
+            let msg = "📊 Calorie calc (GPS): \(Int(calories)) cal | \(String(format: "%.3f", distance)) mi | \(String(format: "%.1f", elapsedTime/60)) min"
+            print(msg)
+            DebugLogger.shared.log(msg)
+            
+        } else if isMoving {
+            // FALLBACK: Time-based but only if recent movement detected
+            // Use minimal calorie rate for stationary/slow movement
+            calories = CalorieCalculator.calculateRuckingCalories(
+                bodyWeightKg: userSettings.bodyWeightInKg,
+                ruckWeightPounds: ruckWeight,
+                timeMinutes: elapsedTime / 60.0,
+                distanceMiles: 0.0  // Will use base MET for stationary
+            )
+            let msg = "📊 Calorie calc (stationary): \(Int(calories)) cal | No GPS | \(String(format: "%.1f", elapsedTime/60)) min | Movement detected"
+            print(msg)
+            DebugLogger.shared.log(msg)
+            
+        } else {
+            // NO MOVEMENT: Minimal calories (standing with ruck weight only)
+            // Only account for carrying the load, not walking
+            let standingCaloriesPerMinute = userSettings.bodyWeightInKg * 1.5 / 60.0 // Very low MET
+            calories = standingCaloriesPerMinute * (elapsedTime / 60.0)
+            let msg = "⚠️ Calorie calc (no movement): \(Int(calories)) cal | No GPS | No movement for 2+ min"
+            print(msg)
+            DebugLogger.shared.log(msg)
         }
+    }
+    
+    /// Detects if user is actually moving based on GPS data
+    private func isUserMoving() -> Bool {
+        // If we have recent distance updates (within last 2 minutes), user is moving
+        if let lastUpdate = lastDistanceUpdateTime {
+            let timeSinceLastMovement = Date().timeIntervalSince(lastUpdate)
+            return timeSinceLastMovement < 120 // 2 minutes grace period
+        }
+        
+        // If no distance data yet, assume moving for first 2 minutes (GPS acquisition time)
+        return elapsedTime < 120
     }
     
     // MARK: - Local Data Storage
@@ -593,10 +717,15 @@ extension WorkoutManager: CLLocationManagerDelegate {
         calories = 0
         startDate = nil
         currentHeartRate = 0
+        lastCalorieUpdate = 0
         
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
+        
+        // Reset movement detection
+        lastDistanceUpdateTime = nil
+        lastDistanceValue = 0
         
         // Clean up HealthKit objects
         workoutBuilder = nil
@@ -609,10 +738,15 @@ extension WorkoutManager: CLLocationManagerDelegate {
         calories = 0
         startDate = nil
         currentHeartRate = 0
+        lastCalorieUpdate = 0
         
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
+        
+        // Reset movement detection
+        lastDistanceUpdateTime = nil
+        lastDistanceValue = 0
         
         // Clean up HealthKit objects
         workoutBuilder = nil

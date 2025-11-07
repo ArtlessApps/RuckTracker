@@ -112,26 +112,7 @@ struct TrainingProgramsView: View {
     }
     
     private func calculateProgress(userProgram: UserProgram, program: Program) -> Double {
-        // Get total workouts from program JSON data
-        let totalWorkouts = getTotalWorkoutsFromProgram(programId: program.id)
-        guard totalWorkouts > 0 else { return 0 }
-        
-        let completedWorkouts = WorkoutDataManager.shared.workouts.filter {
-            $0.programId == userProgram.id.uuidString
-        }.count
-        
-        return Double(completedWorkouts) / Double(totalWorkouts)
-    }
-    
-    private func getTotalWorkoutsFromProgram(programId: UUID) -> Int {
-        // Get weeks for this program
-        let weeks = LocalWeekLoader.shared.getWeeks(forProgramId: programId)
-        
-        // Get all workouts for this program using the workout loader
-        let workoutLoader = LocalWorkoutLoader.shared
-        let allWorkouts = workoutLoader.getAllWorkouts(forProgramId: programId, weeks: weeks)
-        
-        return allWorkouts.count
+        return ProgramProgressCalculator.calculateProgress(for: program)
     }
     
 }
@@ -581,14 +562,7 @@ struct ChallengesView: View {
     }
     
     private func calculateChallengeProgress(userChallenge: UserChallenge, challenge: Challenge) -> Double {
-        let totalDays = challenge.durationDays
-        guard totalDays > 0 else { return 0 }
-        
-        let completedWorkouts = WorkoutDataManager.shared.workouts.filter {
-            $0.challengeId == userChallenge.id.uuidString
-        }.count
-        
-        return Double(completedWorkouts) / Double(totalDays)
+        return ChallengeProgressCalculator.calculateProgress(for: challenge)
     }
     
 }

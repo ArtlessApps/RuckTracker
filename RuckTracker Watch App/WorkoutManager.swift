@@ -207,6 +207,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     func endWorkout() {
         print("🏁 Ending workout...")
         
+        // Use fallback calorie calculation if needed before saving final stats
+        updateCaloriesWithFallback()
+        
         // Save final stats before resetting
         finalElapsedTime = elapsedTime
         finalDistance = distance
@@ -403,6 +406,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                 if let manualStartTime = manualStartTime {
                     elapsedTime = pausedTime + Date().timeIntervalSince(manualStartTime)
                 }
+                
+                // Check if we need to use fallback calorie calculation
+                updateCaloriesWithFallback()
             }
             
             if !isActive {
@@ -513,6 +519,21 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         let additionalCalories = additionalCaloriesPerHour * timeHours
         
         return baseCalories + additionalCalories
+    }
+    
+    // MARK: - Fallback Calorie Calculation
+    private func updateCaloriesWithFallback() {
+        // If we have distance and HealthKit isn't providing calories,
+        // calculate them ourselves using the CalorieCalculator
+        if distance > 0.01 && calories < 1.0 {
+            calories = CalorieCalculator.calculateRuckingCalories(
+                bodyWeightKg: userSettings.bodyWeightInKg,
+                ruckWeightPounds: ruckWeight,
+                timeMinutes: elapsedTime / 60.0,
+                distanceMiles: distance
+            )
+            print("📊 Using fallback calorie calculation: \(Int(calories))")
+        }
     }
     
     // MARK: - Local Data Storage

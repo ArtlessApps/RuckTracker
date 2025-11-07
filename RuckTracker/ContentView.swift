@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var healthManager = HealthManager.shared
-    @StateObject private var workoutManager = WorkoutManager()
+    @EnvironmentObject var workoutManager: WorkoutManager
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
     @StateObject private var premiumManager = PremiumManager.shared
     @State private var showingSplash = true

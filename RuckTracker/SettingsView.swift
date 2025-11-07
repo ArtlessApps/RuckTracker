@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var showingResetAlert = false
     @State private var showingValidationError = false
     @State private var validationMessage = ""
+    @State private var showingDebugLogs = false
     
     var body: some View {
         NavigationView {
@@ -174,6 +175,22 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                
+                // MARK: - Debug Section
+                Section(header: Text("Debug")) {
+                    Button(action: {
+                        showingDebugLogs = true
+                    }) {
+                        HStack {
+                            Image(systemName: "doc.text.magnifyingglass")
+                            Text("View Debug Logs")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
@@ -193,6 +210,9 @@ struct SettingsView: View {
                     }
                     .fontWeight(.semibold)
                 }
+            }
+            .sheet(isPresented: $showingDebugLogs) {
+                DebugLogViewer()
             }
             .alert("Reset Settings", isPresented: $showingResetAlert) {
                 Button("Reset", role: .destructive) {

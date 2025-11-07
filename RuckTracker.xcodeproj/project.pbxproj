@@ -45,6 +45,7 @@
 		12F4B31F2EA2973E00688D71 /* Exceptions for "RuckTracker" folder in "RuckTracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Info.plist,
 				Untitled.swift,
 			);
 			target = 1218572C2E6BE73D00088A62 /* RuckTracker */;
@@ -435,6 +436,7 @@
 				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RuckTracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
@@ -474,6 +476,7 @@
 				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RuckTracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "RuckTracker needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "RuckTracker needs permission to save your ruck workout data to your Health app.";
