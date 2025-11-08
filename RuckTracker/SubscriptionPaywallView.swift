@@ -406,7 +406,7 @@ struct TermsOfServiceView: View {
                 Last updated: \(Date().formatted(date: .abbreviated, time: .omitted))
                 
                 1. Acceptance of Terms
-                By downloading and using RuckTracker, you agree to these terms.
+                By downloading and using MARCH, you agree to these terms.
                 
                 2. Subscription Terms
                 - Premium subscriptions auto-renew unless cancelled
@@ -423,7 +423,7 @@ struct TermsOfServiceView: View {
                 Your health data remains private and is processed locally on your device.
                 
                 5. Limitation of Liability
-                Use RuckTracker at your own risk. Consult healthcare providers before starting new exercise programs.
+                Use MARCH at your own risk. Consult healthcare providers before starting new exercise programs.
                 """)
                 .padding()
             }
@@ -451,7 +451,7 @@ struct PrivacyPolicyView: View {
                 
                 Last updated: \(Date().formatted(date: .abbreviated, time: .omitted))
                 
-                RuckTracker is committed to protecting your privacy.
+                MARCH is committed to protecting your privacy.
                 
                 Data We Collect:
                 - Workout data (distance, time, calories) - stored locally

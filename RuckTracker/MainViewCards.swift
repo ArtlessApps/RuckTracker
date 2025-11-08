@@ -114,7 +114,7 @@ struct TrainingInsightsSection: View {
                     
                     Spacer()
                     
-                    Text("RuckTracker Pro")
+                    Text("MARCH Pro")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)

@@ -148,7 +148,7 @@ struct PremiumDataSection: View {
             let csvData = self.generateCSVData()
             
             DispatchQueue.main.async {
-                self.shareData(csvData, fileName: "RuckTracker_Workouts.csv", mimeType: "text/csv")
+                self.shareData(csvData, fileName: "MARCH_Workouts.csv", mimeType: "text/csv")
             }
         }
     }

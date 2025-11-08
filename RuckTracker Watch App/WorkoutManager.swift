@@ -635,7 +635,7 @@ extension WorkoutManager {
             // Core rucking data
             "RuckWeight": ruckWeight,
             "RuckWeightUnit": "lbs",
-            "AppName": "RuckTracker",
+            "AppName": "MARCH",
             "WorkoutType": "Rucking",
             "Version": "1.0",
             

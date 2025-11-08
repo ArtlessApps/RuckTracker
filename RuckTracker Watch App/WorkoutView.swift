@@ -187,14 +187,15 @@ struct WorkoutView: View {
             .animation(.easeInOut(duration: 0.3), value: workoutManager.isPaused)
         }
         .background(Color.black)
-        .focusable()
+        .focusable(true)
         .digitalCrownRotation(
             $workoutManager.ruckWeight,
             from: 0,
             through: 100,
             by: 1,
             sensitivity: .medium,
-            isContinuous: false
+            isContinuous: false,
+            isHapticFeedbackEnabled: true
         )
         .contextMenu(menuItems: {
             Button("Settings") {

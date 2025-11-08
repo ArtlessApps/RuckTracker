@@ -214,7 +214,7 @@ struct HealthKitPermissionStep: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Text("RuckTracker saves your workouts to the Health app for complete fitness tracking.")
+                        Text("MARCH saves your workouts to the Health app for complete fitness tracking.")
                             .font(.system(size: 17))
                             .foregroundColor(.white.opacity(0.7))
                             .multilineTextAlignment(.center)

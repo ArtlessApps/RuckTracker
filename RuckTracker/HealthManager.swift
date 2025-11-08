@@ -322,7 +322,7 @@ class HealthManager: ObservableObject {
                     end: endDate,
                     metadata: [
                         "RuckWeight": weight,
-                        "AppName": "RuckTracker-\(self.platformName)",
+                        "AppName": "MARCH-\(self.platformName)",
                         "Terrain": "Flat",
                         "GPS": self.isWatchApp ? "Full" : "Limited"
                     ]

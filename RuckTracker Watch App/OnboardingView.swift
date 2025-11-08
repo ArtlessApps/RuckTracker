@@ -1,8 +1,8 @@
 //
 //  OnboardingView.swift
-//  RuckTracker Watch App
+//  MARCH Watch App
 //
-//  Clean onboarding flow matching SettingsView design
+//  Clean onboarding flow with MARCH branding
 //
 
 import SwiftUI
@@ -122,175 +122,152 @@ struct HealthKitPermissionStep: View {
     @ObservedObject var healthManager: HealthManager
     let nextAction: () -> Void
     let backAction: () -> Void
-    @State private var showFallbackOption = false
+    @State private var hasRequestedPermission = false
     
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: 16) {
-                    Image(systemName: "heart.circle.fill")
-                        .font(.system(size: 48))
-                        .foregroundColor(.red)
+        ScrollView {
+            VStack(spacing: 10) {
+                // Icon with circle background (MARCH style)
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.3))
+                        .frame(width: 60, height: 60)
                     
-                    VStack(spacing: 8) {
-                        Text("Health Integration")
-                            .font(.title3)
-                            .fontWeight(.bold)
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 40, height: 40)
                         
-                        Text("RuckTracker uses HealthKit to track your workouts accurately with heart rate, distance, and calories.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .padding(.vertical)
-                .listRowBackground(Color.clear)
-            }
-            
-            Section {
-                VStack(spacing: 12) {
-                    HStack(spacing: 8) {
                         Image(systemName: "heart.fill")
-                            .foregroundColor(.red)
-                            .font(.caption)
-                        Text("Heart Rate Monitoring")
-                            .font(.caption)
-                        Spacer()
-                    }
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(.blue)
-                            .font(.caption)
-                        Text("GPS Distance Tracking")
-                            .font(.caption)
-                        Spacer()
-                    }
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "flame.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                        Text("Calorie Calculation")
-                            .font(.caption)
-                        Spacer()
-                    }
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "figure.walk")
-                            .foregroundColor(.green)
-                            .font(.caption)
-                        Text("Workout Logging")
-                            .font(.caption)
-                        Spacer()
+                            .font(.system(size: 18))
+                            .foregroundColor(.black)
                     }
                 }
-                .padding(.vertical, 4)
-            } header: {
-                Text("Permissions Needed")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Authorization Status
-            Section {
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+                
+                // Title and description
+                VStack(spacing: 4) {
+                    Text("Health Integration")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("MARCH saves workouts to Health for fitness tracking.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                }
+                .padding(.bottom, 8)
+                
+                // Permissions list with icons
+                VStack(spacing: 6) {
+                    PermissionRow(icon: "figure.walk", text: "Workouts", color: .green)
+                    PermissionRow(icon: "flame.fill", text: "Calories", color: .orange)
+                    PermissionRow(icon: "location.fill", text: "Distance", color: .blue)
+                    PermissionRow(icon: "heart.fill", text: "Heart Rate", color: .red)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                
+                // Status message
                 if healthManager.isAuthorized {
-                    HStack {
+                    HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("HealthKit Connected")
-                            .font(.caption)
-                        Spacer()
+                            .font(.caption2)
+                        Text("Connected")
+                            .font(.caption2)
+                            .foregroundColor(.green)
                     }
+                    .padding(.bottom, 6)
+                } else if healthManager.authorizationInProgress {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                        Text("Requesting...")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.bottom, 6)
+                } else if !hasRequestedPermission {
+                    Button("Enable HealthKit") {
+                        hasRequestedPermission = true
+                        healthManager.requestAuthorization()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .background(Color.red)
+                    .cornerRadius(8)
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
                 } else {
-                    VStack(spacing: 8) {
-                        if healthManager.authorizationInProgress {
-                            HStack {
-                                ProgressView()
-                                    .scaleEffect(0.7)
-                                Text("Requesting permissions...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                        } else {
-                            Button("Enable HealthKit") {
-                                healthManager.requestAuthorization()
-                            }
-                            .frame(maxWidth: .infinity)
-                            .foregroundColor(.white)
-                            .padding(.vertical, 8)
-                            .background(Color.red)
-                            .cornerRadius(8)
-                        }
-                    }
+                    Text("Enable later in Settings")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 6)
                 }
-            }
-            
-            // Navigation
-            Section {
-                HStack {
+                
+                // Navigation buttons
+                HStack(spacing: 10) {
                     Button("Back") {
                         backAction()
                     }
-                    .foregroundColor(.secondary)
-                    
-                    Spacer()
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .background(Color.gray.opacity(0.5))
+                    .cornerRadius(8)
+                    .buttonStyle(PlainButtonStyle())
                     
                     Button("Continue") {
                         nextAction()
                     }
-                    .disabled(!healthManager.isAuthorized && !healthManager.authorizationInProgress)
-                    .foregroundColor(healthManager.isAuthorized ? .orange : .secondary)
-                    .fontWeight(healthManager.isAuthorized ? .medium : .regular)
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .background((hasRequestedPermission || healthManager.isAuthorized) ? Color.orange : Color.gray.opacity(0.5))
+                    .cornerRadius(8)
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(!hasRequestedPermission && !healthManager.isAuthorized)
+                    .opacity((hasRequestedPermission || healthManager.isAuthorized) ? 1.0 : 0.5)
                 }
-                .padding(.vertical, 4)
-            }
-            
-            // Add fallback option if HealthKit fails or times out
-            if showFallbackOption || (healthManager.errorManager.currentError != nil && !healthManager.isAuthorized) {
-                Section {
-                    VStack(spacing: 8) {
-                        Text("HealthKit Setup Failed")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                        
-                        Text("You can continue without HealthKit, but workout data won't sync to the Health app.")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Button("Continue Without HealthKit") {
-                            nextAction()
-                        }
-                        .frame(maxWidth: .infinity)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 6)
-                        .background(Color.orange)
-                        .cornerRadius(6)
-                    }
-                    .padding(.vertical, 4)
-                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
-        .navigationTitle("Health Setup")
+        .background(Color.black)
         .onAppear {
-            // Set up a timeout to show fallback option if HealthKit doesn't respond
-            DispatchQueue.main.asyncAfter(deadline: .now() + 45.0) {
-                if !healthManager.isAuthorized && !healthManager.authorizationInProgress {
-                    showFallbackOption = true
-                }
+            // If already authorized from a previous session, mark as requested
+            if healthManager.isAuthorized {
+                hasRequestedPermission = true
             }
         }
-        .onChange(of: healthManager.isAuthorized) { isAuthorized in
-            if isAuthorized {
-                showFallbackOption = false
-            }
-        }
-        .onChange(of: healthManager.authorizationInProgress) { inProgress in
-            if !inProgress && !healthManager.isAuthorized {
-                showFallbackOption = true
-            }
+    }
+}
+
+// Helper view for permission rows
+struct PermissionRow: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(color)
+                .frame(width: 16)
+            
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.white)
+            
+            Spacer()
         }
     }
 }
@@ -299,45 +276,46 @@ struct WelcomeStep: View {
     let nextAction: () -> Void
     
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: 16) {
-                    Image(systemName: "figure.hiking")
-                        .font(.system(size: 48))
-                        .foregroundColor(.orange)
-                    
-                    VStack(spacing: 8) {
-                        Text("Welcome to")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("RuckTracker")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text("Let's set up your profile for accurate tracking of weighted walks.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .padding(.vertical)
-                .listRowBackground(Color.clear)
-            }
+        VStack(spacing: 0) {
+            Spacer()
             
-            Section {
-                Button("Get Started") {
-                    nextAction()
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(.white)
-                .padding(.vertical, 8)
-                .background(Color.orange)
-                .cornerRadius(8)
-                .buttonStyle(PlainButtonStyle())
+            // MARCH branding
+            VStack(spacing: 4) {
+                Text("MARCH")
+                    .font(.system(size: 32, weight: .black, design: .default))
+                    .foregroundColor(.orange)
+                    .tracking(1)
+                
+                Text("WALK STRONGER")
+                    .font(.system(size: 8, weight: .medium, design: .default))
+                    .foregroundColor(.white)
+                    .tracking(2)
             }
+            .padding(.bottom, 16)
+            
+            // Subtitle
+            Text("Track rucking workouts with distance, calories, and heart rate.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+            Spacer()
+            
+            // Get Started button
+            Button("Get Started") {
+                nextAction()
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundColor(.white)
+            .padding(.vertical, 10)
+            .background(Color.orange)
+            .cornerRadius(10)
+            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
         }
-        .navigationTitle("Setup")
+        .background(Color.black)
     }
 }
 
@@ -349,32 +327,48 @@ struct BodyWeightSetupStep: View {
     let backAction: () -> Void
     
     var body: some View {
-        List {
-            Section {
+        ScrollView {
+            VStack(spacing: 12) {
+                Text("Body Weight")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 12)
+                    .padding(.bottom, 4)
+                
+                // Weight display with tap to edit
                 Button {
                     showingPicker = true
                 } label: {
-                    HStack {
-                        Text(String(format: "%.1f %@", bodyWeight, weightUnit.rawValue))
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
+                    VStack(spacing: 4) {
+                        Text(String(format: "%.1f", bodyWeight))
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.orange)
+                        Text(weightUnit.rawValue)
                             .font(.caption)
+                            .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(10)
                 }
                 .buttonStyle(PlainButtonStyle())
-            }
-            
-            Section {
-                HStack(spacing: 16) {
+                .padding(.horizontal, 16)
+                
+                Text("Tap to adjust")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 12)
+                
+                // Navigation buttons
+                HStack(spacing: 10) {
                     Button("Back") {
                         backAction()
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .background(Color.gray)
+                    .padding(.vertical, 10)
+                    .background(Color.gray.opacity(0.5))
                     .cornerRadius(8)
                     .buttonStyle(PlainButtonStyle())
                     
@@ -383,14 +377,16 @@ struct BodyWeightSetupStep: View {
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.white)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                     .background(Color.orange)
                     .cornerRadius(8)
                     .buttonStyle(PlainButtonStyle())
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
-        .navigationTitle("Body Weight")
+        .background(Color.black)
     }
 }
 
@@ -404,52 +400,87 @@ struct PreferencesSetupStep: View {
     let backAction: () -> Void
     
     var body: some View {
-        List {
-            Section("Default Ruck Weight") {
+        ScrollView {
+            VStack(spacing: 12) {
+                Text("Preferences")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                
+                // Ruck Weight
                 Button {
                     showingRuckPicker = true
                 } label: {
-                    HStack {
-                        Text(String(format: "%.0f %@", ruckWeight, weightUnit.rawValue))
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Default Ruck Weight")
+                            .font(.caption2)
                             .foregroundColor(.secondary)
-                            .font(.caption)
+                        HStack {
+                            Text(String(format: "%.0f %@", ruckWeight, weightUnit.rawValue))
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.orange)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                                .font(.caption2)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
-            }
-            
-            Section("Units") {
+                .padding(.horizontal, 16)
+                
+                // Units
                 Button {
                     showingUnitsPicker = true
                 } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Weight: \(weightUnit.rawValue)")
-                                .foregroundColor(.primary)
-                            Text("Distance: \(distanceUnit.rawValue)")
-                                .foregroundColor(.primary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Units")
+                            .font(.caption2)
                             .foregroundColor(.secondary)
-                            .font(.caption)
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack {
+                                Text("Weight:")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text(weightUnit.rawValue)
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                            HStack {
+                                Text("Distance:")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text(distanceUnit.rawValue)
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
-            }
-            
-            Section {
-                HStack(spacing: 16) {
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+                
+                // Navigation buttons
+                HStack(spacing: 10) {
                     Button("Back") {
                         backAction()
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .background(Color.gray)
+                    .padding(.vertical, 10)
+                    .background(Color.gray.opacity(0.5))
                     .cornerRadius(8)
                     .buttonStyle(PlainButtonStyle())
                     
@@ -458,14 +489,16 @@ struct PreferencesSetupStep: View {
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.white)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                     .background(Color.orange)
                     .cornerRadius(8)
                     .buttonStyle(PlainButtonStyle())
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
-        //.navigationTitle("Preferences")
+        .background(Color.black)
     }
 }
 
@@ -478,7 +511,8 @@ struct OnboardingBodyWeightPicker: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Body Weight")
-                .font(.headline)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
                 .padding(.top, 16)
             
             Picker("Weight", selection: $selectedWeight) {
@@ -493,30 +527,31 @@ struct OnboardingBodyWeightPicker: View {
             .padding(.top, 16)
             .padding(.bottom, 24)
             
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.gray)
+                .padding(.vertical, 10)
+                .background(Color.gray.opacity(0.5))
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .buttonStyle(PlainButtonStyle())
                 
                 Button("Done") {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
                 .background(Color.orange)
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
+        .background(Color.black)
         .navigationBarHidden(true)
     }
     
@@ -537,7 +572,8 @@ struct OnboardingRuckWeightPicker: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Ruck Weight")
-                .font(.headline)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
                 .padding(.top, 16)
             
             Picker("Ruck Weight", selection: $selectedWeight) {
@@ -552,30 +588,31 @@ struct OnboardingRuckWeightPicker: View {
             .padding(.top, 16)
             .padding(.bottom, 24)
             
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.gray)
+                .padding(.vertical, 10)
+                .background(Color.gray.opacity(0.5))
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .buttonStyle(PlainButtonStyle())
                 
                 Button("Done") {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
                 .background(Color.orange)
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
+        .background(Color.black)
         .navigationBarHidden(true)
     }
     
@@ -594,16 +631,30 @@ struct OnboardingUnitsPicker: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Units")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button("Done") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .foregroundColor(.orange)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+            
             List {
-                Section("Weight") {
+                Section {
                     ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
                         Button {
                             selectedWeightUnit = unit
                         } label: {
                             HStack {
                                 Text(unit.rawValue.capitalized)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                                 Spacer()
                                 if selectedWeightUnit == unit {
                                     Image(systemName: "checkmark")
@@ -613,16 +664,19 @@ struct OnboardingUnitsPicker: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
+                } header: {
+                    Text("Weight")
+                        .foregroundColor(.secondary)
                 }
                 
-                Section("Distance") {
+                Section {
                     ForEach(UserSettings.DistanceUnit.allCases, id: \.self) { unit in
                         Button {
                             selectedDistanceUnit = unit
                         } label: {
                             HStack {
                                 Text(unit.rawValue.capitalized)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                                 Spacer()
                                 if selectedDistanceUnit == unit {
                                     Image(systemName: "checkmark")
@@ -632,17 +686,13 @@ struct OnboardingUnitsPicker: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                }
-            }
-            .navigationTitle("Units")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
+                } header: {
+                    Text("Distance")
+                        .foregroundColor(.secondary)
                 }
             }
         }
+        .background(Color.black)
     }
 }
 

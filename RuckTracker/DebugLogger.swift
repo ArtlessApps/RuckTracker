@@ -22,7 +22,7 @@ class DebugLogger: ObservableObject {
         // Create log file in Documents directory
         if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             let timestamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
-            logFile = documentsPath.appendingPathComponent("RuckTracker_Log_\(timestamp).txt")
+            logFile = documentsPath.appendingPathComponent("MARCH_Log_\(timestamp).txt")
             
             print("📝 Log file will be saved to: \(logFile?.path ?? "unknown")")
             

@@ -54,6 +54,11 @@ class WorkoutManager: NSObject, ObservableObject {
     private var lastDistanceUpdateTime: Date?
     private var lastDistanceValue: Double = 0
     
+    // Active time tracking (excludes prolonged inactivity)
+    private var activeTime: TimeInterval = 0
+    private var lastActiveTimeUpdate: Date?
+    private let inactivityGracePeriod: TimeInterval = 300 // 5 minutes before we stop counting calories
+    
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
     var minutes: Int { (Int(elapsedTime) % 3600) / 60 }
@@ -265,14 +270,13 @@ class WorkoutManager: NSObject, ObservableObject {
     }
     
     // MARK: - Timer
-    private var lastCalorieUpdate: TimeInterval = 0
-    
     private func startTimer() {
         // Stop any existing timer
         timer?.invalidate()
         
         // Reset calorie update tracker
         lastCalorieUpdate = 0
+        lastActiveTimeUpdate = Date()
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timerInstance in
             guard let self = self else {
@@ -283,6 +287,9 @@ class WorkoutManager: NSObject, ObservableObject {
             if self.isActive && !self.isPaused {
                 if let startDate = self.startDate {
                     self.elapsedTime = Date().timeIntervalSince(startDate)
+                    
+                    // Update active time based on movement
+                    self.updateActiveTime()
                     
                     // Update calories every 5 seconds (more responsive for user)
                     let timeSinceLastCalorieUpdate = self.elapsedTime - self.lastCalorieUpdate
@@ -550,8 +557,43 @@ extension WorkoutManager: CLLocationManagerDelegate {
     }
     
     // MARK: - Calorie Calculation
+    /// Updates the active time counter based on whether user is still moving
+    /// Active time excludes prolonged inactivity to prevent inflated calorie counts from forgotten workouts
+    private func updateActiveTime() {
+        guard let lastUpdate = lastActiveTimeUpdate else {
+            lastActiveTimeUpdate = Date()
+            return
+        }
+        
+        let now = Date()
+        let timeSinceLastUpdate = now.timeIntervalSince(lastUpdate)
+        
+        // Check if user is moving or within grace period
+        if let lastMovement = lastDistanceUpdateTime {
+            let timeSinceMovement = now.timeIntervalSince(lastMovement)
+            
+            if timeSinceMovement < inactivityGracePeriod {
+                // Still active or within grace period - count this time
+                activeTime += timeSinceLastUpdate
+            } else {
+                // Beyond grace period - stopped counting
+                // This prevents forgotten workouts from accumulating calories indefinitely
+            }
+        } else {
+            // No movement data yet - assume active for first 5 minutes (GPS acquisition)
+            if elapsedTime < inactivityGracePeriod {
+                activeTime += timeSinceLastUpdate
+            }
+        }
+        
+        lastActiveTimeUpdate = now
+    }
+    
     private func updateCalories() {
         guard elapsedTime > 0 else { return }
+        
+        // Use activeTime for all calculations - this prevents forgotten workouts from inflating calories
+        let timeToUse = activeTime / 60.0 // Convert to minutes
         
         // Check if we're actually moving or just forgot to stop the workout
         let isMoving = isUserMoving()
@@ -561,10 +603,10 @@ extension WorkoutManager: CLLocationManagerDelegate {
             calories = CalorieCalculator.calculateRuckingCalories(
                 bodyWeightKg: userSettings.bodyWeightInKg,
                 ruckWeightPounds: ruckWeight,
-                timeMinutes: elapsedTime / 60.0,
+                timeMinutes: timeToUse,
                 distanceMiles: distance
             )
-            let msg = "📊 Calorie calc (GPS): \(Int(calories)) cal | \(String(format: "%.3f", distance)) mi | \(String(format: "%.1f", elapsedTime/60)) min"
+            let msg = "📊 Calorie calc (GPS): \(Int(calories)) cal | \(String(format: "%.3f", distance)) mi | Active: \(String(format: "%.1f", timeToUse)) min | Elapsed: \(String(format: "%.1f", elapsedTime/60)) min"
             print(msg)
             DebugLogger.shared.log(msg)
             
@@ -574,19 +616,20 @@ extension WorkoutManager: CLLocationManagerDelegate {
             calories = CalorieCalculator.calculateRuckingCalories(
                 bodyWeightKg: userSettings.bodyWeightInKg,
                 ruckWeightPounds: ruckWeight,
-                timeMinutes: elapsedTime / 60.0,
+                timeMinutes: timeToUse,
                 distanceMiles: 0.0  // Will use base MET for stationary
             )
-            let msg = "📊 Calorie calc (stationary): \(Int(calories)) cal | No GPS | \(String(format: "%.1f", elapsedTime/60)) min | Movement detected"
+            let msg = "📊 Calorie calc (stationary): \(Int(calories)) cal | No GPS | Active: \(String(format: "%.1f", timeToUse)) min | Movement detected"
             print(msg)
             DebugLogger.shared.log(msg)
             
         } else {
             // NO MOVEMENT: Minimal calories (standing with ruck weight only)
-            // Only account for carrying the load, not walking
+            // Only use activeTime - stops accumulating after grace period
             let standingCaloriesPerMinute = userSettings.bodyWeightInKg * 1.5 / 60.0 // Very low MET
-            calories = standingCaloriesPerMinute * (elapsedTime / 60.0)
-            let msg = "⚠️ Calorie calc (no movement): \(Int(calories)) cal | No GPS | No movement for 2+ min"
+            calories = standingCaloriesPerMinute * timeToUse
+            let inactiveTime = elapsedTime - activeTime
+            let msg = "⚠️ Calorie calc (no movement): \(Int(calories)) cal | Active: \(String(format: "%.1f", timeToUse)) min | Inactive: \(String(format: "%.1f", inactiveTime/60)) min"
             print(msg)
             DebugLogger.shared.log(msg)
         }
@@ -723,9 +766,11 @@ extension WorkoutManager: CLLocationManagerDelegate {
         startLocation = nil
         lastLocation = nil
         
-        // Reset movement detection
+        // Reset movement detection and active time tracking
         lastDistanceUpdateTime = nil
         lastDistanceValue = 0
+        activeTime = 0
+        lastActiveTimeUpdate = nil
         
         // Clean up HealthKit objects
         workoutBuilder = nil
@@ -744,9 +789,11 @@ extension WorkoutManager: CLLocationManagerDelegate {
         startLocation = nil
         lastLocation = nil
         
-        // Reset movement detection
+        // Reset movement detection and active time tracking
         lastDistanceUpdateTime = nil
         lastDistanceValue = 0
+        activeTime = 0
+        lastActiveTimeUpdate = nil
         
         // Clean up HealthKit objects
         workoutBuilder = nil
