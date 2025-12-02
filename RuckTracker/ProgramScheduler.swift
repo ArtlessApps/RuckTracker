@@ -10,10 +10,10 @@ struct ScheduledWorkout: Identifiable {
 }
 
 class ProgramScheduler {
-    static func generateSchedule(for programWeeks: [ProgramWeek], startDate: Date, preferredDays: [Int]) -> [ScheduledWorkout] {
+    static func generateSchedule(for programWeeks: [LocalProgramWeek], startDate: Date, preferredDays: [Int]) -> [ScheduledWorkout] {
         var schedule: [ScheduledWorkout] = []
         var currentDate = startDate
-        var workoutQueue: [(week: Int, workout: WorkoutStep)] = []
+        var workoutQueue: [(week: Int, workout: LocalProgramWorkout)] = []
         
         // Flatten JSON
         for week in programWeeks {
@@ -39,7 +39,7 @@ class ProgramScheduler {
                 let scheduled = ScheduledWorkout(
                     date: currentDate,
                     weekNumber: item.week,
-                    title: "Week \(item.week) - \(item.workout.workoutType)",
+                    title: "Week \(item.week) - \(item.workout.workoutType.capitalized)",
                     description: "Target: \(item.workout.distanceMiles ?? 0) miles",
                     workoutID: item.workout.id.uuidString
                 )
