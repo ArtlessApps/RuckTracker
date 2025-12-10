@@ -10,6 +10,8 @@ struct PhonePostWorkoutSummaryView: View {
     @State private var showingAnalytics = false
     @State private var showingShare = false
     @State private var hasScheduledSharePrompt = false
+    @State private var perceivedEffort: Double = 5
+    @State private var experiencedSoreness: Bool = false
     
     // Final workout stats
     let finalElapsedTime: TimeInterval
@@ -95,6 +97,25 @@ struct PhonePostWorkoutSummaryView: View {
                 
                 // Action Buttons
                 VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("How did it feel?")
+                            .font(.headline)
+                            .foregroundColor(Color("BackgroundDark"))
+                        HStack {
+                            Text("Easy")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Slider(value: $perceivedEffort, in: 1...10, step: 1)
+                            Text("Hard")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        Toggle("Soreness or niggles", isOn: $experiencedSoreness)
+                            .toggleStyle(SwitchToggleStyle(tint: Color("PrimaryMain")))
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color("PrimaryMain").opacity(0.08)))
+                    
                     Button(action: {
                         showingShare = true
                     }) {
@@ -112,6 +133,12 @@ struct PhonePostWorkoutSummaryView: View {
                     
                     // Done Button
                     Button(action: {
+                        let feedback = MarchFeedback(
+                            rpe: Int(perceivedEffort),
+                            soreness: experiencedSoreness,
+                            timestamp: Date()
+                        )
+                        MarchAdaptationEngine.saveFeedback(feedback)
                         dismiss()
                     }) {
                         Text("Done")

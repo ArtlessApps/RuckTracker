@@ -7,6 +7,7 @@ class LocalProgramStorage {
     private let defaults = UserDefaults.standard
     private let enrollmentKey = "enrolled_program_id"
     private let enrollmentDateKey = "program_enrollment_date"
+    private let generatedWeeksKey = "march_generated_weeks"
     
     private init() {}
     
@@ -56,6 +57,7 @@ class LocalProgramStorage {
         // Clear enrollment data
         defaults.removeObject(forKey: enrollmentKey)
         defaults.removeObject(forKey: enrollmentDateKey)
+        defaults.removeObject(forKey: generatedWeeksKey)
         
         print("✅ Unenrolled from program and deleted all associated workouts")
     }
@@ -82,7 +84,8 @@ class LocalProgramStorage {
         print("🟡 Program ID: \(programId.uuidString)")
         
         let weekLoader = LocalWeekLoader.shared
-        let weeks = weekLoader.getWeeks(forProgramId: programId)
+        let generatedWeeks = getGeneratedWeeks(programId: programId)
+        let weeks = generatedWeeks.isEmpty ? weekLoader.getWeeks(forProgramId: programId) : generatedWeeks
         
         let completedWorkouts = getCompletedProgramWorkouts(programId: programId)
         print("🟡 Found \(completedWorkouts.count) completed workouts in CoreData")
@@ -141,9 +144,29 @@ class LocalProgramStorage {
     }
     
     private func getTotalWorkoutCount(programId: UUID) -> Int {
-        // Mock implementation - should be based on actual program data
-        // For now, assume programs have 12 weeks with 5 workouts each
+        let generatedWeeks = getGeneratedWeeks(programId: programId)
+        if !generatedWeeks.isEmpty {
+            return generatedWeeks.reduce(0) { $0 + $1.workouts.count }
+        }
+        
+        // Mock fallback
         return 60
+    }
+    
+    // MARK: - Generated plan persistence
+    func setGeneratedWeeks(programId: UUID, weeks: [LocalProgramWeek]) {
+        guard programId == MarchPlanGenerator.programId else { return }
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(weeks) {
+            defaults.set(data, forKey: generatedWeeksKey)
+        }
+    }
+    
+    func getGeneratedWeeks(programId: UUID) -> [LocalProgramWeek] {
+        guard programId == MarchPlanGenerator.programId,
+              let data = defaults.data(forKey: generatedWeeksKey) else { return [] }
+        let decoder = JSONDecoder()
+        return (try? decoder.decode([LocalProgramWeek].self, from: data)) ?? []
     }
     
 }

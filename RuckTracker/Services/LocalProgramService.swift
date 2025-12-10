@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
 class LocalProgramService: ObservableObject {
@@ -16,6 +17,7 @@ class LocalProgramService: ObservableObject {
     private let storage = LocalProgramStorage.shared
     private let workoutLoader = LocalWorkoutLoader.shared
     private var localPrograms: [LocalProgram] = []
+    private var customProgram: LocalProgram?
     
     private init() {
         loadPrograms()
@@ -84,6 +86,25 @@ class LocalProgramService: ObservableObject {
         }
         
         isLoading = false
+    }
+
+    /// Inject or replace the personalized MARCH program in memory.
+    func upsertMarchProgram(_ generated: MarchPlanGenerator.GeneratedPlan) {
+        customProgram = generated.program
+        
+        // Replace any existing instance.
+        localPrograms.removeAll { $0.id == MarchPlanGenerator.programId }
+        programs.removeAll { $0.id == MarchPlanGenerator.programId }
+        
+        localPrograms.append(generated.program)
+        programs.append(generated.program.toProgram())
+        
+        // Persist enrollment metadata so schedule anchoring works.
+        storage.enrollInProgram(generated.program.id)
+        LocalProgramStorage.shared.setGeneratedWeeks(programId: generated.program.id, weeks: generated.weeks)
+        
+        objectWillChange.send()
+        print("✅ Upserted MARCH personalized plan with \(generated.weeks.count) weeks")
     }
     
     func loadUserPrograms() {
@@ -154,6 +175,25 @@ class LocalProgramService: ObservableObject {
             return []
         }
         
+        // If this is the generated MARCH program, use embedded workouts.
+        if programId == MarchPlanGenerator.programId {
+            let workouts = localProgram.weeks.flatMap { week in
+                week.workouts.map { workout in
+                    ProgramWorkout(
+                        id: workout.id,
+                        weekId: week.id,
+                        dayNumber: workout.dayNumber,
+                        workoutType: ProgramWorkout.WorkoutType(rawValue: workout.workoutType) ?? .ruck,
+                        distanceMiles: workout.distanceMiles,
+                        targetPaceMinutes: workout.targetPaceMinutes,
+                        instructions: workout.instructions
+                    )
+                }
+            }
+            print("✅ Loaded \(workouts.count) generated workouts for program: \(localProgram.title)")
+            return workouts.sorted { $0.dayNumber < $1.dayNumber }
+        }
+        
         // Get all workouts for this program using the workout loader
         let workouts = workoutLoader.getAllWorkouts(
             forProgramId: programId,
@@ -169,6 +209,24 @@ class LocalProgramService: ObservableObject {
         guard let localProgram = localPrograms.first(where: { $0.id == programId }) else {
             print("❌ Program not found: \(programId)")
             return []
+        }
+        
+        if programId == MarchPlanGenerator.programId {
+            let workouts = localProgram.weeks.flatMap { week in
+                week.workouts.map { workout in
+                    ProgramWorkout(
+                        id: workout.id,
+                        weekId: week.id,
+                        dayNumber: workout.dayNumber,
+                        workoutType: ProgramWorkout.WorkoutType(rawValue: workout.workoutType) ?? .ruck,
+                        distanceMiles: workout.distanceMiles,
+                        targetPaceMinutes: workout.targetPaceMinutes,
+                        instructions: workout.instructions
+                    )
+                }
+            }
+            print("✅ Loaded \(workouts.count) generated workouts for program: \(localProgram.title)")
+            return workouts.sorted { $0.dayNumber < $1.dayNumber }
         }
         
         // Get all workouts for this program using the workout loader

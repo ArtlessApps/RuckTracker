@@ -655,6 +655,9 @@ struct ImprovedPhoneMainView: View {
             preferredDays: normalizedTrainingDays
         )
         
+        // Apply light adaptation based on recent feedback.
+        schedule = MarchAdaptationEngine.adapt(schedule: schedule)
+        
         // Mark completed workouts by ordinal completion count (ordered by date) to avoid duplicate dayNumber issues across weeks.
         let completedWorkouts = WorkoutDataManager.shared.workouts
             .filter { $0.programId == programId.uuidString }

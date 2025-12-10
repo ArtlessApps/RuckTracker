@@ -13,6 +13,13 @@ class UserSettings: ObservableObject {
     @Published var preferredTrainingDays: [Int] = [2, 4, 7] // Mon, Wed, Sat
     // The Result - Active plan assignment
     @Published var activeProgramID: String?
+    // New personalization inputs
+    @Published var targetEventDate: Date?
+    @Published var baselinePaceMinutesPerMile: Double = 16.0
+    @Published var baselineLongestDistanceMiles: Double = 4.0
+    @Published var hasHillAccess: Bool = true
+    @Published var hasStairsAccess: Bool = false
+    @Published var injuryFlags: [String] = []
     
     // MARK: - Legacy Preferences
     @Published var bodyWeight: Double = 180.0 // lbs
@@ -75,6 +82,14 @@ class UserSettings: ObservableObject {
         username = userDefaults.string(forKey: "username")
         email = userDefaults.string(forKey: "email")
         hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedOnboarding")
+        targetEventDate = userDefaults.object(forKey: "targetEventDate") as? Date
+        baselinePaceMinutesPerMile = userDefaults.double(forKey: "baselinePaceMinutesPerMile")
+        if baselinePaceMinutesPerMile == 0 { baselinePaceMinutesPerMile = 16.0 }
+        baselineLongestDistanceMiles = userDefaults.double(forKey: "baselineLongestDistanceMiles")
+        if baselineLongestDistanceMiles == 0 { baselineLongestDistanceMiles = 4.0 }
+        hasHillAccess = userDefaults.object(forKey: "hasHillAccess") as? Bool ?? true
+        hasStairsAccess = userDefaults.object(forKey: "hasStairsAccess") as? Bool ?? false
+        injuryFlags = userDefaults.stringArray(forKey: "injuryFlags") ?? []
         
         if let goalString = userDefaults.string(forKey: "ruckingGoal"),
            let goal = RuckingGoal(rawValue: goalString) {
@@ -173,6 +188,42 @@ class UserSettings: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+        
+        $targetEventDate
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "targetEventDate")
+            }
+            .store(in: &cancellables)
+        
+        $baselinePaceMinutesPerMile
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "baselinePaceMinutesPerMile")
+            }
+            .store(in: &cancellables)
+        
+        $baselineLongestDistanceMiles
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "baselineLongestDistanceMiles")
+            }
+            .store(in: &cancellables)
+        
+        $hasHillAccess
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "hasHillAccess")
+            }
+            .store(in: &cancellables)
+        
+        $hasStairsAccess
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "hasStairsAccess")
+            }
+            .store(in: &cancellables)
+        
+        $injuryFlags
+            .sink { [weak self] value in
+                self?.userDefaults.set(value, forKey: "injuryFlags")
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Helpers
@@ -216,6 +267,12 @@ class UserSettings: ObservableObject {
         experienceLevel = .beginner
         preferredTrainingDays = [2, 4, 7]
         activeProgramID = nil
+        targetEventDate = nil
+        baselinePaceMinutesPerMile = 16.0
+        baselineLongestDistanceMiles = 4.0
+        hasHillAccess = true
+        hasStairsAccess = false
+        injuryFlags = []
     }
 }
 

@@ -4,12 +4,19 @@ import CoreLocation
 struct PhoneOnboardingView: View {
     @EnvironmentObject var healthManager: HealthManager
     @EnvironmentObject var workoutManager: WorkoutManager
+    @ObservedObject private var programService = LocalProgramService.shared
     @ObservedObject var userSettings = UserSettings.shared
     @Binding var hasCompletedOnboarding: Bool
     
     @State private var currentStep = 0
     @State private var recommendedProgramID: String = ""
     @State private var recommendedProgramTitle: String = ""
+    @State private var baselinePaceInput: String = "16"
+    @State private var baselineDistanceInput: String = "4"
+    @State private var eventDate: Date = Date().addingTimeInterval(60 * 60 * 24 * 30)
+    @State private var hillAccess: Bool = true
+    @State private var stairsAccess: Bool = false
+    @State private var injuryNotes: String = ""
     
     var body: some View {
         ZStack {
@@ -18,7 +25,7 @@ struct PhoneOnboardingView: View {
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
-                    ForEach(0..<6) { index in
+                    ForEach(0..<8) { index in
                         Capsule()
                             .fill(index <= currentStep ? Color("PrimaryMain") : Color.gray.opacity(0.3))
                             .frame(height: 4)
@@ -43,29 +50,56 @@ struct PhoneOnboardingView: View {
                     })
                     .tag(2)
                     
-                    // Step 4: Preferred Training Days (Schedule)
-                    TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStep() })
-                        .tag(3)
+                    // Step 4: Baseline Metrics
+                    BaselineMetricsStep(
+                        baselinePace: $baselinePaceInput,
+                        baselineDistance: $baselineDistanceInput,
+                        nextAction: { applyBaselines(); nextStep() }
+                    )
+                    .tag(3)
                     
-                    // Step 5: The Reveal (The Product)
+                    // Step 5: Terrain & Event (Context)
+                    TerrainEventStep(
+                        eventDate: $eventDate,
+                        hasHills: $hillAccess,
+                        hasStairs: $stairsAccess,
+                        injuryNotes: $injuryNotes,
+                        nextAction: { applyTerrainAndInjuries(); nextStep() },
+                        backAction: previousStep
+                    )
+                    .tag(4)
+                    
+                    // Step 6: Preferred Training Days (Schedule)
+                    TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStep() })
+                        .tag(5)
+                    
+                    // Step 7: The Reveal (The Product)
                     ProgramRecommendationStep(
                         goal: userSettings.ruckingGoal,
                         programTitle: recommendedProgramTitle,
                         nextAction: { nextStep() }
                     )
-                    .tag(4)
+                    .tag(6)
                     
-                    // Step 6: The Buy-in (Permissions)
+                    // Step 8: The Buy-in (Permissions)
                     PermissionsStep(
                         healthManager: healthManager, 
                         workoutManager: workoutManager, 
                         onComplete: { hasCompletedOnboarding = true }
                     )
-                    .tag(5)
+                    .tag(7)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentStep)
             }
+        }
+        .onAppear {
+            baselinePaceInput = String(format: "%.0f", userSettings.baselinePaceMinutesPerMile)
+            baselineDistanceInput = String(format: "%.0f", userSettings.baselineLongestDistanceMiles)
+            eventDate = userSettings.targetEventDate ?? eventDate
+            hillAccess = userSettings.hasHillAccess
+            stairsAccess = userSettings.hasStairsAccess
+            injuryNotes = userSettings.injuryFlags.joined(separator: ", ")
         }
     }
     
@@ -73,42 +107,33 @@ struct PhoneOnboardingView: View {
         currentStep += 1
     }
     
+    private func previousStep() {
+        currentStep = max(0, currentStep - 1)
+    }
+    
     private func calculateRecommendation() {
-        // MAPPING LOGIC: Goals -> Programs.json IDs
-        switch userSettings.ruckingGoal {
-        case .longevity:
-            // "Ruck Ready" - Safe, progressive, focused on form
-            recommendedProgramID = "11111111-1111-1111-1111-111111111111"
-            recommendedProgramTitle = "Ruck Ready"
-            
-        case .weightLoss:
-            // "Foundation Builder" - Higher volume, consistent burn
-            recommendedProgramID = "22222222-2222-2222-2222-222222222222"
-            recommendedProgramTitle = "Foundation Builder"
-            
-        case .hiking:
-            // "Endurance Build" - Mileage focus for backcountry
-            recommendedProgramID = "44444444-4444-4444-4444-444444444444"
-            recommendedProgramTitle = "Endurance Build"
-            
-        case .goruckBasic:
-            // "GORUCK Light Prep" (Now Basic)
-            recommendedProgramID = "55555555-5555-5555-5555-555555555555"
-            recommendedProgramTitle = "GORUCK Basic Prep"
-            
-        case .goruckTough:
-            // "GORUCK Heavy/Tough Prep"
-            recommendedProgramID = "66666666-6666-6666-6666-666666666666"
-            recommendedProgramTitle = "Tough Challenge Prep"
-            
-        case .military:
-            // "Army ACFT Prep"
-            recommendedProgramID = "77777777-7777-7777-7777-777777777777"
-            recommendedProgramTitle = "Military Selection"
-        }
+        let generated = MarchPlanGenerator.generatePlan(for: userSettings)
+        programService.upsertMarchProgram(generated)
         
-        // Save to settings
+        recommendedProgramID = generated.program.id.uuidString
+        recommendedProgramTitle = generated.program.title
         userSettings.activeProgramID = recommendedProgramID
+    }
+    
+    private func applyBaselines() {
+        if let pace = Double(baselinePaceInput) {
+            userSettings.baselinePaceMinutesPerMile = pace
+        }
+        if let distance = Double(baselineDistanceInput) {
+            userSettings.baselineLongestDistanceMiles = distance
+        }
+    }
+    
+    private func applyTerrainAndInjuries() {
+        userSettings.targetEventDate = eventDate
+        userSettings.hasHillAccess = hillAccess
+        userSettings.hasStairsAccess = stairsAccess
+        userSettings.injuryFlags = injuryNotes.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
     }
 }
 
@@ -298,6 +323,123 @@ struct TrainingDaysSelectionStep: View {
     private func longLabel(for day: Int) -> String {
         let index = (day - 1 + 7) % 7
         return calendar.weekdaySymbols[index]
+    }
+}
+
+struct BaselineMetricsStep: View {
+    @Binding var baselinePace: String
+    @Binding var baselineDistance: String
+    var nextAction: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Calibrate your plan")
+                .font(.title).bold().foregroundColor(.white)
+            Text("Tell us your current best effort so we scale load and pace safely.")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Best sustainable pace (min/mi)")
+                    .foregroundColor(.white.opacity(0.8))
+                TextField("16", text: $baselinePace)
+                    .keyboardType(.decimalPad)
+                    .padding()
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(10)
+                    .foregroundColor(.white)
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Longest recent ruck (miles)")
+                    .foregroundColor(.white.opacity(0.8))
+                TextField("4", text: $baselineDistance)
+                    .keyboardType(.decimalPad)
+                    .padding()
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(10)
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+            
+            Button(action: nextAction) {
+                Text("Continue")
+                    .bold()
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color("PrimaryMain"))
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+        }
+        .padding()
+    }
+}
+
+struct TerrainEventStep: View {
+    @Binding var eventDate: Date
+    @Binding var hasHills: Bool
+    @Binding var hasStairs: Bool
+    @Binding var injuryNotes: String
+    var nextAction: () -> Void
+    var backAction: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Context matters")
+                .font(.title).bold().foregroundColor(.white)
+            Text("We’ll bias sessions toward your terrain and timeline.")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            DatePicker("Target event date", selection: $eventDate, displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .foregroundColor(.white)
+            
+            Toggle("I have hills nearby", isOn: $hasHills)
+                .toggleStyle(SwitchToggleStyle(tint: Color("PrimaryMain")))
+                .foregroundColor(.white)
+            
+            Toggle("I can use stairs for elevation", isOn: $hasStairs)
+                .toggleStyle(SwitchToggleStyle(tint: Color("PrimaryMain")))
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Injury considerations (comma separated)")
+                    .foregroundColor(.white.opacity(0.8))
+                TextField("e.g., knees, plantar", text: $injuryNotes)
+                    .padding()
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(10)
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+            
+            HStack {
+                Button(action: backAction) {
+                    Text("Back")
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                
+                Button(action: nextAction) {
+                    Text("Continue")
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("PrimaryMain"))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+        }
+        .padding()
     }
 }
 
