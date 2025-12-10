@@ -10,6 +10,7 @@ struct ScheduledWorkout: Identifiable {
     let dayNumber: Int?
     let workoutType: String
     var isCompleted: Bool = false
+    var isLocked: Bool = false
 }
 
 class ProgramScheduler {

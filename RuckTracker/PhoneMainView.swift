@@ -639,23 +639,18 @@ struct ImprovedPhoneMainView: View {
             preferredDays: normalizedTrainingDays
         )
         
-        // Mark completed workouts using programWorkoutDay (preferred) with a safe fallback to ordinal if missing.
-        let completedDays = WorkoutDataManager.shared.workouts
-            .filter { $0.programId == programId.uuidString }
-            .compactMap { Int($0.programWorkoutDay) }
+        // Mark completed workouts by ordinal completion count (ordered by date) to avoid duplicate dayNumber issues across weeks.
         let completedWorkouts = WorkoutDataManager.shared.workouts
             .filter { $0.programId == programId.uuidString }
             .sorted { ($0.date ?? .distantPast) < ($1.date ?? .distantPast) }
         let completedCount = completedWorkouts.count
         
+        // Assign completion and lock state: first completedCount items completed, next one unlocked, others locked.
         schedule = schedule.enumerated().map { index, workout in
             var mutable = workout
-            if let dayNumber = workout.dayNumber {
-                mutable.isCompleted = completedDays.contains(dayNumber)
-            } else {
-                // Fallback: mark by ordinal completion count
-                mutable.isCompleted = index < completedCount
-            }
+            mutable.isCompleted = index < completedCount
+            // Unlock the next available workout; lock those beyond.
+            mutable.isLocked = index > completedCount
             return mutable
         }
         
@@ -745,16 +740,20 @@ struct ImprovedPhoneMainView: View {
                 return
             }
             
-            if targetWorkout.isLocked {
-                print("ℹ️ Selected workout is locked; completion required for previous day")
-                return
-            }
-            
             await MainActor.run {
                 selectedUserProgram = programService.userPrograms.first(where: { $0.programId == programId })
                 print("📌 Selected programId set for detail: \(programId.uuidString)")
                 selectedProgramId = programId
-                selectedProgramWorkout = targetWorkout
+                // Trust the coach plan lock state; allow opening even if ProgramWorkoutsView logic marks locked due to duplicated day numbers.
+                var unlocked = targetWorkout
+                unlocked = ProgramWorkoutWithState(
+                    workout: targetWorkout.workout,
+                    weekNumber: targetWorkout.weekNumber,
+                    isCompleted: targetWorkout.isCompleted,
+                    isLocked: false,
+                    completionDate: targetWorkout.completionDate
+                )
+                selectedProgramWorkout = unlocked
             }
         }
     }
@@ -896,34 +895,78 @@ struct CoachPlanScheduleRow: View {
     
     var body: some View {
         Button(action: {
-            onTap?()
+            if !workout.isLocked {
+                onTap?()
+            }
         }) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(Self.dateFormatter.string(from: workout.date))
                         .font(.caption)
-                        .foregroundColor(workout.isCompleted ? .white.opacity(0.5) : .white.opacity(0.7))
+                        .foregroundColor(foregroundColor)
                     Text(workout.title)
                         .font(.headline)
-                        .foregroundColor(workout.isCompleted ? .white.opacity(0.65) : .white)
+                        .foregroundColor(titleColor)
                     Text(workout.description)
                         .font(.caption)
-                        .foregroundColor(workout.isCompleted ? .white.opacity(0.45) : .white.opacity(0.7))
+                        .foregroundColor(subtitleColor)
                 }
                 
                 Spacer()
                 
-                Image(systemName: workout.isCompleted ? "checkmark.circle.fill" : "chevron.right")
+                Image(systemName: statusIcon)
                     .font(.caption)
-                    .foregroundColor(workout.isCompleted ? Color("AccentGreen") : .white.opacity(0.4))
+                    .foregroundColor(statusColor)
             }
             .padding(12)
             .background(
-                Color.white.opacity(workout.isCompleted ? 0.08 : 0.05)
+                Color.white.opacity(backgroundOpacity)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(workout.isLocked ? Color("WarmGray").opacity(0.4) : Color.white.opacity(0.1), lineWidth: 1)
             )
             .cornerRadius(12)
+            .opacity(workout.isLocked ? 0.6 : 1.0)
         }
         .buttonStyle(.plain)
+        .disabled(workout.isLocked)
+    }
+    
+    private var foregroundColor: Color {
+        if workout.isCompleted { return .white.opacity(0.5) }
+        if workout.isLocked { return .white.opacity(0.5) }
+        return .white.opacity(0.7)
+    }
+    
+    private var titleColor: Color {
+        if workout.isCompleted { return .white.opacity(0.65) }
+        if workout.isLocked { return .white.opacity(0.65) }
+        return .white
+    }
+    
+    private var subtitleColor: Color {
+        if workout.isCompleted { return .white.opacity(0.45) }
+        if workout.isLocked { return .white.opacity(0.45) }
+        return .white.opacity(0.7)
+    }
+    
+    private var statusIcon: String {
+        if workout.isCompleted { return "checkmark.circle.fill" }
+        if workout.isLocked { return "lock.fill" }
+        return "chevron.right"
+    }
+    
+    private var statusColor: Color {
+        if workout.isCompleted { return Color("AccentGreen") }
+        if workout.isLocked { return Color("WarmGray") }
+        return .white.opacity(0.4)
+    }
+    
+    private var backgroundOpacity: Double {
+        if workout.isCompleted { return 0.08 }
+        if workout.isLocked { return 0.06 }
+        return 0.05
     }
 }
 
