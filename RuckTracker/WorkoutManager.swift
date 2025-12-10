@@ -45,6 +45,9 @@ class WorkoutManager: NSObject, ObservableObject {
     // HealthKit workout builder - using simpler HKWorkoutBuilder for iPhone
     private var workoutBuilder: HKWorkoutBuilder?
     
+    // Optional override to tag the next workout with specific program context
+    private var overrideProgramContext: (programId: UUID, day: Int)?
+    
     // GPS backup tracking (in case HealthKit distance isn't available)
     private var startLocation: CLLocation?
     private var lastLocation: CLLocation?
@@ -193,6 +196,17 @@ class WorkoutManager: NSObject, ObservableObject {
         let completeMsg = "🏋️‍♀️ ===== WORKOUT START COMPLETE =====\n"
         print(completeMsg)
         DebugLogger.shared.log(completeMsg)
+    }
+    
+    /// Set program context for the next workout save (used when starting from a plan row)
+    func setProgramContext(programId: UUID?, day: Int?) {
+        if let programId, let day {
+            overrideProgramContext = (programId, day)
+            print("🟣 Override program context set: \(programId.uuidString), day \(day)")
+        } else {
+            overrideProgramContext = nil
+            print("🟣 Override program context cleared")
+        }
     }
     
     func togglePause() {
@@ -660,11 +674,16 @@ extension WorkoutManager: CLLocationManagerDelegate {
         let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 0
         print("🟣 Heart Rate: \(Int(avgHeartRate)) bpm")
         
-        // Check if currently enrolled in a program
-        let programId = LocalProgramService.shared.getEnrolledProgramId()
-        let programWorkoutDay = calculateCurrentProgramWorkoutDay()
-        print("🟣 Enrolled Program ID: \(programId?.uuidString ?? "NONE")")
-        print("🟣 Program Workout Day: \(programWorkoutDay?.description ?? "NONE")")
+        // Check if currently enrolled in a program, allowing an explicit override set by UI
+        let programId = overrideProgramContext?.programId ?? LocalProgramService.shared.getEnrolledProgramId()
+        let programWorkoutDay = overrideProgramContext?.day ?? calculateCurrentProgramWorkoutDay()
+        print("🟣 Enrolled Program ID (override-aware): \(programId?.uuidString ?? "NONE")")
+        print("🟣 Program Workout Day (override-aware): \(programWorkoutDay?.description ?? "NONE")")
+        if overrideProgramContext != nil {
+            print("🟣 Using overrideProgramContext for save")
+        } else {
+            print("🟣 No overrideProgramContext present at save time")
+        }
         
         // Check if currently enrolled in a challenge
         let challengeId = LocalChallengeService.shared.getEnrolledChallengeId()
@@ -687,6 +706,9 @@ extension WorkoutManager: CLLocationManagerDelegate {
             challengeDay: challengeWorkoutDay
         )
         print("🟣 WorkoutDataManager.saveWorkout() completed")
+        // Clear override once persisted
+        overrideProgramContext = nil
+        print("🟣 Override program context cleared after save")
         
         // If this was a program workout, update progress
         if let programId = programId, let day = programWorkoutDay {

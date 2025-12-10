@@ -215,9 +215,11 @@ class LocalProgramService: ObservableObject {
     /// Note: The workout is already saved to CoreData by WorkoutManager with program metadata
     func refreshProgramProgress() {
         print("\n🟠 ===== REFRESHING PROGRAM PROGRESS =====")
+        let enrolledProgramId = storage.getEnrolledProgramId()
+            ?? (UserSettings.shared.activeProgramID.flatMap { UUID(uuidString: $0) })
         
-        guard let enrolledProgramId = storage.getEnrolledProgramId() else {
-            print("🟠 ❌ No enrolled program found")
+        guard let enrolledProgramId else {
+            print("🟠 ❌ No enrolled program found (storage or activeProgramID)")
             print("🟠 ===== REFRESH ABORTED =====\n")
             return
         }
@@ -260,6 +262,14 @@ class LocalProgramService: ObservableObject {
     
     func getEnrolledProgramId() -> UUID? {
         return storage.getEnrolledProgramId()
+    }
+    
+    func getProgramWeeks(programId: UUID) -> [LocalProgramWeek] {
+        return localPrograms.first(where: { $0.id == programId })?.weeks ?? []
+    }
+    
+    func getProgramTitle(programId: UUID) -> String? {
+        return programs.first(where: { $0.id == programId })?.title
     }
     
     // MARK: - Testing

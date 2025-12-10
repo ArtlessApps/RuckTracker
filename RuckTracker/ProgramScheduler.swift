@@ -7,6 +7,9 @@ struct ScheduledWorkout: Identifiable {
     let title: String
     let description: String
     let workoutID: String?
+    let dayNumber: Int?
+    let workoutType: String
+    var isCompleted: Bool = false
 }
 
 class ProgramScheduler {
@@ -31,17 +34,33 @@ class ProgramScheduler {
             if queueIndex >= workoutQueue.count { break }
             
             let weekday = calendar.component(.weekday, from: currentDate)
+            let daysFromStart = calendar.dateComponents([.day], from: startDate, to: currentDate).day ?? 0
+            let computedWeek = (daysFromStart / 7) + 1
             
             // If today is a training day
             if preferredDays.contains(weekday) {
-                let item = workoutQueue[queueIndex]
+                var item = workoutQueue[queueIndex]
+                
+                // Skip rest days: pull next non-rest workout into this training day
+                while item.workout.workoutType.lowercased() == "rest" {
+                    queueIndex += 1
+                    if queueIndex >= workoutQueue.count { break }
+                    item = workoutQueue[queueIndex]
+                }
+                
+                if queueIndex >= workoutQueue.count { break }
                 
                 let scheduled = ScheduledWorkout(
                     date: currentDate,
-                    weekNumber: item.week,
-                    title: "Week \(item.week) - \(item.workout.workoutType.capitalized)",
+                    // Use the calendar-relative week so labels progress as time passes,
+                    // even if the user trains fewer days than the template provides.
+                    weekNumber: computedWeek,
+                    title: "Week \(computedWeek) - \(item.workout.workoutType.capitalized)",
                     description: "Target: \(item.workout.distanceMiles ?? 0) miles",
-                    workoutID: item.workout.id.uuidString
+                    workoutID: item.workout.id.uuidString,
+                    dayNumber: item.workout.dayNumber,
+                    workoutType: item.workout.workoutType,
+                    isCompleted: false
                 )
                 
                 schedule.append(scheduled)

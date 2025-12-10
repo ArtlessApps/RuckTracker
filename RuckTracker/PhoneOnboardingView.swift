@@ -18,7 +18,7 @@ struct PhoneOnboardingView: View {
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
-                    ForEach(0..<5) { index in
+                    ForEach(0..<6) { index in
                         Capsule()
                             .fill(index <= currentStep ? Color("PrimaryMain") : Color.gray.opacity(0.3))
                             .frame(height: 4)
@@ -43,21 +43,25 @@ struct PhoneOnboardingView: View {
                     })
                     .tag(2)
                     
-                    // Step 4: The Reveal (The Product)
+                    // Step 4: Preferred Training Days (Schedule)
+                    TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStep() })
+                        .tag(3)
+                    
+                    // Step 5: The Reveal (The Product)
                     ProgramRecommendationStep(
                         goal: userSettings.ruckingGoal,
                         programTitle: recommendedProgramTitle,
                         nextAction: { nextStep() }
                     )
-                    .tag(3)
+                    .tag(4)
                     
-                    // Step 5: The Buy-in (Permissions)
+                    // Step 6: The Buy-in (Permissions)
                     PermissionsStep(
                         healthManager: healthManager, 
                         workoutManager: workoutManager, 
                         onComplete: { hasCompletedOnboarding = true }
                     )
-                    .tag(4)
+                    .tag(5)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentStep)
@@ -217,6 +221,83 @@ struct ExperienceSelectionStep: View {
             Spacer()
         }
         .padding()
+    }
+}
+
+struct TrainingDaysSelectionStep: View {
+    @Binding var selectedDays: [Int]
+    var nextAction: () -> Void
+    
+    private let orderedWeekdays = [2, 3, 4, 5, 6, 7, 1] // Mon-Sun display order
+    private let calendar = Calendar.current
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("When do you want to train?")
+                .font(.title).bold().foregroundColor(.white)
+            
+            Text("Pick the days you can consistently ruck. We'll schedule workouts around your life.")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
+                ForEach(orderedWeekdays, id: \.self) { day in
+                    Button(action: { toggle(day) }) {
+                        VStack(spacing: 8) {
+                            Text(shortLabel(for: day))
+                                .font(.headline)
+                            Text(longLabel(for: day))
+                                .font(.caption2)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(isSelected(day) ? Color("PrimaryMain") : Color.white.opacity(0.1))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(isSelected(day) ? Color("PrimaryMain") : Color.clear, lineWidth: 2)
+                        )
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Button(action: nextAction) {
+                Text("Lock Schedule")
+                    .bold()
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(selectedDays.isEmpty ? Color.gray.opacity(0.3) : Color("PrimaryMain"))
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            .disabled(selectedDays.isEmpty)
+        }
+        .padding()
+    }
+    
+    private func toggle(_ day: Int) {
+        if let index = selectedDays.firstIndex(of: day) {
+            selectedDays.remove(at: index)
+        } else {
+            selectedDays.append(day)
+        }
+    }
+    
+    private func isSelected(_ day: Int) -> Bool {
+        selectedDays.contains(day)
+    }
+    
+    private func shortLabel(for day: Int) -> String {
+        let index = (day - 1 + 7) % 7
+        return calendar.shortWeekdaySymbols[index]
+    }
+    
+    private func longLabel(for day: Int) -> String {
+        let index = (day - 1 + 7) % 7
+        return calendar.weekdaySymbols[index]
     }
 }
 

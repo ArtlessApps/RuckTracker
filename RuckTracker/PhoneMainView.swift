@@ -1,11 +1,17 @@
 import SwiftUI
 import Foundation
+import Combine
 
 // MARK: - Main Phone View Coordinator
 struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
+    @ObservedObject private var userSettings = UserSettings.shared
+    @ObservedObject private var programService = LocalProgramService.shared
+    
+    @State private var upcomingWorkouts: [ScheduledWorkout] = []
+    @State private var coachPlanTitle: String?
     @State private var showingProfile = false
     @State private var showingSettings = false
     @State private var showingAnalytics = false
@@ -19,6 +25,9 @@ struct ImprovedPhoneMainView: View {
     @State private var selectedWorkoutWeight: Double = 0
     @State private var activeTab: ActiveTab = .home
     @State private var showingActiveWorkout = false
+    @State private var selectedProgramWorkout: ProgramWorkoutWithState?
+    @State private var selectedUserProgram: UserProgram?
+    @State private var selectedProgramId: UUID?
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -113,6 +122,23 @@ struct ImprovedPhoneMainView: View {
             ActiveWorkoutFullScreenView()
                 .environmentObject(workoutManager)
         }
+        .sheet(item: $selectedProgramWorkout, onDismiss: {
+            selectedProgramWorkout = nil
+        }) { workout in
+            WorkoutDetailView(
+                workout: workout,
+                programId: selectedProgramId,
+                userProgram: selectedUserProgram,
+                onComplete: {
+                    refreshCoachPlan()
+                },
+                isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
+                onDismiss: {
+                    selectedProgramWorkout = nil
+                }
+            )
+            .environmentObject(workoutManager)
+        }
         .onChange(of: workoutManager.isActive) { oldValue, newValue in
             if newValue && !oldValue {
                 // Workout just started - dismiss all sheets first
@@ -130,6 +156,21 @@ struct ImprovedPhoneMainView: View {
                 activeTab = .home
             }
         }
+        .onAppear {
+            refreshCoachPlan()
+        }
+        .onChange(of: userSettings.activeProgramID) { _, _ in
+            refreshCoachPlan()
+        }
+        .onChange(of: userSettings.preferredTrainingDays) { _, _ in
+            refreshCoachPlan()
+        }
+        .onReceive(programService.$programs) { _ in
+            refreshCoachPlan()
+        }
+        .onReceive(programService.$programProgress) { _ in
+            refreshCoachPlan()
+        }
     }
     
     // MARK: - Main Content View
@@ -137,8 +178,12 @@ struct ImprovedPhoneMainView: View {
     private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Main cards
                 justRuckCard
+                
+                if let planCard = coachPlanCard {
+                    planCard
+                }
+                // Main cards
                 programsCard
                 challengesCard
                 // dataCard  // Moved to Activity view
@@ -168,6 +213,25 @@ struct ImprovedPhoneMainView: View {
                         )
                     )
             }
+        )
+    }
+    
+    // MARK: - Coach Plan Card
+    
+    private var coachPlanCard: AnyView? {
+        guard let title = coachPlanTitle, !upcomingWorkouts.isEmpty else {
+            return nil
+        }
+        
+        return AnyView(
+            CoachPlanCard(
+                programTitle: title,
+                preferredDays: userSettings.preferredTrainingDays,
+                upcomingWorkouts: upcomingWorkouts,
+                onWorkoutTap: { workout in
+                    handleCoachPlanWorkoutTap(workout)
+                }
+            )
         )
     }
     
@@ -546,6 +610,159 @@ struct ImprovedPhoneMainView: View {
                 .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: -1)
         )
     }
+    
+    // MARK: - Coach Plan Helpers
+    
+    private func refreshCoachPlan() {
+        guard let idString = userSettings.activeProgramID,
+              let programId = UUID(uuidString: idString) else {
+            coachPlanTitle = nil
+            upcomingWorkouts = []
+            return
+        }
+        
+        let weeks = programService.getProgramWeeks(programId: programId)
+        guard !weeks.isEmpty else {
+            coachPlanTitle = programService.getProgramTitle(programId: programId)
+            upcomingWorkouts = []
+            return
+        }
+        
+        coachPlanTitle = programService.getProgramTitle(programId: programId) ?? "Custom Plan"
+        
+        // Anchor the schedule to the actual enrollment date so week numbers advance correctly
+        // instead of restarting at Week 1 each time this view loads.
+        let enrollmentStartDate = LocalProgramStorage.shared.getEnrollmentDate() ?? Date()
+        var schedule = ProgramScheduler.generateSchedule(
+            for: weeks,
+            startDate: enrollmentStartDate,
+            preferredDays: normalizedTrainingDays
+        )
+        
+        // Mark completed workouts using programWorkoutDay (preferred) with a safe fallback to ordinal if missing.
+        let completedDays = WorkoutDataManager.shared.workouts
+            .filter { $0.programId == programId.uuidString }
+            .compactMap { Int($0.programWorkoutDay) }
+        let completedWorkouts = WorkoutDataManager.shared.workouts
+            .filter { $0.programId == programId.uuidString }
+            .sorted { ($0.date ?? .distantPast) < ($1.date ?? .distantPast) }
+        let completedCount = completedWorkouts.count
+        
+        schedule = schedule.enumerated().map { index, workout in
+            var mutable = workout
+            if let dayNumber = workout.dayNumber {
+                mutable.isCompleted = completedDays.contains(dayNumber)
+            } else {
+                // Fallback: mark by ordinal completion count
+                mutable.isCompleted = index < completedCount
+            }
+            return mutable
+        }
+        
+        // Debug logging to trace mapping
+        print("📋 CoachPlan refresh for program \(programId.uuidString)")
+        print("📋 Schedule count: \(schedule.count), Completed count: \(completedCount)")
+        if !completedWorkouts.isEmpty {
+            let sample = completedWorkouts.prefix(5).enumerated().map { idx, w -> String in
+                let dateString = w.date?.formatted() ?? "nil"
+                return "#\(idx + 1) day=\(w.programWorkoutDay) date=\(dateString)"
+            }
+            print("📋 Completed sample: \(sample.joined(separator: " | "))")
+        }
+        let mappedSample = schedule.prefix(5).enumerated().map { idx, w -> String in
+            return "#\(idx + 1) title=\(w.title) completed=\(w.isCompleted) dayNumber=\(w.dayNumber?.description ?? "nil") date=\(w.date.formatted())"
+        }
+        print("📋 Schedule sample: \(mappedSample.joined(separator: " | "))")
+        
+        // Only surface future items and hide completed; if today is completed, keep it once with a check for immediate feedback
+        let today = Calendar.current.startOfDay(for: Date())
+        let filtered = schedule.filter { workout in
+            if workout.isCompleted {
+                // Show completed items only if they are today to give immediate confirmation
+                return Calendar.current.isDate(workout.date, inSameDayAs: today)
+            }
+            // Hide past items entirely and keep upcoming
+            return workout.date >= today
+        }
+        
+        let futureWorkouts = filtered.filter { !$0.isCompleted }
+        let todayCompleted = filtered.filter { $0.isCompleted }
+        
+        // Prefer showing future pending workouts; if none, still show today's completed once
+        upcomingWorkouts = futureWorkouts.isEmpty ? todayCompleted : futureWorkouts
+    }
+    
+    private func handleCoachPlanWorkoutTap(_ scheduledWorkout: ScheduledWorkout) {
+        guard let workoutIdString = scheduledWorkout.workoutID,
+              let workoutId = UUID(uuidString: workoutIdString) else {
+            print("❌ Missing workout ID for scheduled workout \(scheduledWorkout.title)")
+            return
+        }
+        
+        guard let programIdString = userSettings.activeProgramID,
+              let programId = UUID(uuidString: programIdString) else {
+            print("❌ No active program found for coach plan tap")
+            return
+        }
+        
+        Task {
+            let programWorkouts = await programService.loadProgramWorkouts(programId: programId)
+            guard !programWorkouts.isEmpty else {
+                print("❌ No workouts available for program \(programId)")
+                return
+            }
+            
+            let completedIndices = WorkoutDataManager.shared.workouts
+                .filter { $0.programId == programId.uuidString }
+                .compactMap { Int($0.programWorkoutDay) - 1 }
+            
+            var lastCompletedIndex = -1
+            let workoutsWithState: [ProgramWorkoutWithState] = programWorkouts.enumerated().map { index, workout in
+                let isCompleted = completedIndices.contains(index)
+                
+                if isCompleted {
+                    lastCompletedIndex = index
+                }
+                
+                let isLocked: Bool
+                if workout.workoutType == .rest {
+                    isLocked = false
+                } else {
+                    isLocked = index > lastCompletedIndex + 1
+                }
+                
+                return ProgramWorkoutWithState(
+                    workout: workout,
+                    weekNumber: (workout.dayNumber - 1) / 7 + 1,
+                    isCompleted: isCompleted,
+                    isLocked: isLocked,
+                    completionDate: nil
+                )
+            }
+            
+            guard let targetWorkout = workoutsWithState.first(where: { $0.workout.id == workoutId }) else {
+                print("❌ Scheduled workout id not found in program data")
+                return
+            }
+            
+            if targetWorkout.isLocked {
+                print("ℹ️ Selected workout is locked; completion required for previous day")
+                return
+            }
+            
+            await MainActor.run {
+                selectedUserProgram = programService.userPrograms.first(where: { $0.programId == programId })
+                print("📌 Selected programId set for detail: \(programId.uuidString)")
+                selectedProgramId = programId
+                selectedProgramWorkout = targetWorkout
+            }
+        }
+    }
+    
+    private var normalizedTrainingDays: [Int] {
+        let uniqueDays = Array(Set(userSettings.preferredTrainingDays))
+        return uniqueDays.isEmpty ? [2, 4, 7] : uniqueDays
+    }
 }
 
 // MARK: - Supporting Views
@@ -569,6 +786,144 @@ struct FeaturePill: View {
             Color.white.opacity(0.2)
                 .cornerRadius(8)
         )
+    }
+}
+
+struct CoachPlanCard: View {
+    let programTitle: String
+    let preferredDays: [Int]
+    let upcomingWorkouts: [ScheduledWorkout]
+    let onWorkoutTap: (ScheduledWorkout) -> Void
+    
+    private var previewWorkouts: [ScheduledWorkout] {
+        Array(upcomingWorkouts.prefix(3))
+    }
+    
+    private let calendar = Calendar.current
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Your Coach Plan")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Text(programTitle)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "checkmark.shield")
+                    .font(.title2)
+                    .foregroundColor(Color("PrimaryMain"))
+            }
+            
+            // Preferred days
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(orderedDays.filter { preferredDays.contains($0) }, id: \.self) { day in
+                        Text(shortLabel(for: day))
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.white.opacity(0.15))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            
+            Divider().background(Color.white.opacity(0.2))
+            
+            if previewWorkouts.isEmpty {
+                Text("Building your first week...")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(previewWorkouts) { workout in
+                        CoachPlanScheduleRow(
+                            workout: workout,
+                            onTap: {
+                                onWorkoutTap(workout)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [Color("BackgroundDark"), Color("BackgroundDark").opacity(0.9)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+        )
+    }
+    
+    private var orderedDays: [Int] {
+        [2, 3, 4, 5, 6, 7, 1]
+    }
+    
+    private func shortLabel(for day: Int) -> String {
+        let index = (day - 1 + 7) % 7
+        return calendar.shortWeekdaySymbols[index]
+    }
+}
+
+struct CoachPlanScheduleRow: View {
+    let workout: ScheduledWorkout
+    let onTap: (() -> Void)?
+    
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, MMM d"
+        return formatter
+    }()
+    
+    var body: some View {
+        Button(action: {
+            onTap?()
+        }) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(Self.dateFormatter.string(from: workout.date))
+                        .font(.caption)
+                        .foregroundColor(workout.isCompleted ? .white.opacity(0.5) : .white.opacity(0.7))
+                    Text(workout.title)
+                        .font(.headline)
+                        .foregroundColor(workout.isCompleted ? .white.opacity(0.65) : .white)
+                    Text(workout.description)
+                        .font(.caption)
+                        .foregroundColor(workout.isCompleted ? .white.opacity(0.45) : .white.opacity(0.7))
+                }
+                
+                Spacer()
+                
+                Image(systemName: workout.isCompleted ? "checkmark.circle.fill" : "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(workout.isCompleted ? Color("AccentGreen") : .white.opacity(0.4))
+            }
+            .padding(12)
+            .background(
+                Color.white.opacity(workout.isCompleted ? 0.08 : 0.05)
+            )
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
     }
 }
 

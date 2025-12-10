@@ -947,6 +947,7 @@ struct ProgramWorkoutsView: View {
             .sheet(item: $selectedWorkout) { workout in
                 WorkoutDetailView(
                     workout: workout,
+                    programId: program?.id,
                     userProgram: userProgram,
                     onComplete: {
                         Task {
@@ -1270,6 +1271,7 @@ struct CircularProgressView: View {
 // MARK: - Workout Detail View (Simplified Weight Selector Style)
 struct WorkoutDetailView: View {
     let workout: ProgramWorkoutWithState
+    let programId: UUID?
     let userProgram: UserProgram?
     let onComplete: () -> Void
     @Binding var isPresentingWorkoutFlow: Bool
@@ -1283,8 +1285,9 @@ struct WorkoutDetailView: View {
     @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
     @State private var showingGuidelines = false
     
-    init(workout: ProgramWorkoutWithState, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
+    init(workout: ProgramWorkoutWithState, programId: UUID?, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.workout = workout
+        self.programId = programId
         self.userProgram = userProgram
         self.onComplete = onComplete
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
@@ -1529,6 +1532,15 @@ struct WorkoutDetailView: View {
         // Set the weight in workout manager
         workoutManager.ruckWeight = selectedWorkoutWeight
         
+        // Provide program context so the save is tagged even if not formally enrolled
+        let resolvedProgramId = programId
+            ?? userProgram?.programId
+            ?? LocalProgramService.shared.getEnrolledProgramId()
+            ?? (UUID(uuidString: UserSettings.shared.activeProgramID ?? ""))
+        let resolvedDay = workout.workout.dayNumber
+        print("📌 WorkoutDetailView startWorkout resolvedProgramId=\(resolvedProgramId?.uuidString ?? "nil") day=\(resolvedDay)")
+        workoutManager.setProgramContext(programId: resolvedProgramId, day: resolvedDay)
+        
         // Start the workout
         workoutManager.startWorkout(weight: selectedWorkoutWeight)
         
@@ -1551,7 +1563,7 @@ struct WorkoutDetailView: View {
             calories: 0,
             ruckWeight: selectedWorkoutWeight,
             heartRate: 0,
-            programId: userProgram?.programId,
+            programId: programId ?? userProgram?.programId,
             programWorkoutDay: workout.workout.dayNumber,
             challengeId: nil,
             challengeDay: nil
