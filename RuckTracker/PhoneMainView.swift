@@ -30,6 +30,8 @@ struct ImprovedPhoneMainView: View {
     @State private var selectedUserProgram: UserProgram?
     @State private var selectedProgramId: UUID?
     @State private var pendingShareCode: String?
+    @State private var showingQuickPicker = false
+    @State private var selectedQuickContext = "Quick Ruck"
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -114,7 +116,7 @@ struct ImprovedPhoneMainView: View {
                 selectedWeight: $selectedWorkoutWeight,
                 isPresented: $showingWeightSelector,
                 recommendedWeight: nil,
-                context: "Free Ruck",
+                context: selectedQuickContext,
                 onStart: {
                     workoutManager.startWorkout(weight: selectedWorkoutWeight)
                 }
@@ -140,6 +142,29 @@ struct ImprovedPhoneMainView: View {
                 }
             )
             .environmentObject(workoutManager)
+        }
+        .confirmationDialog("Choose your Quick Ruck", isPresented: $showingQuickPicker, titleVisibility: .visible) {
+            Button("Recovery Ruck (Zone 2)") {
+                selectedQuickContext = "Recovery Ruck"
+                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                showingWeightSelector = true
+            }
+            Button("Pace Pusher (Intervals)") {
+                selectedQuickContext = "Pace Pusher Ruck"
+                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                showingWeightSelector = true
+            }
+            Button("Vertical Grind (Hills)") {
+                selectedQuickContext = "Vertical Grind Ruck"
+                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                showingWeightSelector = true
+            }
+            Button("Just Ruck (Open ended)") {
+                selectedQuickContext = "Just Ruck"
+                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                showingWeightSelector = true
+            }
+            Button("Cancel", role: .cancel) { }
         }
         .onChange(of: workoutManager.isActive) { oldValue, newValue in
             if newValue && !oldValue {
@@ -315,12 +340,12 @@ struct ImprovedPhoneMainView: View {
                         // BOLD TERRACOTTA BUTTON
                         Button(action: {
                             selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                            showingWeightSelector = true
+                            showingQuickPicker = true
                         }) {
                             HStack(spacing: 12) {
                                 Image(systemName: "play.fill")
                                     .font(.title2)
-                                Text("Start Rucking Now")
+                                Text("Quick Ruck")
                                     .font(.title2)
                                     .fontWeight(.bold)
                             }

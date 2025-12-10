@@ -16,6 +16,7 @@ class LocalProgramService: ObservableObject {
     
     private let storage = LocalProgramStorage.shared
     private let workoutLoader = LocalWorkoutLoader.shared
+    private let playlistLoader = UnitPlaylistLoader.shared
     private var localPrograms: [LocalProgram] = []
     private var customProgram: LocalProgram?
     
@@ -32,57 +33,62 @@ class LocalProgramService: ObservableObject {
         errorMessage = nil
         
         do {
-            let result: Result<[LocalProgram], Error> = Bundle.main.decodeWithCustomDecoder("Programs.json")
+            // Prefer playlist-based programs (Ruck Units).
+            let playlistPrograms = playlistLoader.loadPlaylists()
+            if !playlistPrograms.isEmpty {
+                localPrograms = playlistPrograms
+                programs = playlistPrograms.map { $0.toProgram() }
+                print("✅ Loaded \(programs.count) unit-playlist programs")
+                isLoading = false
+                return
+            }
+        }
+        
+        // Fallback to legacy loading if playlists missing.
+        let result: Result<[LocalProgram], Error> = Bundle.main.decodeWithCustomDecoder("Programs.json")
+        
+        switch result {
+        case .success(var loadedPrograms):
+            let weekLoader = LocalWeekLoader.shared
             
-            switch result {
-            case .success(var loadedPrograms):
-                // ENHANCEMENT: Add week data to programs
-                let weekLoader = LocalWeekLoader.shared
+            for i in 0..<loadedPrograms.count {
+                let weeks = weekLoader.getWeeks(forProgramId: loadedPrograms[i].id)
                 
-                for i in 0..<loadedPrograms.count {
-                    let weeks = weekLoader.getWeeks(forProgramId: loadedPrograms[i].id)
+                var updatedWeeks: [LocalProgramWeek] = []
+                for week in weeks {
+                    let programWorkouts = workoutLoader.getWorkouts(forWeekId: week.id)
                     
-                    // Update workouts for each week
-                    var updatedWeeks: [LocalProgramWeek] = []
-                    for week in weeks {
-                        // Use the workouts that are already loaded in the week data
-                        // The week data from LocalWeekLoader already has empty workouts array
-                        // We'll populate it with workouts from the workout loader
-                        let programWorkouts = workoutLoader.getWorkouts(forWeekId: week.id)
-                        
-                        // Convert ProgramWorkout to LocalProgramWorkout
-                        let localWorkouts = programWorkouts.map { programWorkout in
-                            LocalProgramWorkout(
-                                id: programWorkout.id,
-                                dayNumber: programWorkout.dayNumber,
-                                workoutType: programWorkout.workoutType.rawValue,
-                                distanceMiles: programWorkout.distanceMiles,
-                                targetPaceMinutes: programWorkout.targetPaceMinutes,
-                                instructions: programWorkout.instructions
-                            )
-                        }
-                        
-                        let updatedWeek = LocalProgramWeek(
-                            id: week.id,
-                            weekNumber: week.weekNumber,
-                            baseWeightLbs: week.baseWeightLbs,
-                            description: week.description,
-                            workouts: localWorkouts
+                    let localWorkouts = programWorkouts.map { programWorkout in
+                        LocalProgramWorkout(
+                            id: programWorkout.id,
+                            dayNumber: programWorkout.dayNumber,
+                            workoutType: programWorkout.workoutType.rawValue,
+                            distanceMiles: programWorkout.distanceMiles,
+                            targetPaceMinutes: programWorkout.targetPaceMinutes,
+                            instructions: programWorkout.instructions
                         )
-                        updatedWeeks.append(updatedWeek)
                     }
                     
-                    loadedPrograms[i].weeks = updatedWeeks
+                    let updatedWeek = LocalProgramWeek(
+                        id: week.id,
+                        weekNumber: week.weekNumber,
+                        baseWeightLbs: week.baseWeightLbs,
+                        description: week.description,
+                        workouts: localWorkouts
+                    )
+                    updatedWeeks.append(updatedWeek)
                 }
                 
-                localPrograms = loadedPrograms
-                programs = loadedPrograms.map { $0.toProgram() }
-                print("✅ Loaded \(programs.count) programs with week data")
-                
-            case .failure(let error):
-                errorMessage = "Failed to load programs: \(error.localizedDescription)"
-                programs = []
+                loadedPrograms[i].weeks = updatedWeeks
             }
+            
+            localPrograms = loadedPrograms
+            programs = loadedPrograms.map { $0.toProgram() }
+            print("✅ Loaded \(programs.count) programs with week data (legacy fallback)")
+            
+        case .failure(let error):
+            errorMessage = "Failed to load programs: \(error.localizedDescription)"
+            programs = []
         }
         
         isLoading = false

@@ -7,7 +7,7 @@ class LocalChallengeWorkoutLoader {
     private var cachedWorkouts: [ChallengeWorkout] = []
     private var workoutsByChallengeId: [UUID: [ChallengeWorkout]] = [:]
     
-    // Define all challenge workout files to load
+    // Legacy challenge workout files to load (fallback)
     private let challengeWorkoutFiles = [
         "PowerWeekWorkouts",
         "SpeedWeekWorkouts",
@@ -19,6 +19,8 @@ class LocalChallengeWorkoutLoader {
         "TacticalReadyWorkouts"
     ]
     
+    private let challengePlaylistFile = "RuckChallengePlaylists"
+    
     private init() {
         loadWorkouts()
     }
@@ -26,9 +28,17 @@ class LocalChallengeWorkoutLoader {
     // MARK: - Loading
     
     func loadWorkouts() {
+        // Prefer new unit-based playlists
+        if let playlistWorkouts = loadPlaylistWorkouts() {
+            cachedWorkouts = playlistWorkouts
+            workoutsByChallengeId = Dictionary(grouping: cachedWorkouts) { $0.challengeId }
+            print("✅ Loaded \(cachedWorkouts.count) challenge workouts from RuckUnit playlists")
+            return
+        }
+        
         var allWorkouts: [ChallengeWorkout] = []
         
-        // Load each challenge workout file
+        // Legacy fallback
         for fileName in challengeWorkoutFiles {
             let result: Result<[ChallengeWorkoutJSON], Error> = Bundle.main.decodeWithCustomDecoder("\(fileName).json")
             
@@ -49,7 +59,7 @@ class LocalChallengeWorkoutLoader {
         // Index by challenge_id for fast lookup
         workoutsByChallengeId = Dictionary(grouping: cachedWorkouts) { $0.challengeId }
         
-        print("✅ Total challenge workouts loaded: \(cachedWorkouts.count)")
+        print("✅ Total challenge workouts loaded (legacy): \(cachedWorkouts.count)")
     }
     
     // MARK: - Querying
@@ -61,9 +71,53 @@ class LocalChallengeWorkoutLoader {
     func getWorkout(byId workoutId: UUID) -> ChallengeWorkout? {
         return cachedWorkouts.first { $0.id == workoutId }
     }
+    
+    // MARK: - Playlist loader (Ruck Units)
+    private func loadPlaylistWorkouts() -> [ChallengeWorkout]? {
+        guard let url = Bundle.main.url(forResource: challengePlaylistFile, withExtension: "json"),
+              let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        
+        do {
+            let playlists = try JSONDecoder().decode([ChallengePlaylistJSON].self, from: data)
+            let catalog = MarchSessionDescriptor.catalog()
+            let now = Date()
+            
+            var workouts: [ChallengeWorkout] = []
+            for playlist in playlists {
+                let challengeId = UUID(uuidString: playlist.id) ?? UUID()
+                for (index, unitName) in playlist.units.enumerated() {
+                    guard let sessionType = MarchSessionType(rawValue: unitName),
+                          let descriptor = catalog[sessionType] else { continue }
+                    
+                    let workout = ChallengeWorkout(
+                        id: UUID(),
+                        challengeId: challengeId,
+                        dayNumber: index + 1,
+                        workoutType: .ruck,
+                        distanceMiles: descriptor.defaultDistanceMiles,
+                        targetPaceMinutes: descriptor.targetPaceMinutes,
+                        weightLbs: nil,
+                        durationMinutes: nil,
+                        instructions: descriptor.purpose,
+                        isRestDay: false,
+                        createdAt: now,
+                        updatedAt: now
+                    )
+                    workouts.append(workout)
+                }
+            }
+            
+            return workouts
+        } catch {
+            print("⚠️ Failed to load \(challengePlaylistFile).json: \(error)")
+            return nil
+        }
+    }
 }
 
-// MARK: - JSON Decoding Model
+// MARK: - JSON Decoding Model (legacy fallback)
 
 private struct ChallengeWorkoutJSON: Codable {
     let idx: Int
@@ -155,4 +209,10 @@ private struct ChallengeWorkoutJSON: Codable {
         formatter.timeZone = TimeZone(abbreviation: "UTC")
         return formatter.date(from: dateString) ?? Date()
     }
+}
+
+// MARK: - Playlist JSON
+private struct ChallengePlaylistJSON: Codable {
+    let id: String
+    let units: [String]
 }

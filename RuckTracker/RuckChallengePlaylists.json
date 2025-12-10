@@ -1,0 +1,35 @@
+[
+  {
+    "id": "f1c56e9d-7c3a-4325-adb1-739e5f48b7bb",
+    "units": ["Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck"]
+  },
+  {
+    "id": "a80d889c-fdeb-4994-945a-59413251cc9f",
+    "units": ["Pace Pusher Ruck", "Pace Pusher Ruck", "Recovery Ruck"]
+  },
+  {
+    "id": "4f560ab3-33c6-426a-b4ae-da250c39fe7e",
+    "units": ["Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"]
+  },
+  {
+    "id": "a2797785-0cf2-422f-a96f-ed46ea571496",
+    "units": ["Recovery Ruck", "Recovery Ruck", "Recovery Ruck"]
+  },
+  {
+    "id": "9fa8bf6d-85e0-471a-ab3b-3c244be00748",
+    "units": ["Load Test Ruck", "Load Test Ruck", "Recovery Ruck"]
+  },
+  {
+    "id": "263eaed5-4b70-4b74-8934-88b8f9c208e3",
+    "units": ["Pace Pusher Ruck", "Pace Pusher Ruck", "Standard Test Ruck"]
+  },
+  {
+    "id": "3bd0092b-e6d6-4909-91a4-8adefd09b984",
+    "units": ["Endurance Ruck", "Pace Pusher Ruck", "Endurance Ruck"]
+  },
+  {
+    "id": "61469e8e-bf25-4e3b-9eee-6d70c25eea35",
+    "units": ["Integrated PT Ruck", "Vertical Grind Ruck", "Endurance Ruck"]
+  }
+]
+
