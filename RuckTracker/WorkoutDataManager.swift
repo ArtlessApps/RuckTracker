@@ -37,6 +37,7 @@ class WorkoutDataManager: ObservableObject {
     static let shared = WorkoutDataManager()
     
     @Published var workouts: [WorkoutEntity] = []
+    @Published var lastSavedWorkoutURI: URL?
     
     // MARK: - Core Data Stack
     lazy var persistentContainer: NSPersistentContainer = {
@@ -183,6 +184,9 @@ class WorkoutDataManager: ObservableObject {
         
         saveContext()
         print("🔵 Context saved to CoreData")
+        
+        // Track the most recent saved workout for sharing and deep links
+        lastSavedWorkoutURI = workout.objectID.uriRepresentation()
         
         fetchWorkouts() // Refresh the list
         print("🔵 Current workout count AFTER save: \(workouts.count)")

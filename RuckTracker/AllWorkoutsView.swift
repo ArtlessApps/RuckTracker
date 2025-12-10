@@ -9,16 +9,32 @@ import SwiftUI
 import CoreData
 
 struct AllWorkoutsView: View {
+    let deepLinkShareCode: String?
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.presentationMode) var presentationMode
     
     @State private var showingDeleteAlert = false
     @State private var workoutToDelete: WorkoutEntity?
+    @State private var shareTarget: WorkoutEntity?
+    @State private var showingShareSheet = false
     
     var body: some View {
         NavigationView {
             List {
+                if let code = deepLinkShareCode {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("You opened a shared ruck")
+                                .font(.headline)
+                            Text("Code: \(code). View the latest rucks below or start your own.")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                }
+                
                 if workoutDataManager.workouts.isEmpty {
                     Section {
                         VStack(spacing: 20) {
@@ -52,6 +68,11 @@ struct AllWorkoutsView: View {
                                         workoutToDelete = workout
                                         showingDeleteAlert = true
                                     }
+                                    Button("Share") {
+                                        shareTarget = workout
+                                        showingShareSheet = true
+                                    }
+                                    .tint(.blue)
                                 }
                         }
                     }
@@ -76,6 +97,49 @@ struct AllWorkoutsView: View {
             } message: {
                 Text("Are you sure you want to delete this workout? This action cannot be undone.")
             }
+            .sheet(isPresented: $showingShareSheet) {
+                if let workout = shareTarget {
+                    WorkoutShareSheet(data: shareData(for: workout))
+                        .environmentObject(workoutDataManager)
+                }
+            }
+        }
+        .onAppear {
+            if let code = deepLinkShareCode,
+               let workout = workoutFromShareCode(code) {
+                shareTarget = workout
+                showingShareSheet = true
+            }
+        }
+    }
+    
+    init(deepLinkShareCode: String? = nil) {
+        self.deepLinkShareCode = deepLinkShareCode
+    }
+    
+    private func shareData(for workout: WorkoutEntity) -> WorkoutShareData {
+        WorkoutShareData(
+            title: "Ruck Complete",
+            distanceMiles: workout.distance,
+            durationSeconds: workout.duration,
+            calories: Int(workout.calories),
+            ruckWeight: Int(workout.ruckWeight),
+            date: workout.date ?? Date(),
+            workoutURI: workout.objectID.uriRepresentation()
+        )
+    }
+    
+    private func workoutFromShareCode(_ code: String) -> WorkoutEntity? {
+        guard let uri = ShareLinkBuilder.decodeWorkoutURI(from: code),
+              let objectId = workoutDataManager.context.persistentStoreCoordinator?.managedObjectID(forURIRepresentation: uri) else {
+            return nil
+        }
+        
+        do {
+            let object = try workoutDataManager.context.existingObject(with: objectId)
+            return object as? WorkoutEntity
+        } catch {
+            return nil
         }
     }
 }
@@ -237,6 +301,6 @@ struct WorkoutDetailRowView: View {
 }
 
 #Preview {
-    AllWorkoutsView()
+    AllWorkoutsView(deepLinkShareCode: nil)
         .environmentObject(WorkoutDataManager.shared)
 }

@@ -8,6 +8,8 @@ struct PhonePostWorkoutSummaryView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingAnalytics = false
+    @State private var showingShare = false
+    @State private var hasScheduledSharePrompt = false
     
     // Final workout stats
     let finalElapsedTime: TimeInterval
@@ -93,6 +95,21 @@ struct PhonePostWorkoutSummaryView: View {
                 
                 // Action Buttons
                 VStack(spacing: 16) {
+                    Button(action: {
+                        showingShare = true
+                    }) {
+                        Text("Share this Ruck")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(Color("BackgroundDark"))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color("PrimaryMain").opacity(0.12))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    
                     // Done Button
                     Button(action: {
                         dismiss()
@@ -134,6 +151,18 @@ struct PhonePostWorkoutSummaryView: View {
                 .environmentObject(WorkoutDataManager.shared)
                 .environmentObject(PremiumManager.shared)
         }
+        .onAppear {
+            if !hasScheduledSharePrompt {
+                hasScheduledSharePrompt = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    showingShare = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingShare) {
+            WorkoutShareSheet(data: shareData)
+                .environmentObject(WorkoutDataManager.shared)
+        }
     }
     
     // MARK: - Helpers
@@ -159,6 +188,21 @@ struct PhonePostWorkoutSummaryView: View {
         let mins = Int(paceInSeconds) / 60
         let secs = Int(paceInSeconds) % 60
         return String(format: "%02d:%02d", mins, secs)
+    }
+    
+    private var shareData: WorkoutShareData {
+        let latestWorkout = WorkoutDataManager.shared.workouts.first
+        let workoutDate = latestWorkout?.date ?? Date()
+        let uri = WorkoutDataManager.shared.lastSavedWorkoutURI ?? latestWorkout?.objectID.uriRepresentation()
+        return WorkoutShareData(
+            title: "Ruck Complete",
+            distanceMiles: finalDistance,
+            durationSeconds: finalElapsedTime,
+            calories: Int(finalCalories),
+            ruckWeight: Int(finalRuckWeight),
+            date: workoutDate,
+            workoutURI: uri
+        )
     }
 }
 

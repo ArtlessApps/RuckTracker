@@ -7,6 +7,7 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
+    @EnvironmentObject var deepLinkManager: DeepLinkManager
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
     
@@ -28,6 +29,7 @@ struct ImprovedPhoneMainView: View {
     @State private var selectedProgramWorkout: ProgramWorkoutWithState?
     @State private var selectedUserProgram: UserProgram?
     @State private var selectedProgramId: UUID?
+    @State private var pendingShareCode: String?
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -79,7 +81,7 @@ struct ImprovedPhoneMainView: View {
                     .environmentObject(workoutDataManager)
                     .environmentObject(premiumManager)
             case .workoutHistory:
-                AllWorkoutsView()
+                AllWorkoutsView(deepLinkShareCode: pendingShareCode)
             case .trainingPrograms:
                 TrainingProgramsView(isPresentingWorkoutFlow: $isPresentingWorkoutFlow)
             case .challenges:
@@ -170,6 +172,20 @@ struct ImprovedPhoneMainView: View {
         }
         .onReceive(programService.$programProgress) { _ in
             refreshCoachPlan()
+        }
+        .onReceive(deepLinkManager.$pendingDestination.compactMap { $0 }) { destination in
+            switch destination {
+            case .workoutShare(let code):
+                pendingShareCode = code
+                activeSheet = .workoutHistory
+            case .workoutHistory:
+                activeSheet = .workoutHistory
+            }
+            
+            // Clear after handling to avoid repeated triggers
+            DispatchQueue.main.async {
+                deepLinkManager.pendingDestination = nil
+            }
         }
     }
     
