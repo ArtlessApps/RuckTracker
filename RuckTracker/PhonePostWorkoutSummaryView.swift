@@ -39,7 +39,7 @@ struct PhonePostWorkoutSummaryView: View {
     var body: some View {
         ZStack {
             // Clean white background
-            Color.white
+            AppColors.surface
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -49,7 +49,7 @@ struct PhonePostWorkoutSummaryView: View {
                 // Congratulatory phrase (randomly selected)
                 Text(congratsPhrases.randomElement() ?? "Workout complete.")
                     .font(.system(size: 20, weight: .regular))
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
@@ -100,7 +100,7 @@ struct PhonePostWorkoutSummaryView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("How did it feel?")
                             .font(.headline)
-                            .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                         HStack {
                             Text("Easy")
                                 .font(.caption)
@@ -111,22 +111,22 @@ struct PhonePostWorkoutSummaryView: View {
                                 .foregroundColor(.gray)
                         }
                         Toggle("Soreness or niggles", isOn: $experiencedSoreness)
-                            .toggleStyle(SwitchToggleStyle(tint: Color("PrimaryMain")))
+                    .toggleStyle(SwitchToggleStyle(tint: AppColors.primary))
                     }
                     .padding()
-                    .background(RoundedRectangle(cornerRadius: 16).fill(Color("PrimaryMain").opacity(0.08)))
+                    .background(RoundedRectangle(cornerRadius: 16).fill(AppColors.primary.opacity(0.08)))
                     
                     Button(action: {
                         showingShare = true
                     }) {
                         Text("Share this Ruck")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .foregroundColor(AppColors.textOnLight)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color("PrimaryMain").opacity(0.12))
+                                .fill(AppColors.primary.opacity(0.12))
                             )
                     }
                     .buttonStyle(.plain)
@@ -148,7 +148,7 @@ struct PhonePostWorkoutSummaryView: View {
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color("PrimaryMain"))
+                                .fill(AppColors.primary)
                             )
                     }
                     .buttonStyle(.plain)
@@ -159,12 +159,12 @@ struct PhonePostWorkoutSummaryView: View {
                     }) {
                         Text("View Workout History")
                             .font(.system(size: 17, weight: .regular))
-                            .foregroundColor(Color("PrimaryMain"))
+                            .foregroundColor(AppColors.primary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .strokeBorder(Color("PrimaryMain"), lineWidth: 1.5)
+                                    .strokeBorder(AppColors.primary, lineWidth: 1.5)
                             )
                     }
                     .buttonStyle(.plain)
@@ -252,7 +252,7 @@ struct StatRow: View {
             
             Text(value)
                 .font(.system(size: 44, weight: .regular))
-                .foregroundColor(isSecondary ? Color("TextSecondary") : Color("BackgroundDark"))
+                .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textOnLight)
         }
         .padding(.horizontal, 40)
         .padding(.vertical, 12)
@@ -280,7 +280,7 @@ struct StatRowWithUnit: View {
             HStack(alignment: .lastTextBaseline, spacing: 3) {
                 Text(value)
                     .font(.system(size: 44, weight: .regular))
-                    .foregroundColor(isSecondary ? Color("TextSecondary") : Color("BackgroundDark"))
+                    .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textOnLight)
                 
                 Text(unit)
                     .font(.system(size: 16, weight: .regular))

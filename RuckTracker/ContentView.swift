@@ -30,7 +30,7 @@ struct ContentView: View {
                     .environmentObject(workoutDataManager)
                     .environmentObject(premiumManager)
             } else {
-                ImprovedPhoneMainView()
+                MainTabView()
                     .environmentObject(healthManager)
                     .environmentObject(workoutManager)
                     .environmentObject(workoutDataManager)

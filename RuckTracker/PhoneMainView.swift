@@ -24,14 +24,13 @@ struct ImprovedPhoneMainView: View {
     @State private var isPresentingWorkoutFlow = false
     @State private var showingWeightSelector = false
     @State private var selectedWorkoutWeight: Double = 0
-    @State private var activeTab: ActiveTab = .home
     @State private var showingActiveWorkout = false
     @State private var selectedProgramWorkout: ProgramWorkoutWithState?
     @State private var selectedUserProgram: UserProgram?
     @State private var selectedProgramId: UUID?
     @State private var pendingShareCode: String?
-    @State private var showingQuickPicker = false
-    @State private var selectedQuickContext = "Quick Ruck"
+    @State private var selectedSessionType: SessionType?
+    @State private var showingSessionConfig = false
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -55,23 +54,63 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
-    enum ActiveTab {
-        case home
-        case profile
-        case analytics
-        case settings
+    // MARK: - Quick Session Types
+    enum SessionType: CaseIterable {
+        case justRuck
+        case recovery
+        case pacePusher
+        case vertical
+        case benchmark
+        
+        var title: String {
+            switch self {
+            case .justRuck: return "Just Ruck"
+            case .recovery: return "Recovery"
+            case .pacePusher: return "Pace Pusher"
+            case .vertical: return "Vertical"
+            case .benchmark: return "Benchmark"
+            }
+        }
+        
+        var subtitle: String {
+            switch self {
+            case .justRuck: return "Open-ended. Stop when you're done."
+            case .recovery: return "Zone 2 focus. Choose duration."
+            case .pacePusher: return "Intervals for speed."
+            case .vertical: return "Hill repeats. Choose elevation."
+            case .benchmark: return "Standards for distance/time."
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .justRuck: return "figure.walk"
+            case .recovery: return "bolt.heart"
+            case .pacePusher: return "hare.fill"
+            case .vertical: return "mountain.2.fill"
+            case .benchmark: return "trophy.fill"
+            }
+        }
+        
+        var contextLabel: String {
+            switch self {
+            case .justRuck: return "Just Ruck"
+            case .recovery: return "Recovery Ruck"
+            case .pacePusher: return "Pace Pusher Ruck"
+            case .vertical: return "Vertical Grind Ruck"
+            case .benchmark: return "Standard Test Ruck"
+            }
+        }
     }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 mainContentView
-                
-                // Bottom Navigation Bar
-                bottomNavigationBar
             }
             .navigationBarHidden(true)
         }
+        .preferredColorScheme(.dark)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .profile:
@@ -111,20 +150,18 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
-        .sheet(isPresented: $showingWeightSelector) {
-            WorkoutWeightSelector(
-                selectedWeight: $selectedWorkoutWeight,
-                isPresented: $showingWeightSelector,
-                recommendedWeight: nil,
-                context: selectedQuickContext,
-                onStart: {
-                    workoutManager.startWorkout(weight: selectedWorkoutWeight)
-                }
-            )
-        }
         .sheet(isPresented: $showingActiveWorkout) {
             ActiveWorkoutFullScreenView()
                 .environmentObject(workoutManager)
+        }
+        .sheet(isPresented: $showingSessionConfig) {
+            SessionConfiguratorSheet(
+                sessionType: $selectedSessionType,
+                onStart: { type, config in
+                    startQuickSession(type: type, config: config)
+                },
+                onCancel: { showingSessionConfig = false }
+            )
         }
         .sheet(item: $selectedProgramWorkout, onDismiss: {
             selectedProgramWorkout = nil
@@ -143,44 +180,12 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
-        .confirmationDialog("Choose your Quick Ruck", isPresented: $showingQuickPicker, titleVisibility: .visible) {
-            Button("Recovery Ruck (Zone 2)") {
-                selectedQuickContext = "Recovery Ruck"
-                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                showingWeightSelector = true
-            }
-            Button("Pace Pusher (Intervals)") {
-                selectedQuickContext = "Pace Pusher Ruck"
-                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                showingWeightSelector = true
-            }
-            Button("Vertical Grind (Hills)") {
-                selectedQuickContext = "Vertical Grind Ruck"
-                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                showingWeightSelector = true
-            }
-            Button("Just Ruck (Open ended)") {
-                selectedQuickContext = "Just Ruck"
-                selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                showingWeightSelector = true
-            }
-            Button("Cancel", role: .cancel) { }
-        }
         .onChange(of: workoutManager.isActive) { oldValue, newValue in
             if newValue && !oldValue {
-                // Workout just started - dismiss all sheets first
                 activeSheet = nil
-                
-                // Then show the active workout view
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showingActiveWorkout = true
                 }
-            }
-        }
-        .onChange(of: activeSheet) { oldValue, newValue in
-            // Reset active tab when sheet is dismissed
-            if oldValue != nil && newValue == nil {
-                activeTab = .home
             }
         }
         .onAppear {
@@ -207,304 +212,196 @@ struct ImprovedPhoneMainView: View {
                 activeSheet = .workoutHistory
             }
             
-            // Clear after handling to avoid repeated triggers
             DispatchQueue.main.async {
                 deepLinkManager.pendingDestination = nil
             }
         }
     }
-    
     // MARK: - Main Content View
     
     private var mainContentView: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                justRuckCard
-                
-                if let planCard = coachPlanCard {
-                    planCard
-                }
-                // Main cards
-                programsCard
-                challengesCard
-                // dataCard  // Moved to Activity view
-                
-                // Preserve existing functionality sections
-                
-                Spacer(minLength: 100)
+            VStack(spacing: 20) {
+                heroCard
+                sessionGrid
+                trainingProgramsSection
+                Spacer(minLength: 80)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 60)  // Accounts for status bar + breathing room
+            .padding(.top, 40)
             .padding(.bottom, 20)
         }
-        .background(
-            ZStack {
-                Color("OffWhite")
-                
-                // Subtle noise texture
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color("AccentCream").opacity(0.3),
-                                Color.clear
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
-        )
+        .background(AppColors.surface)
     }
     
-    // MARK: - Coach Plan Card
+    // MARK: - Coach + Quick Sessions
     
-    private var coachPlanCard: AnyView? {
-        guard let title = coachPlanTitle, !upcomingWorkouts.isEmpty else {
-            return nil
-        }
-        
-        return AnyView(
-            CoachPlanCard(
-                programTitle: title,
-                preferredDays: userSettings.preferredTrainingDays,
-                upcomingWorkouts: upcomingWorkouts,
-                onWorkoutTap: { workout in
-                    handleCoachPlanWorkoutTap(workout)
-                }
-            )
-        )
-    }
-    
-    // MARK: - Main Action Cards
-    
-    private var justRuckCard: some View {
-        VStack(spacing: 0) {
-            if workoutManager.isActive {
-                // Show compact status button
+    private var heroCard: some View {
+        Group {
+            if let planned = todaysPlannedWorkout {
                 Button {
-                    showingActiveWorkout = true
+                    startPlannedWorkout(planned)
                 } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 8) {
-                                Circle()
-                                    .fill(workoutManager.isPaused ? Color.red : Color.green)
-                                    .frame(width: 10, height: 10)
-                                
-                                Text(workoutManager.isPaused ? "Workout Paused" : "Workout Active")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Text("Tap to view workout")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "arrow.up.right")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(programEyebrow)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    .foregroundColor(AppColors.textSecondary)
+                        Text(planned.title)
                             .font(.title2)
-                            .foregroundColor(.white.opacity(0.5))
+                            .fontWeight(.bold)
+                        Text("Week \(planned.weekNumber), Day \(planned.dayNumber ?? 1)")
+                            .font(.subheadline)
+                    .foregroundColor(AppColors.textSecondary)
+                        HStack(spacing: 12) {
+                            Label(durationLabel(for: planned), systemImage: "clock")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                            Label(intensityLabel(for: planned), systemImage: "flame.fill")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
                     }
-                    .padding(24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color("BackgroundDark"))
-                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .fill(AppColors.surfaceAlt)
+                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     )
                 }
                 .buttonStyle(.plain)
             } else {
-                ZStack {
-                    VStack(spacing: 20) {
-                        // Header
-                        VStack(spacing: 12) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("MARCH")
-                                        .font(.system(size: 46, weight: .heavy, design: .default))
-                                        .foregroundColor(.white)
-                                        .tracking(2)
-                                    
-                                    Text("Your Ruck Training Partner")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.90))
+                Button {
+                    activeSheet = .trainingPrograms
+                } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("PERSONALIZED PLAN")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(AppColors.textSecondary)
+                        Text("Create My Plan")
+                            .font(.title2).fontWeight(.bold)
+                        Text("We’ll build your schedule from MARCH sessions.")
+                            .font(.subheadline)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(AppColors.background)
+                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+    
+    private var sessionGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Ruck")
+                .font(.headline)
+                .foregroundColor(AppColors.textPrimary)
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(SessionType.allCases, id: \.self) { type in
+                    Button {
+                        selectedSessionType = type
+                        showingSessionConfig = true
+                    } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: type.icon)
+                                .font(.title2)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(type.title)
+                                    .font(.headline)
+                                Text(type.subtitle)
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(AppColors.surfaceAlt)
+                                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+    
+    private var trainingProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Training Programs")
+                .font(.headline)
+                .foregroundColor(AppColors.textPrimary)
+            
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(programCardData) { card in
+                    Button {
+                        if premiumManager.isPremiumUser {
+                            activeSheet = .trainingPrograms
+                        } else {
+                            premiumManager.showPaywall(context: .programAccess)
+                        }
+                    } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: card.icon)
+                                .font(.title2)
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(card.title)
+                                        .font(.headline)
+                                        .foregroundColor(AppColors.textPrimary)
+                                    if card.isPro {
+                                        PremiumBadge(size: .small)
+                                    }
                                 }
-                                
-                                Spacer()
+                                Text(card.subtitle)
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.textPrimary.opacity(0.8))
                             }
+                            Spacer()
                         }
-                    
-                        // BOLD TERRACOTTA BUTTON
-                        Button(action: {
-                            selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-                            showingQuickPicker = true
-                        }) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "play.fill")
-                                    .font(.title2)
-                                Text("Quick Ruck")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color("PrimaryMain"))  // Terracotta
-                            )
-                        }
-                        .buttonStyle(HeroButtonStyle())
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(AppColors.background)
+                        )
                     }
-                    .padding(28)
+                    .buttonStyle(.plain)
                 }
-                .background(
-                    ZStack {
-                        // Base dark color (solid, no gradient needed)
-                        Color("BackgroundDark")
-                        
-                        // Warm terracotta glow - REFINED
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    gradient: Gradient(colors: [
-                                        Color("PrimaryMain").opacity(0.18),  // Slightly more visible at center
-                                        Color("PrimaryMain").opacity(0.08),  // Fades to almost nothing
-                                        Color.clear
-                                    ]),
-                                    center: .topTrailing,
-                                    startRadius: 20,
-                                    endRadius: 180
-                                )
-                            )
-                            .frame(width: 300, height: 300)
-                            .offset(x: 120, y: -80)  // Adjusted position
-                    }
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)  // Slightly stronger shadow
-                )
             }
         }
     }
     
-    private var programsCard: some View {
-        Button(action: {
-            if premiumManager.isPremiumUser {
-                activeSheet = .trainingPrograms
-            } else {
-                premiumManager.showPaywall(context: .programAccess)
-            }
-        }) {
-            HStack(spacing: 12) {
-                // Icon with sage background
-                ZStack {
-                    Circle()
-                        .fill(Color("AccentGreen").opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "figure.hiking")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color("AccentGreen"))
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Training Programs")
-                            .font(.system(size: 22, weight: .bold, design: .default))
-                            .foregroundColor(Color("BackgroundDark"))  // Charcoal, not black
-                        
-                        Spacer()
-                        
-                        if !premiumManager.isPremiumUser {
-                            PremiumBadge(size: .small)
-                        }
-                    }
-                    
-                    Text("Multi-Week Structured Plans")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))  // Not .secondary
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.title2)
-                    .foregroundColor(Color("WarmGray"))
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white)  // Pure white, not off-white
-                    .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
+    private var programCardData: [ProgramCard] {
+        [
+            ProgramCard(title: "Beginner Ruck", subtitle: "4-week habit build", icon: "leaf.fill", isPro: false),
+            ProgramCard(title: "Pro Pathfinder", subtitle: "8-week performance", icon: "figure.strengthtraining.traditional", isPro: true),
+            ProgramCard(title: "Endurance Base", subtitle: "Mileage focus", icon: "map.fill", isPro: false),
+            ProgramCard(title: "Selection Prep", subtitle: "High-load grind", icon: "flame.fill", isPro: true)
+        ]
     }
     
-    private var challengesCard: some View {
-        Button(action: {
-            if premiumManager.isPremiumUser {
-                activeSheet = .challenges
-            } else {
-                premiumManager.showPaywall(context: .featureUpsell)
-            }
-        }) {
-            HStack(spacing: 12) {
-                // Icon with dusty teal background
-                ZStack {
-                    Circle()
-                        .fill(Color("AccentTeal").opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "trophy.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color("AccentTeal"))
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Weekly Challenges")
-                            .font(.system(size: 22, weight: .bold, design: .default))
-                            .foregroundColor(Color("BackgroundDark"))  // Charcoal, not black
-                        
-                        Spacer()
-                        
-                        if !premiumManager.isPremiumUser {
-                            PremiumBadge(size: .small)
-                        }
-                    }
-                    
-                    Text("7-Day Focused Challenges")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))  // Not .secondary
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.title2)
-                    .foregroundColor(Color("WarmGray"))
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white)  // Pure white, not off-white
-                    .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
+    private struct ProgramCard: Identifiable {
+        let id = UUID()
+        let title: String
+        let subtitle: String
+        let icon: String
+        let isPro: Bool
     }
+    
+    // challengesCard removed; Tribe tab handles challenge access
     
     
     private var dataCard: some View {
@@ -518,10 +415,10 @@ struct ImprovedPhoneMainView: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Export Data")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.black)
+                    Text("Export Data")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.textOnLight)
                         
                         Spacer()
                         
@@ -531,14 +428,14 @@ struct ImprovedPhoneMainView: View {
                     }
                     Text("Export your workout data")
                         .font(.subheadline)
-                        .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.title2)
-                    .foregroundColor(Color("WarmGray"))
+                    .foregroundColor(AppColors.accentWarm)
             }
             .padding()
             .background(
@@ -550,107 +447,6 @@ struct ImprovedPhoneMainView: View {
     }
     
     // MARK: - Bottom Navigation Bar
-    
-    private var bottomNavigationBar: some View {
-        HStack(spacing: 0) {
-            // Profile Button
-            Button(action: {
-                if activeSheet == .profile {
-                    activeSheet = nil
-                    activeTab = .home
-                } else {
-                    activeSheet = .profile
-                    activeTab = .profile
-                }
-            }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "person.circle")
-                        .font(.title2)
-                        .foregroundColor(activeTab == .profile ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    Text("Profile")
-                        .font(.caption2)
-                        .foregroundColor(activeTab == .profile ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    if activeTab == .profile {
-                        Capsule()
-                            .fill(Color("PrimaryMain"))
-                            .frame(width: 40, height: 3)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            }
-            .buttonStyle(.plain)
-            
-            // Activity Button
-            Button(action: {
-                if activeSheet == .analytics {
-                    activeSheet = nil
-                    activeTab = .home
-                } else {
-                    activeSheet = .analytics
-                    activeTab = .analytics
-                }
-            }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.title2)
-                        .foregroundColor(activeTab == .analytics ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    Text("Activity")
-                        .font(.caption2)
-                        .foregroundColor(activeTab == .analytics ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    if activeTab == .analytics {
-                        Capsule()
-                            .fill(Color("PrimaryMain"))
-                            .frame(width: 40, height: 3)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            }
-            .buttonStyle(.plain)
-            
-            // Settings Button
-            Button(action: {
-                if activeSheet == .settings {
-                    activeSheet = nil
-                    activeTab = .home
-                } else {
-                    activeSheet = .settings
-                    activeTab = .settings
-                }
-            }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "gearshape")
-                        .font(.title2)
-                        .foregroundColor(activeTab == .settings ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    Text("Settings")
-                        .font(.caption2)
-                        .foregroundColor(activeTab == .settings ? Color("PrimaryMain") : Color("WarmGray"))
-                    
-                    if activeTab == .settings {
-                        Capsule()
-                            .fill(Color("PrimaryMain"))
-                            .frame(width: 40, height: 3)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
-        .background(
-            Rectangle()
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: -1)
-        )
-    }
     
     // MARK: - Coach Plan Helpers
     
@@ -822,11 +618,11 @@ struct FeaturePill: View {
                 .font(.caption)
                 .fontWeight(.medium)
         }
-        .foregroundColor(.white)
+        .foregroundColor(AppColors.textPrimary)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
-            Color.white.opacity(0.2)
+            AppColors.textPrimary.opacity(0.2)
                 .cornerRadius(8)
         )
     }
@@ -850,19 +646,19 @@ struct CoachPlanCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Your Coach Plan")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(AppColors.textPrimary.opacity(0.7))
                     
                     Text(programTitle)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "checkmark.shield")
                     .font(.title2)
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
             }
             
             // Preferred days
@@ -874,19 +670,19 @@ struct CoachPlanCard: View {
                             .fontWeight(.semibold)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.15))
-                            .foregroundColor(.white)
+                            .background(AppColors.textPrimary.opacity(0.15))
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(8)
                     }
                 }
             }
             
-            Divider().background(Color.white.opacity(0.2))
+            Divider().background(AppColors.textPrimary.opacity(0.2))
             
             if previewWorkouts.isEmpty {
                 Text("Building your first week...")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(AppColors.textPrimary.opacity(0.7))
             } else {
                 VStack(spacing: 12) {
                     ForEach(previewWorkouts) { workout in
@@ -905,14 +701,14 @@ struct CoachPlanCard: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(
                     LinearGradient(
-                        colors: [Color("BackgroundDark"), Color("BackgroundDark").opacity(0.9)],
+                        colors: [AppColors.background, AppColors.background.opacity(0.9)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(AppColors.textPrimary.opacity(0.08), lineWidth: 1)
                 )
         )
     }
@@ -924,6 +720,66 @@ struct CoachPlanCard: View {
     private func shortLabel(for day: Int) -> String {
         let index = (day - 1 + 7) % 7
         return calendar.shortWeekdaySymbols[index]
+    }
+}
+
+// MARK: - Helpers for Coach / Sessions
+extension ImprovedPhoneMainView {
+    private var todaysPlannedWorkout: ScheduledWorkout? {
+        upcomingWorkouts.first
+    }
+    
+    private var programEyebrow: String {
+        if let programIdString = userSettings.activeProgramID,
+           let programId = UUID(uuidString: programIdString),
+           let title = programService.getProgramTitle(programId: programId) {
+            return title.uppercased()
+        }
+        return userSettings.ruckingGoal.rawValue.uppercased()
+    }
+    
+    private func durationLabel(for workout: ScheduledWorkout) -> String {
+        switch workout.workoutType.lowercased() {
+        case "recovery ruck": return "40 min est."
+        case "pace pusher ruck": return "50 min est."
+        case "vertical grind ruck": return "45 min est."
+        case "standard test ruck": return "90 min est."
+        default: return "60 min est."
+        }
+    }
+    
+    private func intensityLabel(for workout: ScheduledWorkout) -> String {
+        switch workout.workoutType.lowercased() {
+        case "recovery ruck": return "Low"
+        case "pace pusher ruck": return "Medium"
+        case "vertical grind ruck": return "Medium"
+        case "standard test ruck": return "High"
+        default: return "Medium"
+        }
+    }
+    
+    private func startPlannedWorkout(_ scheduled: ScheduledWorkout) {
+        guard let workoutIdString = scheduled.workoutID,
+              let _ = UUID(uuidString: workoutIdString),
+              let programIdString = userSettings.activeProgramID,
+              let programId = UUID(uuidString: programIdString) else {
+            return
+        }
+        
+        // Mark program context for save
+        workoutManager.setProgramContext(programId: programId, day: scheduled.dayNumber ?? 1)
+        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        showingActiveWorkout = true
+    }
+    
+    private func startQuickSession(type: SessionType, config: SessionConfiguratorSheet.SessionConfig) {
+        // For now we start with default weight; params can be threaded to AudioCoach later.
+        workoutManager.setProgramContext(programId: nil, day: nil)
+        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        showingSessionConfig = false
+        showingActiveWorkout = true
     }
 }
 
@@ -964,11 +820,11 @@ struct CoachPlanScheduleRow: View {
             }
             .padding(12)
             .background(
-                Color.white.opacity(backgroundOpacity)
+                AppColors.textPrimary.opacity(backgroundOpacity)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(workout.isLocked ? Color("WarmGray").opacity(0.4) : Color.white.opacity(0.1), lineWidth: 1)
+                    .strokeBorder(workout.isLocked ? AppColors.accentWarm.opacity(0.4) : AppColors.textPrimary.opacity(0.1), lineWidth: 1)
             )
             .cornerRadius(12)
             .opacity(workout.isLocked ? 0.6 : 1.0)
@@ -1002,8 +858,8 @@ struct CoachPlanScheduleRow: View {
     }
     
     private var statusColor: Color {
-        if workout.isCompleted { return Color("AccentGreen") }
-        if workout.isLocked { return Color("WarmGray") }
+        if workout.isCompleted { return AppColors.accentGreen }
+        if workout.isLocked { return AppColors.accentWarm }
         return .white.opacity(0.4)
     }
     
@@ -1034,11 +890,11 @@ struct ClickableWeightPill: View {
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 8))
             }
-            .foregroundColor(.white)
+            .foregroundColor(AppColors.textPrimary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
-                Color.white.opacity(0.3)
+                AppColors.textPrimary.opacity(0.3)
                     .cornerRadius(8)
             )
         }
@@ -1054,6 +910,126 @@ struct ClickableWeightPill: View {
                     UserSettings.shared.defaultRuckWeight = selectedWorkoutWeight
                 }
             )
+        }
+    }
+}
+
+// MARK: - Session Configurator Sheet
+private struct SessionConfiguratorSheet: View {
+    @Binding var sessionType: ImprovedPhoneMainView.SessionType?
+    let onStart: (ImprovedPhoneMainView.SessionType, SessionConfig) -> Void
+    let onCancel: () -> Void
+    
+    @State private var recoveryDuration: Int = 45
+    @State private var paceIntensity: PaceIntensity = .beginner
+    @State private var verticalElevation: Int = 500
+    @State private var benchmark: BenchmarkOption = .twelveThree
+    
+    enum PaceIntensity: String, CaseIterable, Identifiable {
+        case beginner, pro
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .beginner: return "Beginner (15/15)"
+            case .pro: return "Pro (10/5)"
+            }
+        }
+    }
+    
+    enum BenchmarkOption: String, CaseIterable, Identifiable {
+        case twelveThree = "12 mi / 3 hr"
+        case sixNinety = "6 mi / 1.5 hr"
+        var id: String { rawValue }
+    }
+    
+    struct SessionConfig {
+        var durationMinutes: Int?
+        var paceIntensity: PaceIntensity?
+        var elevationFeet: Int?
+        var benchmark: BenchmarkOption?
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(currentTitle)
+                    .font(.title2).bold()
+                
+                configContent
+                
+                Spacer()
+                
+                HStack {
+                    Button("Cancel", action: onCancel)
+                        .foregroundColor(AppColors.textSecondary)
+                    Spacer()
+                    Button("Start") {
+                        let type = sessionType ?? .justRuck
+                        let config = SessionConfig(
+                            durationMinutes: type == .recovery ? recoveryDuration : nil,
+                            paceIntensity: type == .pacePusher ? paceIntensity : nil,
+                            elevationFeet: type == .vertical ? verticalElevation : nil,
+                            benchmark: type == .benchmark ? benchmark : nil
+                        )
+                        onStart(type, config)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+    
+    private var currentTitle: String {
+        (sessionType ?? .justRuck).title
+    }
+    
+    @ViewBuilder
+    private var configContent: some View {
+        switch sessionType ?? .justRuck {
+        case .justRuck:
+            Text("Open-ended. We’ll record until you stop.")
+                .foregroundColor(AppColors.textSecondary)
+        case .recovery:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Choose duration")
+                Picker("", selection: $recoveryDuration) {
+                    Text("30 min").tag(30)
+                    Text("45 min").tag(45)
+                    Text("60 min").tag(60)
+                }
+                .pickerStyle(.segmented)
+            }
+        case .pacePusher:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Intensity")
+                Picker("", selection: $paceIntensity) {
+                    ForEach(PaceIntensity.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+        case .vertical:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Elevation goal (ft)")
+                Picker("", selection: $verticalElevation) {
+                    Text("500 ft").tag(500)
+                    Text("1000 ft").tag(1000)
+                }
+                .pickerStyle(.segmented)
+            }
+        case .benchmark:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Select benchmark")
+                Picker("", selection: $benchmark) {
+                    ForEach(BenchmarkOption.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .pickerStyle(.inline)
+            }
         }
     }
 }

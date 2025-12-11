@@ -32,12 +32,12 @@ struct ActiveChallengeCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(challenge.title)
                         .font(.system(size: 22, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                     
                     if let description = challenge.description {
                         Text(description)
                             .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                             .lineLimit(2)
                     }
                 }
@@ -47,12 +47,12 @@ struct ActiveChallengeCard: View {
                 // Duration badge
                 Text("\(challenge.durationDays)d")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color("WarmGray").opacity(0.1))
+                            .fill(AppColors.accentWarm.opacity(0.1))
                     )
             }
             
@@ -61,13 +61,13 @@ struct ActiveChallengeCard: View {
                 HStack {
                     Text("\(Int(progress * 100))% complete")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(Color("WarmGray"))
+                        .foregroundColor(AppColors.accentWarm)
                 }
                 
                 // Progress bar with focus area color
@@ -75,12 +75,12 @@ struct ActiveChallengeCard: View {
                     ZStack(alignment: .leading) {
                         // Background
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color("WarmGray").opacity(0.15))
+                            .fill(AppColors.accentWarm.opacity(0.15))
                             .frame(height: 6)
                         
                         // Progress - using muted terracotta color
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color("PrimaryMain"))
+                            .fill(AppColors.primary)
                             .frame(width: geometry.size.width * progress, height: 6)
                     }
                 }
@@ -91,10 +91,10 @@ struct ActiveChallengeCard: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white)
-                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .shadow(color: AppColors.accentWarm.opacity(0.15), radius: 8, x: 0, y: 4)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                        .strokeBorder(AppColors.accentWarm.opacity(0.1), lineWidth: 1)
                 )
         )
     }
@@ -103,17 +103,17 @@ struct ActiveChallengeCard: View {
     private var focusAreaColor: Color {
         switch challenge.focusArea {
         case .enduranceProgression:
-            return Color("AccentTeal") // Dusty Teal
+            return AppColors.accentTeal // Dusty Teal
         case .power, .progressiveWeight:
-            return Color("AccentGreen") // Sage Green
+            return AppColors.accentGreen // Sage Green
         case .tacticalMixed:
-            return Color("BackgroundDark") // Charcoal
+            return AppColors.textOnLight // Charcoal
         case .recovery:
-            return Color("PrimaryMain") // Terracotta
+            return AppColors.primary // Terracotta
         case .distance:
-            return Color("AccentTeal") // Dusty Teal
+            return AppColors.accentTeal // Dusty Teal
         case .speed, .speedDevelopment:
-            return Color("AccentGreen") // Sage Green
+            return AppColors.accentGreen // Sage Green
         }
     }
 }
@@ -140,7 +140,7 @@ struct AvailableChallengeCard: View {
                 HStack {
                     Text(challenge.title)
                         .font(.system(size: 22, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                     
                     Spacer()
                 }
@@ -148,7 +148,7 @@ struct AvailableChallengeCard: View {
                 if let description = challenge.description {
                     Text(description)
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                 }
             }
@@ -159,21 +159,21 @@ struct AvailableChallengeCard: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(challenge.durationDays)d")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(Color("WarmGray"))
+                    .foregroundColor(AppColors.accentWarm)
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white)
-                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .shadow(color: AppColors.accentWarm.opacity(0.15), radius: 8, x: 0, y: 4)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                        .strokeBorder(AppColors.accentWarm.opacity(0.1), lineWidth: 1)
                 )
         )
     }
@@ -182,17 +182,17 @@ struct AvailableChallengeCard: View {
     private var focusAreaColor: Color {
         switch challenge.focusArea {
         case .enduranceProgression:
-            return Color("AccentTeal") // Dusty Teal
+            return AppColors.accentTeal // Dusty Teal
         case .power, .progressiveWeight:
-            return Color("AccentGreen") // Sage Green
+            return AppColors.accentGreen // Sage Green
         case .tacticalMixed:
-            return Color("BackgroundDark") // Charcoal
+            return AppColors.textOnLight // Charcoal
         case .recovery:
-            return Color("PrimaryMain") // Terracotta
+            return AppColors.primary // Terracotta
         case .distance:
-            return Color("AccentTeal") // Dusty Teal
+            return AppColors.accentTeal // Dusty Teal
         case .speed, .speedDevelopment:
-            return Color("AccentGreen") // Sage Green
+            return AppColors.accentGreen // Sage Green
         }
     }
 }
@@ -252,7 +252,7 @@ struct ChallengeDetailView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color(.systemBackground)
+                AppColors.surface
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -261,12 +261,12 @@ struct ChallengeDetailView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(challenge.title)
                                 .font(.system(size: 34, weight: .bold, design: .default))
-                                .foregroundColor(.primary)
+                                .foregroundColor(AppColors.textPrimary)
                             
                             if let description = challenge.description {
                                 Text(description)
                                     .font(.system(size: 16, weight: .regular))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(AppColors.textSecondary)
                                     .lineLimit(3)
                             }
                             
@@ -280,7 +280,7 @@ struct ChallengeDetailView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Challenge Overview")
                                 .font(.system(size: 22, weight: .bold, design: .default))
-                                .foregroundColor(Color("BackgroundDark"))
+                                .foregroundColor(AppColors.textOnLight)
                             
                             VStack(spacing: 0) {
                                 ChallengeOverviewCard(
@@ -295,7 +295,7 @@ struct ChallengeDetailView: View {
                                     icon: "figure.walk",
                                     title: "Type",
                                     value: challenge.challengeType.displayName,
-                                    iconColor: Color("PrimaryMain"),
+                                    iconColor: AppColors.primary,
                                     isFirst: false,
                                     isLast: true
                                 )
@@ -322,10 +322,10 @@ struct ChallengeDetailView: View {
                             Text("Enroll in Challenge")
                                 .font(.system(size: 17, weight: .semibold))
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(Color("PrimaryMain"))
+                        .background(AppColors.primary)
                         .cornerRadius(16)
                         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     }
@@ -333,7 +333,7 @@ struct ChallengeDetailView: View {
                     .padding(.bottom, 20)
                     .background(
                         LinearGradient(
-                            colors: [Color(.systemBackground).opacity(0), Color(.systemBackground)],
+                            colors: [AppColors.surface.opacity(0), AppColors.surface],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -348,7 +348,7 @@ struct ChallengeDetailView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
         }
@@ -406,14 +406,14 @@ struct ChallengeOverviewCard: View {
             // Title
             Text(title)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
             
             Spacer()
             
             // Value
             Text(value)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -449,17 +449,17 @@ struct ChallengeFocusBadge: View {
     private var focusAreaColor: Color {
         switch focusArea {
         case .enduranceProgression:
-            return Color("AccentTeal")
+            return AppColors.accentTeal
         case .power, .progressiveWeight:
-            return Color("AccentGreen")
+            return AppColors.accentGreen
         case .tacticalMixed:
-            return Color("BackgroundDark")
+            return AppColors.textOnLight
         case .recovery:
-            return Color("PrimaryMain")
+            return AppColors.primary
         case .distance:
-            return Color("AccentTeal")
+            return AppColors.accentTeal
         case .speed, .speedDevelopment:
-            return Color("AccentGreen")
+            return AppColors.accentGreen
         }
     }
 }
@@ -476,7 +476,7 @@ private func focusAreaColor(_ focusArea: Challenge.FocusArea) -> Color {
     case "green":
         return .green
     case "orange":
-        return Color("PrimaryMain")
+        return AppColors.primary
     case "purple":
         return .purple
     default:

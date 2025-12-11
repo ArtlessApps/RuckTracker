@@ -21,7 +21,7 @@ struct AnalyticsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.systemGroupedBackground)
+                AppColors.surface
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -44,7 +44,7 @@ struct AnalyticsView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
             .alert("Delete Workout", isPresented: $showingDeleteAlert) {
@@ -75,15 +75,15 @@ struct AnalyticsView: View {
         VStack(spacing: 20) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             
             Text("No Activity Data Yet")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.primary)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("Start your first rucking workout to see detailed analytics, progress charts, and performance insights here.")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
         }
@@ -113,7 +113,7 @@ struct AnalyticsView: View {
             HStack {
                 Text("Advanced Analytics")
                     .font(.system(size: 22, weight: .bold, design: .default))
-                    .foregroundColor(Color("BackgroundDark"))
+                    .foregroundColor(AppColors.textOnLight)
                 
                 Spacer()
                 
@@ -154,12 +154,12 @@ struct AnalyticsView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "crown.fill")
                                 .font(.title2)
-                                .foregroundColor(Color("PrimaryMain"))
+                                .foregroundColor(AppColors.primary)
                             
                             Text("Premium Analytics")
                                 .font(.headline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.white)
+                                .foregroundColor(AppColors.textPrimary)
                             
                             Text("Detailed charts and insights")
                                 .font(.caption)
@@ -175,7 +175,7 @@ struct AnalyticsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Summary")
                 .font(.system(size: 22, weight: .bold, design: .default))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
             
             // Stats Grid
             LazyVGrid(columns: [
@@ -185,25 +185,25 @@ struct AnalyticsView: View {
                 SummaryStatBox(
                     value: "\(workoutDataManager.totalWorkouts)",
                     label: "Workouts",
-                    color: Color("PrimaryMain")
+                    color: AppColors.primary
                 )
                 
                 SummaryStatBox(
                     value: String(format: "%.1f", totalDistance),
                     label: "mi",
-                    color: Color("PrimaryMain")
+                    color: AppColors.primary
                 )
                 
                 SummaryStatBox(
                     value: "\(totalCalories)",
                     label: "Calories",
-                    color: Color("AccentGreen")
+                    color: AppColors.accentGreen
                 )
                 
                 SummaryStatBox(
                     value: formattedTotalTime,
                     label: "Total Time",
-                    color: Color("AccentTeal")
+                    color: AppColors.accentTeal
                 )
             }
             
@@ -270,7 +270,7 @@ struct SummaryStatBox: View {
             
             Text(label)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, fullWidth ? 16 : 12)
@@ -296,7 +296,7 @@ struct MetricView: View {
             
             Text(label)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
         }
         .frame(minWidth: 140, maxWidth: .infinity)
     }

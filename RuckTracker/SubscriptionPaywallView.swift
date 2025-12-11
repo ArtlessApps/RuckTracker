@@ -24,7 +24,7 @@ struct SubscriptionPaywallView: View {
             ZStack {
                 // Background gradient
                 LinearGradient(
-                    colors: [Color("PrimaryMain").opacity(0.1), .blue.opacity(0.1)],
+                    colors: [AppColors.primary.opacity(0.1), AppColors.primary.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -79,7 +79,7 @@ struct SubscriptionPaywallView: View {
         VStack(spacing: 16) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 48))
-                .foregroundColor(Color("PrimaryMain"))
+                .foregroundColor(AppColors.primary)
                 .symbolEffect(.pulse)
             
             Text("Upgrade to Pro")
@@ -89,7 +89,7 @@ struct SubscriptionPaywallView: View {
             
             Text(contextDescription)
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -168,11 +168,11 @@ struct SubscriptionPaywallView: View {
             VStack(spacing: 12) {
                 Image(systemName: "wifi.exclamationmark")
                     .font(.title2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
                 
                 Text("Unable to load subscription options")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
                 
                 Button("Retry") {
                     Task {
@@ -233,15 +233,15 @@ struct SubscriptionPaywallView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color("PrimaryMain"))
-                    .foregroundColor(.white)
+                    .background(AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
                 }
                 .disabled(storeManager.isLoading)
                 
                 Text("Free for 7 days, then \(selectedProduct.localizedPrice) \(selectedProduct.subscriptionPeriodDescription.lowercased())")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -251,7 +251,7 @@ struct SubscriptionPaywallView: View {
                 }
             }
             .font(.subheadline)
-            .foregroundColor(.blue)
+            .foregroundColor(AppColors.primary)
             .disabled(storeManager.isLoading)
         }
     }
@@ -262,7 +262,7 @@ struct SubscriptionPaywallView: View {
         VStack(spacing: 8) {
             Text("By subscribing, you agree to our Terms of Service and Privacy Policy. Subscriptions auto-renew unless cancelled 24 hours before the next billing period.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
             
             HStack(spacing: 20) {
@@ -270,13 +270,13 @@ struct SubscriptionPaywallView: View {
                     showingTerms = true
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(AppColors.primary)
                 
                 Button("Privacy Policy") {
                     showingPrivacy = true
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundColor(AppColors.primary)
             }
         }
         .padding(.top, 8)
@@ -294,7 +294,7 @@ private struct FeatureRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(Color("PrimaryMain"))
+                .foregroundColor(AppColors.primary)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -304,7 +304,7 @@ private struct FeatureRow: View {
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             Spacer()
@@ -327,10 +327,10 @@ struct SubscriptionOptionCard: View {
                     Text("Save \(discount)")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color("PrimaryMain"))
+                        .foregroundColor(AppColors.primary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color("PrimaryMain").opacity(0.2))
+                        .background(AppColors.primary.opacity(0.2))
                         .cornerRadius(6)
                 } else {
                     // Spacer to maintain consistent height
@@ -343,18 +343,18 @@ struct SubscriptionOptionCard: View {
                     Text(product.subscriptionPeriodDescription)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppColors.textPrimary)
                     
                     Text(product.localizedPrice)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppColors.textPrimary)
                     
                     if product.isYearlySubscription {
                         if let monthlyPrice = calculateMonthlyPrice() {
                             Text("\(monthlyPrice)/month")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                 }
@@ -364,7 +364,7 @@ struct SubscriptionOptionCard: View {
                     Text("Most Popular")
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(Color.blue)
@@ -379,7 +379,7 @@ struct SubscriptionOptionCard: View {
                     .fill(Color.gray.opacity(0.1))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color("PrimaryMain") : Color.clear, lineWidth: 2)
+                            .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
                     )
             )
         }

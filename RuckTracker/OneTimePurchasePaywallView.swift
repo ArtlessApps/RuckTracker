@@ -23,7 +23,7 @@ struct OneTimePurchasePaywallView: View {
             ZStack {
                 // Background gradient
                 LinearGradient(
-                    colors: [Color("PrimaryMain").opacity(0.1), .blue.opacity(0.1)],
+                    colors: [AppColors.primary.opacity(0.1), AppColors.primary.opacity(0.1)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -76,7 +76,7 @@ struct OneTimePurchasePaywallView: View {
         VStack(spacing: 16) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 48))
-                .foregroundColor(Color("PrimaryMain"))
+                .foregroundColor(AppColors.primary)
                 .symbolEffect(.pulse)
             
             Text("Unlock Pro")
@@ -86,7 +86,7 @@ struct OneTimePurchasePaywallView: View {
             
             Text(contextDescription)
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -148,19 +148,19 @@ struct OneTimePurchasePaywallView: View {
                 VStack(spacing: 8) {
                     Text("One-Time Unlock")
                         .font(.subheadline)
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Text(product.displayPrice)
                         .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(Color("PrimaryMain"))
+                        .foregroundColor(AppColors.primary)
                     
                     Text("Pay once, own forever")
                         .font(.subheadline)
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Text("All programs & challenges included")
                         .font(.caption)
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -192,8 +192,8 @@ struct OneTimePurchasePaywallView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(Color("PrimaryMain"))
-            .foregroundColor(.white)
+            .background(AppColors.primary)
+            .foregroundColor(AppColors.textPrimary)
             .cornerRadius(16)
         }
         .disabled(isPurchasing || storeManager.proUnlockProduct == nil)
@@ -229,16 +229,16 @@ struct OneTimePurchasePaywallView: View {
                 showingTerms = true
             }
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(AppColors.textSecondary)
             
             Text("•")
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             
             Button("Privacy Policy") {
                 showingPrivacy = true
             }
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(AppColors.textSecondary)
             
             Spacer()
             
@@ -248,7 +248,7 @@ struct OneTimePurchasePaywallView: View {
                 }
             }
             .font(.caption)
-            .foregroundColor(Color("PrimaryMain"))
+            .foregroundColor(AppColors.primary)
         }
     }
 }
@@ -264,17 +264,17 @@ struct PaywallFeatureRow: View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(Color("PrimaryMain"))
+                .foregroundColor(AppColors.primary)
                 .frame(width: 32)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Text(description)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             

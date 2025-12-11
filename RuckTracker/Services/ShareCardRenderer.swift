@@ -80,7 +80,7 @@ private struct ShareCardView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color("BackgroundDark"), Color("PrimaryMain").opacity(0.8)],
+                colors: [AppColors.background, AppColors.primary.opacity(0.8)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -91,10 +91,10 @@ private struct ShareCardView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(payload.title.uppercased())
                             .font(.system(size: 28, weight: .heavy))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(AppColors.textPrimary)
                         Text(formattedDate)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.75))
+                            .foregroundStyle(AppColors.textPrimary.opacity(0.75))
                     }
                     
                     Spacer()
@@ -102,10 +102,10 @@ private struct ShareCardView: View {
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("RUCK")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(AppColors.textPrimary.opacity(0.8))
                         Text("TRACKER")
                             .font(.system(size: 16, weight: .heavy))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                     }
                 }
                 
@@ -127,10 +127,10 @@ private struct ShareCardView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("JOIN THE RUCK")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(AppColors.textPrimary.opacity(0.7))
                         Text(shareURL.absoluteString)
                             .font(.system(size: 14, weight: .regular, design: .monospaced))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .lineLimit(2)
                             .minimumScaleFactor(0.7)
                     }
@@ -145,11 +145,11 @@ private struct ShareCardView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(AppColors.textPrimary.opacity(0.7))
                 .tracking(1)
             Text(value)
                 .font(.system(size: 36, weight: .heavy))
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
         }
     }
 }

@@ -29,7 +29,7 @@ struct AllWorkoutsView: View {
                                 .font(.headline)
                             Text("Code: \(code). View the latest rucks below or start your own.")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                         .padding(.vertical, 8)
                     }
@@ -40,14 +40,14 @@ struct AllWorkoutsView: View {
                         VStack(spacing: 20) {
                             Image(systemName: "figure.walk.motion")
                                 .font(.system(size: 50))
-                                .foregroundColor(Color("PrimaryMain"))
+                                .foregroundColor(AppColors.primary)
                             
                             Text("No Workouts Yet")
                                 .font(.headline)
                             
                             Text("Start your first rucking workout to see your progress here.")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
@@ -72,7 +72,7 @@ struct AllWorkoutsView: View {
                                         shareTarget = workout
                                         showingShareSheet = true
                                     }
-                                    .tint(.blue)
+                                    .tint(AppColors.primary)
                                 }
                         }
                     }

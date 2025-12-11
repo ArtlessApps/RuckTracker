@@ -20,14 +20,14 @@ struct PhoneOnboardingView: View {
     
     var body: some View {
         ZStack {
-            Color("BackgroundDark").ignoresSafeArea()
+            AppColors.background.ignoresSafeArea()
             
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
                     ForEach(0..<8) { index in
                         Capsule()
-                            .fill(index <= currentStep ? Color("PrimaryMain") : Color.gray.opacity(0.3))
+                            .fill(index <= currentStep ? AppColors.primary : AppColors.accentWarm.opacity(0.3))
                             .frame(height: 4)
                     }
                 }
@@ -146,15 +146,15 @@ struct WelcomeCoachStep: View {
             Spacer()
             Text("MARCH")
                 .font(.system(size: 60, weight: .black))
-                .foregroundColor(Color("PrimaryMain"))
+                .foregroundColor(AppColors.primary)
             Text("POCKET COACH")
                 .font(.headline)
                 .tracking(4)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("Training for longevity, hunting, or a GORUCK event?\n\nWe build the plan. You do the work.")
                 .multilineTextAlignment(.center)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.textSecondary)
                 .padding()
             
             Spacer()
@@ -164,8 +164,8 @@ struct WelcomeCoachStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color("PrimaryMain"))
-                    .foregroundColor(.white)
+                    .background(AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
             .padding()
@@ -180,7 +180,7 @@ struct GoalSelectionStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("What are we training for?")
-                .font(.title).bold().foregroundColor(.white)
+                .font(.title).bold().foregroundColor(AppColors.textPrimary)
             
             ScrollView {
                 VStack(spacing: 12) {
@@ -203,10 +203,10 @@ struct GoalSelectionStep: View {
                             .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.1))
                             .cornerRadius(12)
-                            .foregroundColor(selectedGoal == goal ? Color("PrimaryMain") : .white)
+                    .foregroundColor(selectedGoal == goal ? AppColors.primary : AppColors.textPrimary)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(selectedGoal == goal ? Color("PrimaryMain") : Color.clear, lineWidth: 2)
+                        .stroke(selectedGoal == goal ? AppColors.primary : Color.clear, lineWidth: 2)
                             )
                         }
                     }
@@ -224,7 +224,7 @@ struct ExperienceSelectionStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("What is your baseline?")
-                .font(.title).bold().foregroundColor(.white)
+                .font(.title).bold().foregroundColor(AppColors.textPrimary)
             
             ForEach(ExperienceLevel.allCases, id: \.self) { level in
                 Button(action: {
@@ -240,7 +240,7 @@ struct ExperienceSelectionStep: View {
                     .frame(maxWidth: .infinity)
                     .background(Color.white.opacity(0.1))
                     .cornerRadius(12)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                 }
             }
             Spacer()
@@ -259,11 +259,11 @@ struct TrainingDaysSelectionStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("When do you want to train?")
-                .font(.title).bold().foregroundColor(.white)
+                .font(.title).bold().foregroundColor(AppColors.textPrimary)
             
             Text("Pick the days you can consistently ruck. We'll schedule workouts around your life.")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.textSecondary)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                 ForEach(orderedWeekdays, id: \.self) { day in
@@ -276,12 +276,12 @@ struct TrainingDaysSelectionStep: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(isSelected(day) ? Color("PrimaryMain") : Color.white.opacity(0.1))
-                        .foregroundColor(.white)
+                        .background(isSelected(day) ? AppColors.primary : AppColors.textPrimary.opacity(0.1))
+                        .foregroundColor(AppColors.textPrimary)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(isSelected(day) ? Color("PrimaryMain") : Color.clear, lineWidth: 2)
+                            .stroke(isSelected(day) ? AppColors.primary : Color.clear, lineWidth: 2)
                         )
                     }
                 }
@@ -294,8 +294,8 @@ struct TrainingDaysSelectionStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(selectedDays.isEmpty ? Color.gray.opacity(0.3) : Color("PrimaryMain"))
-                    .foregroundColor(.white)
+                    .background(selectedDays.isEmpty ? AppColors.accentWarm.opacity(0.3) : AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
             .disabled(selectedDays.isEmpty)
@@ -516,9 +516,9 @@ struct PermissionsStep: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("Final Setup")
-                .font(.title).bold().foregroundColor(.white)
+                .font(.title).bold().foregroundColor(AppColors.textPrimary)
             Text("To be your coach, we need to see your data.")
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
             
             // Simplified for brevity
@@ -527,8 +527,8 @@ struct PermissionsStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(healthManager.isAuthorized ? Color.green : Color.white.opacity(0.1))
-                    .foregroundColor(.white)
+                    .background(healthManager.isAuthorized ? AppColors.accentGreen : AppColors.textPrimary.opacity(0.1))
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
             
@@ -537,8 +537,8 @@ struct PermissionsStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
+                    .background(AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
             
@@ -549,8 +549,8 @@ struct PermissionsStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color("PrimaryMain"))
-                    .foregroundColor(.white)
+                    .background(AppColors.primary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
             .padding()

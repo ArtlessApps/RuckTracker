@@ -17,12 +17,12 @@ struct ChallengeEnrollmentView: View {
     // Focus color computed property
     private var focusColor: Color {
         switch challenge.focusArea.color {
-        case "red": return .red
-        case "blue": return .blue
-        case "green": return Color("AccentGreen")
-        case "orange": return Color("PrimaryMain")
-        case "purple": return .purple
-        default: return .blue
+        case "red": return AppColors.accentWarm
+        case "blue": return AppColors.accentTeal
+        case "green": return AppColors.accentGreen
+        case "orange": return AppColors.primary
+        case "purple": return AppColors.primary
+        default: return AppColors.primary
         }
     }
     

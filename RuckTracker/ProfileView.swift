@@ -97,18 +97,18 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Username")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     if let username = userSettings.username, !username.isEmpty {
                         Text(username)
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(AppColors.textPrimary)
                     } else {
                         Text("Tap to set username")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 
@@ -119,7 +119,7 @@ struct ProfileView: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 16))
-                        .foregroundColor(.blue)
+                        .foregroundColor(AppColors.primary)
                 }
             }
             
@@ -130,12 +130,12 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Subscription")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Text(subscriptionStatusText)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 
                 Spacer()
@@ -169,7 +169,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "crown.fill")
-                    .foregroundColor(.yellow)
+                    .foregroundColor(AppColors.primary)
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -181,7 +181,7 @@ struct ProfileView: View {
                         if let expiryDate = premiumManager.subscriptionExpiryDate {
                             Text("Trial ends \(expiryDate, style: .date)")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     } else {
                         Text("Premium Active")
@@ -191,7 +191,7 @@ struct ProfileView: View {
                         if let expiryDate = premiumManager.subscriptionExpiryDate {
                             Text("Renews \(expiryDate, style: .date)")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                 }
@@ -217,7 +217,7 @@ struct ProfileView: View {
                 Text("Manage Subscription")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.blue)
+                    .foregroundColor(AppColors.primary)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(
@@ -241,7 +241,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "person.circle")
-                    .foregroundColor(.blue)
+                    .foregroundColor(AppColors.primary)
                     .font(.title2)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -251,7 +251,7 @@ struct ProfileView: View {
                     
                     Text("Upgrade to Premium for more features")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
                 Spacer()
@@ -263,7 +263,7 @@ struct ProfileView: View {
                 Text("Upgrade to Premium")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(
@@ -306,11 +306,11 @@ private struct FeatureRow: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             
             Text(text)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
         }
     }
 }
@@ -330,7 +330,7 @@ struct UsernameEditorView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Username")
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppColors.textPrimary)
                     
                     TextField("Enter username", text: $username)
                         .textFieldStyle(RoundedBorderTextFieldStyle())

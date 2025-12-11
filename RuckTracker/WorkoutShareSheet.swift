@@ -42,7 +42,7 @@ struct WorkoutShareSheet: View {
                     ProgressView("Building your share card...")
                 } else {
                     Text("Generate a share card with your ruck stats.")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
                 // Toggles
@@ -52,23 +52,23 @@ struct WorkoutShareSheet: View {
                     Toggle("Include app link", isOn: $includeLink)
                     Toggle("Square format (Feed)", isOn: $useSquareFormat)
                 }
-                .toggleStyle(SwitchToggleStyle(tint: Color("PrimaryMain")))
+                .toggleStyle(SwitchToggleStyle(tint: AppColors.primary))
                 .padding()
-                .background(Color(.secondarySystemBackground))
+                .background(AppColors.surfaceAlt)
                 .cornerRadius(12)
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Caption")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
                     TextEditor(text: $customCaption)
                         .frame(height: 80)
                         .padding(8)
-                        .background(Color(.secondarySystemBackground))
+                    .background(AppColors.surfaceAlt)
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                            .stroke(AppColors.accentWarm.opacity(0.15), lineWidth: 1)
                         )
                 }
                 

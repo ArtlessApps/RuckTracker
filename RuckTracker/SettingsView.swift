@@ -46,7 +46,7 @@ struct SettingsView: View {
                             Text("Current:")
                             Spacer()
                             Text(userSettings.bodyWeightDisplayString)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                 }
@@ -62,7 +62,7 @@ struct SettingsView: View {
                             .frame(width: 80)
                         
                         Text(userSettings.preferredWeightUnit.rawValue)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                     
                     if !defaultRuckWeightInput.isEmpty {
@@ -70,7 +70,7 @@ struct SettingsView: View {
                             Text("Current:")
                             Spacer()
                             Text("\(String(format: "%.1f", userSettings.defaultRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                 }
@@ -105,7 +105,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundColor(healthManager.isAuthorized ? Color("AccentGreen") : Color("PrimaryMain"))
+                                .foregroundColor(healthManager.isAuthorized ? AppColors.accentGreen : AppColors.primary)
                                 .font(.system(size: 18))
                             
                             VStack(alignment: .leading, spacing: 2) {
@@ -113,7 +113,7 @@ struct SettingsView: View {
                                     .font(.headline)
                                 Text(healthManager.getHealthKitStatusMessage())
                                     .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(AppColors.textSecondary)
                             }
                             
                             Spacer()
@@ -135,7 +135,7 @@ struct SettingsView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(Color.blue)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(AppColors.textPrimary)
                                     .cornerRadius(10)
                             }
                         }
@@ -165,14 +165,14 @@ struct SettingsView: View {
                         Text("App Version")
                         Spacer()
                         Text("1.0")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                     
                     HStack {
                         Text("Onboarding Status")
                         Spacer()
                         Text(userSettings.hasCompletedOnboarding ? "Completed" : "Pending")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 
@@ -187,7 +187,7 @@ struct SettingsView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                 }

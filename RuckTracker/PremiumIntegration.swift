@@ -81,18 +81,18 @@ struct PremiumFeatureRow: View {
         Button(action: action) {
             HStack {
                 Image(systemName: feature.iconName)
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(feature.displayName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(AppColors.textPrimary)
                     
                     Text(feature.description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                 }
                 
@@ -104,7 +104,7 @@ struct PremiumFeatureRow: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .buttonStyle(.plain)
@@ -168,12 +168,12 @@ struct PremiumAnalyticsSection: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "crown.fill")
                                     .font(.title2)
-                                    .foregroundColor(Color("PrimaryMain"))
+                                    .foregroundColor(AppColors.primary)
                                 
                                 Text("Premium Analytics")
                                     .font(.headline)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(AppColors.textPrimary)
                                 
                                 Text("Detailed charts and insights")
                                     .font(.caption)
@@ -190,7 +190,7 @@ struct AnalyticsEmptyState: View {
         VStack(spacing: 12) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 32))
-                .foregroundColor(Color("PrimaryMain").opacity(0.6))
+                .foregroundColor(AppColors.primary.opacity(0.6))
             
             Text("Advanced Analytics")
                 .font(.headline)
@@ -198,7 +198,7 @@ struct AnalyticsEmptyState: View {
             
             Text("Get detailed insights into your rucking performance with charts, trends, and personalized recommendations.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 20)
@@ -255,7 +255,7 @@ struct WeeklyProgressChart: View {
                 
                 Text("Last 8 weeks")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             if weeklyData.allSatisfy({ $0.distance == 0 }) {
@@ -263,11 +263,11 @@ struct WeeklyProgressChart: View {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.title2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Text("No recent activity")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 .frame(height: 120)
                 .frame(maxWidth: .infinity)
@@ -288,7 +288,7 @@ struct WeeklyProgressChart: View {
                             // Week label
                             Text(weekLabel(for: dataPoint.weekStart))
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                                 .rotationEffect(.degrees(-45))
                                 .frame(width: 20, height: 20)
                         }
@@ -304,7 +304,7 @@ struct WeeklyProgressChart: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("This Week")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                         Text(String(format: "%.1f %@", weeklyData.last?.distance ?? 0, userSettings.preferredDistanceUnit.rawValue))
                             .font(.caption)
                             .fontWeight(.medium)
@@ -315,7 +315,7 @@ struct WeeklyProgressChart: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Avg/Week")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                         Text(String(format: "%.1f %@", weeklyData.map(\.distance).reduce(0, +) / Double(weeklyData.count), userSettings.preferredDistanceUnit.rawValue))
                             .font(.caption)
                             .fontWeight(.medium)
@@ -348,7 +348,7 @@ struct PerformanceInsightsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "lightbulb.fill")
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 
                 Text("Performance Insights")
                     .font(.subheadline)
@@ -371,7 +371,7 @@ struct PerformanceInsightsCard: View {
                 InsightRow(
                     icon: "calendar",
                     text: "3 days since last workout - consider scheduling",
-                    color: Color("PrimaryMain")
+                    color: AppColors.primary
                 )
             }
         }
@@ -396,7 +396,7 @@ struct InsightRow: View {
             
             Text(text)
                 .font(.caption)
-                .foregroundColor(.primary)
+                .foregroundColor(AppColors.textPrimary)
             
             Spacer()
         }
@@ -519,7 +519,7 @@ struct ProgramDetailView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color(.systemBackground)
+                AppColors.surface
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -528,12 +528,12 @@ struct ProgramDetailView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(program.title)
                                 .font(.system(size: 34, weight: .bold, design: .default))
-                                .foregroundColor(.primary)
+                                .foregroundColor(AppColors.textPrimary)
                             
                             if let description = program.description {
                                 Text(description)
                                     .font(.system(size: 16, weight: .regular))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(AppColors.textSecondary)
                                     .lineLimit(3)
                             }
                             
@@ -547,7 +547,7 @@ struct ProgramDetailView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Program Overview")
                                 .font(.system(size: 22, weight: .bold, design: .default))
-                                .foregroundColor(.primary)
+                                .foregroundColor(AppColors.textPrimary)
                             
                             VStack(spacing: 0) {
                                 OverviewItemCard(
@@ -570,7 +570,7 @@ struct ProgramDetailView: View {
                                     icon: "target",
                                     title: "Category",
                                     value: program.category.rawValue.capitalized,
-                                    iconColor: Color("PrimaryMain"),
+                                    iconColor: AppColors.primary,
                                     isFirst: false,
                                     isLast: true
                                 )
@@ -598,10 +598,10 @@ struct ProgramDetailView: View {
                             Text("Enroll in Program")
                                 .font(.system(size: 17, weight: .semibold))
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(Color("PrimaryMain"))
+                        .background(AppColors.primary)
                         .cornerRadius(16)
                         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     }
@@ -609,7 +609,7 @@ struct ProgramDetailView: View {
                     .padding(.bottom, 20)
                     .background(
                         LinearGradient(
-                            colors: [Color(.systemBackground).opacity(0), Color(.systemBackground)],
+                            colors: [AppColors.surface.opacity(0), AppColors.surface],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -624,7 +624,7 @@ struct ProgramDetailView: View {
                     Button("Done") {
                         onDismiss?()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
         }
@@ -651,10 +651,10 @@ struct ProgramDetailView: View {
     
     private var difficultyIconColor: Color {
         switch program.difficulty {
-        case .beginner: return Color("AccentGreen")
+        case .beginner: return AppColors.accentGreen
         case .intermediate: return .yellow
-        case .advanced: return Color("PrimaryMain")
-        case .elite: return Color("PrimaryMedium")
+        case .advanced: return AppColors.primary
+        case .elite: return AppColors.primary
         }
     }
     
@@ -691,10 +691,10 @@ struct DifficultyBadge: View {
     
     private var difficultyColor: Color {
         switch difficulty {
-        case .beginner: return Color("AccentGreen")
+        case .beginner: return AppColors.accentGreen
         case .intermediate: return .yellow
-        case .advanced: return Color("PrimaryMain")
-        case .elite: return Color("PrimaryMedium")
+        case .advanced: return AppColors.primary
+        case .elite: return AppColors.primary
         }
     }
 }
@@ -725,14 +725,14 @@ struct OverviewItemCard: View {
             // Title
             Text(title)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
             
             Spacer()
             
             // Value
             Text(value)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -764,24 +764,24 @@ struct SampleWorkoutCard: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(Color("PrimaryMain").opacity(0.15))
+                    .fill(AppColors.primary.opacity(0.15))
                     .frame(width: 36, height: 36)
                 
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
             }
             
             // Day
             Text(day)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
                 .frame(width: 90, alignment: .leading)
             
             // Workout
             Text(workout)
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
             
             Spacer()
         }
@@ -815,7 +815,7 @@ struct EnrolledSection: View {
             HStack {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
-                    .foregroundColor(.green)
+                    .foregroundColor(AppColors.accentGreen)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Enrolled in this program")  // ← MORE LIKE CHALLENGE
@@ -824,7 +824,7 @@ struct EnrolledSection: View {
                     if let userProgram = userProgram {
                         Text("Week \(userProgram.currentWeek) • \(Int(userProgram.currentWeightLbs)) lbs")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 
@@ -837,7 +837,7 @@ struct EnrolledSection: View {
             }
             .font(.headline)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(AppColors.textPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(
@@ -877,11 +877,11 @@ struct StatView: View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(.blue)
+                .foregroundColor(AppColors.primary)
             
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             
             Text(value)
                 .font(.caption)
@@ -914,7 +914,7 @@ struct ProgramWorkoutsView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color(.systemGroupedBackground)
+                AppColors.surface
                     .ignoresSafeArea()
                 
                 if isLoading {
@@ -933,7 +933,7 @@ struct ProgramWorkoutsView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 
@@ -941,7 +941,7 @@ struct ProgramWorkoutsView: View {
                     Button("Done") {
                         onDismiss?()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
             .sheet(item: $selectedWorkout) { workout in
@@ -1027,11 +1027,11 @@ struct ProgramWorkoutsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(program?.title ?? "Program")
                         .font(.system(size: 28, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                     
                     Text("\(completedCount) of \(workouts.count) workouts")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
                 Spacer()
@@ -1039,19 +1039,19 @@ struct ProgramWorkoutsView: View {
                 // Progress Ring
                 ZStack {
                     Circle()
-                        .stroke(Color("WarmGray").opacity(0.2), lineWidth: 6)
+                        .stroke(AppColors.accentWarm.opacity(0.2), lineWidth: 6)
                         .frame(width: 64, height: 64)
                     
                     Circle()
                         .trim(from: 0, to: progressPercentage)
-                        .stroke(Color("PrimaryMain"), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(AppColors.primary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .frame(width: 64, height: 64)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 0.5), value: progressPercentage)
                     
                     Text("\(Int(progressPercentage * 100))%")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                 }
             }
         }
@@ -1071,7 +1071,7 @@ struct ProgramWorkoutsView: View {
                 .scaleEffect(1.2)
             Text("Loading workouts...")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
         }
     }
     
@@ -1079,15 +1079,15 @@ struct ProgramWorkoutsView: View {
         VStack(spacing: 16) {
             Image(systemName: "figure.walk.circle")
                 .font(.system(size: 60))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
             
             Text("No Workouts Found")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
             
             Text("This program doesn't have any workouts yet.")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
@@ -1189,16 +1189,16 @@ struct WorkoutRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.displayTitle)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(workout.isLocked ? Color("TextSecondary").opacity(0.5) : Color("BackgroundDark"))
+                    .foregroundColor(workout.isLocked ? AppColors.textSecondary.opacity(0.5) : AppColors.textOnLight)
                 
                 Text(workout.displaySubtitle)
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(workout.isLocked ? Color("TextSecondary").opacity(0.4) : Color("TextSecondary"))
+                    .foregroundColor(workout.isLocked ? AppColors.textSecondary.opacity(0.4) : AppColors.textSecondary)
                 
                 if let instructions = workout.workout.instructions?.prefix(50) {
                     Text(String(instructions) + "...")
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(Color("TextSecondary").opacity(0.7))
+                        .foregroundColor(AppColors.textSecondary.opacity(0.7))
                         .lineLimit(1)
                 }
             }
@@ -1209,7 +1209,7 @@ struct WorkoutRowView: View {
             if !workout.isCompleted && !workout.isLocked {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .padding(20)
@@ -1228,13 +1228,13 @@ struct WorkoutRowView: View {
     
     private var statusColor: Color {
         if workout.isCompleted {
-            return Color("AccentGreen")
+            return AppColors.accentGreen
         } else if workout.isLocked {
-            return Color("TextSecondary")
+            return AppColors.textSecondary
         } else if workout.workout.workoutType == .rest {
-            return Color("AccentTeal")
+            return AppColors.accentTeal
         } else {
-            return Color("PrimaryMain")
+            return AppColors.primary
         }
     }
 }
@@ -1310,11 +1310,11 @@ struct WorkoutDetailView: View {
                         VStack(spacing: 8) {
                             Text(workout.displayTitle)
                                 .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(Color("BackgroundDark"))
+                                .foregroundColor(AppColors.textOnLight)
                             
                             Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
                                 .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(Color("TextSecondary"))
+                                .foregroundColor(AppColors.textSecondary)
                         }
                         .padding(.top, 60)
                         .padding(.bottom, 40)
@@ -1345,7 +1345,7 @@ struct WorkoutDetailView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
             .alert("Mark as Complete?", isPresented: $showingCompletionConfirmation) {
@@ -1373,7 +1373,7 @@ struct WorkoutDetailView: View {
                 
                 Text("Set Ruck Weight")
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                 
                 Spacer()
                 
@@ -1382,7 +1382,7 @@ struct WorkoutDetailView: View {
                 } label: {
                     Image(systemName: "info.circle")
                         .font(.system(size: 18))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 .padding(.trailing, 24)
             }
@@ -1393,24 +1393,24 @@ struct WorkoutDetailView: View {
                 .font(.system(size: 100, weight: .medium))
              + Text(" lbs")
                 .font(.system(size: 36, weight: .regular)))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
                 .padding(.bottom, 60)
             
             // Slider
             VStack(spacing: 16) {
                 Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
-                    .tint(Color("BackgroundDark"))
+                    .tint(AppColors.textOnLight)
                 
                 HStack {
                     Text("0 lbs")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     Text("100 lbs")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                 }
             }
             .padding(.horizontal, 40)
@@ -1421,15 +1421,15 @@ struct WorkoutDetailView: View {
         VStack(spacing: 16) {
             Image(systemName: "bed.double.fill")
                 .font(.system(size: 60))
-                .foregroundColor(Color("AccentTeal"))
+                .foregroundColor(AppColors.accentTeal)
             
             Text("Rest Day")
                 .font(.system(size: 32, weight: .semibold))
-                .foregroundColor(Color("BackgroundDark"))
+                .foregroundColor(AppColors.textOnLight)
             
             Text("Recovery is essential")
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
         }
         .padding(.vertical, 40)
     }
@@ -1439,16 +1439,16 @@ struct WorkoutDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "list.bullet.clipboard")
                     .font(.system(size: 14))
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 
                 Text("Instructions")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color("BackgroundDark"))
+                    .foregroundColor(AppColors.textOnLight)
             }
             
             Text(instructions)
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1456,7 +1456,7 @@ struct WorkoutDetailView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color("AccentTeal").opacity(0.08))
+                .fill(AppColors.accentTeal.opacity(0.08))
         )
         .padding(.horizontal, 40)
         .padding(.bottom, 20)
@@ -1475,12 +1475,12 @@ struct WorkoutDetailView: View {
                         Text("Completed")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .foregroundColor(Color("AccentGreen"))
+                    .foregroundColor(AppColors.accentGreen)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color("AccentGreen").opacity(0.1))
+                            .fill(AppColors.accentGreen.opacity(0.1))
                     )
                 }
                 .buttonStyle(.plain)
@@ -1491,12 +1491,12 @@ struct WorkoutDetailView: View {
                 }) {
                     Text("Cancel")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color("BackgroundDark").opacity(0.08))
+                                .fill(AppColors.textOnLight.opacity(0.08))
                         )
                 }
                 .buttonStyle(.plain)
@@ -1511,12 +1511,12 @@ struct WorkoutDetailView: View {
                         Text("Start Workout")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color("PrimaryMain"))
+                            .fill(AppColors.primary)
                     )
                 }
                 .buttonStyle(.plain)
@@ -1587,7 +1587,7 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             Spacer()
             Text(value)
                 .fontWeight(.medium)
@@ -1620,7 +1620,7 @@ struct ProgressStatsSection: View {
                     value: "\(Int(currentWeight)) lbs",
                     subtitle: "ruck weight",
                     icon: "backpack.fill",
-                    color: Color("PrimaryMain")
+                    color: AppColors.primary
                 )
             }
         }
@@ -1651,11 +1651,11 @@ struct ProgressStatCard: View {
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.primary)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Text(subtitle)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .padding()
@@ -1705,7 +1705,7 @@ struct WeeklyWorkoutRow: View {
                 
                 Text(workout)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             Spacer()
@@ -1748,16 +1748,16 @@ struct WeightProgressionRow: View {
             
             Text("\(Int(weight)) lbs")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(AppColors.textSecondary)
             
             Spacer()
             
             if isCompleted {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
+                    .foregroundColor(AppColors.accentGreen)
             } else {
                 Image(systemName: "circle")
-                    .foregroundColor(.gray)
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .padding(.vertical, 4)
@@ -1795,7 +1795,7 @@ struct RecentWorkoutRow: View {
                 
                 Text(workout)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             Spacer()
@@ -1807,7 +1807,7 @@ struct RecentWorkoutRow: View {
                 
                 Text(duration)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .padding(.vertical, 4)
