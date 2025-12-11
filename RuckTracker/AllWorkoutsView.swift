@@ -21,7 +21,11 @@ struct AllWorkoutsView: View {
     
     var body: some View {
         NavigationView {
-            List {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                List {
                 if let code = deepLinkShareCode {
                     Section {
                         VStack(alignment: .leading, spacing: 8) {
@@ -76,6 +80,7 @@ struct AllWorkoutsView: View {
                                 }
                         }
                     }
+                }
                 }
             }
             .navigationTitle("All Workouts")

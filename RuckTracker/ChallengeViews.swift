@@ -325,7 +325,7 @@ struct ChallengeDetailView: View {
                         .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(AppColors.primary)
+                        .background(AppColors.primaryGradient)
                         .cornerRadius(16)
                         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     }

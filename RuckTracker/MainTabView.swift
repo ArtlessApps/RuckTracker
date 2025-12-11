@@ -55,6 +55,7 @@ struct MainTabView: View {
         }
         .accentColor(AppColors.primary)
         .preferredColorScheme(.dark)
+        .background(AppColors.backgroundGradient.ignoresSafeArea())
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }

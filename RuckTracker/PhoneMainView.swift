@@ -105,8 +105,13 @@ struct ImprovedPhoneMainView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                mainContentView
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    mainContentView
+                }
             }
             .navigationBarHidden(true)
         }
@@ -231,7 +236,7 @@ struct ImprovedPhoneMainView: View {
             .padding(.top, 40)
             .padding(.bottom, 20)
         }
-        .background(AppColors.surface)
+        .background(Color.clear)
     }
     
     // MARK: - Coach + Quick Sessions
@@ -256,18 +261,22 @@ struct ImprovedPhoneMainView: View {
                         HStack(spacing: 12) {
                             Label(durationLabel(for: planned), systemImage: "clock")
                                 .font(.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(AppColors.primary)
                             Label(intensityLabel(for: planned), systemImage: "flame.fill")
                                 .font(.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(AppColors.primary)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(AppColors.surfaceAlt)
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                            .fill(AppColors.surface)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -288,10 +297,14 @@ struct ImprovedPhoneMainView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.background)
-                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(AppColors.surface)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
                         )
                 }
                 .buttonStyle(.plain)
@@ -311,14 +324,25 @@ struct ImprovedPhoneMainView: View {
                         showingSessionConfig = true
                     } label: {
                         HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: type.icon)
-                                .font(.title2)
+                            ZStack {
+                                Circle()
+                                    .fill(AppColors.primary.opacity(0.1))
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: type.icon)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(AppColors.primary)
+                            }
+                            
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(type.title)
                                     .font(.headline)
+                                    .foregroundColor(AppColors.textPrimary)
+                                
                                 Text(type.subtitle)
                                     .font(.caption)
                                     .foregroundColor(AppColors.textSecondary)
+                                    .lineLimit(2)
                             }
                             Spacer()
                         }
@@ -326,8 +350,30 @@ struct ImprovedPhoneMainView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(AppColors.surfaceAlt)
-                                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            AppColors.surfaceAlt.opacity(0.6),
+                                            AppColors.surfaceAlt.opacity(0.3)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    AppColors.textPrimary.opacity(0.2),
+                                                    .clear
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
                         )
                     }
                     .buttonStyle(.plain)
@@ -361,9 +407,6 @@ struct ImprovedPhoneMainView: View {
                                     Text(card.title)
                                         .font(.headline)
                                         .foregroundColor(AppColors.textPrimary)
-                                    if card.isPro {
-                                        PremiumBadge(size: .small)
-                                    }
                                 }
                                 Text(card.subtitle)
                                     .font(.caption)
@@ -375,7 +418,12 @@ struct ImprovedPhoneMainView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(AppColors.background)
+                                .fill(AppColors.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
                         )
                     }
                     .buttonStyle(.plain)
@@ -386,10 +434,10 @@ struct ImprovedPhoneMainView: View {
     
     private var programCardData: [ProgramCard] {
         [
-            ProgramCard(title: "Beginner Ruck", subtitle: "4-week habit build", icon: "leaf.fill", isPro: false),
-            ProgramCard(title: "Pro Pathfinder", subtitle: "8-week performance", icon: "figure.strengthtraining.traditional", isPro: true),
-            ProgramCard(title: "Endurance Base", subtitle: "Mileage focus", icon: "map.fill", isPro: false),
-            ProgramCard(title: "Selection Prep", subtitle: "High-load grind", icon: "flame.fill", isPro: true)
+            ProgramCard(title: "Beginner Ruck", subtitle: "4-week habit build", icon: "leaf.fill"),
+            ProgramCard(title: "Pro Pathfinder", subtitle: "8-week performance", icon: "figure.strengthtraining.traditional"),
+            ProgramCard(title: "Endurance Base", subtitle: "Mileage focus", icon: "map.fill"),
+            ProgramCard(title: "Selection Prep", subtitle: "High-load grind", icon: "flame.fill")
         ]
     }
     
@@ -398,7 +446,6 @@ struct ImprovedPhoneMainView: View {
         let title: String
         let subtitle: String
         let icon: String
-        let isPro: Bool
     }
     
     // challengesCard removed; Tribe tab handles challenge access
@@ -421,10 +468,6 @@ struct ImprovedPhoneMainView: View {
                         .foregroundColor(AppColors.textOnLight)
                         
                         Spacer()
-                        
-                        if !premiumManager.isPremiumUser {
-                            PremiumBadge(size: .small)
-                        }
                     }
                     Text("Export your workout data")
                         .font(.subheadline)
@@ -440,7 +483,12 @@ struct ImprovedPhoneMainView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.05))
+                    .fill(AppColors.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
             )
         }
         .buttonStyle(.plain)

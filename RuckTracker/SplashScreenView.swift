@@ -7,14 +7,14 @@ struct SplashScreenView: View {
     var body: some View {
         ZStack {
             // Dark background
-            Color("BackgroundDark")
+            AppColors.background
                 .ignoresSafeArea()
             
             VStack(spacing: 8) {
                 // MARCH text in burnt sienna
                 Text("MARCH")
                     .font(.system(size: 72, weight: .black, design: .default))
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                     .tracking(2)
                 
                 // WALK STRONGER subtitle in white

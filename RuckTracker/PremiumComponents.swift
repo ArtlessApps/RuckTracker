@@ -106,8 +106,6 @@ struct PremiumDataSection: View {
                     .fontWeight(.semibold)
                 
                 Spacer()
-                
-                PremiumBadge(size: .small)
             }
             
             PremiumFeatureCard(

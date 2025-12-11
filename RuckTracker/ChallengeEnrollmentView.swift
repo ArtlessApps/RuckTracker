@@ -30,8 +30,12 @@ struct ChallengeEnrollmentView: View {
     
     var body: some View {
         NavigationView {
-            GeometryReader { geometry in
-                ScrollView {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                GeometryReader { geometry in
+                    ScrollView {
                     VStack(spacing: 24) {
                         // Challenge Info Header
                         challengeHeaderView
@@ -49,6 +53,7 @@ struct ChallengeEnrollmentView: View {
                     }
                     .padding()
                     .frame(minHeight: geometry.size.height)
+                    }
                 }
             }
             .navigationTitle("Enroll in Challenge")

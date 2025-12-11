@@ -98,10 +98,6 @@ struct PremiumFeatureRow: View {
                 
                 Spacer()
                 
-                if premiumManager.requiresPremium(for: feature) {
-                    PremiumBadge(size: .small)
-                }
-                
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(AppColors.textSecondary)
@@ -127,7 +123,6 @@ struct PremiumAnalyticsSection: View {
                 Spacer()
                 
                 if !premiumManager.isPremiumUser {
-                    PremiumBadge(size: .small)
                 }
             }
             
@@ -519,7 +514,7 @@ struct ProgramDetailView: View {
         NavigationView {
             ZStack {
                 // Background
-                AppColors.surface
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -601,7 +596,7 @@ struct ProgramDetailView: View {
                         .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(AppColors.primary)
+                        .background(AppColors.primaryGradient)
                         .cornerRadius(16)
                         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     }
@@ -914,7 +909,7 @@ struct ProgramWorkoutsView: View {
         NavigationView {
             ZStack {
                 // Background
-                AppColors.surface
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 if isLoading {
@@ -1300,8 +1295,8 @@ struct WorkoutDetailView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Clean white background
-                Color.white
+                // Background gradient
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1516,7 +1511,7 @@ struct WorkoutDetailView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(AppColors.primary)
+                            .fill(AppColors.primaryGradient)
                     )
                 }
                 .buttonStyle(.plain)

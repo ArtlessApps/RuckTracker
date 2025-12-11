@@ -30,7 +30,11 @@ struct WorkoutShareSheet: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 20) {
                 if let image = generatedImage {
                     Image(uiImage: image)
                         .resizable()
@@ -160,6 +164,7 @@ struct WorkoutShareSheet: View {
                                 self.toastMessage = nil
                             }
                         }
+                    }
                 }
             }
         }

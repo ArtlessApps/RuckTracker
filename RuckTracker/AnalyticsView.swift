@@ -21,7 +21,7 @@ struct AnalyticsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.surface
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -117,14 +117,6 @@ struct AnalyticsView: View {
                 
                 Spacer()
                 
-                if !premiumManager.isPremiumUser {
-                    Button(action: {
-                        premiumManager.showPaywall(context: .featureUpsell)
-                    }) {
-                        PremiumBadge(size: .small)
-                    }
-                    .buttonStyle(.plain)
-                }
             }
             
             // Use existing WeeklyProgressChart and PerformanceInsightsCard

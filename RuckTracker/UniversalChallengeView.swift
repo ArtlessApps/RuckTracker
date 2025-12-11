@@ -21,7 +21,7 @@ struct UniversalChallengeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.background.ignoresSafeArea()
+                AppColors.backgroundGradient.ignoresSafeArea()
                 
                 if challengeManager.isLoading {
                     loadingView
@@ -229,7 +229,7 @@ struct UniversalChallengeView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.primary)
+                            .fill(AppColors.primaryGradient)
                     )
             }
             .buttonStyle(.plain)
@@ -592,7 +592,7 @@ struct ChallengeWorkoutDetailView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(AppColors.primary)
+                            .fill(AppColors.primaryGradient)
                     )
                 }
                 .buttonStyle(.plain)

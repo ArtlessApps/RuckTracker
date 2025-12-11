@@ -19,7 +19,11 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                ScrollView {
                 VStack(spacing: 24) {
                     // Simplified Profile Info
                     profileHeaderSection
@@ -34,6 +38,7 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
+                }
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)

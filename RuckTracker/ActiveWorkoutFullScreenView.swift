@@ -8,8 +8,8 @@ struct ActiveWorkoutFullScreenView: View {
     
     var body: some View {
         ZStack {
-            // Clean white background
-            Color.white
+            // Background gradient
+            AppColors.backgroundGradient
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

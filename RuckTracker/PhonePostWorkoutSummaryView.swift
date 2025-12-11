@@ -38,8 +38,8 @@ struct PhonePostWorkoutSummaryView: View {
     
     var body: some View {
         ZStack {
-            // Clean white background
-            AppColors.surface
+            // Background gradient
+            AppColors.backgroundGradient
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -148,7 +148,7 @@ struct PhonePostWorkoutSummaryView: View {
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.primary)
+                                .fill(AppColors.primaryGradient)
                             )
                     }
                     .buttonStyle(.plain)

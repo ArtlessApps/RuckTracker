@@ -20,7 +20,7 @@ struct PhoneOnboardingView: View {
     
     var body: some View {
         ZStack {
-            AppColors.background.ignoresSafeArea()
+            AppColors.backgroundGradient.ignoresSafeArea()
             
             VStack {
                 // Progress Bar
@@ -164,7 +164,7 @@ struct WelcomeCoachStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(AppColors.primary)
+                    .background(AppColors.primaryGradient)
                     .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
@@ -537,7 +537,7 @@ struct PermissionsStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(AppColors.primary)
+                    .background(AppColors.primaryGradient)
                     .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }
@@ -549,7 +549,7 @@ struct PermissionsStep: View {
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(AppColors.primary)
+                    .background(AppColors.primaryGradient)
                     .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
             }

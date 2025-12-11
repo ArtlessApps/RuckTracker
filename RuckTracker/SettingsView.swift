@@ -21,7 +21,11 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                Form {
                 // MARK: - Body Weight Section
                 Section(header: Text("Body Weight"), footer: Text("Used for accurate calorie calculations")) {
                     HStack {
@@ -190,6 +194,7 @@ struct SettingsView: View {
                                 .foregroundColor(AppColors.textSecondary)
                         }
                     }
+                }
                 }
             }
             .navigationTitle("Settings")

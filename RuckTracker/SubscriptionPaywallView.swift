@@ -23,12 +23,8 @@ struct SubscriptionPaywallView: View {
         NavigationView {
             ZStack {
                 // Background gradient
-                LinearGradient(
-                    colors: [AppColors.primary.opacity(0.1), AppColors.primary.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 32) {
@@ -233,7 +229,7 @@ struct SubscriptionPaywallView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(AppColors.primary)
+                    .background(AppColors.primaryGradient)
                     .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(12)
                 }
