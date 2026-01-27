@@ -336,7 +336,7 @@ struct ClubFeedView: View {
             }
             .padding()
         }
-        .background(AppColors.background)
+        .background(AppColors.backgroundGradient)
     }
 }
 
@@ -506,7 +506,7 @@ struct ClubLeaderboardView: View {
             }
             .padding()
         }
-        .background(AppColors.background)
+        .background(AppColors.backgroundGradient)
     }
 }
 
@@ -664,7 +664,7 @@ struct CreateClubView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.background
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 VStack(spacing: 24) {
@@ -762,7 +762,7 @@ struct AuthenticationView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppColors.background
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
                 VStack(spacing: 24) {

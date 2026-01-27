@@ -20,7 +20,7 @@ struct WorkoutView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: workoutManager.isActive ? 10 : 14, weight: .medium))
-                        .foregroundColor(workoutManager.isActive ? .gray : .orange)
+                        .foregroundColor(workoutManager.isActive ? AppColors.textSecondary : AppColors.primary)
                 }
                 .buttonStyle(PlainButtonStyle())
                 
@@ -30,10 +30,10 @@ struct WorkoutView: View {
                 HStack(spacing: 2) {
                     Text("\(String(format: "%.0f", workoutManager.ruckWeight))")
                         .font(.system(size: 18, weight: .medium, design: .default))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                     Text(userSettings.preferredWeightUnit.rawValue.uppercased())
                         .font(.system(size: 10, weight: .regular))
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
                 Spacer()
@@ -74,15 +74,15 @@ struct WorkoutView: View {
                     VStack(spacing: 4) {
                         Text("\(Int(workoutManager.calories))")
                             .font(.system(size: 20, weight: .medium, design: .default))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                         Text("CAL")
                             .font(.system(size: 10, weight: .regular))
-                            .foregroundColor(.gray)
+                            .foregroundColor(AppColors.textSecondary)
                             .tracking(1)
                         if workoutManager.ruckWeight > 0 {
                             Text("LOADED")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.orange)
+                                .foregroundColor(AppColors.accentWarm)
                                 .padding(.top, 2)
                         }
                     }
@@ -92,7 +92,7 @@ struct WorkoutView: View {
                     // Center Hiker Icon
                     Image(systemName: "figure.hiking")
                         .font(.system(size: 44, weight: .regular))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .symbolEffect(.pulse, isActive: workoutManager.isActive)
                     
                     Spacer()
@@ -104,10 +104,10 @@ struct WorkoutView: View {
                             workoutManager.distance / userSettings.preferredDistanceUnit.conversionToMiles
                         Text(String(format: "%.2f", displayDistance))
                             .font(.system(size: 20, weight: .medium, design: .default))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                         Text(userSettings.preferredDistanceUnit.rawValue.uppercased())
                             .font(.system(size: 10, weight: .regular))
-                            .foregroundColor(.gray)
+                            .foregroundColor(AppColors.textSecondary)
                             .tracking(1)
                     }
                 }
@@ -117,32 +117,32 @@ struct WorkoutView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.successGreen)
                     Text("\(Int(workoutManager.elevationGain))")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                     Text("FT")
                         .font(.system(size: 10, weight: .regular))
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
                 // Timer Display (from HKLiveWorkoutBuilder.elapsedTime)
                 HStack(spacing: 4) {
                     Text(String(format: "%02d", workoutManager.hours))
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                     Text(":")
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.textSecondary)
                     Text(String(format: "%02d", workoutManager.minutes))
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                     Text(":")
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.textSecondary)
                     Text(String(format: "%02d", workoutManager.seconds))
                         .font(.system(size: 28, weight: .ultraLight, design: .default))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 .tracking(2)
             }
@@ -165,12 +165,12 @@ struct WorkoutView: View {
                 }) {
                     ZStack {
                         Circle()
-                            .fill(workoutManager.isActive ? Color.orange : Color.green)
+                            .fill(workoutManager.isActive ? AppColors.pauseOrange : AppColors.successGreen)
                             .frame(width: 44, height: 44)
                         
                         Image(systemName: workoutManager.isActive ? "pause.fill" : "play.fill")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .offset(x: workoutManager.isActive ? 0 : 1.5)
                     }
                 }
@@ -183,12 +183,12 @@ struct WorkoutView: View {
                     }) {
                         ZStack {
                             Circle()
-                                .fill(Color.red)
+                                .fill(AppColors.destructiveRed)
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "stop.fill")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
+                                .foregroundColor(AppColors.textPrimary)
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -199,7 +199,7 @@ struct WorkoutView: View {
             .animation(.easeInOut(duration: 0.3), value: workoutManager.isActive)
             .animation(.easeInOut(duration: 0.3), value: workoutManager.isPaused)
         }
-        .background(Color.black)
+        .background(AppColors.background)
         .focusable(true)
         .digitalCrownRotation(
             $workoutManager.ruckWeight,

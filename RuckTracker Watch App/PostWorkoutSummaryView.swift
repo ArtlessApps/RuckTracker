@@ -11,11 +11,11 @@ struct PostWorkoutSummaryView: View {
                 VStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 40, weight: .medium))
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.successGreen)
                     
                     Text("Workout Complete!")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 8)
@@ -27,7 +27,7 @@ struct PostWorkoutSummaryView: View {
                         icon: "clock.fill",
                         label: "Duration",
                         value: formattedTime(workoutManager.finalElapsedTime),
-                        color: .blue
+                        color: AppColors.accentTeal
                     )
                     
                     // Distance
@@ -40,7 +40,7 @@ struct PostWorkoutSummaryView: View {
                                 workoutManager.finalDistance / userSettings.preferredDistanceUnit.conversionToMiles
                             return String(format: "%.2f %@", displayDistance, userSettings.preferredDistanceUnit.rawValue)
                         }(),
-                        color: .green
+                        color: AppColors.successGreen
                     )
                     
                     // Calories
@@ -48,7 +48,7 @@ struct PostWorkoutSummaryView: View {
                         icon: "flame.fill",
                         label: "Calories",
                         value: "\(Int(workoutManager.finalCalories))",
-                        color: .orange
+                        color: AppColors.accentWarm
                     )
                     
                     // Ruck Weight
@@ -57,7 +57,7 @@ struct PostWorkoutSummaryView: View {
                             icon: "figure.hiking",
                             label: "Ruck Weight",
                             value: "\(String(format: "%.0f", workoutManager.finalRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)",
-                            color: .yellow
+                            color: AppColors.primary
                         )
                     }
                     
@@ -67,7 +67,7 @@ struct PostWorkoutSummaryView: View {
                             icon: "arrow.up.right",
                             label: "Elevation",
                             value: "\(Int(workoutManager.finalElevationGain)) ft",
-                            color: .green
+                            color: AppColors.successGreen
                         )
                     }
                     
@@ -81,7 +81,7 @@ struct PostWorkoutSummaryView: View {
                             icon: "speedometer",
                             label: "Avg Pace",
                             value: String(format: "%d:%02d /%@", minutes, seconds, userSettings.preferredDistanceUnit.rawValue),
-                            color: .purple
+                            color: AppColors.accentTealLight
                         )
                     }
                 }
@@ -94,11 +94,11 @@ struct PostWorkoutSummaryView: View {
                     HStack {
                         Text("Done")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(AppColors.primary)
                     .cornerRadius(25)
                 }
                 .padding(.horizontal, 16)
@@ -106,7 +106,7 @@ struct PostWorkoutSummaryView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .background(Color.black)
+        .background(AppColors.background)
         .navigationBarHidden(true)
     }
     
@@ -141,7 +141,7 @@ struct StatRow: View {
             // Label
             Text(label)
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.textSecondary)
             
             Spacer()
             
@@ -149,11 +149,11 @@ struct StatRow: View {
             Text(value)
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 12)
-        .background(Color.gray.opacity(0.1))
+        .background(AppColors.surface)
         .cornerRadius(8)
     }
 }

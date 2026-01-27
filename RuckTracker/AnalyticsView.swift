@@ -94,7 +94,7 @@ struct AnalyticsView: View {
             HStack {
                 Text("Advanced Analytics")
                     .font(.system(size: 22, weight: .bold, design: .default))
-                    .foregroundColor(AppColors.textOnLight)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Spacer()
                 
@@ -113,8 +113,8 @@ struct AnalyticsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: AppColors.shadowBlackSubtle, radius: 8, x: 0, y: 2)
+                .fill(AppColors.surface)
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
         )
     }
     
@@ -148,7 +148,7 @@ struct AnalyticsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Summary")
                 .font(.system(size: 22, weight: .bold, design: .default))
-                .foregroundColor(AppColors.textOnLight)
+                .foregroundColor(AppColors.textPrimary)
             
             // Stats Grid
             LazyVGrid(columns: [
@@ -195,8 +195,8 @@ struct AnalyticsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: AppColors.shadowBlackSubtle, radius: 8, x: 0, y: 2)
+                .fill(AppColors.surface)
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
         )
     }
     

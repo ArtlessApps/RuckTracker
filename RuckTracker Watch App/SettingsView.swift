@@ -63,7 +63,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundColor(healthManager.isAuthorized ? .green : .orange)
+                                .foregroundColor(healthManager.isAuthorized ? AppColors.successGreen : AppColors.accentWarm)
                                 .font(.system(size: 14))
                             
                             Text(healthManager.getHealthKitStatusMessage())
@@ -78,7 +78,7 @@ struct SettingsView: View {
                                 healthManager.requestAuthorization()
                             }
                             .font(.caption2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppColors.primary)
                         }
                         
                         // Show error display if there are issues
@@ -92,7 +92,7 @@ struct SettingsView: View {
                     Button("Reset to Defaults") {
                         showingResetAlert = true
                     }
-                    .foregroundColor(.red)
+                    .foregroundColor(AppColors.destructiveRed)
                 }
             }
             .navigationTitle("Settings")
@@ -147,8 +147,8 @@ struct BodyWeightPickerView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(Color.gray)
-                .foregroundColor(.white)
+                .background(AppColors.surface)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
                 
@@ -158,8 +158,8 @@ struct BodyWeightPickerView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(Color.blue)
-                .foregroundColor(.white)
+                .background(AppColors.primary)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
             }
@@ -207,8 +207,8 @@ struct RuckWeightPickerView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(Color.gray)
-                .foregroundColor(.white)
+                .background(AppColors.surface)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
                 
@@ -218,8 +218,8 @@ struct RuckWeightPickerView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(Color.blue)
-                .foregroundColor(.white)
+                .background(AppColors.primary)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
             }
@@ -263,7 +263,7 @@ struct UnitsSettingsView: View {
                             Spacer()
                             if userSettings.preferredWeightUnit == unit {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(AppColors.primary)
                             }
                         }
                     }
@@ -282,7 +282,7 @@ struct UnitsSettingsView: View {
                             Spacer()
                             if userSettings.preferredDistanceUnit == unit {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(AppColors.primary)
                             }
                         }
                     }

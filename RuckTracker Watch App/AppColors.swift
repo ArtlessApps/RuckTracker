@@ -32,7 +32,7 @@ enum AppColors {
     
     /// PRIMARY BRAND COLOR - Electric Green
     /// This is your main brand color for MARCH logo, CTAs, active states
-    static let primary = Color(hex: "00E08F") 
+    static let primary = Color(hex: "00C896") 
     
     
     // MARK: - Accent Colors
@@ -91,7 +91,7 @@ enum AppColors {
     /// USAGE: .background(AppColors.primaryGradient)
     static let primaryGradient = LinearGradient(
         gradient: Gradient(colors: [
-            Color(hex: "00E08F"),      // Electric Green
+            Color(hex: "00C896"),      // Electric Green
             Color(hex: "00C4B4")       // Teal
         ]),
         startPoint: .leading,

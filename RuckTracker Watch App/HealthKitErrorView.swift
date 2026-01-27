@@ -92,7 +92,7 @@ struct HealthKitErrorView: View {
                         if isPermissionError(currentError) {
                             Text("Check iPhone Health app")
                                 .font(.caption2)
-                                .foregroundColor(.blue)
+                                .foregroundColor(AppColors.primary)
                         }
                     }
                 }
@@ -166,13 +166,13 @@ struct WatchHealthKitStatusBanner: View {
                     VStack(spacing: 4) {
                         HStack(spacing: 6) {
                             Image(systemName: "heart.circle")
-                                .foregroundColor(.orange)
+                                .foregroundColor(AppColors.accentWarm)
                                 .font(.system(size: 14))
                             
                             Text("HealthKit Setup")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.orange)
+                                .foregroundColor(AppColors.accentWarm)
                             
                             Spacer()
                         }
@@ -187,7 +187,7 @@ struct WatchHealthKitStatusBanner: View {
                             if healthManager.errorManager.currentError != nil {
                                 Text(healthManager.getRecoveryInstructions())
                                     .font(.caption2)
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(AppColors.accentWarm)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.top, 4)
                             }
@@ -196,10 +196,10 @@ struct WatchHealthKitStatusBanner: View {
                     .padding(isMinimal ? 6 : 8)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.orange.opacity(0.1))
+                            .fill(AppColors.accentWarm.opacity(0.1))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.orange.opacity(0.4), lineWidth: 0.5)
+                                    .stroke(AppColors.accentWarm.opacity(0.4), lineWidth: 0.5)
                             )
                     )
                     .onTapGesture {
@@ -236,7 +236,7 @@ struct WorkoutErrorView: View {
                     }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.caption2)
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppColors.primary)
                     }
                 }
             }
