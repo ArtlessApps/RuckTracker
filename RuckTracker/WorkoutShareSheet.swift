@@ -7,8 +7,20 @@ struct WorkoutShareData {
     let durationSeconds: TimeInterval
     let calories: Int
     let ruckWeight: Int
+    let elevationGain: Int
     let date: Date
     let workoutURI: URL?
+    
+    init(title: String, distanceMiles: Double, durationSeconds: TimeInterval, calories: Int, ruckWeight: Int, elevationGain: Int = 0, date: Date, workoutURI: URL?) {
+        self.title = title
+        self.distanceMiles = distanceMiles
+        self.durationSeconds = durationSeconds
+        self.calories = calories
+        self.ruckWeight = ruckWeight
+        self.elevationGain = elevationGain
+        self.date = date
+        self.workoutURI = workoutURI
+    }
 }
 
 /// Share experience shown after completing a workout or from history.
@@ -17,6 +29,7 @@ struct WorkoutShareSheet: View {
     
     @State private var includeCalories = true
     @State private var includeWeight = true
+    @State private var includeElevation = true
     @State private var includeLink = true
     @State private var useSquareFormat = false
     @State private var generatedImage: UIImage?
@@ -53,6 +66,7 @@ struct WorkoutShareSheet: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Toggle("Show calories", isOn: $includeCalories)
                     Toggle("Show ruck weight", isOn: $includeWeight)
+                    Toggle("Show elevation", isOn: $includeElevation)
                     Toggle("Include app link", isOn: $includeLink)
                     Toggle("Square format (Feed)", isOn: $useSquareFormat)
                 }
@@ -139,6 +153,10 @@ struct WorkoutShareSheet: View {
                 Task { await generateCard() }
                 customCaption = shareCaption(channel: "copy")
             }
+            .onChange(of: includeElevation) { _, _ in
+                Task { await generateCard() }
+                customCaption = shareCaption(channel: "copy")
+            }
             .onChange(of: includeLink) { _, _ in
                 Task { await generateCard() }
                 customCaption = shareCaption(channel: "copy")
@@ -180,9 +198,11 @@ struct WorkoutShareSheet: View {
             durationSeconds: data.durationSeconds,
             calories: data.calories,
             ruckWeight: data.ruckWeight,
+            elevationGain: data.elevationGain,
             date: data.date,
             showCalories: includeCalories,
             showWeight: includeWeight,
+            showElevation: includeElevation,
             shareURL: includeLink ? shareURL(channel: "preview") : nil
         )
         let format: ShareCardFormat = useSquareFormat ? .square : .story
@@ -207,6 +227,9 @@ struct WorkoutShareSheet: View {
         parts.append("Crushed a \(String(format: "%.2f", data.distanceMiles)) mi ruck in \(formattedTime())")
         if includeWeight {
             parts.append("\(Int(data.ruckWeight)) lbs")
+        }
+        if includeElevation && data.elevationGain > 0 {
+            parts.append("↑\(data.elevationGain) ft")
         }
         if includeCalories {
             parts.append("\(data.calories) kcal")

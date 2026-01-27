@@ -288,6 +288,7 @@ class CommunityService: ObservableObject {
         duration: Int,
         weight: Double,
         calories: Int,
+        elevationGain: Double = 0,
         caption: String? = nil,
         workoutId: UUID
     ) async throws {
@@ -303,7 +304,8 @@ class CommunityService: ObservableObject {
             "distance_miles": .double(distance),
             "duration_minutes": .double(Double(duration)),
             "weight_lbs": .double(weight),
-            "calories": .double(Double(calories))
+            "calories": .double(Double(calories)),
+            "elevation_gain": .double(elevationGain)
         ]
         
         if let caption = caption {
@@ -316,7 +318,7 @@ class CommunityService: ObservableObject {
             .execute()
         
         // Also update leaderboard
-        try await updateLeaderboard(clubId: clubId, distance: distance, weight: weight)
+        try await updateLeaderboard(clubId: clubId, distance: distance, weight: weight, elevation: elevationGain)
         
         print("✅ Posted workout to club feed")
     }
@@ -347,6 +349,7 @@ class CommunityService: ObservableObject {
                     durationMinutes: item.durationMinutes,
                     weightLbs: item.weightLbs,
                     calories: item.calories,
+                    elevationGain: item.elevationGain,
                     likeCount: item.likeCount,
                     commentCount: item.commentCount,
                     createdAt: item.createdAt,
@@ -410,6 +413,7 @@ class CommunityService: ObservableObject {
         let p_user_id: UUID
         let p_distance: Double
         let p_weight: Double
+        let p_elevation: Double
     }
     
     private struct GetWeeklyLeaderboardParams: Encodable {
@@ -422,7 +426,7 @@ class CommunityService: ObservableObject {
     }
     
     /// Update user's weekly leaderboard entry after a workout
-    private func updateLeaderboard(clubId: UUID, distance: Double, weight: Double) async throws {
+    private func updateLeaderboard(clubId: UUID, distance: Double, weight: Double, elevation: Double = 0) async throws {
         guard let userId = supabase.auth.currentUser?.id else { return }
         
         // Call the database function
@@ -433,7 +437,8 @@ class CommunityService: ObservableObject {
                     p_club_id: clubId,
                     p_user_id: userId,
                     p_distance: distance,
-                    p_weight: weight
+                    p_weight: weight,
+                    p_elevation: elevation
                 )
             )
             .execute()
@@ -561,6 +566,7 @@ struct ClubPost: Codable, Identifiable {
     let durationMinutes: Int?
     let weightLbs: Double?
     let calories: Int?
+    let elevationGain: Double?
     let likeCount: Int
     let commentCount: Int
     let createdAt: Date
@@ -579,6 +585,7 @@ struct ClubPost: Codable, Identifiable {
         case durationMinutes = "duration_minutes"
         case weightLbs = "weight_lbs"
         case calories
+        case elevationGain = "elevation_gain"
         case likeCount = "like_count"
         case commentCount = "comment_count"
         case createdAt = "created_at"
@@ -598,6 +605,7 @@ struct ClubFeedItem: Codable {
     let durationMinutes: Int?
     let weightLbs: Double?
     let calories: Int?
+    let elevationGain: Double?
     let likeCount: Int
     let commentCount: Int
     let createdAt: Date
@@ -617,6 +625,7 @@ struct ClubFeedItem: Codable {
         case durationMinutes = "duration_minutes"
         case weightLbs = "weight_lbs"
         case calories
+        case elevationGain = "elevation_gain"
         case likeCount = "like_count"
         case commentCount = "comment_count"
         case createdAt = "created_at"
@@ -635,6 +644,7 @@ struct LeaderboardEntry: Codable, Identifiable {
     let displayName: String
     let avatarUrl: String?
     let totalDistance: Double
+    let totalElevation: Double
     let totalWorkouts: Int
     
     enum CodingKeys: String, CodingKey {
@@ -644,6 +654,7 @@ struct LeaderboardEntry: Codable, Identifiable {
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case totalDistance = "total_distance"
+        case totalElevation = "total_elevation"
         case totalWorkouts = "total_workouts"
     }
 }

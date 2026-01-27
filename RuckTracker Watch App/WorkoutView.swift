@@ -67,7 +67,7 @@ struct WorkoutView: View {
             Spacer()
             
             // Main Content Area
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 // Stats Row
                 HStack {
                     // Calories (Apple's base + our ruck weight adjustment)
@@ -91,7 +91,7 @@ struct WorkoutView: View {
                     
                     // Center Hiker Icon
                     Image(systemName: "figure.hiking")
-                        .font(.system(size: 48, weight: .regular))
+                        .font(.system(size: 44, weight: .regular))
                         .foregroundColor(.white)
                         .symbolEffect(.pulse, isActive: workoutManager.isActive)
                     
@@ -112,6 +112,19 @@ struct WorkoutView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+                
+                // Elevation Row (from barometric altimeter / flights climbed)
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.green)
+                    Text("\(Int(workoutManager.elevationGain))")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                    Text("FT")
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundColor(.gray)
+                }
                 
                 // Timer Display (from HKLiveWorkoutBuilder.elapsedTime)
                 HStack(spacing: 4) {

@@ -10,6 +10,7 @@ import Combine
 import SwiftUI
 import HealthKit
 import CoreData
+import CoreMotion
 
 // MARK: - Watch App Types
 // TerrainType enum removed for MVP - using flat terrain only
@@ -26,7 +27,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
-    @Published var elevationGain: Double = 0 // Total elevation gain in feet (from flights climbed)
+    @Published var elevationGain: Double = 0 // Total elevation gain in feet (from barometric altimeter)
     @Published var errorManager = HealthKitErrorManager()
     
     // Final workout stats for post-workout summary
@@ -60,6 +61,12 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     private var manualStartTime: Date?        // When user pressed start (immediate)
     private var healthKitStartTime: Date?     // When HealthKit actually started (delayed)
     private var isHealthKitReady = false      // Track if HealthKit is ready
+    
+    // Barometric altimeter for precise elevation tracking
+    private let altimeter = CMAltimeter()
+    private var lastAltitude: Double?                    // Last recorded altitude (meters)
+    private var totalElevationGainMeters: Double = 0     // Cumulative elevation gain
+    private let altitudeFilterThreshold: Double = 0.5    // Minimum change to count (meters) - more sensitive than iPhone
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -165,6 +172,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         // Start UI timer immediately for instant feedback
         startElapsedTimeTracking()
         
+        // Start barometric altimeter for precise elevation tracking
+        startAltimeterTracking()
+        
         // 2. BACKGROUND HealthKit setup (async - can take 2-3 seconds)
         DispatchQueue.global(qos: .userInitiated).async {
             self.startWorkoutSession()
@@ -209,6 +219,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     func endWorkout() {
         print("🏁 Ending workout...")
+        
+        // Stop altimeter tracking
+        stopAltimeterTracking()
         
         // Use fallback calorie calculation if needed before saving final stats
         updateCaloriesWithFallback()
@@ -303,6 +316,54 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             session?.end()
             resetWorkout()
         }
+    }
+    
+    // MARK: - Barometric Altimeter for Elevation
+    private func startAltimeterTracking() {
+        guard CMAltimeter.isRelativeAltitudeAvailable() else {
+            print("⚠️ Barometric altimeter not available on this device")
+            return
+        }
+        
+        // Reset elevation tracking
+        lastAltitude = nil
+        totalElevationGainMeters = 0
+        elevationGain = 0
+        
+        altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, error in
+            guard let self = self, let data = data else {
+                if let error = error {
+                    print("❌ Altimeter error: \(error.localizedDescription)")
+                }
+                return
+            }
+            
+            // Only track when workout is active and not paused
+            guard self.isActive && !self.isPaused else { return }
+            
+            let currentAltitude = data.relativeAltitude.doubleValue // meters from start
+            
+            if let previousAltitude = self.lastAltitude {
+                let altitudeChange = currentAltitude - previousAltitude
+                
+                // Only count uphill movement above threshold
+                if altitudeChange > self.altitudeFilterThreshold {
+                    self.totalElevationGainMeters += altitudeChange
+                    // Convert to feet for display
+                    self.elevationGain = self.totalElevationGainMeters * 3.28084
+                    print("⛰️ Elevation: +\(String(format: "%.1f", altitudeChange))m, Total: \(Int(self.elevationGain)) ft")
+                }
+            }
+            
+            self.lastAltitude = currentAltitude
+        }
+        
+        print("✅ Started barometric altimeter for elevation tracking")
+    }
+    
+    private func stopAltimeterTracking() {
+        altimeter.stopRelativeAltitudeUpdates()
+        print("🛑 Stopped altimeter tracking. Final elevation: \(Int(elevationGain)) ft")
     }
     
     // MARK: - HKLiveWorkoutBuilder Integration
@@ -495,13 +556,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                         print("🔥 Adjusted calories: \(Int(self.calories)) (Apple: \(Int(appleCalories)))")
                     }
                     
-                case HKQuantityType.quantityType(forIdentifier: .flightsClimbed):
-                    // Flights climbed - each flight is approximately 10 feet / 3 meters
-                    if let flights = statistics?.sumQuantity()?.doubleValue(for: .count()) {
-                        // Convert flights to feet (1 flight ≈ 10 feet)
-                        self.elevationGain = flights * 10.0
-                        print("⛰️ Elevation gain: \(Int(self.elevationGain)) ft (\(Int(flights)) flights)")
-                    }
+                // Note: Elevation is now tracked via CMAltimeter (barometric altimeter)
+                // for more precise readings than flightsClimbed
                     
                 default:
                     break
@@ -629,6 +685,10 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         manualStartTime = nil
         healthKitStartTime = nil
         isHealthKitReady = false
+        
+        // Reset altimeter tracking
+        lastAltitude = nil
+        totalElevationGainMeters = 0
         
         // Clean up HealthKit objects
         session = nil

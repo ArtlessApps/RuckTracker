@@ -155,7 +155,8 @@ struct ImprovedPhoneMainView: View {
                 finalElapsedTime: workoutManager.finalElapsedTime,
                 finalDistance: workoutManager.finalDistance,
                 finalCalories: workoutManager.finalCalories,
-                finalRuckWeight: workoutManager.finalRuckWeight
+                finalRuckWeight: workoutManager.finalRuckWeight,
+                finalElevationGain: workoutManager.finalElevationGain
             )
             .environmentObject(workoutManager)
         }

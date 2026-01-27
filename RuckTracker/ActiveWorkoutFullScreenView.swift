@@ -52,11 +52,10 @@ struct ActiveWorkoutFullScreenView: View {
                 Spacer()
                     .frame(height: 50)
                 
-                // SECONDARY METRICS - 2x2 Grid
+                // SECONDARY METRICS - 2x3 Grid
                 VStack(spacing: 36) {
                     HStack(spacing: 50) {
                         // Pace
-                        // CHANGED: Uses AppColors.textPrimary instead of Color("BackgroundDark")
                         WorkoutMetricView(
                             value: formatPace(),
                             label: "min/mi",
@@ -64,7 +63,6 @@ struct ActiveWorkoutFullScreenView: View {
                         )
                         
                         // Calories
-                        // CHANGED: Uses AppColors.textPrimary instead of Color("BackgroundDark")
                         WorkoutMetricView(
                             value: "\(Int(workoutManager.calories))",
                             label: "loaded calories",
@@ -74,15 +72,22 @@ struct ActiveWorkoutFullScreenView: View {
                     
                     HStack(spacing: 50) {
                         // Elapsed Time
-                        // CHANGED: Uses AppColors.textPrimary instead of Color("BackgroundDark")
                         WorkoutMetricView(
                             value: formatElapsedTime(),
                             label: "elapsed",
                             color: AppColors.textPrimary
                         )
                         
-                        // Heart Rate
-                        // CHANGED: Uses AppColors.textPrimary instead of Color("BackgroundDark")
+                        // Elevation Gain
+                        WorkoutMetricView(
+                            value: formatElevation(),
+                            label: "elevation",
+                            color: AppColors.textPrimary
+                        )
+                    }
+                    
+                    // Heart Rate (if available)
+                    if workoutManager.heartRate > 0 {
                         WorkoutMetricView(
                             value: "\(Int(workoutManager.heartRate))",
                             label: "bpm",
@@ -197,6 +202,16 @@ struct ActiveWorkoutFullScreenView: View {
         let seconds = Int((paceMinutesPerMile - Double(minutes)) * 60)
         
         return String(format: "%d:%02d", minutes, seconds)
+    }
+    
+    /// Formats elevation gain in feet
+    private func formatElevation() -> String {
+        let elevation = workoutManager.elevationGain
+        if elevation > 0 {
+            return "\(Int(elevation)) ft"
+        } else {
+            return "0 ft"
+        }
     }
     
     /// Returns current time as string (e.g., "2:30 PM")

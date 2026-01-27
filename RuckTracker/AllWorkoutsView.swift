@@ -129,6 +129,7 @@ struct AllWorkoutsView: View {
             durationSeconds: workout.duration,
             calories: Int(workout.calories),
             ruckWeight: Int(workout.ruckWeight),
+            elevationGain: Int(workout.elevationGain),
             date: workout.date ?? Date(),
             workoutURI: workout.objectID.uriRepresentation()
         )
@@ -195,6 +196,15 @@ struct WorkoutStatsView: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                     Text("Total Time")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                VStack {
+                    Text("\(Int(workoutDataManager.totalElevationGain))")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    Text("ft Climbed")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -283,21 +293,24 @@ struct WorkoutDetailRowView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(Int(workout.heartRate))")
+                    Text(workout.formattedElevationGain)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    Text("Avg HR")
+                        .foregroundColor(.green)
+                    Text("Elevation")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(workout.weightPercentage(bodyWeightKg: userSettings.bodyWeightInKg))%")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Text("Body Weight")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                if workout.heartRate > 0 {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(Int(workout.heartRate))")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("Avg HR")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

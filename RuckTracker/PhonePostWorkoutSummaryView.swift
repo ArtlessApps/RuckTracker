@@ -18,6 +18,7 @@ struct PhonePostWorkoutSummaryView: View {
     let finalDistance: Double
     let finalCalories: Double
     let finalRuckWeight: Double
+    let finalElevationGain: Double
     
     // Rotating congratulatory phrases
     private let congratsPhrases = [
@@ -29,11 +30,12 @@ struct PhonePostWorkoutSummaryView: View {
         "Weight, lifted."
     ]
     
-    init(finalElapsedTime: TimeInterval, finalDistance: Double, finalCalories: Double, finalRuckWeight: Double) {
+    init(finalElapsedTime: TimeInterval, finalDistance: Double, finalCalories: Double, finalRuckWeight: Double, finalElevationGain: Double = 0) {
         self.finalElapsedTime = finalElapsedTime
         self.finalDistance = finalDistance
         self.finalCalories = finalCalories
         self.finalRuckWeight = finalRuckWeight
+        self.finalElevationGain = finalElevationGain
     }
     
     var body: some View {
@@ -70,6 +72,13 @@ struct PhonePostWorkoutSummaryView: View {
                         label: "DISTANCE",
                         value: String(format: "%.2f", finalDistance),
                         unit: "mi"
+                    )
+                    
+                    // Elevation
+                    StatRowWithUnit(
+                        label: "ELEVATION",
+                        value: "\(Int(finalElevationGain))",
+                        unit: "ft"
                     )
                     
                     // Pace
@@ -227,6 +236,7 @@ struct PhonePostWorkoutSummaryView: View {
             durationSeconds: finalElapsedTime,
             calories: Int(finalCalories),
             ruckWeight: Int(finalRuckWeight),
+            elevationGain: Int(finalElevationGain),
             date: workoutDate,
             workoutURI: uri
         )
@@ -299,7 +309,8 @@ struct StatRowWithUnit: View {
         finalElapsedTime: 3661,
         finalDistance: 3.42,
         finalCalories: 326,
-        finalRuckWeight: 20
+        finalRuckWeight: 20,
+        finalElevationGain: 245
     )
     .environmentObject(WorkoutManager())
 }

@@ -17,7 +17,8 @@ extension WorkoutManager {
         distance: Double,
         duration: Int,
         weight: Double,
-        calories: Int
+        calories: Int,
+        elevationGain: Double = 0
     ) async {
         let communityService = CommunityService.shared
         
@@ -42,6 +43,7 @@ extension WorkoutManager {
                     duration: duration,
                     weight: weight,
                     calories: calories,
+                    elevationGain: elevationGain,
                     caption: nil, // User can add captions in v2
                     workoutId: workoutId
                 )
@@ -65,6 +67,16 @@ struct PostWorkoutShareSheet: View {
     let duration: Int
     let weight: Double
     let calories: Int
+    let elevationGain: Double
+    
+    init(workoutId: UUID, distance: Double, duration: Int, weight: Double, calories: Int, elevationGain: Double = 0) {
+        self.workoutId = workoutId
+        self.distance = distance
+        self.duration = duration
+        self.weight = weight
+        self.calories = calories
+        self.elevationGain = elevationGain
+    }
     
     @StateObject private var communityService = CommunityService.shared
     @State private var selectedClubs: Set<UUID> = []
@@ -163,9 +175,12 @@ struct PostWorkoutShareSheet: View {
     }
     
     private var workoutSummaryView: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 16) {
             WorkoutStatColumn(icon: "figure.walk", value: String(format: "%.1f", distance), unit: "mi")
             WorkoutStatColumn(icon: "clock", value: "\(duration)", unit: "min")
+            if elevationGain > 0 {
+                WorkoutStatColumn(icon: "arrow.up.right", value: "\(Int(elevationGain))", unit: "ft")
+            }
             WorkoutStatColumn(icon: "scalemass", value: "\(Int(weight))", unit: "lbs")
             WorkoutStatColumn(icon: "flame", value: "\(calories)", unit: "cal")
         }
@@ -184,6 +199,7 @@ struct PostWorkoutShareSheet: View {
                         duration: duration,
                         weight: weight,
                         calories: calories,
+                        elevationGain: elevationGain,
                         caption: caption.isEmpty ? nil : caption,
                         workoutId: workoutId
                     )

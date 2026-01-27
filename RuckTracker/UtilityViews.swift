@@ -111,9 +111,16 @@ struct CompactWorkoutRow: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
-                Text("\(String(format: "%.0f", workout.calories)) cal")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    if workout.elevationGain > 0 {
+                        Text("↑\(Int(workout.elevationGain)) ft")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    }
+                    Text("\(String(format: "%.0f", workout.calories)) cal")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
         .padding()

@@ -375,9 +375,12 @@ struct FeedPostCard: View {
             
             // Workout stats
             if post.postType == "workout" {
-                HStack(spacing: 20) {
+                HStack(spacing: 12) {
                     IconStatPill(icon: "figure.walk", value: String(format: "%.1f mi", post.distanceMiles ?? 0))
                     IconStatPill(icon: "clock", value: "\(post.durationMinutes ?? 0) min")
+                    if let elevation = post.elevationGain, elevation > 0 {
+                        IconStatPill(icon: "arrow.up.right", value: "\(Int(elevation)) ft")
+                    }
                     if let weight = post.weightLbs, weight > 0 {
                         IconStatPill(icon: "scalemass", value: "\(Int(weight)) lbs")
                     }
@@ -536,10 +539,18 @@ struct LeaderboardRow: View {
             
             Spacer()
             
-            // Distance
-            Text(String(format: "%.1f mi", entry.totalDistance))
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(AppColors.primary)
+            // Stats: Distance and Elevation
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(String(format: "%.1f mi", entry.totalDistance))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppColors.primary)
+                
+                if entry.totalElevation > 0 {
+                    Text("↑\(Int(entry.totalElevation)) ft")
+                        .font(.system(size: 12))
+                        .foregroundColor(.green)
+                }
+            }
         }
         .padding()
         .background(AppColors.surface)

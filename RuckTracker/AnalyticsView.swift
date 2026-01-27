@@ -174,19 +174,23 @@ struct AnalyticsView: View {
                 )
                 
                 SummaryStatBox(
+                    value: "\(totalElevation)",
+                    label: "ft Climbed",
+                    color: .green
+                )
+                
+                SummaryStatBox(
                     value: formattedTotalTime,
                     label: "Total Time",
                     color: AppColors.accentTeal
                 )
+                
+                SummaryStatBox(
+                    value: formattedAvgPace,
+                    label: "Avg Pace",
+                    color: .orange
+                )
             }
-            
-            // Avg Pace - centered below
-            SummaryStatBox(
-                value: formattedAvgPace,
-                label: "Avg Pace",
-                color: .orange,
-                fullWidth: true
-            )
         }
         .padding(20)
         .background(
@@ -204,6 +208,10 @@ struct AnalyticsView: View {
     
     private var totalCalories: Int {
         Int(workoutDataManager.workouts.reduce(0) { $0 + $1.calories })
+    }
+    
+    private var totalElevation: Int {
+        Int(workoutDataManager.totalElevationGain)
     }
     
     private var formattedTotalTime: String {

@@ -59,7 +59,16 @@ struct PostWorkoutSummaryView: View {
                             value: "\(String(format: "%.0f", workoutManager.finalRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)",
                             color: .yellow
                         )
-                        
+                    }
+                    
+                    // Elevation Gain
+                    if workoutManager.finalElevationGain > 0 {
+                        StatRow(
+                            icon: "arrow.up.right",
+                            label: "Elevation",
+                            value: "\(Int(workoutManager.finalElevationGain)) ft",
+                            color: .green
+                        )
                     }
                     
                     // Average Pace (if we have distance)
@@ -157,6 +166,7 @@ struct StatRow: View {
             manager.finalDistance = 3.5
             manager.finalCalories = 450
             manager.finalRuckWeight = 35
+            manager.finalElevationGain = 180
             return manager
         }())
 }

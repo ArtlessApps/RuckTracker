@@ -743,7 +743,8 @@ extension WorkoutManager: CLLocationManagerDelegate {
                 distance: finalDistance,
                 duration: Int(finalElapsedTime / 60), // Convert seconds to minutes
                 weight: finalRuckWeight,
-                calories: Int(finalCalories)
+                calories: Int(finalCalories),
+                elevationGain: finalElevationGain
             )
         }
         

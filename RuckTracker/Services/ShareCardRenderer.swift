@@ -7,9 +7,11 @@ struct ShareCardPayload {
     let durationSeconds: TimeInterval
     let calories: Int
     let ruckWeight: Int
+    let elevationGain: Int
     let date: Date
     let showCalories: Bool
     let showWeight: Bool
+    let showElevation: Bool
     let shareURL: URL?
 }
 
@@ -71,6 +73,10 @@ private struct ShareCardView: View {
         return String(format: "%d:%02d /mi", minutes, seconds)
     }
     
+    private var formattedElevation: String {
+        return "\(payload.elevationGain) ft"
+    }
+    
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
@@ -110,6 +116,9 @@ private struct ShareCardView: View {
                     statRow(label: "DISTANCE", value: formattedDistance)
                     statRow(label: "TIME", value: formattedTime)
                     statRow(label: "PACE", value: formattedPace)
+                    if payload.showElevation && payload.elevationGain > 0 {
+                        statRow(label: "ELEVATION", value: formattedElevation)
+                    }
                     if payload.showCalories {
                         statRow(label: "CALORIES", value: "\(payload.calories) kcal")
                     }
