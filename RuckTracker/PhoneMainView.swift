@@ -251,36 +251,57 @@ struct ImprovedPhoneMainView: View {
                 Button {
                     startPlannedWorkout(planned)
                 } label: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(programEyebrow)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textSecondary)
-                        Text(planned.title)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Week \(planned.weekNumber), Day \(planned.dayNumber ?? 1)")
-                            .font(.subheadline)
-                    .foregroundColor(AppColors.textSecondary)
-                        HStack(spacing: 12) {
-                            Label(durationLabel(for: planned), systemImage: "clock")
+                    HStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(programEyebrow)
                                 .font(.caption)
+                                .fontWeight(.bold)
                                 .foregroundColor(AppColors.primary)
-                            Label(intensityLabel(for: planned), systemImage: "flame.fill")
-                                .font(.caption)
-                                .foregroundColor(AppColors.primary)
+                            
+                            Text(planned.title)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            Text("Week \(planned.weekNumber), Day \(planned.dayNumber ?? 1)")
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            HStack(spacing: 12) {
+                                Label(durationLabel(for: planned), systemImage: "clock")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.primary)
+                                Label(intensityLabel(for: planned), systemImage: "flame.fill")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.primary)
+                            }
+                            .padding(.top, 4)
+                        }
+                        
+                        Spacer()
+                        
+                        // Play button CTA
+                        ZStack {
+                            Circle()
+                                .fill(AppColors.primary)
+                                .frame(width: 52, height: 52)
+                            
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                                .offset(x: 2)
                         }
                     }
+                    .padding(18)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: 20)
                             .fill(AppColors.surface)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(AppColors.primary.opacity(0.4), lineWidth: 1.5)
                             )
-                            .shadow(color: AppColors.shadowBlack, radius: 10, x: 0, y: 5)
+                            .shadow(color: AppColors.primary.opacity(0.25), radius: 16, x: 0, y: 6)
                     )
                 }
                 .buttonStyle(.plain)
@@ -288,28 +309,39 @@ struct ImprovedPhoneMainView: View {
                 Button {
                     activeSheet = .trainingPrograms
                 } label: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("PERSONALIZED PLAN")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textSecondary)
-                        Text("Create My Plan")
-                            .font(.title2).fontWeight(.bold)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("PERSONALIZED PLAN")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppColors.primary)
+                            
+                            Text("Create My Plan")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppColors.textPrimary)
                         Text("We’ll build your schedule from MARCH sessions.")
-                            .font(.subheadline)
-                            .foregroundColor(AppColors.textSecondary)
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 36))
+                            .foregroundColor(AppColors.primary)
                     }
+                    .padding(18)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: 20)
                             .fill(AppColors.surface)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(AppColors.primary.opacity(0.4), lineWidth: 1.5)
                             )
-                            .shadow(color: AppColors.shadowBlack, radius: 10, x: 0, y: 5)
-                        )
+                            .shadow(color: AppColors.primary.opacity(0.25), radius: 16, x: 0, y: 6)
+                    )
                 }
                 .buttonStyle(.plain)
             }
@@ -321,69 +353,56 @@ struct ImprovedPhoneMainView: View {
             Text("Quick Ruck")
                 .font(.headline)
                 .foregroundColor(AppColors.textPrimary)
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(SessionType.allCases, id: \.self) { type in
-                    Button {
-                        selectedSessionType = type
-                        showingSessionConfig = true
-                    } label: {
-                        HStack(alignment: .top, spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(type.accent.opacity(0.12))
-                                    .frame(width: 40, height: 40)
-                                
-                                Image(systemName: type.icon)
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(type.accent)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(type.title)
-                                    .font(.headline)
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                Text(type.subtitle)
-                                    .font(.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                                    .lineLimit(2)
-                            }
-                            Spacer()
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            AppColors.surfaceAlt.opacity(0.6),
-                                            AppColors.surfaceAlt.opacity(0.3)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    AppColors.textPrimary.opacity(0.2),
-                                                    .clear
-                                                ],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                        )
+            
+            VStack(spacing: 0) {
+                ForEach(Array(SessionType.allCases.enumerated()), id: \.element) { index, type in
+                    sessionCard(for: type)
+                    
+                    if index < SessionType.allCases.count - 1 {
+                        Divider()
+                            .background(AppColors.textSecondary.opacity(0.2))
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(AppColors.surface.opacity(0.5))
+            )
         }
+    }
+    
+    private func sessionCard(for type: SessionType) -> some View {
+        Button {
+            selectedSessionType = type
+            showingSessionConfig = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(type.accent.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: type.icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(type.accent)
+                }
+                
+                Text(type.title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(AppColors.textPrimary)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary.opacity(0.4))
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
     }
     
     private var trainingProgramsSection: some View {
@@ -392,7 +411,7 @@ struct ImprovedPhoneMainView: View {
                 .font(.headline)
                 .foregroundColor(AppColors.textPrimary)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            VStack(spacing: 12) {
                 ForEach(programCardData) { card in
                     Button {
                         if premiumManager.isPremiumUser {
@@ -401,33 +420,42 @@ struct ImprovedPhoneMainView: View {
                             premiumManager.showPaywall(context: .programAccess)
                         }
                     } label: {
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: card.icon)
-                                .font(.title2)
-                                .foregroundColor(card.accent)
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(card.accent.opacity(0.15))
+                                    .frame(width: 48, height: 48)
+                                
+                                Image(systemName: card.icon)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(card.accent)
+                            }
                             
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(card.title)
-                                        .font(.headline)
-                                        .foregroundColor(AppColors.textPrimary)
-                                }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(card.title)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(AppColors.textPrimary)
+                                
                                 Text(card.subtitle)
-                                    .font(.caption)
+                                    .font(.system(size: 14))
                                     .foregroundColor(AppColors.textSecondary)
                             }
+                            
                             Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppColors.textSecondary.opacity(0.5))
                         }
-                        .padding()
+                        .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 16)
                                 .fill(AppColors.surface)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(card.accent.opacity(0.25), lineWidth: 1)
                                 )
-                                .shadow(color: AppColors.shadowBlack, radius: 8, x: 0, y: 4)
                         )
                     }
                     .buttonStyle(.plain)

@@ -12,54 +12,41 @@ struct AnalyticsView: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
     @ObservedObject private var userSettings = UserSettings.shared
-    @Environment(\.dismiss) private var dismiss
     @Binding var showAllWorkouts: Bool
     
     @State private var showingDeleteAlert = false
     @State private var workoutToDelete: WorkoutEntity?
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                AppColors.backgroundGradient
-                    .ignoresSafeArea()
-                
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 20) {
-                        if workoutDataManager.workouts.isEmpty {
-                            emptyStateView
-                        } else {
-                            analyticsContentView
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 20)
-                }
-            }
-            .navigationTitle("Activity")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .foregroundColor(AppColors.primary)
-                }
-            }
-            .alert("Delete Workout", isPresented: $showingDeleteAlert) {
-                Button("Delete", role: .destructive) {
-                    if let workout = workoutToDelete {
-                        workoutDataManager.deleteWorkout(workout)
+        ZStack {
+            AppColors.backgroundGradient
+                .ignoresSafeArea()
+            
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 20) {
+                    if workoutDataManager.workouts.isEmpty {
+                        emptyStateView
+                    } else {
+                        analyticsContentView
                     }
                 }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("Are you sure you want to delete this workout? This action cannot be undone.")
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
-            .sheet(isPresented: $premiumManager.showingPaywall) {
-                SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
+        .alert("Delete Workout", isPresented: $showingDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                if let workout = workoutToDelete {
+                    workoutDataManager.deleteWorkout(workout)
+                }
             }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete this workout? This action cannot be undone.")
+        }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
     }
     
@@ -135,7 +122,7 @@ struct AnalyticsView: View {
         WeeklyProgressChart()
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AppColors.shadowBlack)
+                    .fill(Color(hex: "0F2942").opacity(0.85))
                     .overlay(
                         VStack(spacing: 8) {
                             Image(systemName: "crown.fill")
@@ -149,7 +136,7 @@ struct AnalyticsView: View {
                             
                             Text("Detailed charts and insights")
                                 .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     )
             )

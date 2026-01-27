@@ -35,20 +35,6 @@ struct CommunityTribeView: View {
                 }
             }
             .navigationTitle("Tribe")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button(action: { showingJoinClub = true }) {
-                            Label("Join Club", systemImage: "person.badge.plus")
-                        }
-                        Button(action: { showingCreateClub = true }) {
-                            Label("Create Club", systemImage: "plus.circle")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
             .sheet(isPresented: $showingAuth) {
                 AuthenticationView()
             }
@@ -161,6 +147,42 @@ struct CommunityTribeView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                
+                // Action buttons - always visible below clubs
+                HStack(spacing: 12) {
+                    Button(action: { showingJoinClub = true }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "person.badge.plus")
+                                .font(.system(size: 14))
+                            Text("Join Club")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                        .foregroundColor(AppColors.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(AppColors.primary, lineWidth: 1.5)
+                        )
+                    }
+                    
+                    Button(action: { showingCreateClub = true }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 14))
+                            Text("Create Club")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                        .foregroundColor(AppColors.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(AppColors.primary, lineWidth: 1.5)
+                        )
+                    }
+                }
+                .padding(.top, 8)
             }
             .padding()
         }
