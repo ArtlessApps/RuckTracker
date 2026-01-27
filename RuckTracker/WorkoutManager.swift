@@ -22,6 +22,7 @@ class WorkoutManager: NSObject, ObservableObject {
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
+    @Published var elevationGain: Double = 0 // Total elevation gain in feet
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
     
     // Post-workout summary state
@@ -30,6 +31,7 @@ class WorkoutManager: NSObject, ObservableObject {
     @Published var finalDistance: Double = 0
     @Published var finalCalories: Double = 0
     @Published var finalRuckWeight: Double = 0
+    @Published var finalElevationGain: Double = 0
     
     // Settings
     private let userSettings = UserSettings.shared
@@ -52,6 +54,11 @@ class WorkoutManager: NSObject, ObservableObject {
     private var startLocation: CLLocation?
     private var lastLocation: CLLocation?
     private var totalGPSDistance: Double = 0
+    
+    // Elevation tracking
+    private var lastAltitude: Double?
+    private var totalElevationGainMeters: Double = 0
+    private let altitudeFilterThreshold: Double = 1.0 // Minimum altitude change in meters to count
     
     // Movement detection for calorie validation
     private var lastDistanceUpdateTime: Date?
@@ -165,10 +172,13 @@ class WorkoutManager: NSObject, ObservableObject {
         totalGPSDistance = 0
         calories = 0
         currentHeartRate = 0
+        elevationGain = 0
+        totalElevationGainMeters = 0
         
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
+        lastAltitude = nil
         
         // Reset movement detection
         lastDistanceUpdateTime = nil
@@ -250,6 +260,7 @@ class WorkoutManager: NSObject, ObservableObject {
         finalDistance = distance
         finalCalories = calories
         finalRuckWeight = ruckWeight
+        finalElevationGain = elevationGain
         
         // Stop timer first
         timer?.invalidate()
@@ -419,7 +430,8 @@ extension WorkoutManager: CLLocationManagerDelegate {
             if self.startLocation == nil {
                 self.startLocation = location
                 self.lastLocation = location
-                let msg = "📍 GPS: First location acquired | Accuracy: \(String(format: "%.1f", location.horizontalAccuracy))m"
+                self.lastAltitude = location.altitude
+                let msg = "📍 GPS: First location acquired | Accuracy: \(String(format: "%.1f", location.horizontalAccuracy))m | Altitude: \(String(format: "%.1f", location.altitude))m"
                 print(msg)
                 DebugLogger.shared.log(msg)
                 return
@@ -434,6 +446,21 @@ extension WorkoutManager: CLLocationManagerDelegate {
                     
                     // Always update distance with GPS data (HealthKit doesn't auto-collect on iPhone)
                     self.distance = gpsDistanceMiles
+                    
+                    // Track elevation gain (only count uphill)
+                    if let previousAltitude = self.lastAltitude {
+                        let altitudeChange = location.altitude - previousAltitude
+                        // Only count significant uphill changes (filters noise)
+                        if altitudeChange > self.altitudeFilterThreshold && location.verticalAccuracy >= 0 && location.verticalAccuracy < 20 {
+                            self.totalElevationGainMeters += altitudeChange
+                            // Convert to feet for display (1 meter = 3.28084 feet)
+                            self.elevationGain = self.totalElevationGainMeters * 3.28084
+                            let elevMsg = "⛰️ Elevation gain: +\(String(format: "%.1f", altitudeChange))m | Total: \(String(format: "%.0f", self.elevationGain)) ft"
+                            print(elevMsg)
+                            DebugLogger.shared.log(elevMsg)
+                        }
+                    }
+                    self.lastAltitude = location.altitude
                     
                     // Track when distance was last updated (for movement detection)
                     self.lastDistanceUpdateTime = Date()
@@ -669,6 +696,7 @@ extension WorkoutManager: CLLocationManagerDelegate {
         print("🟣 Distance: \(String(format: "%.2f", distance))mi")
         print("🟣 Calories: \(Int(calories))")
         print("🟣 Ruck Weight: \(Int(ruckWeight))lbs")
+        print("🟣 Elevation Gain: \(Int(elevationGain))ft")
         
         // Use actual heart rate if available, otherwise 0 (will show as N/A)
         let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 0
@@ -700,6 +728,7 @@ extension WorkoutManager: CLLocationManagerDelegate {
             calories: calories,
             ruckWeight: ruckWeight,
             heartRate: avgHeartRate,
+            elevationGain: elevationGain,
             programId: programId,
             programWorkoutDay: programWorkoutDay,
             challengeId: challengeId,
@@ -795,10 +824,13 @@ extension WorkoutManager: CLLocationManagerDelegate {
         startDate = nil
         currentHeartRate = 0
         lastCalorieUpdate = 0
+        elevationGain = 0
+        totalElevationGainMeters = 0
         
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
+        lastAltitude = nil
         
         // Reset movement detection and active time tracking
         lastDistanceUpdateTime = nil
@@ -818,10 +850,13 @@ extension WorkoutManager: CLLocationManagerDelegate {
         startDate = nil
         currentHeartRate = 0
         lastCalorieUpdate = 0
+        elevationGain = 0
+        totalElevationGainMeters = 0
         
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
+        lastAltitude = nil
         
         // Reset movement detection and active time tracking
         lastDistanceUpdateTime = nil
@@ -838,6 +873,7 @@ extension WorkoutManager: CLLocationManagerDelegate {
         finalDistance = 0
         finalCalories = 0
         finalRuckWeight = 0
+        finalElevationGain = 0
     }
     
     // MARK: - Utility

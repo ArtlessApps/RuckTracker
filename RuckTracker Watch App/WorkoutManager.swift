@@ -26,6 +26,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
+    @Published var elevationGain: Double = 0 // Total elevation gain in feet (from flights climbed)
     @Published var errorManager = HealthKitErrorManager()
     
     // Final workout stats for post-workout summary
@@ -33,6 +34,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     @Published var finalDistance: Double = 0
     @Published var finalCalories: Double = 0
     @Published var finalRuckWeight: Double = 0
+    @Published var finalElevationGain: Double = 0
     
     // Settings
     private let userSettings = UserSettings.shared
@@ -154,6 +156,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         elapsedTime = 0
         distance = 0
         calories = 0
+        elevationGain = 0
         pausedTime = 0
         manualStartTime = Date()           // Start manual timer immediately
         startTime = manualStartTime        // Use manual start time for consistency
@@ -215,8 +218,9 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         finalDistance = distance
         finalCalories = calories
         finalRuckWeight = ruckWeight
+        finalElevationGain = elevationGain
         
-        print("📊 Final stats saved: time=\(finalElapsedTime), distance=\(finalDistance), calories=\(finalCalories)")
+        print("📊 Final stats saved: time=\(finalElapsedTime), distance=\(finalDistance), calories=\(finalCalories), elevation=\(finalElevationGain)")
         
         // Stop the timer first
         workoutTimer?.invalidate()
@@ -491,6 +495,14 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                         print("🔥 Adjusted calories: \(Int(self.calories)) (Apple: \(Int(appleCalories)))")
                     }
                     
+                case HKQuantityType.quantityType(forIdentifier: .flightsClimbed):
+                    // Flights climbed - each flight is approximately 10 feet / 3 meters
+                    if let flights = statistics?.sumQuantity()?.doubleValue(for: .count()) {
+                        // Convert flights to feet (1 flight ≈ 10 feet)
+                        self.elevationGain = flights * 10.0
+                        print("⛰️ Elevation gain: \(Int(self.elevationGain)) ft (\(Int(flights)) flights)")
+                    }
+                    
                 default:
                     break
                 }
@@ -553,10 +565,11 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             distance: finalDistance,
             calories: finalCalories,
             ruckWeight: finalRuckWeight,
-            heartRate: avgHeartRate
+            heartRate: avgHeartRate,
+            elevationGain: finalElevationGain
         )
         
-        print("💾 Watch: Saved workout to local storage")
+        print("💾 Watch: Saved workout to local storage (elevation: \(Int(finalElevationGain)) ft)")
         
         // Send workout to phone via WatchConnectivity
         sendWorkoutToPhone(startTime: startTime, avgHeartRate: avgHeartRate)
@@ -571,6 +584,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         tempWorkout.calories = finalCalories
         tempWorkout.ruckWeight = finalRuckWeight
         tempWorkout.heartRate = avgHeartRate
+        tempWorkout.elevationGain = finalElevationGain
         
         // Send to phone
         watchConnectivityManager?.sendWorkoutToPhone(tempWorkout)
@@ -593,6 +607,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         finalDistance = 0
         finalCalories = 0
         finalRuckWeight = 0
+        finalElevationGain = 0
     }
     
     // MARK: - Cleanup
@@ -606,6 +621,7 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         distance = 0
         calories = 0
         currentHeartRate = 0
+        elevationGain = 0
         startTime = nil
         pausedTime = 0
         
@@ -644,9 +660,9 @@ extension WorkoutManager {
             "EquipmentUsed": "Weighted Backpack",
             "ExerciseType": "Cardio + Strength",
             
-            // Using flat terrain for MVP
-            "TerrainType": "Flat",
-            "TerrainMultiplier": 1.0,
+            // Elevation tracking
+            "ElevationGain": elevationGain,
+            "ElevationGainUnit": "ft",
             
             // Average metrics for Apple's ML algorithms
             "AverageHeartRateZone": heartRateZone,
@@ -725,10 +741,10 @@ extension WorkoutManager {
         Rucking Workout Summary:
         • Duration: \(formattedElapsedTime)
         • Distance: \(String(format: "%.2f", distance)) miles
+        • Elevation Gain: \(Int(elevationGain)) ft
         • Ruck Weight: \(Int(ruckWeight)) lbs (\(weightPercentage)% body weight)
         • Calories: \(Int(calories)) (adjusted for load)
         • Avg Pace: \(formattedPace) per mile
-        • Terrain: Flat
         
         This workout contributes to your:
         ✅ Move Ring (Active Calories)

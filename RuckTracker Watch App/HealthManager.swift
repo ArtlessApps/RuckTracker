@@ -12,6 +12,7 @@ class HealthManager: ObservableObject {
     @Published var hasHeartRatePermission = false
     @Published var hasCaloriesPermission = false
     @Published var hasDistancePermission = false
+    @Published var hasElevationPermission = false // For flights climbed (elevation)
     
     // Platform detection
     private var isWatchApp: Bool {
@@ -56,12 +57,22 @@ class HealthManager: ObservableObject {
         let typesToRead: Set<HKObjectType>
         let typesToWrite: Set<HKSampleType>
         
+        // Add flights climbed type for elevation tracking
+        guard let flightsClimbedType = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) else {
+            let error = HealthKitError.quantityTypeUnavailable(identifier: "flightsClimbed")
+            errorManager.handleError(error, context: "Authorization Request")
+            authorizationInProgress = false
+            completion?(false)
+            return
+        }
+        
         if isWatchApp {
-            // Watch can read and write everything
+            // Watch can read and write everything including elevation
             typesToRead = [
                 heartRateType,
                 caloriesType,
                 distanceType,
+                flightsClimbedType,
                 HKWorkoutType.workoutType()
             ]
             typesToWrite = [
@@ -127,7 +138,8 @@ class HealthManager: ObservableObject {
         // Safely get health data types
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
               let caloriesType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
-              let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
+              let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning),
+              let flightsClimbedType = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) else {
             return
         }
         
@@ -138,12 +150,14 @@ class HealthManager: ObservableObject {
         let caloriesStatus = healthStore.authorizationStatus(for: caloriesType)
         let distanceStatus = healthStore.authorizationStatus(for: distanceType)
         let workoutStatus = healthStore.authorizationStatus(for: workoutType)
+        let flightsClimbedStatus = healthStore.authorizationStatus(for: flightsClimbedType)
         
         // Update permission status
         hasHeartRatePermission = heartRateStatus == .sharingAuthorized
         hasCaloriesPermission = caloriesStatus == .sharingAuthorized
         hasDistancePermission = distanceStatus == .sharingAuthorized
         hasWorkoutPermission = workoutStatus == .sharingAuthorized
+        hasElevationPermission = flightsClimbedStatus != .sharingDenied // Read permission
         
         // Essential permissions required for authorization
         isAuthorized = workoutStatus == .sharingAuthorized &&

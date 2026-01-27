@@ -28,6 +28,7 @@ extension WorkoutEntity {
     @NSManaged public var duration: Double
     @NSManaged public var heartRate: Double
     @NSManaged public var ruckWeight: Double
+    @NSManaged public var elevationGain: Double // Elevation gain in feet
     @NSManaged public var programId: String? // Store as String, convert to UUID
     @NSManaged public var programWorkoutDay: Int16 // Which day in program
     @NSManaged public var challengeId: String? // Store as String, convert to UUID
@@ -91,6 +92,13 @@ class WorkoutDataManager: ObservableObject {
         heartRateAttribute.isOptional = false
         heartRateAttribute.defaultValue = 0.0
         
+        // Add elevation tracking attribute
+        let elevationGainAttribute = NSAttributeDescription()
+        elevationGainAttribute.name = "elevationGain"
+        elevationGainAttribute.attributeType = .doubleAttributeType
+        elevationGainAttribute.isOptional = false
+        elevationGainAttribute.defaultValue = 0.0
+        
         // Add program tracking attributes
         let programIdAttribute = NSAttributeDescription()
         programIdAttribute.name = "programId"
@@ -115,7 +123,7 @@ class WorkoutDataManager: ObservableObject {
         challengeDayAttribute.isOptional = true
         challengeDayAttribute.defaultValue = 0
         
-        entity.properties = [idAttribute, dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, programIdAttribute, programWorkoutDayAttribute, challengeIdAttribute, challengeDayAttribute]
+        entity.properties = [idAttribute, dateAttribute, durationAttribute, distanceAttribute, caloriesAttribute, ruckWeightAttribute, heartRateAttribute, elevationGainAttribute, programIdAttribute, programWorkoutDayAttribute, challengeIdAttribute, challengeDayAttribute]
         model.entities = [entity]
         
         let container = NSPersistentContainer(name: "RuckTrackerData", managedObjectModel: model)
@@ -158,11 +166,13 @@ class WorkoutDataManager: ObservableObject {
         calories: Double,
         ruckWeight: Double,
         heartRate: Double,
+        elevationGain: Double = 0,
         programId: UUID? = nil,
         programWorkoutDay: Int? = nil,
         challengeId: UUID? = nil,
         challengeDay: Int? = nil
     ) -> UUID {
+        print("🔵 Elevation Gain: \(Int(elevationGain))ft")
         print("🔵 Program Workout Day: \(programWorkoutDay?.description ?? "NONE")")
         print("🔵 Challenge ID: \(challengeId?.uuidString ?? "NONE")")
         print("🔵 Challenge Day: \(challengeDay?.description ?? "NONE")")
@@ -177,6 +187,7 @@ class WorkoutDataManager: ObservableObject {
         workout.calories = calories
         workout.ruckWeight = ruckWeight
         workout.heartRate = heartRate
+        workout.elevationGain = elevationGain
         
         // Add program metadata if provided
         if let programId = programId {
@@ -359,6 +370,11 @@ class WorkoutDataManager: ObservableObject {
         return workouts.reduce(0) { $0 + $1.calories }
     }
     
+    /// Get total elevation gain across all workouts (in feet)
+    var totalElevationGain: Double {
+        return workouts.reduce(0) { $0 + $1.elevationGain }
+    }
+    
     /// Get total workout time across all workouts
     var totalDuration: TimeInterval {
         return workouts.reduce(0) { $0 + $1.duration }
@@ -441,6 +457,15 @@ extension WorkoutEntity {
         let minutes = Int(pace)
         let seconds = Int((pace - Double(minutes)) * 60)
         return String(format: "%d:%02d", minutes, seconds)
+    }
+    
+    /// Formatted elevation gain (in feet)
+    var formattedElevationGain: String {
+        if elevationGain > 0 {
+            return "\(Int(elevationGain)) ft"
+        } else {
+            return "0 ft"
+        }
     }
     
     /// Pace color based on performance
