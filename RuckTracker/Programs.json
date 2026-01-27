@@ -1,0 +1,502 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "title": "Ruck Ready",
+    "description": "Perfect for complete beginners or those returning from injury. Build the habit, learn proper form, and establish your rucking foundation. Start with light weight and focus on consistency over intensity.",
+    "difficulty": "beginner",
+    "category": "fitness",
+    "durationWeeks": 4,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 1,
+    "weeks": [
+      {
+        "week_id": "25669f9d-7ccb-41ce-8316-2ceb908e5c70",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "f7c94adc-6e46-49e8-9ae7-eb1f70d52308",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "175f546e-34d5-4f91-86e6-f152598f988e",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "24855161-0a89-4d08-8bca-f16d951a536b",
+        "week_number": 4,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "title": "Foundation Builder",
+    "description": "Build a solid rucking foundation with progressive training. Perfect for those who completed Ruck Ready or have some rucking experience. Establish 3-4 rucks per week and build to 25 lbs.",
+    "difficulty": "beginner",
+    "category": "fitness",
+    "durationWeeks": 6,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 2,
+    "weeks": [
+      {
+        "week_id": "0f1cf8b4-1485-4c64-83f7-58ac1c93d3c9",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "4293a591-b8e2-4310-a828-a6dbc28e1f4f",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "3ecb8cac-9acd-49ae-8558-e77bbc44c992",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "fe1e95b4-bc95-4df9-8650-f9f4e3814cb8",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "1f069ada-879f-4480-986e-2878adebb3f7",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "0aa9e7ea-8336-4557-9567-d2e8b89914f5",
+        "week_number": 6,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "title": "Active Lifestyle",
+    "description": "Maintain your fitness with a flexible, sustainable rucking routine. Perfect for busy professionals who want to stay active without following a strict program. 2-3 rucks per week, your choice of days.",
+    "difficulty": "beginner",
+    "category": "fitness",
+    "durationWeeks": 4,
+    "isFeatured": false,
+    "isActive": true,
+    "sortOrder": 3,
+    "weeks": [
+      {
+        "week_id": "ace94299-a0a5-4f3b-ac75-25ea03f83e7e",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "608b71b5-310e-480d-a7f1-ce500d434d76",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "71e34026-1051-47be-988f-2c9f38ca3941",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "418864fd-b4ea-4bf6-812a-d9060ede48dd",
+        "week_number": 4,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "title": "Endurance Build",
+    "description": "Build serious aerobic capacity with progressive mileage. This intermediate program takes you from 3-4 mile rucks to 10+ miles. Focus on time on feet and developing mental toughness. 3-4 rucks per week with progressive distance.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 4,
+    "weeks": [
+      {
+        "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "d5ea9c01-cd0a-4cef-8555-9eda8f72ab1c",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "title": "GORUCK Light Prep",
+    "description": "Train for the GORUCK Light Challenge: 4-6 hours, 8-10 miles, 20+ lbs minimum. This program prepares you with progressive rucks, PT circuits, and team-based work capacity training. Perfect first GORUCK event prep.",
+    "difficulty": "intermediate",
+    "category": "event",
+    "durationWeeks": 6,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 5,
+    "weeks": [
+      {
+        "week_id": "8794a1d9-ece1-4841-8547-4186a092b266",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "56e6524d-75a9-4972-8c61-b6f963879326",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "81c778b3-c966-413a-9d1e-0ac8293901eb",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "c31a2c5e-7c27-41ff-a5c4-4a82ee2e22cd",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "344b9b91-bc89-45e1-a701-6d9d28e6e2f0",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "e48b0f3d-1f73-4e43-8aec-de1d61e41df8",
+        "week_number": 6,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "title": "GORUCK Heavy/Tough Prep",
+    "description": "Prepare for the ultimate GORUCK endurance test: 8-12 hours, 15-20 miles, 30+ lbs. This program builds the physical and mental toughness needed for Heavy or Tough challenges. Advanced ruckers only.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 10,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 6,
+    "weeks": [
+      {
+        "week_id": "7d591fd8-2a32-4d7b-9c92-1e557b1fedd8",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "100db1fe-b5e0-4532-88a5-d7b38e2c4ea9",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "b02e9cb9-dd0d-43c3-ab0b-945626a0d261",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "1ec9c309-18a6-4b08-bf10-cee9509a1d04",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "14b5b0fb-1ea7-44b7-afa7-4e4c2e0a3dd9",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "06f08c97-ae4f-4d9c-b4ba-0ac40166cc50",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "34c37911-d4a0-4e92-9844-d0111626f270",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "296cbc19-e321-430d-a245-b2f5125e4c3e",
+        "week_number": 8,
+        "workouts": []
+      },
+      {
+        "week_id": "ad1cd31f-8abc-4cbb-b9ab-86d2f6a72e59",
+        "week_number": 9,
+        "workouts": []
+      },
+      {
+        "week_id": "24d245c0-946f-49a1-a225-7109e681918a",
+        "week_number": 10,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777777",
+    "title": "Army ACFT Prep",
+    "description": "Train for the Army Combat Fitness Test with a focus on the 12K ruck event. Build the strength and endurance needed to excel at the ACFT while maintaining overall combat readiness. Includes PT circuits and ruck marching.",
+    "difficulty": "intermediate",
+    "category": "military",
+    "durationWeeks": 8,
+    "isFeatured": false,
+    "isActive": true,
+    "sortOrder": 7,
+    "weeks": [
+      {
+        "week_id": "15e0e1fb-67ec-4e88-ada4-d92f0e4ae999",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "c0451935-31de-40d5-97e6-853d34aa1e8d",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "e6c3f5b5-97e5-456e-bbbe-e58d9dbc8ea9",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "88888888-8888-8888-8888-888888888888",
+    "title": "Strength & Conditioning",
+    "description": "Build serious strength while maintaining rucking capacity. This program combines heavy rucks with strength training for total body development. Perfect for those who want to be strong AND have endurance.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 8,
+    "isFeatured": false,
+    "isActive": true,
+    "sortOrder": 8,
+    "weeks": [
+      {
+        "week_id": "6cd9a735-4c73-4308-a96a-b92afccb7deb",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "e2751e94-dfd8-4cee-9d83-99fa03d78ed9",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "fe02737b-9c38-4425-af80-4d4925bf802b",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "057f0a77-fc4c-478b-b053-2e8ebe2e265a",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "fdfb77e4-b14e-4e1d-9cf5-597528699565",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "bb528914-5d3d-42af-82a8-7ef6cb21841b",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "fc8734ed-0349-4062-a5d8-dfad38d25cf8",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "30b02001-ac59-4d72-9d58-ebf65dc9c8c7",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "99999999-9999-9999-9999-999999999999",
+    "title": "Marathon Ruck Prep",
+    "description": "Train for a ruck marathon (26.2 miles with 25-35 lbs). This 12-week program builds the endurance, mental toughness, and physical resilience needed to complete this epic challenge. For experienced ruckers only.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 12,
+    "isFeatured": false,
+    "isActive": true,
+    "sortOrder": 9,
+    "weeks": [
+      {
+        "week_id": "6cddae0d-cf16-4791-8fd3-1751ac61861c",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "23a2f58e-0285-4795-b38f-bace290a551e",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "0d6eb4c3-d62c-438f-90d9-c5e38cc88c09",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "f0ed264f-d271-47f7-845c-a178e923ebc7",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "0b7e645d-a47f-4993-9b3e-56340fba1b7f",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "17c3a77f-01b0-4e0f-9f1e-fb9935c42163",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "ac9d0fb9-ba33-4bda-b7ea-c46a18db7bc9",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "f3b8116e-6442-48b4-b1c1-4628cdae32d0",
+        "week_number": 8,
+        "workouts": []
+      },
+      {
+        "week_id": "799073be-3e14-42af-9c92-af9ccbd7dab0",
+        "week_number": 9,
+        "workouts": []
+      },
+      {
+        "week_id": "bd77347e-1d83-42fe-9c44-3275ac040305",
+        "week_number": 10,
+        "workouts": []
+      },
+      {
+        "week_id": "bad836d1-7079-4e16-8ac6-f49d05cb6c06",
+        "week_number": 11,
+        "workouts": []
+      },
+      {
+        "week_id": "4d8da9b8-69a0-46c5-9335-096da7acaba8",
+        "week_number": 12,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "title": "GORUCK Selection Prep",
+    "description": "Prepare for the most demanding GORUCK event: 48+ hours of continuous movement with heavy loads. This program builds extreme endurance, mental toughness, and the ability to perform under severe fatigue. Elite level only.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 8,
+    "isFeatured": false,
+    "isActive": true,
+    "sortOrder": 10,
+    "weeks": [
+      {
+        "week_id": "0bcc24f5-e0e6-44e6-b02e-fe06aca75199",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "12cc0a08-c2e5-4056-a81c-cca9889c4259",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "edee4b29-4da0-4a87-bc7c-a95fc6da9239",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  }
+]

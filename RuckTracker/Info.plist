@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>NSUserActivityTypeBrowsingWeb</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>com.rucktracker.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>rucktracker</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram</string>
+		<string>instagram-stories</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>CFBundleDisplayName</key>
+	<string>MARCH</string>
+	<key>CFBundleName</key>
+	<string>MARCH</string>
+</dict>
+</plist>

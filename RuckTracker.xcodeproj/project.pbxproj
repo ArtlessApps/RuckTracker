@@ -1,0 +1,563 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		121857512E6BE73F00088A62 /* RuckTracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 121857502E6BE73F00088A62 /* RuckTracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		12C317712E7F7AA500DE131F /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 12C317702E7F7AA500DE131F /* Products.storekit */; };
+		1275C7072F05C2EC00151E62 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1275C7082F05C2EC00151E62 /* Supabase */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		121857522E6BE73F00088A62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 121857252E6BE73C00088A62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1218574F2E6BE73F00088A62;
+			remoteInfo = "RuckTracker Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		121857762E6BE74000088A62 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				121857512E6BE73F00088A62 /* RuckTracker Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1218572D2E6BE73D00088A62 /* RuckTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RuckTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		121857502E6BE73F00088A62 /* RuckTracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RuckTracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		12C317702E7F7AA500DE131F /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		12F4B31F2EA2973E00688D71 /* Exceptions for "RuckTracker" folder in "RuckTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Untitled.swift,
+			);
+			target = 1218572C2E6BE73D00088A62 /* RuckTracker */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1218572F2E6BE73D00088A62 /* RuckTracker */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				12F4B31F2EA2973E00688D71 /* Exceptions for "RuckTracker" folder in "RuckTracker" target */,
+			);
+			path = RuckTracker;
+			sourceTree = "<group>";
+		};
+		121857542E6BE73F00088A62 /* RuckTracker Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "RuckTracker Watch App";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1218572A2E6BE73D00088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1275C7072F05C2EC00151E62 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1218574D2E6BE73F00088A62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		121857242E6BE73C00088A62 = {
+			isa = PBXGroup;
+			children = (
+				12C317702E7F7AA500DE131F /* Products.storekit */,
+				1218572F2E6BE73D00088A62 /* RuckTracker */,
+				121857542E6BE73F00088A62 /* RuckTracker Watch App */,
+				1218572E2E6BE73D00088A62 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1218572E2E6BE73D00088A62 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1218572D2E6BE73D00088A62 /* RuckTracker.app */,
+				121857502E6BE73F00088A62 /* RuckTracker Watch App.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1218572C2E6BE73D00088A62 /* RuckTracker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121857772E6BE74000088A62 /* Build configuration list for PBXNativeTarget "RuckTracker" */;
+			buildPhases = (
+				121857292E6BE73D00088A62 /* Sources */,
+				1218572A2E6BE73D00088A62 /* Frameworks */,
+				1218572B2E6BE73D00088A62 /* Resources */,
+				121857762E6BE74000088A62 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				121857532E6BE73F00088A62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1218572F2E6BE73D00088A62 /* RuckTracker */,
+			);
+			name = RuckTracker;
+			packageProductDependencies = (
+				1275C7082F05C2EC00151E62 /* Supabase */,
+			);
+			productName = RuckTracker;
+			productReference = 1218572D2E6BE73D00088A62 /* RuckTracker.app */;
+			productType = "com.apple.product-type.application";
+		};
+		1218574F2E6BE73F00088A62 /* RuckTracker Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 121857732E6BE74000088A62 /* Build configuration list for PBXNativeTarget "RuckTracker Watch App" */;
+			buildPhases = (
+				1218574C2E6BE73F00088A62 /* Sources */,
+				1218574D2E6BE73F00088A62 /* Frameworks */,
+				1218574E2E6BE73F00088A62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				121857542E6BE73F00088A62 /* RuckTracker Watch App */,
+			);
+			name = "RuckTracker Watch App";
+			packageProductDependencies = (
+			);
+			productName = "RuckTracker Watch App";
+			productReference = 121857502E6BE73F00088A62 /* RuckTracker Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		121857252E6BE73C00088A62 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					1218572C2E6BE73D00088A62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					1218574F2E6BE73F00088A62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = 121857282E6BE73C00088A62 /* Build configuration list for PBXProject "RuckTracker" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 121857242E6BE73C00088A62;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1275C7062F05C2EC00151E61 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1218572E2E6BE73D00088A62 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1218572C2E6BE73D00088A62 /* RuckTracker */,
+				1218574F2E6BE73F00088A62 /* RuckTracker Watch App */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1218572B2E6BE73D00088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12C317712E7F7AA500DE131F /* Products.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1218574E2E6BE73F00088A62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		121857292E6BE73D00088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1218574C2E6BE73F00088A62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		121857532E6BE73F00088A62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1218574F2E6BE73F00088A62 /* RuckTracker Watch App */;
+			targetProxy = 121857522E6BE73F00088A62 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		121857712E6BE74000088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		121857722E6BE74000088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		121857742E6BE74000088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "RuckTracker Watch App/RuckTracker Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		121857752E6BE74000088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "RuckTracker Watch App/RuckTracker Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		121857782E6BE74000088A62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RuckTracker/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = location;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		121857792E6BE74000088A62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = RuckTracker/RuckTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = KLA3GV43P7;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RuckTracker/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = location;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		121857282E6BE73C00088A62 /* Build configuration list for PBXProject "RuckTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121857712E6BE74000088A62 /* Debug */,
+				121857722E6BE74000088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121857732E6BE74000088A62 /* Build configuration list for PBXNativeTarget "RuckTracker Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121857742E6BE74000088A62 /* Debug */,
+				121857752E6BE74000088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		121857772E6BE74000088A62 /* Build configuration list for PBXNativeTarget "RuckTracker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121857782E6BE74000088A62 /* Debug */,
+				121857792E6BE74000088A62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1275C7062F05C2EC00151E61 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1275C7082F05C2EC00151E62 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1275C7062F05C2EC00151E61 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 121857252E6BE73C00088A62 /* Project object */;
+}

@@ -1,0 +1,23 @@
+0000000000000000000000000000000000000000 3324a331f7a0e2f1bd154b9e44582a1a774cbc41 Nick Dame <nicholas.dame@gmail.com> 1764694512 -0800	clone: from https://github.com/ArtlessApps/RuckTracker.git
+3324a331f7a0e2f1bd154b9e44582a1a774cbc41 a24a53a75e9eaf810769b65c752c2a97b20e1a90 Nick Dame <nicholas.dame@gmail.com> 1764694527 -0800	checkout: moving from main to FETCH_HEAD
+a24a53a75e9eaf810769b65c752c2a97b20e1a90 a24a53a75e9eaf810769b65c752c2a97b20e1a90 Nick Dame <nicholas.dame@gmail.com> 1764695250 -0800	checkout: moving from a24a53a75e9eaf810769b65c752c2a97b20e1a90 to main-from-a24a53a
+a24a53a75e9eaf810769b65c752c2a97b20e1a90 a24a53a75e9eaf810769b65c752c2a97b20e1a90 Nick Dame <nicholas.dame@gmail.com> 1764695251 -0800	checkout: moving from main-from-a24a53a to main
+a24a53a75e9eaf810769b65c752c2a97b20e1a90 e35a6884a30546558bd45cf9b106b5e6c256b85b Nick Dame <nicholas.dame@gmail.com> 1764695375 -0800	commit: deleted MDs
+e35a6884a30546558bd45cf9b106b5e6c256b85b de4662b3fd87cca79b9d5699df581e6ccc026e90 Nick Dame <nicholas.dame@gmail.com> 1764705653 -0800	commit: personalized onboarding
+de4662b3fd87cca79b9d5699df581e6ccc026e90 e33073373b51209882a07e1780b6532843943fbd Nick Dame <nicholas.dame@gmail.com> 1764707925 -0800	commit: imprved onboarding successful build
+e33073373b51209882a07e1780b6532843943fbd 3f6e7bf8467dca36df5617ac7beacf3e509c968d Nick Dame <nicholas.dame@gmail.com> 1765342875 -0800	commit: custom plan ux
+3f6e7bf8467dca36df5617ac7beacf3e509c968d e4c83cecb38fbf7cbd1208a5986ddf3bb8036c22 Nick Dame <nicholas.dame@gmail.com> 1765344726 -0800	commit: coach plan day sequencing
+e4c83cecb38fbf7cbd1208a5986ddf3bb8036c22 b2c62218b3e883caaeeeff964055e08364fe19ba Nick Dame <nicholas.dame@gmail.com> 1765347463 -0800	commit: share card mvp
+b2c62218b3e883caaeeeff964055e08364fe19ba 03adc5191ff8411fc53f49ba6da034def2dfbc31 Nick Dame <nicholas.dame@gmail.com> 1765398363 -0800	commit: new Ruck units
+03adc5191ff8411fc53f49ba6da034def2dfbc31 1151354a60321fc92b6c361325315603108120f5 Nick Dame <nicholas.dame@gmail.com> 1765404338 -0800	commit: rebuilt programs, challenges, quick ruck to be built with march ruck sessions
+1151354a60321fc92b6c361325315603108120f5 e40703c0bfa045241ad5361c2536e7b4fa72a0b6 Nick Dame <nicholas.dame@gmail.com> 1765486605 -0800	commit: centralization of app color scheme
+e40703c0bfa045241ad5361c2536e7b4fa72a0b6 5bb74cc1416e119ae5fc531ed41df179740a319b Nick Dame <nicholas.dame@gmail.com> 1765490966 -0800	commit: color changes
+5bb74cc1416e119ae5fc531ed41df179740a319b a2ad82e99b31e34fef6d3c5aeb38cf0f5aa4a3c1 Nick Dame <nicholas.dame@gmail.com> 1767129007 -0800	commit: change sub, focus on March naming
+a2ad82e99b31e34fef6d3c5aeb38cf0f5aa4a3c1 bd5b56646e8a31bd32e27f2d78d4daead30c8bf2 Nick Dame <nicholas.dame@gmail.com> 1767129977 -0800	commit: local program service refactor
+bd5b56646e8a31bd32e27f2d78d4daead30c8bf2 fc150c08f1f43a104791f8cf57bf0fb21419ad56 Nick Dame <nicholas.dame@gmail.com> 1767156188 -0800	commit: new onboarding
+fc150c08f1f43a104791f8cf57bf0fb21419ad56 4b6b68132e6e4a1f24b307c862a87d75bee0bdf3 Nick Dame <nicholas.dame@gmail.com> 1767159341 -0800	commit: new primary color
+4b6b68132e6e4a1f24b307c862a87d75bee0bdf3 4c473ed05a4ec63b58af20ba63ee623c1c4322af Nick Dame <nicholas.dame@gmail.com> 1767208656 -0800	commit: plan tab, centralized colors
+4c473ed05a4ec63b58af20ba63ee623c1c4322af b92b743e6cadb69d9d93cd0b988a37862784d5ba Nick Dame <nicholas.dame@gmail.com> 1767215162 -0800	commit: community build initial steps
+b92b743e6cadb69d9d93cd0b988a37862784d5ba 0da6b09fb86b2b6dca5bccee29b2fcafe6e10e54 Nick Dame <nicholas.dame@gmail.com> 1767284455 -0800	commit: Tribe tab
+0da6b09fb86b2b6dca5bccee29b2fcafe6e10e54 5ac8281f23148e0531fdc2b54e4a6ce1537b93a8 Nick Dame <nicholas.dame@gmail.com> 1767290589 -0800	commit: sign in, clubs working
+5ac8281f23148e0531fdc2b54e4a6ce1537b93a8 ed1556f070db1c4aad57f136d2bcd33575ddcd16 Nick Dame <nicholas.dame@gmail.com> 1769521936 -0800	commit: posts to leaderboard

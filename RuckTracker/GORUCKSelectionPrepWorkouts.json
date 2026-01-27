@@ -1,0 +1,562 @@
+[
+  {
+    "id": "gs-w1-d1",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1: Foundation - High Frequency\n\n\u2022 Distance: 6 miles\n\nWelcome to Selection Prep! 48+ hour endurance events require extreme preparation. Multiple sessions daily.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d2",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d3",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 8 Mile Ruck\n\n\u2022 Distance: 8 miles\n\nPM: 3 miles light + PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d4",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d5",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 10 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d6",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w1-d7",
+    "week_id": "90149900-e5e4-42d4-a3d1-982a9d6ea63a",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 1: 24 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d1",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "7.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2: Foundation Build\n\n\u2022 Distance: 7 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d2",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d3",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "9.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 9 Mile Ruck\n\n\u2022 Distance: 9 miles\n\nPM: 4 miles + heavy PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d4",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d5",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 12 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d6",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w2-d7",
+    "week_id": "a4b2fc94-ac3b-47c0-8a1d-7da9a8913a82",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 2: 28 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d1",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3: Pace Development - Speed Work\n\n\u2022 Distance: 8 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d2",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d3",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "AM: 10 Miles Fast\n\n\u2022 Distance: 10 miles\n\u2022 Pace: 16 min/mile\n\nPM: 5 miles easy + PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d4",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d5",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "14.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 14 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d6",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w3-d7",
+    "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 3: 32 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d1",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4: Work Capacity - Multiple Sessions Daily\n\n\u2022 Distance: 8 miles\n\nAM + PM sessions standard",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d2",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d3",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 12 Mile Ruck\n\n\u2022 Distance: 12 miles\n\nPM: 6 miles + max PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d4",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d5",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "15.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck - 15 Miles\n\n\u2022 Distance: 15 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d6",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w4-d7",
+    "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 4: 35 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d1",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5: Load Progression - Heavy Rucks\n\n\u2022 Distance: 10 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d2",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d3",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 12 Miles Heavy\n\n\u2022 Distance: 12 miles\n\nPM: 5 miles light + PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d4",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d5",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "16.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Heavy Ruck\n\n\u2022 Distance: 16 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d6",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w5-d7",
+    "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 5: 38 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d1",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6: Intensification - 2-a-Days Standard\n\n\u2022 Distance: 10 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d2",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d3",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "14.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 14 Miles Max Weight\n\n\u2022 Distance: 14 miles\n\nPM: 6 miles + max effort PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d4",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d5",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "18.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Heavy - 18 Miles!\n\n\u2022 Distance: 18 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d6",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w6-d7",
+    "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 6: 42 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d1",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7: Peak Volume - Maximum Workload\n\n\u2022 Distance: 12 miles\n\nPeak week!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d2",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d3",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "15.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "AM: 15 Miles Peak\n\n\u2022 Distance: 15 miles\n\nPM: 7 miles + brutal PT",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d4",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d5",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "20.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "PEAK LONG RUCK - 20 MILES!\n\n\u2022 Distance: 20 miles\n\nThis is your peak!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d6",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w7-d7",
+    "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 7: 47 miles! Peak complete!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d1",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8: Final Week - Event Ready\n\n\u2022 Distance: 8 miles\n\nTaper and prep for selection!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d2",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d3",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Confidence Builder\n\n\u2022 Distance: 10 miles\n\nFeeling strong!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d4",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d5",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Final Sharpener\n\n\u2022 Distance: 6 miles\n\u2022 Fast pace\n\nStaying sharp!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d6",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "gs-w8-d7",
+    "week_id": "a53d3dbe-9996-4493-961f-1124f79374c0",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "PROGRAM COMPLETE! \ud83c\udf89\n\nYou finished GORUCK Selection Prep! In 8 weeks you:\n\u2022 Built to 42 lbs\n\u2022 Completed 20-mile heavy rucks\n\u2022 Trained with 2-a-days\n\u2022 Developed extreme mental toughness\n\u2022 Total: 250+ miles\n\nYou're ready for the most demanding endurance event in the world. You're an ELITE rucker!\n\nWeek 8: 24 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  }
+]
