@@ -4,6 +4,7 @@ struct PlanView: View {
     @EnvironmentObject private var workoutManager: WorkoutManager
     @EnvironmentObject private var workoutDataManager: WorkoutDataManager
     
+    @StateObject private var premiumManager = PremiumManager.shared
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
     
@@ -13,6 +14,7 @@ struct PlanView: View {
     @State private var schedule: [ScheduledWorkout] = []
     @State private var loadError: String?
     @State private var showingActiveWorkout = false
+    @State private var showingPaywall = false
     
     var body: some View {
         NavigationView {
@@ -39,6 +41,14 @@ struct PlanView: View {
         .sheet(isPresented: $showingActiveWorkout) {
             ActiveWorkoutFullScreenView()
                 .environmentObject(workoutManager)
+        }
+        .sheet(isPresented: $showingPaywall) {
+            SubscriptionPaywallView(
+                context: .planGeneration,
+                onMaybeLater: {
+                    // User chose free version - they stay on plan view but can't start workouts
+                }
+            )
         }
     }
     
@@ -136,9 +146,17 @@ struct PlanView: View {
     
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Your Coach Plan")
-                .font(.caption)
-                .foregroundColor(AppColors.textSecondary)
+            HStack {
+                Text("Your Coach Plan")
+                    .font(.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                
+                Spacer()
+                
+                if premiumManager.isPremiumUser {
+                    SmartPremiumBadge(size: .small)
+                }
+            }
             
             Text(planTitle ?? "Personalized Plan")
                 .font(.title2)
@@ -149,6 +167,28 @@ struct PlanView: View {
                 headerPill(title: "Goal", value: userSettings.ruckingGoal.rawValue)
                 headerPill(title: "Days", value: preferredDaysLabel)
                 headerPill(title: "Done", value: "\(completedCount)/\(schedule.count)")
+            }
+            
+            // Free user notice
+            if !premiumManager.isPremiumUser {
+                Button(action: { showingPaywall = true }) {
+                    HStack {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                        Text("Upgrade to Pro to start workouts")
+                            .font(.caption)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(AppColors.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(AppColors.primary.opacity(0.1))
+                    )
+                }
             }
         }
         .padding(16)
@@ -197,6 +237,12 @@ struct PlanView: View {
         let accent = accentColor(for: workout.workoutType)
         
         return Button {
+            // Gate: Require Pro to execute workouts from plans
+            guard premiumManager.isPremiumUser else {
+                showingPaywall = true
+                return
+            }
+            
             // Minimal interaction for now: if unlocked, start the workout immediately.
             // (This mirrors the "today" start flow in `ImprovedPhoneMainView`.)
             guard !workout.isLocked,

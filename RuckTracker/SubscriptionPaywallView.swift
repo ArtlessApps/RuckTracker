@@ -10,13 +10,15 @@ struct SubscriptionPaywallView: View {
     @State private var showingPrivacy = false
     
     let context: PaywallContext
+    var onMaybeLater: (() -> Void)? = nil  // Callback for "Maybe Later" action
     
     enum PaywallContext {
-        case onboarding
-        case programAccess
-        case settings
-        case featureUpsell
-        case profileUpgrade
+        case onboarding           // During initial onboarding
+        case planGeneration       // After generating a custom plan (the "magic moment")
+        case programAccess        // Trying to access a specific program
+        case settings             // From settings menu
+        case featureUpsell        // Generic feature upsell
+        case profileUpgrade       // From profile screen
     }
     
     var body: some View {
@@ -41,11 +43,13 @@ struct SubscriptionPaywallView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if context != .onboarding {
+                // Show close button for non-blocking contexts
+                if context != .onboarding && context != .planGeneration {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Later") {
-                            dismiss()
+                            handleMaybeLater()
                         }
+                        .foregroundColor(AppColors.textSecondary)
                     }
                 }
             }
@@ -79,7 +83,7 @@ struct SubscriptionPaywallView: View {
                 .foregroundColor(AppColors.primary)
                 .symbolEffect(.pulse)
             
-            Text("Upgrade to MARCH Pro")
+            Text(contextHeadline)
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
@@ -94,7 +98,7 @@ struct SubscriptionPaywallView: View {
     // MARK: - Value Proposition
     
     private var valuePropositionTagline: some View {
-        Text("The Runna of Rucking")
+        Text("Your Digital Coach")
             .font(.caption)
             .fontWeight(.semibold)
             .foregroundColor(AppColors.primary)
@@ -106,18 +110,31 @@ struct SubscriptionPaywallView: View {
             )
     }
     
+    private var contextHeadline: String {
+        switch context {
+        case .planGeneration:
+            return "Unlock Your Custom Plan"
+        case .onboarding, .programAccess:
+            return "Upgrade to MARCH Pro"
+        case .settings, .featureUpsell, .profileUpgrade:
+            return "Upgrade to MARCH Pro"
+        }
+    }
+    
     private var contextDescription: String {
         switch context {
+        case .planGeneration:
+            return "Train effectively with audio coaching, progress tracking, and smart targets."
         case .onboarding:
-            return "Get personalized training plans and accurate tracking for serious ruckers"
+            return "Get personalized training plans and smart coaching for serious ruckers"
         case .programAccess:
-            return "Join thousands of ruckers training with structured, military-backed programs"
+            return "Access all 10+ military-backed training programs and weekly challenges"
         case .settings:
-            return "Unlock all pro features and personalized training"
+            return "Unlock all Pro features and personalized training"
         case .featureUpsell:
             return "Get the complete rucking training experience"
         case .profileUpgrade:
-            return "Take your rucking to the next level with pro features"
+            return "Take your rucking to the next level with Pro features"
         }
     }
     
@@ -132,26 +149,38 @@ struct SubscriptionPaywallView: View {
             VStack(spacing: 12) {
                 FeatureRow(
                     icon: "sparkles",
-                    title: "Personalized MARCH Plans",
-                    description: "AI-generated training tailored to your goals and fitness level"
+                    title: "Dynamic Plan Generator",
+                    description: "AI-generated training tailored to your goals and schedule"
+                )
+                
+                FeatureRow(
+                    icon: "waveform.circle.fill",
+                    title: "Smart Audio Coaching",
+                    description: "Real-time cues: 'Speed up', 'Halfway there', pace guidance"
                 )
                 
                 FeatureRow(
                     icon: "figure.hiking",
-                    title: "10 Structured Programs",
-                    description: "From beginner to GORUCK prep, military-researched plans"
+                    title: "10+ Structured Programs",
+                    description: "GORUCK Prep, Selection Prep, military-researched plans"
                 )
                 
                 FeatureRow(
                     icon: "chart.xyaxis.line",
-                    title: "Accurate Tracking",
-                    description: "Weight-adjusted calories and biometrics standard apps miss"
+                    title: "Heavy Hauler Analytics",
+                    description: "Tonnage trends, vertical gain analysis, progress over time"
                 )
                 
                 FeatureRow(
-                    icon: "trophy.fill",
-                    title: "Weekly Challenges",
-                    description: "Stay motivated with focused challenges and achievements"
+                    icon: "globe",
+                    title: "Global Leaderboards",
+                    description: "Rank against ruckers worldwide, not just your club"
+                )
+                
+                FeatureRow(
+                    icon: "photo.artframe",
+                    title: "Propaganda Mode",
+                    description: "Massive tonnage overlay, club badge, military-stencil shares"
                 )
             }
         }
@@ -257,15 +286,44 @@ struct SubscriptionPaywallView: View {
                     .multilineTextAlignment(.center)
             }
             
+            // "Maybe Later" / Use Free Version button
+            Button {
+                handleMaybeLater()
+            } label: {
+                Text(maybeLaterText)
+                    .font(.subheadline)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+            .disabled(storeManager.isLoading)
+            
             Button("Restore Purchases") {
                 Task {
                     await storeManager.restorePurchases()
                 }
             }
-            .font(.subheadline)
-            .foregroundColor(AppColors.primary)
+            .font(.caption)
+            .foregroundColor(AppColors.primary.opacity(0.7))
             .disabled(storeManager.isLoading)
         }
+    }
+    
+    private var maybeLaterText: String {
+        switch context {
+        case .planGeneration:
+            return "Use Free Version"
+        case .onboarding:
+            return "Maybe Later"
+        default:
+            return "Not Now"
+        }
+    }
+    
+    private func handleMaybeLater() {
+        // Execute callback if provided (for navigation control)
+        onMaybeLater?()
+        
+        // Dismiss the paywall
+        dismiss()
     }
     
     // MARK: - Legal Links

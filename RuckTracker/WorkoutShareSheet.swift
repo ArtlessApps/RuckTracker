@@ -11,7 +11,10 @@ struct WorkoutShareData {
     let date: Date
     let workoutURI: URL?
     
-    init(title: String, distanceMiles: Double, durationSeconds: TimeInterval, calories: Int, ruckWeight: Int, elevationGain: Int = 0, date: Date, workoutURI: URL?) {
+    // v2.0: Club context for "Propaganda Mode"
+    var clubName: String? = nil
+    
+    init(title: String, distanceMiles: Double, durationSeconds: TimeInterval, calories: Int, ruckWeight: Int, elevationGain: Int = 0, date: Date, workoutURI: URL?, clubName: String? = nil) {
         self.title = title
         self.distanceMiles = distanceMiles
         self.durationSeconds = durationSeconds
@@ -20,12 +23,15 @@ struct WorkoutShareData {
         self.elevationGain = elevationGain
         self.date = date
         self.workoutURI = workoutURI
+        self.clubName = clubName
     }
 }
 
 /// Share experience shown after completing a workout or from history.
 struct WorkoutShareSheet: View {
     let data: WorkoutShareData
+    
+    @StateObject private var premiumManager = PremiumManager.shared
     
     @State private var includeCalories = true
     @State private var includeWeight = true
@@ -39,7 +45,17 @@ struct WorkoutShareSheet: View {
     @State private var toastMessage: String?
     @State private var customCaption: String = ""
     
+    // v2.0: Propaganda Mode (Pro only)
+    @State private var showTonnage = true
+    @State private var showClubBadge = true
+    @State private var showingPaywall = false
+    
     private let renderer = ShareCardRenderer()
+    
+    /// Whether user has access to Propaganda Mode features
+    private var hasPropagandaMode: Bool {
+        premiumManager.isPremiumUser
+    }
     
     var body: some View {
         NavigationView {
@@ -62,7 +78,7 @@ struct WorkoutShareSheet: View {
                         .foregroundColor(AppColors.textSecondary)
                 }
                 
-                // Toggles
+                // Basic Toggles
                 VStack(alignment: .leading, spacing: 12) {
                     Toggle("Show calories", isOn: $includeCalories)
                     Toggle("Show ruck weight", isOn: $includeWeight)
@@ -74,6 +90,9 @@ struct WorkoutShareSheet: View {
                 .padding()
                 .background(AppColors.surfaceAlt)
                 .cornerRadius(12)
+                
+                // Propaganda Mode (Pro)
+                propagandaModeSection
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Caption")
@@ -164,6 +183,12 @@ struct WorkoutShareSheet: View {
             .onChange(of: useSquareFormat) { _, _ in
                 Task { await generateCard() }
             }
+            .onChange(of: showTonnage) { _, _ in
+                Task { await generateCard() }
+            }
+            .onChange(of: showClubBadge) { _, _ in
+                Task { await generateCard() }
+            }
             .sheet(isPresented: $showingShareSheet) {
                 ShareSheet(items: shareItems)
             }
@@ -188,10 +213,97 @@ struct WorkoutShareSheet: View {
         }
     }
     
+    // MARK: - Propaganda Mode Section
+    
+    @ViewBuilder
+    private var propagandaModeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("PROPAGANDA MODE")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(AppColors.primary)
+                    .tracking(1)
+                
+                Spacer()
+                
+                if hasPropagandaMode {
+                    PremiumBadge(size: .small)
+                } else {
+                    LockedFeatureBadge(feature: .propagandaMode)
+                }
+            }
+            
+            if hasPropagandaMode {
+                // Pro user - show toggles
+                VStack(alignment: .leading, spacing: 12) {
+                    Toggle(isOn: $showTonnage) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Show Tonnage")
+                            Text("Hero metric: Weight × Distance")
+                                .font(.caption2)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                    }
+                    
+                    if let clubName = data.clubName, !clubName.isEmpty {
+                        Toggle(isOn: $showClubBadge) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Club Badge")
+                                Text("TRAINING WITH \(clubName.uppercased())")
+                                    .font(.caption2)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                        }
+                    }
+                }
+                .toggleStyle(SwitchToggleStyle(tint: AppColors.primary))
+            } else {
+                // Free user - show upsell
+                Button(action: { showingPaywall = true }) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Unlock Propaganda Mode")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            Text("Massive tonnage overlay, club badge, military-stencil theme")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(AppColors.primary)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(hasPropagandaMode ? AppColors.primary.opacity(0.1) : AppColors.surfaceAlt)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(hasPropagandaMode ? AppColors.primary.opacity(0.3) : Color.clear, lineWidth: 1)
+                )
+        )
+        .sheet(isPresented: $showingPaywall) {
+            SubscriptionPaywallView(context: .featureUpsell)
+        }
+    }
+    
     // MARK: - Actions
     
     private func generateCard() async {
         isGenerating = true
+        
+        // Determine which Pro features to include
+        let includeTonnage = hasPropagandaMode && showTonnage
+        let includeClubName = hasPropagandaMode && showClubBadge ? data.clubName : nil
+        
         let payload = ShareCardPayload(
             title: data.title,
             distanceMiles: data.distanceMiles,
@@ -203,7 +315,9 @@ struct WorkoutShareSheet: View {
             showCalories: includeCalories,
             showWeight: includeWeight,
             showElevation: includeElevation,
-            shareURL: includeLink ? shareURL(channel: "preview") : nil
+            shareURL: includeLink ? shareURL(channel: "preview") : nil,
+            clubName: includeClubName,
+            showTonnage: includeTonnage
         )
         let format: ShareCardFormat = useSquareFormat ? .square : .story
         generatedImage = await renderer.render(payload: payload, format: format)
@@ -225,9 +339,15 @@ struct WorkoutShareSheet: View {
         
         var parts: [String] = []
         parts.append("Crushed a \(String(format: "%.2f", data.distanceMiles)) mi ruck in \(formattedTime())")
-        if includeWeight {
+        
+        // Pro feature: Show tonnage in caption
+        if hasPropagandaMode && showTonnage && data.ruckWeight > 0 && data.distanceMiles > 0 {
+            let tonnage = Double(data.ruckWeight) * data.distanceMiles
+            parts.append(String(format: "%.0f lb-mi tonnage", tonnage))
+        } else if includeWeight {
             parts.append("\(Int(data.ruckWeight)) lbs")
         }
+        
         if includeElevation && data.elevationGain > 0 {
             parts.append("↑\(data.elevationGain) ft")
         }
@@ -237,6 +357,12 @@ struct WorkoutShareSheet: View {
         parts.append("Pace \(paceString)")
         
         var caption = parts.joined(separator: " • ")
+        
+        // Pro feature: Add club badge mention
+        if hasPropagandaMode && showClubBadge, let clubName = data.clubName, !clubName.isEmpty {
+            caption += " | Training with \(clubName)"
+        }
+        
         if includeLink, let url = shareURL(channel: channel) {
             caption += " – \(url.absoluteString)"
         }

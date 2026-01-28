@@ -245,10 +245,13 @@ struct ClubCard: View {
 struct ClubDetailView: View {
     let club: Club
     @StateObject private var communityService = CommunityService.shared
-    @State private var selectedTab: ClubTab = .feed
+    @State private var selectedTab: ClubTab = .events
+    @State private var userRole: ClubRole = .member
+    @State private var showingMembers = false
     @Environment(\.dismiss) private var dismiss
     
     enum ClubTab: String, CaseIterable {
+        case events = "Events"
         case feed = "Feed"
         case leaderboard = "Leaderboard"
     }
@@ -267,6 +270,8 @@ struct ClubDetailView: View {
                 
                 // Content based on tab
                 switch selectedTab {
+                case .events:
+                    EventListView(club: club, userRole: userRole)
                 case .feed:
                     ClubFeedView(club: club)
                 case .leaderboard:
@@ -276,14 +281,32 @@ struct ClubDetailView: View {
             .navigationTitle(club.name)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { showingMembers = true }) {
+                        Image(systemName: "person.2")
+                    }
+                    .foregroundColor(AppColors.primary)
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
             }
+            .sheet(isPresented: $showingMembers) {
+                ClubMembersView(club: club, userRole: userRole)
+            }
         }
         .task {
+            // Load user role first
+            do {
+                userRole = try await communityService.getUserRole(clubId: club.id)
+                print("✅ User role: \(userRole.displayText)")
+            } catch {
+                print("❌ Failed to get user role: \(error)")
+            }
+            
             // Load feed and leaderboard when view appears
             do {
                 try await communityService.loadClubFeed(clubId: club.id)

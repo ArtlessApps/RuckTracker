@@ -5,20 +5,29 @@ import Combine
 /// PremiumManager handles premium subscription status
 ///
 /// Key Design Principle:
-/// Premium status is determined SOLELY by StoreKit subscription status
+/// Premium status is determined by StoreKit subscription OR Ambassador status
 /// - Premium is tied to Apple ID, NOT user email/authentication
 /// - Anonymous users CAN have premium (they purchased via Apple Pay)
 /// - Premium persists across sign in/sign out (tied to device's Apple ID)
-/// - Signing out does NOT affect premium status
+/// - Club Founders with 5+ members get Pro for free ("Ambassador" status)
 @MainActor
 class PremiumManager: ObservableObject {
     static let shared = PremiumManager()
     
     @Published var isPremiumUser = false
+    @Published var isAmbassador = false  // Club founder with 5+ members
     @Published var subscriptionExpiryDate: Date?
     @Published var showingPaywall = false
     @Published var paywallContext: SubscriptionPaywallView.PaywallContext = .featureUpsell
     @Published var showingPostPurchasePrompt = false
+    
+    /// Premium source for display purposes
+    enum PremiumSource {
+        case subscription
+        case ambassador
+        case none
+    }
+    @Published var premiumSource: PremiumSource = .none
     
     private let storeKitManager = StoreKitManager.shared
     private var cancellables = Set<AnyCancellable>()
@@ -54,31 +63,88 @@ class PremiumManager: ObservableObject {
         let storeKitSubscribed = storeKitManager.isSubscribed
         let newExpiryDate = storeKitManager.subscriptionExpiryDate
         
-        // Premium status is based on StoreKit subscription status
+        // Premium status is based on StoreKit subscription status OR Ambassador status
         // Users with valid subscriptions get premium access regardless of authentication status
         // This allows anonymous users who purchase subscriptions to access premium features
-        let newPremiumStatus = storeKitSubscribed
+        let newPremiumStatus = storeKitSubscribed || isAmbassador
         
         // Always update the status, even if it's the same
         isPremiumUser = newPremiumStatus
-        subscriptionExpiryDate = newPremiumStatus ? newExpiryDate : nil
+        subscriptionExpiryDate = storeKitSubscribed ? newExpiryDate : nil
+        
+        // Update premium source
+        if storeKitSubscribed {
+            premiumSource = .subscription
+        } else if isAmbassador {
+            premiumSource = .ambassador
+        } else {
+            premiumSource = .none
+        }
         
         // Log status changes with more detail
         if wasPremium != isPremiumUser {
             print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
             print("🔐 StoreKit subscription: \(storeKitSubscribed)")
-            print("🔐 User authenticated: true (local-only)")
-            print("🔐 User has email: false (local-only)")
-            print("🔐 StoreKit subscription status: \(storeKitManager.subscriptionStatus)")
+            print("🔐 Ambassador status: \(isAmbassador)")
+            print("🔐 Premium source: \(premiumSource)")
             if let expiry = newExpiryDate {
                 print("🔐 Subscription expiry: \(expiry)")
             }
         } else {
             // Log current status for debugging
             print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
-            print("🔐 StoreKit subscription: \(storeKitSubscribed)")
-            print("🔐 User authenticated: true (local-only)")
-            print("🔐 User has email: false (local-only)")
+        }
+    }
+    
+    // MARK: - Ambassador System
+    
+    /// Check if user qualifies for Ambassador (free Pro) status
+    /// Club Founders with 5+ members get Pro for free
+    func checkAmbassadorStatus() async {
+        let communityService = CommunityService.shared
+        
+        // Must be signed in
+        guard communityService.currentProfile != nil else {
+            isAmbassador = false
+            updatePremiumStatus()
+            return
+        }
+        
+        do {
+            // Load user's clubs
+            try await communityService.loadMyClubs()
+            
+            // Check for clubs where user is founder with 5+ members
+            var qualifiesAsAmbassador = false
+            
+            for club in communityService.myClubs {
+                // Check if user is founder
+                let role = try await communityService.getUserRole(clubId: club.id)
+                if role == .founder && club.memberCount >= 5 {
+                    qualifiesAsAmbassador = true
+                    break
+                }
+            }
+            
+            let wasAmbassador = isAmbassador
+            isAmbassador = qualifiesAsAmbassador
+            
+            if wasAmbassador != isAmbassador {
+                print("🎖️ Ambassador status changed: \(isAmbassador ? "Granted" : "Revoked")")
+                updatePremiumStatus()
+            }
+            
+        } catch {
+            print("❌ Failed to check ambassador status: \(error)")
+            isAmbassador = false
+            updatePremiumStatus()
+        }
+    }
+    
+    /// Refresh ambassador status when club membership changes
+    func refreshAmbassadorStatus() {
+        Task {
+            await checkAmbassadorStatus()
         }
     }
     
@@ -153,15 +219,46 @@ class PremiumManager: ObservableObject {
 // MARK: - Premium Features Enum
 
 enum PremiumFeature {
-    case trainingPrograms
-    case weeklyChallenges
-    case achievementSystem
-    case exportData  // Only if you built this
+    // Core Training (Pro)
+    case trainingPrograms       // Structured programs (4-12 weeks)
+    case weeklyChallenges       // Weekly challenges
+    case planExecution          // Starting/executing workouts from plans
+    
+    // Smart Coaching (Pro)
+    case audioCoaching          // Audio cues during workouts
+    case heartRateZones         // Heart rate zone tracking
+    case intervalTimers         // Smart interval timers
+    
+    // Analytics (Pro)
+    case advancedAnalytics      // Tonnage trends, progress charts
+    case achievementSystem      // Badges and accomplishments
+    case exportData             // Export workout data to CSV
+    
+    // Competition (Pro)
+    case globalLeaderboards     // Global rankings (vs local club only)
+    case proBadges              // Exclusive Pro badges
+    
+    // Social/Sharing (Pro)
+    case propagandaMode         // Enhanced share cards (tonnage, club badge, stencil theme)
+    
+    // Free Features (always available)
+    case basicTracking          // Open Ruck GPS tracking
+    case clubAccess             // Join clubs, RSVP, waivers, chat
+    case localLeaderboards      // Club leaderboards
+    case standardShareCard      // Basic share card
     
     var requiresPremium: Bool {
         switch self {
-        case .trainingPrograms, .weeklyChallenges, .achievementSystem, .exportData:
+        // Pro features
+        case .trainingPrograms, .weeklyChallenges, .planExecution,
+             .audioCoaching, .heartRateZones, .intervalTimers,
+             .advancedAnalytics, .achievementSystem, .exportData,
+             .globalLeaderboards, .proBadges, .propagandaMode:
             return true
+            
+        // Free features
+        case .basicTracking, .clubAccess, .localLeaderboards, .standardShareCard:
+            return false
         }
     }
     
@@ -171,23 +268,71 @@ enum PremiumFeature {
             return "Training Programs"
         case .weeklyChallenges:
             return "Weekly Challenges"
+        case .planExecution:
+            return "Plan Execution"
+        case .audioCoaching:
+            return "Smart Coaching"
+        case .heartRateZones:
+            return "Heart Rate Zones"
+        case .intervalTimers:
+            return "Interval Timers"
+        case .advancedAnalytics:
+            return "Advanced Analytics"
         case .achievementSystem:
             return "Achievement System"
         case .exportData:
             return "Export Data"
+        case .globalLeaderboards:
+            return "Global Leaderboards"
+        case .proBadges:
+            return "Pro Badges"
+        case .propagandaMode:
+            return "Propaganda Mode"
+        case .basicTracking:
+            return "Basic Tracking"
+        case .clubAccess:
+            return "Club Access"
+        case .localLeaderboards:
+            return "Club Leaderboards"
+        case .standardShareCard:
+            return "Share Card"
         }
     }
     
     var description: String {
         switch self {
         case .trainingPrograms:
-            return "Access all 10 structured training programs (4-12 weeks)"
+            return "Access all 10+ structured training programs (4-12 weeks)"
         case .weeklyChallenges:
-            return "Access all 8 focused weekly challenges"
+            return "Access all focused weekly challenges"
+        case .planExecution:
+            return "Execute workouts from your custom training plan"
+        case .audioCoaching:
+            return "Audio cues like 'Speed up', 'Halfway there', and pace guidance"
+        case .heartRateZones:
+            return "Track heart rate zones for optimal training"
+        case .intervalTimers:
+            return "Smart interval timers for structured workouts"
+        case .advancedAnalytics:
+            return "Tonnage trends, vertical gain analysis, progress charts over time"
         case .achievementSystem:
             return "Unlock badges and track accomplishments"
         case .exportData:
             return "Export workout data to CSV"
+        case .globalLeaderboards:
+            return "Rank against ruckers worldwide, not just your club"
+        case .proBadges:
+            return "Exclusive Pro badges to show off your status"
+        case .propagandaMode:
+            return "Massive tonnage overlay, club badge, military-stencil share cards"
+        case .basicTracking:
+            return "GPS tracking for distance, time, and pace"
+        case .clubAccess:
+            return "Join clubs, sign waivers, RSVP to events, group chat"
+        case .localLeaderboards:
+            return "View your club's weekly leaderboard"
+        case .standardShareCard:
+            return "Basic share card with workout stats"
         }
     }
     
@@ -197,11 +342,62 @@ enum PremiumFeature {
             return "figure.hiking"
         case .weeklyChallenges:
             return "trophy.fill"
+        case .planExecution:
+            return "play.circle.fill"
+        case .audioCoaching:
+            return "waveform.circle.fill"
+        case .heartRateZones:
+            return "heart.fill"
+        case .intervalTimers:
+            return "timer"
+        case .advancedAnalytics:
+            return "chart.xyaxis.line"
         case .achievementSystem:
             return "star.fill"
         case .exportData:
             return "square.and.arrow.up"
+        case .globalLeaderboards:
+            return "globe"
+        case .proBadges:
+            return "crown.fill"
+        case .propagandaMode:
+            return "photo.artframe"
+        case .basicTracking:
+            return "location.fill"
+        case .clubAccess:
+            return "person.3.fill"
+        case .localLeaderboards:
+            return "list.number"
+        case .standardShareCard:
+            return "square.and.arrow.up"
         }
+    }
+    
+    /// Category for grouping in UI
+    var category: FeatureCategory {
+        switch self {
+        case .trainingPrograms, .weeklyChallenges, .planExecution:
+            return .training
+        case .audioCoaching, .heartRateZones, .intervalTimers:
+            return .coaching
+        case .advancedAnalytics, .achievementSystem, .exportData:
+            return .analytics
+        case .globalLeaderboards, .proBadges:
+            return .competition
+        case .propagandaMode, .standardShareCard:
+            return .sharing
+        case .basicTracking, .clubAccess, .localLeaderboards:
+            return .free
+        }
+    }
+    
+    enum FeatureCategory: String, CaseIterable {
+        case training = "Training Plans"
+        case coaching = "Smart Coaching"
+        case analytics = "Analytics"
+        case competition = "Competition"
+        case sharing = "Social Sharing"
+        case free = "Free Features"
     }
 }
 
@@ -305,6 +501,108 @@ struct PremiumBadge: View {
     }
 }
 
+// MARK: - Ambassador Badge
+
+struct AmbassadorBadge: View {
+    let size: PremiumBadge.BadgeSize
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "star.circle.fill")
+                .font(size.fontSize)
+            Text("AMBASSADOR")
+                .font(size.fontSize)
+                .fontWeight(.bold)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, size.padding.horizontal)
+        .padding(.vertical, size.padding.vertical)
+        .background(
+            LinearGradient(
+                colors: [Color.orange, Color.yellow],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
+        .cornerRadius(6)
+    }
+}
+
+// MARK: - Smart Premium Badge (shows correct badge based on source)
+
+struct SmartPremiumBadge: View {
+    @StateObject private var premiumManager = PremiumManager.shared
+    let size: PremiumBadge.BadgeSize
+    
+    var body: some View {
+        Group {
+            switch premiumManager.premiumSource {
+            case .ambassador:
+                AmbassadorBadge(size: size)
+            case .subscription:
+                PremiumBadge(size: size)
+            case .none:
+                EmptyView()
+            }
+        }
+    }
+}
+
+// MARK: - Tier Badge (Free vs Pro indicator)
+
+struct TierBadge: View {
+    let isPro: Bool
+    let size: PremiumBadge.BadgeSize
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            if isPro {
+                Image(systemName: "crown.fill")
+                    .font(size.fontSize)
+                Text("PRO")
+                    .font(size.fontSize)
+                    .fontWeight(.semibold)
+            } else {
+                Image(systemName: "person.fill")
+                    .font(size.fontSize)
+                Text("FREE")
+                    .font(size.fontSize)
+                    .fontWeight(.medium)
+            }
+        }
+        .foregroundColor(isPro ? .white : AppColors.textSecondary)
+        .padding(.horizontal, size.padding.horizontal)
+        .padding(.vertical, size.padding.vertical)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isPro ? AppColors.primary : AppColors.surface)
+        )
+    }
+}
+
+// MARK: - Locked Feature Badge
+
+struct LockedFeatureBadge: View {
+    let feature: PremiumFeature
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "lock.fill")
+                .font(.caption2)
+            Text("PRO")
+                .font(.caption2)
+                .fontWeight(.bold)
+        }
+        .foregroundColor(AppColors.primary)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(AppColors.primary.opacity(0.15))
+        )
+    }
+}
+
 // MARK: - View Extensions
 
 extension View {
@@ -348,41 +646,69 @@ struct PremiumStatusView: View {
     private var activePremiumView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                PremiumBadge(size: .medium)
+                SmartPremiumBadge(size: .medium)
                 Spacer()
-                if let expiryDate = premiumManager.subscriptionExpiryDate,
-                   expiryDate != Date.distantFuture {
+                
+                // Show expiry for subscribers, or Ambassador note
+                switch premiumManager.premiumSource {
+                case .subscription:
+                    if let expiryDate = premiumManager.subscriptionExpiryDate,
+                       expiryDate != Date.distantFuture {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("Expires")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Text(expiryDate.formatted(date: .abbreviated, time: .omitted))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                    }
+                case .ambassador:
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("Expires")
+                        Text("Club Leader Perk")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Text(expiryDate.formatted(date: .abbreviated, time: .omitted))
+                            .foregroundColor(.orange)
+                        Text("Free Pro Access")
                             .font(.caption)
                             .fontWeight(.medium)
                     }
+                case .none:
+                    EmptyView()
                 }
             }
             
-            Text("You have access to all premium features")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            if premiumManager.isInFreeTrial {
-                if let daysRemaining = premiumManager.freeTrialDaysRemaining {
-                    Text("\(daysRemaining) days left in free trial")
-                        .font(.caption)
-                        .foregroundColor(Color("PrimaryMain"))
-                        .fontWeight(.medium)
+            // Status message
+            switch premiumManager.premiumSource {
+            case .subscription:
+                Text("You have access to all premium features")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                if premiumManager.isInFreeTrial {
+                    if let daysRemaining = premiumManager.freeTrialDaysRemaining {
+                        Text("\(daysRemaining) days left in free trial")
+                            .font(.caption)
+                            .foregroundColor(Color("PrimaryMain"))
+                            .fontWeight(.medium)
+                    }
                 }
+                
+            case .ambassador:
+                Text("Thanks for growing the MARCH community! Pro is free while you lead a club with 5+ members.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+            case .none:
+                EmptyView()
             }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.green.opacity(0.1))
+                .fill(premiumManager.isAmbassador ? Color.orange.opacity(0.1) : Color.green.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        .stroke(premiumManager.isAmbassador ? Color.orange.opacity(0.3) : Color.green.opacity(0.3), lineWidth: 1)
                 )
         )
     }
@@ -405,7 +731,7 @@ struct PremiumStatusView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    Text("Unlock training programs, analytics, and more")
+                    Text("Unlock training programs, smart coaching, and more")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

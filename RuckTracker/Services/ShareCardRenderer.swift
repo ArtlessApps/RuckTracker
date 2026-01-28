@@ -13,6 +13,24 @@ struct ShareCardPayload {
     let showWeight: Bool
     let showElevation: Bool
     let shareURL: URL?
+    
+    // New v2.0 properties
+    var clubName: String? = nil  // For "TRAINING WITH [CLUB NAME]" badge
+    var showTonnage: Bool = true // Show tonnage as hero metric
+    
+    /// Calculate tonnage: Weight (lbs) × Distance (miles)
+    var tonnage: Double {
+        Double(ruckWeight) * distanceMiles
+    }
+    
+    /// Formatted tonnage string
+    var formattedTonnage: String {
+        if tonnage >= 1000 {
+            return String(format: "%.1fK", tonnage / 1000.0)
+        } else {
+            return String(format: "%.0f", tonnage)
+        }
+    }
 }
 
 enum ShareCardFormat {
@@ -85,19 +103,22 @@ private struct ShareCardView: View {
     
     var body: some View {
         ZStack {
+            // Background gradient - military-inspired dark theme
             LinearGradient(
-                colors: [AppColors.background, AppColors.primary.opacity(0.8)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [AppColors.background, Color(hex: "0A1A2A"), AppColors.primary.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
             
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 20) {
+                // Header
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(payload.title.uppercased())
                             .font(.system(size: 28, weight: .heavy))
                             .foregroundStyle(AppColors.textPrimary)
+                            .tracking(2)
                         Text(formattedDate)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(AppColors.textPrimary.opacity(0.75))
@@ -107,11 +128,54 @@ private struct ShareCardView: View {
                     
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("MARCH")
-                            .font(.system(size: 16, weight: .heavy))
-                            .foregroundColor(AppColors.textPrimary)
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundColor(AppColors.primary)
+                            .tracking(3)
                     }
                 }
                 
+                // Hero Metrics Section
+                if payload.showTonnage && payload.ruckWeight > 0 && payload.distanceMiles > 0 {
+                    // Tonnage as hero metric
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("TONNAGE")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(AppColors.primary)
+                            .tracking(2)
+                        
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(payload.formattedTonnage)
+                                .font(.system(size: 72, weight: .black))
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            Text("LB-MI")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(AppColors.textPrimary.opacity(0.6))
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } else if payload.showWeight && payload.ruckWeight > 0 {
+                    // Weight as hero metric if no tonnage
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("WEIGHT")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(AppColors.primary)
+                            .tracking(2)
+                        
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("\(payload.ruckWeight)")
+                                .font(.system(size: 72, weight: .black))
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            Text("LBS")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(AppColors.textPrimary.opacity(0.6))
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+                
+                // Stats Grid
                 VStack(alignment: .leading, spacing: 16) {
                     statRow(label: "DISTANCE", value: formattedDistance)
                     statRow(label: "TIME", value: formattedTime)
@@ -122,23 +186,47 @@ private struct ShareCardView: View {
                     if payload.showCalories {
                         statRow(label: "CALORIES", value: "\(payload.calories) kcal")
                     }
-                    if payload.showWeight {
-                        statRow(label: "WEIGHT", value: "\(payload.ruckWeight) lbs")
-                    }
                 }
                 
                 Spacer()
                 
-                if let shareURL = payload.shareURL {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("JOIN THE RUCK")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(AppColors.textPrimary.opacity(0.7))
-                        Text(shareURL.absoluteString)
-                            .font(.system(size: 14, weight: .regular, design: .monospaced))
-                            .foregroundColor(AppColors.textPrimary)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.7)
+                // Footer section
+                VStack(alignment: .leading, spacing: 12) {
+                    // Club Badge (if training with a club)
+                    if let clubName = payload.clubName, !clubName.isEmpty {
+                        HStack(spacing: 0) {
+                            Rectangle()
+                                .fill(AppColors.primary)
+                                .frame(width: 4)
+                            
+                            Text("TRAINING WITH ")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(AppColors.textPrimary.opacity(0.7))
+                            + Text(clubName.uppercased())
+                                .font(.system(size: 14, weight: .black))
+                                .foregroundColor(AppColors.primary)
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(AppColors.primary.opacity(0.1))
+                        )
+                    }
+                    
+                    // Share URL
+                    if let shareURL = payload.shareURL {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("JOIN THE RUCK")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(AppColors.textPrimary.opacity(0.6))
+                                .tracking(1)
+                            Text(shareURL.absoluteString)
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                .foregroundColor(AppColors.textPrimary)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.7)
+                        }
                     }
                 }
             }
@@ -150,11 +238,11 @@ private struct ShareCardView: View {
     private func statRow(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(AppColors.textPrimary.opacity(0.7))
-                .tracking(1)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(AppColors.textPrimary.opacity(0.6))
+                .tracking(2)
             Text(value)
-                .font(.system(size: 36, weight: .heavy))
+                .font(.system(size: 32, weight: .heavy))
                 .foregroundColor(AppColors.textPrimary)
         }
     }

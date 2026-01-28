@@ -184,8 +184,8 @@ class CommunityService: ObservableObject {
             .execute()
             .value
         
-        // Auto-join creator as admin
-        try await joinClub(clubId: newClub.id, role: "admin")
+        // Auto-join creator as founder
+        try await joinClub(clubId: newClub.id, role: "founder")
         
         print("✅ Created club: \(newClub.name) with code: \(joinCode)")
         return newClub
@@ -460,6 +460,438 @@ class CommunityService: ObservableObject {
         print("✅ Loaded leaderboard: \(entries.count) entries")
     }
     
+    // MARK: - Events
+    
+    @Published var clubEvents: [ClubEvent] = []
+    @Published var currentEventRSVPs: [EventRSVP] = []
+    @Published var eventComments: [EventComment] = []
+    
+    /// Create a new club event (Leader/Founder only)
+    func createEvent(
+        clubId: UUID,
+        title: String,
+        startTime: Date,
+        locationLat: Double? = nil,
+        locationLong: Double? = nil,
+        addressText: String? = nil,
+        meetingPointDescription: String? = nil,
+        requiredWeight: Int? = nil,
+        waterRequirements: String? = nil
+    ) async throws -> ClubEvent {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Verify user has permission (is leader or founder)
+        let role = try await getUserRole(clubId: clubId)
+        guard role.canCreateEvents else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        var eventData: [String: AnyJSON] = [
+            "club_id": .string(clubId.uuidString),
+            "created_by": .string(userId.uuidString),
+            "title": .string(title),
+            "start_time": .string(ISO8601DateFormatter().string(from: startTime))
+        ]
+        
+        if let lat = locationLat {
+            eventData["location_lat"] = .double(lat)
+        }
+        if let long = locationLong {
+            eventData["location_long"] = .double(long)
+        }
+        if let address = addressText {
+            eventData["address_text"] = .string(address)
+        }
+        if let meetingPoint = meetingPointDescription {
+            eventData["meeting_point_description"] = .string(meetingPoint)
+        }
+        if let weight = requiredWeight {
+            eventData["required_weight"] = .double(Double(weight))
+        }
+        if let water = waterRequirements {
+            eventData["water_requirements"] = .string(water)
+        }
+        
+        let newEvent: ClubEvent = try await supabase
+            .from("club_events")
+            .insert(eventData)
+            .select()
+            .single()
+            .execute()
+            .value
+        
+        print("✅ Created event: \(newEvent.title)")
+        
+        // Reload events
+        try await loadClubEvents(clubId: clubId)
+        
+        return newEvent
+    }
+    
+    /// Update an existing event
+    func updateEvent(eventId: UUID, updates: CreateEventInput) async throws {
+        var updateData: [String: AnyJSON] = [
+            "title": .string(updates.title),
+            "start_time": .string(ISO8601DateFormatter().string(from: updates.startTime)),
+            "address_text": .string(updates.addressText),
+            "meeting_point_description": .string(updates.meetingPointDescription),
+            "water_requirements": .string(updates.waterRequirements)
+        ]
+        
+        if let lat = updates.locationLat {
+            updateData["location_lat"] = .double(lat)
+        }
+        if let long = updates.locationLong {
+            updateData["location_long"] = .double(long)
+        }
+        if let weight = updates.requiredWeight {
+            updateData["required_weight"] = .double(Double(weight))
+        }
+        
+        try await supabase
+            .from("club_events")
+            .update(updateData)
+            .eq("id", value: eventId.uuidString)
+            .execute()
+        
+        print("✅ Updated event: \(eventId)")
+    }
+    
+    /// Delete an event
+    func deleteEvent(eventId: UUID) async throws {
+        try await supabase
+            .from("club_events")
+            .delete()
+            .eq("id", value: eventId.uuidString)
+            .execute()
+        
+        print("✅ Deleted event: \(eventId)")
+    }
+    
+    /// Load upcoming events for a club
+    func loadClubEvents(clubId: UUID) async throws {
+        let events: [ClubEvent] = try await supabase
+            .from("club_events")
+            .select()
+            .eq("club_id", value: clubId.uuidString)
+            .gte("start_time", value: ISO8601DateFormatter().string(from: Date()))
+            .order("start_time", ascending: true)
+            .execute()
+            .value
+        
+        clubEvents = events
+        print("✅ Loaded \(events.count) upcoming events")
+    }
+    
+    /// RSVP to an event
+    func rsvpToEvent(eventId: UUID, status: RSVPStatus, declaredWeight: Int? = nil) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Check if user already has an RSVP
+        let existingRSVPs: [EventRSVP] = try await supabase
+            .from("event_rsvps")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+        
+        var rsvpData: [String: AnyJSON] = [
+            "event_id": .string(eventId.uuidString),
+            "user_id": .string(userId.uuidString),
+            "status": .string(status.rawValue)
+        ]
+        
+        if let weight = declaredWeight {
+            rsvpData["declared_weight"] = .double(Double(weight))
+        }
+        
+        if existingRSVPs.isEmpty {
+            // Insert new RSVP
+            try await supabase
+                .from("event_rsvps")
+                .insert(rsvpData)
+                .execute()
+        } else {
+            // Update existing RSVP
+            try await supabase
+                .from("event_rsvps")
+                .update(rsvpData)
+                .eq("event_id", value: eventId.uuidString)
+                .eq("user_id", value: userId.uuidString)
+                .execute()
+        }
+        
+        print("✅ RSVP'd to event: \(status.rawValue)")
+        
+        // Reload RSVPs
+        try await loadEventRSVPs(eventId: eventId)
+    }
+    
+    /// Load RSVPs for an event
+    func loadEventRSVPs(eventId: UUID) async throws {
+        let rsvps: [EventRSVP] = try await supabase
+            .from("event_rsvps")
+            .select("""
+                *,
+                profiles!inner(username, display_name, avatar_url)
+            """)
+            .eq("event_id", value: eventId.uuidString)
+            .execute()
+            .value
+        
+        currentEventRSVPs = rsvps
+        print("✅ Loaded \(rsvps.count) RSVPs")
+    }
+    
+    /// Get user's RSVP status for an event
+    func getUserRSVP(eventId: UUID) async throws -> EventRSVP? {
+        guard let userId = supabase.auth.currentUser?.id else {
+            return nil
+        }
+        
+        let rsvps: [EventRSVP] = try await supabase
+            .from("event_rsvps")
+            .select()
+            .eq("event_id", value: eventId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+        
+        return rsvps.first
+    }
+    
+    /// Calculate RSVP summary for an event
+    func getRSVPSummary(eventId: UUID) async throws -> RSVPSummary {
+        try await loadEventRSVPs(eventId: eventId)
+        
+        let goingCount = currentEventRSVPs.filter { $0.status == .going }.count
+        let maybeCount = currentEventRSVPs.filter { $0.status == .maybe }.count
+        let outCount = currentEventRSVPs.filter { $0.status == .out }.count
+        let totalWeight = currentEventRSVPs
+            .filter { $0.status == .going }
+            .compactMap { $0.declaredWeight }
+            .reduce(0, +)
+        
+        return RSVPSummary(
+            goingCount: goingCount,
+            maybeCount: maybeCount,
+            outCount: outCount,
+            totalDeclaredWeight: totalWeight,
+            rsvps: currentEventRSVPs
+        )
+    }
+    
+    // MARK: - Event Comments (The Wire)
+    
+    /// Post a comment to an event
+    func postEventComment(eventId: UUID, content: String) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let commentData: [String: AnyJSON] = [
+            "event_id": .string(eventId.uuidString),
+            "user_id": .string(userId.uuidString),
+            "content": .string(content),
+            "post_type": .string("event_comment")
+        ]
+        
+        try await supabase
+            .from("club_posts")
+            .insert(commentData)
+            .execute()
+        
+        print("✅ Posted event comment")
+        
+        // Reload comments
+        try await loadEventComments(eventId: eventId)
+    }
+    
+    /// Load comments for an event
+    func loadEventComments(eventId: UUID) async throws {
+        // Query posts where event_id matches
+        let comments: [EventComment] = try await supabase
+            .from("club_posts")
+            .select("""
+                id, event_id, user_id, content, created_at,
+                profiles!inner(username, display_name, avatar_url)
+            """)
+            .eq("event_id", value: eventId.uuidString)
+            .order("created_at", ascending: true)
+            .execute()
+            .value
+        
+        eventComments = comments
+        print("✅ Loaded \(comments.count) event comments")
+    }
+    
+    // MARK: - Member Management & Roles
+    
+    @Published var clubMembers: [ClubMemberDetails] = []
+    
+    /// Get user's role in a club
+    func getUserRole(clubId: UUID) async throws -> ClubRole {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let members: [ClubMember] = try await supabase
+            .from("club_members")
+            .select()
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+        
+        guard let member = members.first else {
+            throw CommunityError.notAMember
+        }
+        
+        return ClubRole(rawValue: member.role) ?? .member
+    }
+    
+    /// Load all members of a club with details
+    func loadClubMembers(clubId: UUID) async throws {
+        let members: [ClubMemberDetails] = try await supabase
+            .from("club_members")
+            .select("""
+                *,
+                profiles!inner(username, display_name, avatar_url)
+            """)
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+            .value
+        
+        clubMembers = members
+        print("✅ Loaded \(members.count) club members")
+    }
+    
+    /// Promote a member to leader (Founder only)
+    func promoteToLeader(userId: UUID, clubId: UUID) async throws {
+        let myRole = try await getUserRole(clubId: clubId)
+        guard myRole.canManageMembers else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        try await supabase
+            .from("club_members")
+            .update(["role": AnyJSON.string("leader")])
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        
+        print("✅ Promoted user to leader")
+        
+        // Reload members
+        try await loadClubMembers(clubId: clubId)
+    }
+    
+    /// Demote a leader to member (Founder only)
+    func demoteToMember(userId: UUID, clubId: UUID) async throws {
+        let myRole = try await getUserRole(clubId: clubId)
+        guard myRole.canManageMembers else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        try await supabase
+            .from("club_members")
+            .update(["role": AnyJSON.string("member")])
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        
+        print("✅ Demoted user to member")
+        
+        // Reload members
+        try await loadClubMembers(clubId: clubId)
+    }
+    
+    /// Remove a member from the club (Founder only)
+    func removeMember(userId: UUID, clubId: UUID) async throws {
+        let myRole = try await getUserRole(clubId: clubId)
+        guard myRole.canManageMembers else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        try await supabase
+            .from("club_members")
+            .delete()
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        
+        print("✅ Removed member from club")
+        
+        // Reload members
+        try await loadClubMembers(clubId: clubId)
+    }
+    
+    // MARK: - Waiver System
+    
+    /// Sign waiver for a club
+    func signWaiver(clubId: UUID, emergencyContactName: String, emergencyContactPhone: String) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let emergencyContact = EmergencyContact(name: emergencyContactName, phone: emergencyContactPhone)
+        let encoder = JSONEncoder()
+        let emergencyContactData = try encoder.encode(emergencyContact)
+        let emergencyContactJSON = String(data: emergencyContactData, encoding: .utf8) ?? "{}"
+        
+        try await supabase
+            .from("club_members")
+            .update([
+                "waiver_signed_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date())),
+                "emergency_contact_json": AnyJSON.string(emergencyContactJSON)
+            ])
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        
+        print("✅ Waiver signed for club")
+    }
+    
+    /// Check if user has signed waiver for a club
+    func hasSignedWaiver(clubId: UUID) async throws -> Bool {
+        guard let userId = supabase.auth.currentUser?.id else {
+            return false
+        }
+        
+        let members: [ClubMemberDetails] = try await supabase
+            .from("club_members")
+            .select("waiver_signed_at")
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+        
+        return members.first?.hasSignedWaiver ?? false
+    }
+    
+    /// Get emergency contact for a member (Founder only)
+    func getMemberEmergencyContact(userId: UUID, clubId: UUID) async throws -> EmergencyContact? {
+        let myRole = try await getUserRole(clubId: clubId)
+        guard myRole.canViewEmergencyData else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        let members: [ClubMemberDetails] = try await supabase
+            .from("club_members")
+            .select("emergency_contact_json")
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+            .value
+        
+        return members.first?.emergencyContact
+    }
+    
     // MARK: - Helper Functions
     
     private func generateJoinCode(from name: String) -> String {
@@ -668,6 +1100,9 @@ enum CommunityError: Error, LocalizedError {
     case networkError(String)
     case invalidData
     case alreadyMember
+    case notAMember
+    case insufficientPermissions
+    case waiverRequired
     
     var errorDescription: String? {
         switch self {
@@ -683,6 +1118,12 @@ enum CommunityError: Error, LocalizedError {
             return "Invalid data received from server"
         case .alreadyMember:
             return "You're already a member of this club"
+        case .notAMember:
+            return "You are not a member of this club"
+        case .insufficientPermissions:
+            return "You don't have permission to perform this action"
+        case .waiverRequired:
+            return "You must sign a waiver to join this club"
         }
     }
 }

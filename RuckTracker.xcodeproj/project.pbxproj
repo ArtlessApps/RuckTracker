@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		121857512E6BE73F00088A62 /* RuckTracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 121857502E6BE73F00088A62 /* RuckTracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		12C317712E7F7AA500DE131F /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 12C317702E7F7AA500DE131F /* Products.storekit */; };
 		1275C7072F05C2EC00151E62 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1275C7082F05C2EC00151E62 /* Supabase */; };
+		12C317712E7F7AA500DE131F /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 12C317702E7F7AA500DE131F /* Products.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
