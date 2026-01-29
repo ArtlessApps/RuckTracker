@@ -81,7 +81,7 @@ class UserSettings: ObservableObject {
         
         username = userDefaults.string(forKey: "username")
         email = userDefaults.string(forKey: "email")
-        hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedOnboarding")
+        hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedPhoneOnboarding")
         targetEventDate = userDefaults.object(forKey: "targetEventDate") as? Date
         baselinePaceMinutesPerMile = userDefaults.double(forKey: "baselinePaceMinutesPerMile")
         if baselinePaceMinutesPerMile == 0 { baselinePaceMinutesPerMile = 16.0 }
@@ -157,7 +157,7 @@ class UserSettings: ObservableObject {
         
         $hasCompletedOnboarding
             .sink { [weak self] value in
-                self?.userDefaults.set(value, forKey: "hasCompletedOnboarding")
+                self?.userDefaults.set(value, forKey: "hasCompletedPhoneOnboarding")
             }
             .store(in: &cancellables)
         

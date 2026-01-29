@@ -136,21 +136,19 @@ struct ActiveWorkoutFullScreenView: View {
         HStack(spacing: 20) {
             // Pause/Resume Button
             Button(action: {
-                if workoutManager.isActive {
-                    workoutManager.pauseWorkout()
-                } else {
+                if workoutManager.isPaused {
                     workoutManager.resumeWorkout()
+                } else {
+                    workoutManager.pauseWorkout()
                 }
             }) {
                 VStack(spacing: 4) {
-                    Image(systemName: workoutManager.isActive ? "pause.circle.fill" : "play.circle.fill")
+                    Image(systemName: workoutManager.isPaused ? "play.circle.fill" : "pause.circle.fill")
                         .font(.system(size: 44))
-                        // CHANGED: Uses AppColors instead of hardcoded colors
-                        .foregroundColor(workoutManager.isActive ? AppColors.pauseOrange : AppColors.successGreen)
+                        .foregroundColor(workoutManager.isPaused ? AppColors.successGreen : AppColors.pauseOrange)
                     
-                    Text(workoutManager.isActive ? "Pause" : "Resume")
+                    Text(workoutManager.isPaused ? "Resume" : "Pause")
                         .font(.caption)
-                        // CHANGED: Uses AppColors.textSecondary
                         .foregroundColor(AppColors.textSecondary)
                 }
             }

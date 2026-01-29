@@ -8,7 +8,7 @@ struct PlanView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
     
-    @AppStorage("hasCompletedPhoneOnboarding") private var hasCompletedPhoneOnboarding = true
+    @AppStorage("hasCompletedPhoneOnboarding") private var hasCompletedPhoneOnboarding = false
     
     @State private var planTitle: String?
     @State private var schedule: [ScheduledWorkout] = []

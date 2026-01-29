@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import StoreKit
 
 struct PhoneOnboardingView: View {
     @EnvironmentObject var healthManager: HealthManager
@@ -16,9 +17,7 @@ struct PhoneOnboardingView: View {
     @State private var eventDate: Date = Date().addingTimeInterval(60 * 60 * 24 * 30)
     @State private var hillAccess: Bool = true
     @State private var stairsAccess: Bool = false
-    @State private var injuryNotes: String = ""
-    @State private var showingProgressFeedback = false
-    @State private var progressFeedbackText = ""
+    @State private var showingAuth = false
     
     var body: some View {
         ZStack {
@@ -27,7 +26,7 @@ struct PhoneOnboardingView: View {
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
-                    ForEach(0..<8) { index in
+                    ForEach(0..<10) { index in
                         Capsule()
                             .fill(index <= currentStep ? AppColors.primary : AppColors.accentWarm.opacity(0.3))
                             .frame(height: 4)
@@ -38,8 +37,11 @@ struct PhoneOnboardingView: View {
                 
                 TabView(selection: $currentStep) {
                     // Step 1: The Welcome (Identity)
-                    WelcomeCoachStep(nextAction: { nextStep() })
-                        .tag(0)
+                    WelcomeCoachStep(
+                        nextAction: { nextStep() },
+                        onLogin: { showingAuth = true }
+                    )
+                    .tag(0)
                     
                     // Step 2: The Goal (Psychology)
                     GoalSelectionStep(selectedGoal: $userSettings.ruckingGoal, nextAction: { nextStepWithFeedback() })
@@ -60,74 +62,52 @@ struct PhoneOnboardingView: View {
                     )
                     .tag(3)
                     
-                    // Step 5: Terrain & Event (Context)
-                    TerrainEventStep(
-                        eventDate: $eventDate,
+                    // Step 5: Terrain (Context)
+                    TerrainStep(
                         hasHills: $hillAccess,
                         hasStairs: $stairsAccess,
-                        injuryNotes: $injuryNotes,
-                        nextAction: { applyTerrainAndInjuries(); nextStepWithFeedback() },
-                        backAction: previousStep
+                        nextAction: { applyTerrain(); nextStepWithFeedback() }
                     )
                     .tag(4)
                     
-                    // Step 6: Preferred Training Days (Schedule)
-                    TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStepWithFeedback() })
-                        .tag(5)
+                    // Step 6: Event (Timeline)
+                    EventStep(
+                        eventDate: $eventDate,
+                        nextAction: { applyEventDate(); nextStepWithFeedback() }
+                    )
+                    .tag(5)
                     
-                    // Step 7: The Reveal (The Product)
+                    // Step 7: Preferred Training Days (Schedule)
+                    TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStepWithFeedback() })
+                        .tag(6)
+                    
+                    // Step 8: The Reveal (The Product)
                     ProgramRecommendationStep(
                         goal: userSettings.ruckingGoal,
                         programTitle: recommendedProgramTitle,
                         nextAction: { nextStepWithFeedback() }
                     )
-                    .tag(6)
+                    .tag(7)
                     
-                    // Step 8: The Buy-in (Permissions)
+                    // Step 9: Pro Upsell (The Gate)
+                    ProUpsellStep(
+                        programTitle: recommendedProgramTitle,
+                        onSubscribe: { nextStepWithFeedback() },
+                        onMaybeLater: { nextStepWithFeedback() }
+                    )
+                    .tag(8)
+                    
+                    // Step 10: The Buy-in (Permissions)
                     PermissionsStep(
                         healthManager: healthManager, 
                         workoutManager: workoutManager, 
                         onComplete: { hasCompletedOnboarding = true }
                     )
-                    .tag(7)
+                    .tag(9)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentStep)
             }
-            // Progress feedback overlay
-            .overlay(
-                Group {
-                    if showingProgressFeedback {
-                        VStack {
-                            Spacer()
-                            
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(AppColors.accentGreen)
-                                    .font(.title3)
-                                
-                                Text(progressFeedbackText)
-                                    .font(.headline)
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(AppColors.overlayBlack)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(AppColors.primary, lineWidth: 1)
-                                    )
-                            )
-                            .padding(.horizontal, 30)
-                            .padding(.bottom, 100)
-                        }
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                }
-            )
         }
         .onAppear {
             baselinePaceInput = String(format: "%.0f", userSettings.baselinePaceMinutesPerMile)
@@ -135,7 +115,9 @@ struct PhoneOnboardingView: View {
             eventDate = userSettings.targetEventDate ?? eventDate
             hillAccess = userSettings.hasHillAccess
             stairsAccess = userSettings.hasStairsAccess
-            injuryNotes = userSettings.injuryFlags.joined(separator: ", ")
+        }
+        .sheet(isPresented: $showingAuth) {
+            AuthenticationView()
         }
     }
     
@@ -148,46 +130,7 @@ struct PhoneOnboardingView: View {
     }
     
     private func nextStepWithFeedback() {
-        // Show feedback based on which step was just completed
-        let feedbackMessages = [
-            "✓ Goal set", // After step 1 (goal selection)
-            "✓ Experience calibrated", // After step 2 (experience)
-            "✓ Baselines captured", // After step 3 (baseline metrics)
-            "✓ Environment mapped", // After step 4 (terrain)
-            "✓ Schedule locked", // After step 5 (training days)
-            "✓ Program built", // After step 6 (program reveal)
-            "" // No feedback after final step
-        ]
-        
-        // Get feedback for current step (if available)
-        if currentStep < feedbackMessages.count {
-            progressFeedbackText = feedbackMessages[currentStep]
-            
-            if !progressFeedbackText.isEmpty {
-                // Show the feedback
-                withAnimation(.easeIn(duration: 0.2)) {
-                    showingProgressFeedback = true
-                }
-                
-                // Hide it and move to next step
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        showingProgressFeedback = false
-                    }
-                    
-                    // Move to next step after feedback fades
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        currentStep += 1
-                    }
-                }
-            } else {
-                // No feedback, just move to next step
-                currentStep += 1
-            }
-        } else {
-            // Beyond feedback array, just move forward
-            currentStep += 1
-        }
+        currentStep += 1
     }
     
     private func calculateRecommendation() {
@@ -208,11 +151,13 @@ struct PhoneOnboardingView: View {
         }
     }
     
-    private func applyTerrainAndInjuries() {
-        userSettings.targetEventDate = eventDate
+    private func applyTerrain() {
         userSettings.hasHillAccess = hillAccess
         userSettings.hasStairsAccess = stairsAccess
-        userSettings.injuryFlags = injuryNotes.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+    }
+    
+    private func applyEventDate() {
+        userSettings.targetEventDate = eventDate
     }
 }
 
@@ -220,6 +165,7 @@ struct PhoneOnboardingView: View {
 
 struct WelcomeCoachStep: View {
     var nextAction: () -> Void
+    var onLogin: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {
@@ -230,7 +176,7 @@ struct WelcomeCoachStep: View {
                 .font(.system(size: 60, weight: .black))
                 .foregroundColor(AppColors.primary)
             
-            Text("POCKET COACH")
+            Text("WALK STRONGER")
                 .font(.headline)
                 .tracking(4)
                 .foregroundColor(AppColors.textPrimary)
@@ -243,33 +189,10 @@ struct WelcomeCoachStep: View {
                 .padding(.top, 10)
             
             Spacer()
-                .frame(height: 40)
-            
-            // NEW: Expectation setting box
-            VStack(spacing: 8) {
-                HStack(spacing: 4) {
-                    Image(systemName: "clock.fill")
-                        .foregroundColor(AppColors.primary)
-                        .font(.caption)
-                    Text("2 minutes to build your plan")
-                        .font(.subheadline)
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                
-                Text("8 quick questions")
-                    .font(.caption)
-                    .foregroundColor(AppColors.textSecondary.opacity(0.7))
-            }
-            .padding()
-            .background(AppColors.overlayWhiteLight)
-            .cornerRadius(12)
-            .padding(.horizontal, 30)
-            
-            Spacer()
             
             // CTA button
             Button(action: nextAction) {
-                Text("Build My Plan")
+                Text("Get Started")
                     .bold()
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -278,6 +201,17 @@ struct WelcomeCoachStep: View {
                     .cornerRadius(12)
             }
             .padding(.horizontal, 30)
+            
+            // Existing user login link
+            Button(action: onLogin) {
+                Text("Existing User? ")
+                    .foregroundColor(AppColors.textSecondary)
+                +
+                Text("Login")
+                    .foregroundColor(AppColors.primary)
+                    .fontWeight(.semibold)
+            }
+            .font(.subheadline)
             .padding(.bottom, 20)
         }
     }
@@ -453,14 +387,14 @@ struct BaselineMetricsStep: View {
                     Text("Calibrate your plan")
                         .font(.title).bold().foregroundColor(AppColors.textPrimary)
                     
-                    Text("Tell us your current comfortable pace with 20 lbs so we scale load safely.")
+                    Text("Tell us your current comfortable rucking pace so we can scale your training.")
                         .font(.subheadline)
                         .foregroundColor(AppColors.textSecondary)
                 }
                 
                 // PACE SELECTION (multiple choice)
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Comfortable pace with 20 lbs:")
+                    Text("Your comfortable rucking pace:")
                         .font(.headline)
                         .foregroundColor(AppColors.textPrimary)
                     
@@ -669,15 +603,10 @@ enum DistanceLevel: CaseIterable {
     }
 }
 
-struct TerrainEventStep: View {
-    @Binding var eventDate: Date
+struct TerrainStep: View {
     @Binding var hasHills: Bool
     @Binding var hasStairs: Bool
-    @Binding var injuryNotes: String
     var nextAction: () -> Void
-    var backAction: () -> Void
-    
-    @State private var hasEvent: Bool = false // NEW: Track if user has an event
     
     var body: some View {
         ScrollView {
@@ -687,7 +616,7 @@ struct TerrainEventStep: View {
                     Text("Training environment")
                         .font(.title).bold().foregroundColor(AppColors.textPrimary)
                     
-                    Text("We'll adapt your program to match your terrain and timeline.")
+                    Text("We'll adapt your program to match your terrain.")
                         .font(.subheadline)
                         .foregroundColor(AppColors.textSecondary)
                 }
@@ -775,68 +704,109 @@ struct TerrainEventStep: View {
                     .cornerRadius(12)
                 }
                 
-                Divider()
-                    .background(AppColors.overlayWhiteMedium)
-                    .padding(.vertical, 8)
-                
-                // EVENT SELECTION (now optional!)
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Training for something specific?")
-                        .font(.headline)
+                // Continue button
+                Button(action: nextAction) {
+                    Text("Continue")
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(AppColors.primaryGradient)
                         .foregroundColor(AppColors.textPrimary)
+                        .cornerRadius(12)
+                }
+                .padding(.top, 8)
+            }
+            .padding()
+        }
+    }
+}
+
+struct EventStep: View {
+    @Binding var eventDate: Date
+    var nextAction: () -> Void
+    
+    @State private var hasEvent: Bool = false
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Training for something specific?")
+                        .font(.title).bold().foregroundColor(AppColors.textPrimary)
                     
-                    // Yes/No toggle
-                    HStack(spacing: 12) {
-                        Button(action: { hasEvent = false }) {
-                            HStack {
-                                Image(systemName: !hasEvent ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(AppColors.primary)
-                                Text("No - Just getting stronger")
-                                    .font(.subheadline)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(!hasEvent ? AppColors.primary.opacity(0.2) : AppColors.overlayWhite)
-                            .cornerRadius(12)
-                            .foregroundColor(AppColors.textPrimary)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Button(action: { hasEvent = true }) {
-                            HStack {
-                                Image(systemName: hasEvent ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(AppColors.primary)
-                                Text("Yes - I have an event")
-                                    .font(.subheadline)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(hasEvent ? AppColors.primary.opacity(0.2) : AppColors.overlayWhite)
-                            .cornerRadius(12)
-                            .foregroundColor(AppColors.textPrimary)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                    
-                    // Event date picker (only show if they have an event)
-                    if hasEvent {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Event date:")
-                                .font(.subheadline)
-                                .foregroundColor(AppColors.textSecondary)
-                            
-                            DatePicker("", selection: $eventDate, in: Date()..., displayedComponents: .date)
-                                .datePickerStyle(.compact)
-                                .labelsHidden()
-                                .padding()
-                                .background(AppColors.overlayWhite)
-                                .cornerRadius(12)
-                        }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
+                    Text("We'll build your timeline around your goal.")
+                        .font(.subheadline)
+                        .foregroundColor(AppColors.textSecondary)
                 }
                 
-                // REMOVED injury notes - too personal, move to settings
+                // Yes/No selection
+                VStack(alignment: .leading, spacing: 12) {
+                    Button(action: { hasEvent = false }) {
+                        HStack {
+                            Image(systemName: !hasEvent ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(AppColors.primary)
+                                .font(.title2)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("No specific event")
+                                    .font(.headline)
+                                    .foregroundColor(AppColors.textPrimary)
+                                
+                                Text("Just getting stronger")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding()
+                        .background(!hasEvent ? AppColors.primary.opacity(0.2) : AppColors.overlayWhite)
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Button(action: { hasEvent = true }) {
+                        HStack {
+                            Image(systemName: hasEvent ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(AppColors.primary)
+                                .font(.title2)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Yes, I have an event")
+                                    .font(.headline)
+                                    .foregroundColor(AppColors.textPrimary)
+                                
+                                Text("Race, challenge, or goal date")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding()
+                        .background(hasEvent ? AppColors.primary.opacity(0.2) : AppColors.overlayWhite)
+                        .cornerRadius(12)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                
+                // Event date picker (only show if they have an event)
+                if hasEvent {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("When is your event?")
+                            .font(.headline)
+                            .foregroundColor(AppColors.textPrimary)
+                        
+                        DatePicker("", selection: $eventDate, in: Date()..., displayedComponents: .date)
+                            .datePickerStyle(.graphical)
+                            .labelsHidden()
+                            .padding()
+                            .background(AppColors.overlayWhite)
+                            .cornerRadius(12)
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 // Continue button
                 Button(action: nextAction) {
@@ -852,6 +822,7 @@ struct TerrainEventStep: View {
             }
             .padding()
         }
+        .animation(.easeInOut, value: hasEvent)
     }
 }
 
@@ -1069,6 +1040,268 @@ struct ProgramRecommendationStep: View {
             default: return "Rest"
             }
         }
+    }
+}
+
+// MARK: - Pro Upsell Step (The Gate)
+
+struct ProUpsellStep: View {
+    let programTitle: String
+    var onSubscribe: () -> Void
+    var onMaybeLater: () -> Void
+    
+    @StateObject private var storeManager = StoreKitManager.shared
+    @StateObject private var premiumManager = PremiumManager.shared
+    @State private var selectedProduct: Product?
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Header
+                VStack(spacing: 12) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(AppColors.primary)
+                    
+                    Text("Unlock Your Plan")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    Text("Your \(programTitle) is ready.\nSubscribe to start training.")
+                        .font(.subheadline)
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 20)
+                
+                // What's included
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("MARCH Pro includes:")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    ProFeatureRow(icon: "sparkles", text: "Your personalized training plan")
+                    ProFeatureRow(icon: "waveform.circle.fill", text: "Smart audio coaching cues")
+                    ProFeatureRow(icon: "chart.xyaxis.line", text: "Progress tracking & analytics")
+                    ProFeatureRow(icon: "figure.hiking", text: "10+ structured programs")
+                }
+                .padding()
+                .background(AppColors.overlayWhiteLight)
+                .cornerRadius(16)
+                
+                // Subscription options
+                if storeManager.isLoading {
+                    ProgressView("Loading...")
+                        .frame(height: 120)
+                } else if !storeManager.availableSubscriptions.isEmpty {
+                    VStack(spacing: 12) {
+                        ForEach(storeManager.availableSubscriptions, id: \.id) { product in
+                            SubscriptionOptionRow(
+                                product: product,
+                                isSelected: selectedProduct?.id == product.id,
+                                discount: product.isYearlySubscription ? storeManager.yearlyDiscount() : nil
+                            ) {
+                                selectedProduct = product
+                            }
+                        }
+                    }
+                } else {
+                    // Fallback if products not loaded
+                    VStack(spacing: 8) {
+                        Text("$4.99/month or $39.99/year")
+                            .font(.headline)
+                            .foregroundColor(AppColors.textPrimary)
+                        Text("7-day free trial included")
+                            .font(.caption)
+                            .foregroundColor(AppColors.primary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AppColors.overlayWhiteLight)
+                    .cornerRadius(12)
+                }
+                
+                // Subscribe button
+                Button {
+                    Task {
+                        if let product = selectedProduct {
+                            do {
+                                let transaction = try await storeManager.purchase(product)
+                                if transaction != nil {
+                                    // Purchase successful
+                                    onSubscribe()
+                                }
+                            } catch {
+                                // Error handled by StoreKitManager
+                            }
+                        } else {
+                            // No product selected, try to load
+                            await storeManager.loadProducts()
+                            selectedProduct = storeManager.recommendedSubscription
+                        }
+                    }
+                } label: {
+                    HStack {
+                        if storeManager.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text("Start Free Trial")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(AppColors.primaryGradient)
+                    .foregroundColor(AppColors.textPrimary)
+                    .cornerRadius(12)
+                }
+                .disabled(storeManager.isLoading)
+                
+                // Trial info
+                if let product = selectedProduct {
+                    Text("Free for 7 days, then \(product.localizedPrice) \(product.subscriptionPeriodDescription.lowercased()). Cancel anytime.")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Maybe Later
+                Button {
+                    onMaybeLater()
+                } label: {
+                    Text("Use Free Version")
+                        .font(.subheadline)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .padding(.top, 4)
+                
+                // Restore purchases
+                Button {
+                    Task {
+                        await storeManager.restorePurchases()
+                        if premiumManager.isPremiumUser {
+                            onSubscribe()
+                        }
+                    }
+                } label: {
+                    Text("Restore Purchases")
+                        .font(.caption)
+                        .foregroundColor(AppColors.primary.opacity(0.7))
+                }
+                
+                // Legal
+                Text("By subscribing, you agree to our Terms of Service and Privacy Policy.")
+                    .font(.caption2)
+                    .foregroundColor(AppColors.textSecondary.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .padding()
+        }
+        .task {
+            if storeManager.availableSubscriptions.isEmpty {
+                await storeManager.loadProducts()
+            }
+            selectedProduct = storeManager.recommendedSubscription
+        }
+    }
+}
+
+private struct ProFeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(AppColors.primary)
+                .frame(width: 24)
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(AppColors.textPrimary)
+            Spacer()
+        }
+    }
+}
+
+private struct SubscriptionOptionRow: View {
+    let product: Product
+    let isSelected: Bool
+    let discount: String?
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(product.subscriptionPeriodDescription)
+                            .font(.headline)
+                            .foregroundColor(AppColors.textPrimary)
+                        
+                        if let discount = discount {
+                            Text("Save \(discount)")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(AppColors.primary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(AppColors.primary.opacity(0.15))
+                                .cornerRadius(4)
+                        }
+                        
+                        if product.isYearlySubscription {
+                            Text("Best Value")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue)
+                                .cornerRadius(4)
+                        }
+                    }
+                    
+                    if product.isYearlySubscription {
+                        if let monthlyPrice = calculateMonthlyPrice() {
+                            Text("\(monthlyPrice)/month")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Text(product.localizedPrice)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(AppColors.textPrimary)
+                
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .font(.title2)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(AppColors.overlayWhiteLight)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func calculateMonthlyPrice() -> String? {
+        let monthlyPrice = product.price / 12
+        return product.priceFormatStyle.format(monthlyPrice)
     }
 }
 

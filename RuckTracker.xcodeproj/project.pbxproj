@@ -368,7 +368,7 @@
 				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = MARCH;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
@@ -403,7 +403,7 @@
 				DEVELOPMENT_TEAM = KLA3GV43P7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = MARCH;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
@@ -441,7 +441,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RuckTracker/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = MARCH;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
@@ -456,7 +456,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -481,7 +481,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RuckTracker/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RuckTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = MARCH;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
@@ -496,7 +496,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Artless.RuckTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
