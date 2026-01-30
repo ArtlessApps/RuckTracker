@@ -9,6 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var userSettings = UserSettings.shared
+    @StateObject private var communityService = CommunityService.shared
+    @StateObject private var premiumManager = PremiumManager.shared
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var healthManager: HealthManager
     
@@ -18,6 +20,7 @@ struct SettingsView: View {
     @State private var showingValidationError = false
     @State private var validationMessage = ""
     @State private var showingDebugLogs = false
+    @State private var showingLogoutAlert = false
     
     var body: some View {
         NavigationView {
@@ -195,6 +198,21 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                // MARK: - Account Section
+                if communityService.isAuthenticated {
+                    Section(header: Text("Account")) {
+                        Button(action: {
+                            showingLogoutAlert = true
+                        }) {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("Sign Out")
+                            }
+                            .foregroundColor(.red)
+                        }
+                    }
+                }
                 }
             }
             .navigationTitle("Settings")
@@ -233,9 +251,30 @@ struct SettingsView: View {
             } message: {
                 Text(validationMessage)
             }
+            .alert("Sign Out", isPresented: $showingLogoutAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Sign Out", role: .destructive) {
+                    Task {
+                        await signOut()
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to sign out? You'll need to sign in again to access community features.")
+            }
             .onAppear {
                 loadCurrentValues()
             }
+        }
+    }
+    
+    // MARK: - Sign Out
+    private func signOut() async {
+        do {
+            try await communityService.signOut()
+            premiumManager.resetPremiumStatusForSignOut()
+            dismiss()
+        } catch {
+            print("❌ Sign out failed: \(error)")
         }
     }
     

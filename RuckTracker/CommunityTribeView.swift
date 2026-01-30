@@ -593,10 +593,18 @@ struct LeaderboardRow: View {
 
 struct JoinClubView: View {
     @StateObject private var communityService = CommunityService.shared
+    @State private var selectedTab: JoinClubTab = .code
     @State private var joinCode = ""
+    @State private var searchZipcode = ""
     @State private var isJoining = false
+    @State private var isSearching = false
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
+    
+    enum JoinClubTab: String, CaseIterable {
+        case code = "Enter Code"
+        case find = "Find a Club"
+    }
     
     var body: some View {
         NavigationView {
@@ -604,48 +612,25 @@ struct JoinClubView: View {
                 AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
-                VStack(spacing: 24) {
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 64))
-                        .foregroundColor(AppColors.primary)
-                    
-                    Text("Join a Club")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
-                    
-                    Text("Enter the club code shared by your group admin")
-                        .font(.system(size: 16))
-                        .foregroundColor(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                    
-                    TextField("Club Code (e.g., SD-1234)", text: $joinCode)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.characters)
-                        .padding(.horizontal, 32)
-                    
-                    if let error = errorMessage {
-                        Text(error)
-                            .font(.system(size: 14))
-                            .foregroundColor(AppColors.accentWarm)
-                    }
-                    
-                    Button(action: { joinClub() }) {
-                        if isJoining {
-                            ProgressView()
-                                .tint(AppColors.textOnLight)
-                        } else {
-                            Text("Join Club")
+                VStack(spacing: 0) {
+                    // Tab picker
+                    Picker("Join Method", selection: $selectedTab) {
+                        ForEach(JoinClubTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
                         }
                     }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(joinCode.isEmpty || isJoining)
-                    .padding(.horizontal, 32)
+                    .pickerStyle(.segmented)
+                    .padding()
                     
-                    Spacer()
+                    switch selectedTab {
+                    case .code:
+                        joinWithCodeView
+                    case .find:
+                        findClubView
+                    }
                 }
-                .padding(.top, 32)
             }
-            .navigationTitle("")
+            .navigationTitle("Join a Club")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -658,7 +643,124 @@ struct JoinClubView: View {
         }
     }
     
-    private func joinClub() {
+    // MARK: - Join with Code View
+    
+    private var joinWithCodeView: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "person.badge.plus")
+                .font(.system(size: 64))
+                .foregroundColor(AppColors.primary)
+            
+            Text("Have a Code?")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(AppColors.textPrimary)
+            
+            Text("Enter the club code shared by your group admin")
+                .font(.system(size: 16))
+                .foregroundColor(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+            
+            TextField("Club Code (e.g., SD-1234)", text: $joinCode)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.characters)
+                .padding(.horizontal, 32)
+            
+            if let error = errorMessage {
+                Text(error)
+                    .font(.system(size: 14))
+                    .foregroundColor(AppColors.accentWarm)
+            }
+            
+            Button(action: { joinClubWithCode() }) {
+                if isJoining {
+                    ProgressView()
+                        .tint(AppColors.textOnLight)
+                } else {
+                    Text("Join Club")
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(joinCode.isEmpty || isJoining)
+            .padding(.horizontal, 32)
+            
+            Spacer()
+        }
+        .padding(.top, 32)
+    }
+    
+    // MARK: - Find Club View
+    
+    private var findClubView: some View {
+        VStack(spacing: 16) {
+            // Search by zipcode
+            HStack(spacing: 12) {
+                TextField("Enter zipcode", text: $searchZipcode)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
+                
+                Button(action: { searchClubs() }) {
+                    if isSearching {
+                        ProgressView()
+                            .tint(AppColors.primary)
+                    } else {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .background(AppColors.primary)
+                .foregroundColor(AppColors.textOnLight)
+                .cornerRadius(8)
+                .disabled(isSearching)
+            }
+            .padding(.horizontal)
+            
+            if let error = errorMessage {
+                Text(error)
+                    .font(.system(size: 14))
+                    .foregroundColor(AppColors.accentWarm)
+                    .padding(.horizontal)
+            }
+            
+            // Results
+            if communityService.nearbyClubs.isEmpty && !isSearching {
+                VStack(spacing: 16) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 48))
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    Text("Find Clubs Near You")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    Text("Enter your zipcode to discover public clubs in your area")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                .padding(.top, 48)
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(communityService.nearbyClubs) { club in
+                            NearbyClubCard(club: club, onJoin: {
+                                joinDiscoveredClub(club)
+                            }, isJoining: isJoining)
+                        }
+                    }
+                    .padding()
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.top)
+    }
+    
+    // MARK: - Actions
+    
+    private func joinClubWithCode() {
         isJoining = true
         errorMessage = nil
         
@@ -672,6 +774,120 @@ struct JoinClubView: View {
             }
         }
     }
+    
+    private func searchClubs() {
+        isSearching = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                if searchZipcode.isEmpty {
+                    try await communityService.findPublicClubs()
+                } else {
+                    try await communityService.findNearbyClubs(zipcode: searchZipcode)
+                }
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isSearching = false
+        }
+    }
+    
+    private func joinDiscoveredClub(_ club: Club) {
+        isJoining = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                try await communityService.joinClubById(club.id)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+                isJoining = false
+            }
+        }
+    }
+}
+
+// MARK: - Nearby Club Card
+
+struct NearbyClubCard: View {
+    let club: Club
+    let onJoin: () -> Void
+    let isJoining: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                // Club avatar or icon
+                ZStack {
+                    Circle()
+                        .fill(AppColors.primary.opacity(0.2))
+                        .frame(width: 48, height: 48)
+                    
+                    Image(systemName: "figure.hiking")
+                        .font(.system(size: 20))
+                        .foregroundColor(AppColors.primary)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(club.name)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    HStack(spacing: 8) {
+                        Text("\(club.memberCount) members")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textSecondary)
+                        
+                        if let zipcode = club.zipcode {
+                            Text("•")
+                                .foregroundColor(AppColors.textSecondary)
+                            HStack(spacing: 4) {
+                                Image(systemName: "mappin")
+                                    .font(.system(size: 12))
+                                Text(zipcode)
+                                    .font(.system(size: 14))
+                            }
+                            .foregroundColor(AppColors.textSecondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            if let description = club.description, !description.isEmpty {
+                Text(description)
+                    .font(.system(size: 14))
+                    .foregroundColor(AppColors.textSecondary)
+                    .lineLimit(2)
+            }
+            
+            Button(action: onJoin) {
+                if isJoining {
+                    ProgressView()
+                        .tint(AppColors.textOnLight)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text("Join Club")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .foregroundColor(AppColors.textOnLight)
+            .padding(.vertical, 10)
+            .background(AppColors.primary)
+            .cornerRadius(8)
+            .disabled(isJoining)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(AppColors.surface)
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+        )
+    }
 }
 
 // MARK: - Create Club View
@@ -680,6 +896,8 @@ struct CreateClubView: View {
     @StateObject private var communityService = CommunityService.shared
     @State private var clubName = ""
     @State private var clubDescription = ""
+    @State private var isPrivate = false
+    @State private var zipcode = ""
     @State private var isCreating = false
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
@@ -690,49 +908,86 @@ struct CreateClubView: View {
                 AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
-                VStack(spacing: 24) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Club Name")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        TextField("San Diego Ruckers", text: $clubName)
-                            .textFieldStyle(.roundedBorder)
-                        
-                        Text("Description (optional)")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        TextEditor(text: $clubDescription)
-                            .frame(height: 100)
-                            .padding(8)
-                            .background(AppColors.surface)
-                            .cornerRadius(8)
-                            .scrollContentBackground(.hidden)
-                    }
-                    .padding()
-                    
-                    if let error = errorMessage {
-                        Text(error)
-                            .foregroundColor(AppColors.accentWarm)
-                            .font(.system(size: 14))
-                    }
-                    
-                    Button(action: { createClub() }) {
-                        if isCreating {
-                            ProgressView()
-                                .tint(AppColors.textOnLight)
-                        } else {
-                            Text("Create Club")
+                ScrollView {
+                    VStack(spacing: 24) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Club Name")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            TextField("San Diego Ruckers", text: $clubName)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            Text("Description (optional)")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            TextEditor(text: $clubDescription)
+                                .frame(height: 100)
+                                .padding(8)
+                                .background(AppColors.surface)
+                                .cornerRadius(8)
+                                .scrollContentBackground(.hidden)
+                            
+                            // Privacy toggle
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Private Club")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(AppColors.textPrimary)
+                                    
+                                    Text(isPrivate ? "Only visible with invite code" : "Visible in club search")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(AppColors.textSecondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $isPrivate)
+                                    .labelsHidden()
+                                    .tint(AppColors.primary)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(AppColors.surface)
+                            )
+                            
+                            // Zipcode for discoverability
+                            Text("Location (Zipcode)")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            TextField("92101", text: $zipcode)
+                                .textFieldStyle(.roundedBorder)
+                                .keyboardType(.numberPad)
+                            
+                            Text("Helps nearby ruckers find your club")
+                                .font(.system(size: 13))
+                                .foregroundColor(AppColors.textSecondary)
                         }
+                        .padding()
+                        
+                        if let error = errorMessage {
+                            Text(error)
+                                .foregroundColor(AppColors.accentWarm)
+                                .font(.system(size: 14))
+                        }
+                        
+                        Button(action: { createClub() }) {
+                            if isCreating {
+                                ProgressView()
+                                    .tint(AppColors.textOnLight)
+                            } else {
+                                Text("Create Club")
+                            }
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        .disabled(clubName.isEmpty || isCreating)
+                        .padding(.horizontal)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(clubName.isEmpty || isCreating)
-                    .padding(.horizontal)
-                    
-                    Spacer()
+                    .padding(.top)
                 }
-                .padding(.top)
             }
             .navigationTitle("Create Club")
             .navigationBarTitleDisplayMode(.inline)
@@ -755,7 +1010,9 @@ struct CreateClubView: View {
             do {
                 let newClub = try await communityService.createClub(
                     name: clubName,
-                    description: clubDescription
+                    description: clubDescription,
+                    isPrivate: isPrivate,
+                    zipcode: zipcode.isEmpty ? nil : zipcode
                 )
                 
                 // Show success message with join code

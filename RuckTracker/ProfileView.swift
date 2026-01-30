@@ -291,8 +291,8 @@ struct ProfileView: View {
     
     private var actionsSection: some View {
         VStack(spacing: 16) {
-            // Logout Button
-            if CommunityService.shared.currentProfile != nil {
+            // Logout Button - show if user is authenticated
+            if CommunityService.shared.isAuthenticated {
                 Button {
                     showingLogoutAlert = true
                 } label: {

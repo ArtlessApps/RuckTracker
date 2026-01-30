@@ -62,9 +62,13 @@ CREATE TABLE public.clubs (
   join_code text NOT NULL UNIQUE,
   avatar_url text,
   description text,
+  zipcode text,
   CONSTRAINT clubs_pkey PRIMARY KEY (id),
   CONSTRAINT clubs_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
+
+-- Migration to add zipcode column to existing clubs table:
+-- ALTER TABLE public.clubs ADD COLUMN zipcode text;
 CREATE TABLE public.event_rsvps (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   created_at timestamp with time zone DEFAULT now(),

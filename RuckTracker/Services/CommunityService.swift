@@ -27,6 +27,11 @@ class CommunityService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
+    /// Returns true if there's an authenticated user session
+    var isAuthenticated: Bool {
+        supabase.auth.currentUser != nil
+    }
+    
     // MARK: - Supabase Client
     
     // TODO: Replace with your actual Supabase URL and anon key
@@ -161,7 +166,7 @@ class CommunityService: ObservableObject {
     // MARK: - Clubs
     
     /// Create a new club
-    func createClub(name: String, description: String) async throws -> Club {
+    func createClub(name: String, description: String, isPrivate: Bool = false, zipcode: String? = nil) async throws -> Club {
         guard let userId = supabase.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
         }
@@ -169,12 +174,17 @@ class CommunityService: ObservableObject {
         // Generate a simple join code (you can make this fancier)
         let joinCode = generateJoinCode(from: name)
         
-        let clubData: [String: AnyJSON] = [
+        var clubData: [String: AnyJSON] = [
             "name": .string(name),
             "description": .string(description),
             "join_code": .string(joinCode),
-            "created_by": .string(userId.uuidString)
+            "created_by": .string(userId.uuidString),
+            "is_private": .bool(isPrivate)
         ]
+        
+        if let zipcode = zipcode, !zipcode.isEmpty {
+            clubData["zipcode"] = .string(zipcode)
+        }
         
         let newClub: Club = try await supabase
             .from("clubs")
@@ -256,6 +266,57 @@ class CommunityService: ObservableObject {
         // Reload clubs
         try await loadMyClubs()
         print("✅ Left club")
+    }
+    
+    /// Find public clubs near a zipcode
+    @Published var nearbyClubs: [Club] = []
+    
+    func findNearbyClubs(zipcode: String) async throws {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Get the first 3 digits of the zipcode for regional matching
+        let zipcodePrefix = String(zipcode.prefix(3))
+        
+        // Find public clubs with matching zipcode prefix
+        let clubs: [Club] = try await supabase
+            .from("clubs")
+            .select()
+            .eq("is_private", value: false)
+            .like("zipcode", pattern: "\(zipcodePrefix)%")
+            .order("member_count", ascending: false)
+            .limit(20)
+            .execute()
+            .value
+        
+        nearbyClubs = clubs
+        print("✅ Found \(clubs.count) nearby clubs for zipcode prefix: \(zipcodePrefix)")
+    }
+    
+    /// Find all public clubs (when no zipcode is provided)
+    func findPublicClubs() async throws {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let clubs: [Club] = try await supabase
+            .from("clubs")
+            .select()
+            .eq("is_private", value: false)
+            .order("member_count", ascending: false)
+            .limit(20)
+            .execute()
+            .value
+        
+        nearbyClubs = clubs
+        print("✅ Found \(clubs.count) public clubs")
+    }
+    
+    /// Join a club by its ID (for joining discovered clubs)
+    func joinClubById(_ clubId: UUID) async throws {
+        try await joinClub(clubId: clubId)
+        print("✅ Joined club by ID: \(clubId)")
     }
     
     /// Load all clubs the user is a member of
@@ -941,6 +1002,7 @@ struct Club: Codable, Identifiable {
     let isPrivate: Bool
     let avatarUrl: String?
     let memberCount: Int
+    let zipcode: String?
     let createdAt: Date
     
     enum CodingKeys: String, CodingKey {
@@ -952,6 +1014,7 @@ struct Club: Codable, Identifiable {
         case isPrivate = "is_private"
         case avatarUrl = "avatar_url"
         case memberCount = "member_count"
+        case zipcode
         case createdAt = "created_at"
     }
 }
