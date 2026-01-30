@@ -12,6 +12,7 @@
 
 import Foundation
 import Supabase
+import CoreLocation
 
 /// Main service for all community features
 @MainActor
@@ -166,13 +167,24 @@ class CommunityService: ObservableObject {
     // MARK: - Clubs
     
     /// Create a new club
-    func createClub(name: String, description: String, isPrivate: Bool = false, zipcode: String? = nil) async throws -> Club {
+    /// - Parameters:
+    ///   - name: The club name
+    ///   - description: Optional club description
+    ///   - isPrivate: Whether the club is private (invite-only)
+    ///   - zipcode: Optional location zipcode for discoverability
+    ///   - customJoinCode: Optional custom invite code (for private clubs). If nil, auto-generates one.
+    func createClub(name: String, description: String, isPrivate: Bool = false, zipcode: String? = nil, customJoinCode: String? = nil) async throws -> Club {
         guard let userId = supabase.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
         }
         
-        // Generate a simple join code (you can make this fancier)
-        let joinCode = generateJoinCode(from: name)
+        // Use custom join code if provided, otherwise generate one
+        let joinCode: String
+        if let customCode = customJoinCode, !customCode.isEmpty {
+            joinCode = customCode.uppercased()
+        } else {
+            joinCode = generateJoinCode(from: name)
+        }
         
         var clubData: [String: AnyJSON] = [
             "name": .string(name),
@@ -182,17 +194,44 @@ class CommunityService: ObservableObject {
             "is_private": .bool(isPrivate)
         ]
         
+        // Add zipcode and geocode to coordinates if provided
         if let zipcode = zipcode, !zipcode.isEmpty {
             clubData["zipcode"] = .string(zipcode)
+            
+            // Try to geocode the zipcode to store coordinates
+            do {
+                let coordinate = try await geocodeZipcode(zipcode)
+                clubData["latitude"] = .double(coordinate.latitude)
+                clubData["longitude"] = .double(coordinate.longitude)
+                print("📍 Geocoded \(zipcode) to: \(coordinate.latitude), \(coordinate.longitude)")
+            } catch {
+                print("⚠️ Could not geocode zipcode \(zipcode): \(error)")
+                // Continue without coordinates - club will still be searchable by zipcode prefix
+            }
         }
         
-        let newClub: Club = try await supabase
-            .from("clubs")
-            .insert(clubData)
-            .select()
-            .single()
-            .execute()
-            .value
+        let newClub: Club
+        do {
+            newClub = try await supabase
+                .from("clubs")
+                .insert(clubData)
+                .select()
+                .single()
+                .execute()
+                .value
+        } catch {
+            // Check for unique constraint violation (duplicate join code)
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("duplicate") || 
+               errorMessage.contains("unique") || 
+               errorMessage.contains("23505") ||
+               errorMessage.contains("join_code") {
+                print("❌ Duplicate invite code: \(joinCode)")
+                throw CommunityError.duplicateInviteCode
+            }
+            // Re-throw other errors
+            throw error
+        }
         
         // Auto-join creator as founder
         try await joinClub(clubId: newClub.id, role: "founder")
@@ -201,9 +240,8 @@ class CommunityService: ObservableObject {
         return newClub
     }
     
-    /// Join a club using join code
-    func joinClubWithCode(_ code: String) async throws {
-        // Find club by join code
+    /// Get a club by its join code (for waiver flow)
+    func getClubByCode(_ code: String) async throws -> Club {
         let club: Club = try await supabase
             .from("clubs")
             .select()
@@ -211,6 +249,14 @@ class CommunityService: ObservableObject {
             .single()
             .execute()
             .value
+        
+        return club
+    }
+    
+    /// Join a club using join code
+    func joinClubWithCode(_ code: String) async throws {
+        // Find club by join code
+        let club = try await getClubByCode(code)
         
         try await joinClub(clubId: club.id)
         print("✅ Joined club: \(club.name)")
@@ -268,18 +314,316 @@ class CommunityService: ObservableObject {
         print("✅ Left club")
     }
     
+    // MARK: - Founder Management
+    
+    /// Delete a club (Founder only)
+    /// This permanently deletes the club and all associated data
+    func deleteClub(clubId: UUID) async throws {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Verify user is founder
+        let role = try await getUserRole(clubId: clubId)
+        guard role.canDeleteClub else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        // Delete in order: posts, event_rsvps, events, members, then club
+        // Note: This could also be handled by CASCADE in database
+        
+        // Delete club posts
+        try await supabase
+            .from("club_posts")
+            .delete()
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+        
+        // Delete club events and their RSVPs
+        let events: [ClubEvent] = try await supabase
+            .from("club_events")
+            .select("id")
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+            .value
+        
+        for event in events {
+            try await supabase
+                .from("event_rsvps")
+                .delete()
+                .eq("event_id", value: event.id.uuidString)
+                .execute()
+        }
+        
+        try await supabase
+            .from("club_events")
+            .delete()
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+        
+        // Delete leaderboard entries
+        try await supabase
+            .from("weekly_leaderboard")
+            .delete()
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+        
+        // Delete all members
+        try await supabase
+            .from("club_members")
+            .delete()
+            .eq("club_id", value: clubId.uuidString)
+            .execute()
+        
+        // Finally delete the club
+        try await supabase
+            .from("clubs")
+            .delete()
+            .eq("id", value: clubId.uuidString)
+            .execute()
+        
+        // Reload clubs
+        try await loadMyClubs()
+        print("✅ Deleted club")
+    }
+    
+    /// Transfer founder role to another member (Founder only)
+    /// Current founder becomes a leader, target member becomes founder
+    func transferFoundership(clubId: UUID, newFounderId: UUID) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Verify user is founder
+        let role = try await getUserRole(clubId: clubId)
+        guard role.canTransferOwnership else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        // Verify new founder is a member
+        let members: [ClubMember] = try await supabase
+            .from("club_members")
+            .select()
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: newFounderId.uuidString)
+            .execute()
+            .value
+        
+        guard !members.isEmpty else {
+            throw CommunityError.notAMember
+        }
+        
+        // Update new founder to founder role
+        try await supabase
+            .from("club_members")
+            .update(["role": AnyJSON.string("founder")])
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: newFounderId.uuidString)
+            .execute()
+        
+        // Demote current founder to leader
+        try await supabase
+            .from("club_members")
+            .update(["role": AnyJSON.string("leader")])
+            .eq("club_id", value: clubId.uuidString)
+            .eq("user_id", value: userId.uuidString)
+            .execute()
+        
+        // Update club's created_by field
+        try await supabase
+            .from("clubs")
+            .update(["created_by": AnyJSON.string(newFounderId.uuidString)])
+            .eq("id", value: clubId.uuidString)
+            .execute()
+        
+        // Reload members
+        try await loadClubMembers(clubId: clubId)
+        print("✅ Transferred foundership to \(newFounderId)")
+    }
+    
+    /// Update club details (Founder only)
+    func updateClub(
+        clubId: UUID,
+        name: String? = nil,
+        description: String? = nil,
+        isPrivate: Bool? = nil,
+        zipcode: String? = nil
+    ) async throws {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Verify user is founder
+        let role = try await getUserRole(clubId: clubId)
+        guard role.canEditClubDetails else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        var updateData: [String: AnyJSON] = [:]
+        
+        if let name = name {
+            updateData["name"] = .string(name)
+        }
+        if let description = description {
+            updateData["description"] = .string(description)
+        }
+        if let isPrivate = isPrivate {
+            updateData["is_private"] = .bool(isPrivate)
+        }
+        if let zipcode = zipcode {
+            updateData["zipcode"] = .string(zipcode)
+        }
+        
+        guard !updateData.isEmpty else { return }
+        
+        try await supabase
+            .from("clubs")
+            .update(updateData)
+            .eq("id", value: clubId.uuidString)
+            .execute()
+        
+        // Reload clubs
+        try await loadMyClubs()
+        print("✅ Updated club details")
+    }
+    
+    /// Regenerate the club's join code (Founder only)
+    /// Returns the new join code
+    @discardableResult
+    func regenerateJoinCode(clubId: UUID) async throws -> String {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Verify user is founder
+        let role = try await getUserRole(clubId: clubId)
+        guard role.canRegenerateJoinCode else {
+            throw CommunityError.insufficientPermissions
+        }
+        
+        // Get club name for generating new code
+        let club: Club = try await supabase
+            .from("clubs")
+            .select()
+            .eq("id", value: clubId.uuidString)
+            .single()
+            .execute()
+            .value
+        
+        // Generate new code
+        let newCode = generateJoinCode(from: club.name)
+        
+        try await supabase
+            .from("clubs")
+            .update(["join_code": AnyJSON.string(newCode)])
+            .eq("id", value: clubId.uuidString)
+            .execute()
+        
+        // Reload clubs to get updated data
+        try await loadMyClubs()
+        print("✅ Regenerated join code: \(newCode)")
+        return newCode
+    }
+    
+    /// Get fresh club data by ID
+    func getClub(clubId: UUID) async throws -> Club {
+        let club: Club = try await supabase
+            .from("clubs")
+            .select()
+            .eq("id", value: clubId.uuidString)
+            .single()
+            .execute()
+            .value
+        
+        return club
+    }
+    
     /// Find public clubs near a zipcode
     @Published var nearbyClubs: [Club] = []
+    
+    /// Search radius in miles for nearby clubs
+    private let searchRadiusMiles: Double = 50
+    
+    /// Geocode a ZIP code to coordinates using Apple's geocoder
+    private func geocodeZipcode(_ zipcode: String) async throws -> CLLocationCoordinate2D {
+        let geocoder = CLGeocoder()
+        let placemarks = try await geocoder.geocodeAddressString(zipcode)
+        
+        guard let location = placemarks.first?.location else {
+            throw CommunityError.geocodingFailed
+        }
+        
+        return location.coordinate
+    }
     
     func findNearbyClubs(zipcode: String) async throws {
         guard supabase.auth.currentUser != nil else {
             throw CommunityError.notAuthenticated
         }
         
-        // Get the first 3 digits of the zipcode for regional matching
-        let zipcodePrefix = String(zipcode.prefix(3))
+        print("🔍 Geocoding zipcode: \(zipcode)")
         
-        // Find public clubs with matching zipcode prefix
+        // Geocode the zipcode to get coordinates
+        let coordinate: CLLocationCoordinate2D
+        do {
+            coordinate = try await geocodeZipcode(zipcode)
+            print("📍 Coordinates: \(coordinate.latitude), \(coordinate.longitude)")
+        } catch {
+            print("⚠️ Geocoding failed, falling back to prefix search: \(error)")
+            // Fallback to prefix-based search if geocoding fails
+            try await findNearbyClubsByPrefix(zipcode: zipcode)
+            return
+        }
+        
+        // Call the database function to find nearby clubs
+        print("🔍 Searching for clubs within \(searchRadiusMiles) miles...")
+        
+        async let nearbyResultsTask: [NearbyClub] = supabase
+            .rpc("find_nearby_clubs", params: [
+                "user_lat": coordinate.latitude,
+                "user_lon": coordinate.longitude,
+                "radius_miles": searchRadiusMiles
+            ])
+            .execute()
+            .value
+        
+        // Also fetch global/universal clubs (no location set) - they appear in all searches
+        async let globalClubsTask: [Club] = supabase
+            .from("clubs")
+            .select()
+            .eq("is_private", value: false)
+            .is("latitude", value: nil)
+            .order("member_count", ascending: false)
+            .limit(10)
+            .execute()
+            .value
+        
+        // Wait for both queries
+        let (nearbyResults, globalClubs) = try await (nearbyResultsTask, globalClubsTask)
+        
+        // Combine nearby clubs with global clubs (nearby first, then global)
+        var combinedClubs = nearbyResults.map { $0.asClub }
+        combinedClubs.append(contentsOf: globalClubs)
+        
+        nearbyClubs = combinedClubs
+        
+        print("✅ Found \(nearbyResults.count) nearby clubs + \(globalClubs.count) global clubs")
+        
+        // Debug: Print club details with distance
+        for result in nearbyResults {
+            let distance = result.distanceMiles.map { String(format: "%.1f mi", $0) } ?? "?"
+            print("   - \(result.name): \(distance) away, zipcode=\(result.zipcode ?? "nil")")
+        }
+        for club in globalClubs {
+            print("   - \(club.name): 🌎 Global club")
+        }
+    }
+    
+    /// Fallback: Find clubs by ZIP code prefix (3 digits)
+    private func findNearbyClubsByPrefix(zipcode: String) async throws {
+        let zipcodePrefix = String(zipcode.prefix(3))
+        print("🔍 Fallback: Searching for clubs with zipcode prefix: \(zipcodePrefix)")
+        
         let clubs: [Club] = try await supabase
             .from("clubs")
             .select()
@@ -291,7 +635,7 @@ class CommunityService: ObservableObject {
             .value
         
         nearbyClubs = clubs
-        print("✅ Found \(clubs.count) nearby clubs for zipcode prefix: \(zipcodePrefix)")
+        print("✅ Found \(clubs.count) clubs with prefix \(zipcodePrefix)")
     }
     
     /// Find all public clubs (when no zipcode is provided)
@@ -299,6 +643,8 @@ class CommunityService: ObservableObject {
         guard supabase.auth.currentUser != nil else {
             throw CommunityError.notAuthenticated
         }
+        
+        print("🔍 Searching for all public clubs...")
         
         let clubs: [Club] = try await supabase
             .from("clubs")
@@ -1003,6 +1349,8 @@ struct Club: Codable, Identifiable {
     let avatarUrl: String?
     let memberCount: Int
     let zipcode: String?
+    let latitude: Double?
+    let longitude: Double?
     let createdAt: Date
     
     enum CodingKeys: String, CodingKey {
@@ -1015,7 +1363,60 @@ struct Club: Codable, Identifiable {
         case avatarUrl = "avatar_url"
         case memberCount = "member_count"
         case zipcode
+        case latitude
+        case longitude
         case createdAt = "created_at"
+    }
+}
+
+/// Club with distance information (returned from nearby search)
+struct NearbyClub: Codable, Identifiable {
+    let id: UUID
+    let name: String
+    let description: String?
+    let joinCode: String
+    let createdBy: UUID?
+    let isPrivate: Bool
+    let avatarUrl: String?
+    let memberCount: Int
+    let zipcode: String?
+    let latitude: Double?
+    let longitude: Double?
+    let createdAt: Date
+    let distanceMiles: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case description
+        case joinCode = "join_code"
+        case createdBy = "created_by"
+        case isPrivate = "is_private"
+        case avatarUrl = "avatar_url"
+        case memberCount = "member_count"
+        case zipcode
+        case latitude
+        case longitude
+        case createdAt = "created_at"
+        case distanceMiles = "distance_miles"
+    }
+    
+    /// Convert to regular Club for compatibility
+    var asClub: Club {
+        Club(
+            id: id,
+            name: name,
+            description: description,
+            joinCode: joinCode,
+            createdBy: createdBy,
+            isPrivate: isPrivate,
+            avatarUrl: avatarUrl,
+            memberCount: memberCount,
+            zipcode: zipcode,
+            latitude: latitude,
+            longitude: longitude,
+            createdAt: createdAt
+        )
     }
 }
 
@@ -1166,6 +1567,8 @@ enum CommunityError: Error, LocalizedError {
     case notAMember
     case insufficientPermissions
     case waiverRequired
+    case duplicateInviteCode
+    case geocodingFailed
     
     var errorDescription: String? {
         switch self {
@@ -1187,6 +1590,10 @@ enum CommunityError: Error, LocalizedError {
             return "You don't have permission to perform this action"
         case .waiverRequired:
             return "You must sign a waiver to join this club"
+        case .duplicateInviteCode:
+            return "This invite code is already taken. Please choose a different one."
+        case .geocodingFailed:
+            return "Could not find location for that ZIP code"
         }
     }
 }

@@ -62,6 +62,22 @@ enum ClubRole: String, Codable, CaseIterable {
     var canDeleteClub: Bool {
         self == .founder
     }
+    
+    var canTransferOwnership: Bool {
+        self == .founder
+    }
+    
+    var canEditClubDetails: Bool {
+        self == .founder
+    }
+    
+    var canRegenerateJoinCode: Bool {
+        self == .founder
+    }
+    
+    var canInviteMembers: Bool {
+        self == .founder || self == .leader
+    }
 }
 
 // MARK: - Club Event

@@ -248,12 +248,22 @@ struct ClubDetailView: View {
     @State private var selectedTab: ClubTab = .events
     @State private var userRole: ClubRole = .member
     @State private var showingMembers = false
+    @State private var showingLeaveConfirmation = false
+    @State private var showingSettings = false
+    @State private var showingShareInvite = false
+    @State private var isLeaving = false
+    @State private var currentClub: Club
     @Environment(\.dismiss) private var dismiss
     
     enum ClubTab: String, CaseIterable {
         case events = "Events"
         case feed = "Feed"
         case leaderboard = "Leaderboard"
+    }
+    
+    init(club: Club) {
+        self.club = club
+        self._currentClub = State(initialValue: club)
     }
     
     var body: some View {
@@ -271,14 +281,14 @@ struct ClubDetailView: View {
                 // Content based on tab
                 switch selectedTab {
                 case .events:
-                    EventListView(club: club, userRole: userRole)
+                    EventListView(club: currentClub, userRole: userRole)
                 case .feed:
-                    ClubFeedView(club: club)
+                    ClubFeedView(club: currentClub)
                 case .leaderboard:
-                    ClubLeaderboardView(club: club)
+                    ClubLeaderboardView(club: currentClub)
                 }
             }
-            .navigationTitle(club.name)
+            .navigationTitle(currentClub.name)
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -289,13 +299,63 @@ struct ClubDetailView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                    HStack(spacing: 16) {
+                        // Club settings menu
+                        Menu {
+                            // Founder-only: Settings
+                            if userRole == .founder {
+                                Button(action: { showingSettings = true }) {
+                                    Label("Club Settings", systemImage: "gearshape")
+                                }
+                            }
+                            
+                            // Founder/Leader: Share invite
+                            if userRole.canInviteMembers {
+                                Button(action: { showingShareInvite = true }) {
+                                    Label("Invite Members", systemImage: "person.badge.plus")
+                                }
+                            }
+                            
+                            // Copy join code (all members)
+                            Button(action: copyJoinCode) {
+                                Label("Copy Join Code", systemImage: "doc.on.doc")
+                            }
+                            
+                            Divider()
+                            
+                            // Leave club (not for founders)
+                            if userRole != .founder {
+                                Button(role: .destructive, action: { showingLeaveConfirmation = true }) {
+                                    Label("Leave Club", systemImage: "rectangle.portrait.and.arrow.right")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundColor(AppColors.primary)
+                        }
+                        
+                        Button("Done") {
+                            dismiss()
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showingMembers) {
-                ClubMembersView(club: club, userRole: userRole)
+                ClubMembersView(club: currentClub, userRole: userRole)
+            }
+            .sheet(isPresented: $showingSettings, onDismiss: refreshClubData) {
+                ClubSettingsView(club: currentClub)
+            }
+            .sheet(isPresented: $showingShareInvite) {
+                ShareInviteSheet(club: currentClub, joinCode: currentClub.joinCode)
+            }
+            .alert("Leave Club", isPresented: $showingLeaveConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Leave", role: .destructive) {
+                    leaveClub()
+                }
+            } message: {
+                Text("Are you sure you want to leave \(currentClub.name)? You'll need to rejoin with the club code to access it again.")
             }
         }
         .task {
@@ -320,6 +380,44 @@ struct ClubDetailView: View {
                 print("✅ Leaderboard loaded successfully")
             } catch {
                 print("❌ ClubDetailView: Failed to load leaderboard: \(error)")
+            }
+        }
+    }
+    
+    private func copyJoinCode() {
+        UIPasteboard.general.string = currentClub.joinCode
+    }
+    
+    private func refreshClubData() {
+        Task {
+            do {
+                // Refresh club data after settings changes
+                let updatedClub = try await communityService.getClub(clubId: club.id)
+                currentClub = updatedClub
+                
+                // Also refresh role in case ownership was transferred
+                userRole = try await communityService.getUserRole(clubId: club.id)
+            } catch {
+                // Club may have been deleted, dismiss if so
+                if communityService.myClubs.first(where: { $0.id == club.id }) == nil {
+                    dismiss()
+                }
+                print("❌ Failed to refresh club: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - Leave Club
+    
+    private func leaveClub() {
+        isLeaving = true
+        Task {
+            do {
+                try await communityService.leaveClub(clubId: club.id)
+                dismiss()
+            } catch {
+                print("❌ Failed to leave club: \(error)")
+                isLeaving = false
             }
         }
     }
@@ -601,6 +699,11 @@ struct JoinClubView: View {
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
     
+    // Waiver sheet state
+    @State private var showingWaiverSheet = false
+    @State private var pendingClubId: UUID?
+    @State private var pendingClubName: String = ""
+    
     enum JoinClubTab: String, CaseIterable {
         case code = "Enter Code"
         case find = "Find a Club"
@@ -638,6 +741,17 @@ struct JoinClubView: View {
                         dismiss()
                     }
                     .foregroundColor(AppColors.primary)
+                }
+            }
+            .sheet(isPresented: $showingWaiverSheet) {
+                if let clubId = pendingClubId {
+                    WaiverOnboardingSheet(
+                        clubId: clubId,
+                        clubName: pendingClubName,
+                        onWaiverSigned: {
+                            completeJoin()
+                        }
+                    )
                 }
             }
         }
@@ -766,11 +880,28 @@ struct JoinClubView: View {
         
         Task {
             do {
-                try await communityService.joinClubWithCode(joinCode)
-                dismiss()
+                // First fetch the club to get its info for the waiver
+                let club = try await communityService.getClubByCode(joinCode)
+                pendingClubId = club.id
+                pendingClubName = club.name
+                isJoining = false
+                showingWaiverSheet = true
             } catch {
                 errorMessage = error.localizedDescription
                 isJoining = false
+            }
+        }
+    }
+    
+    private func completeJoin() {
+        guard let clubId = pendingClubId else { return }
+        
+        Task {
+            do {
+                try await communityService.joinClubById(clubId)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
             }
         }
     }
@@ -794,18 +925,9 @@ struct JoinClubView: View {
     }
     
     private func joinDiscoveredClub(_ club: Club) {
-        isJoining = true
-        errorMessage = nil
-        
-        Task {
-            do {
-                try await communityService.joinClubById(club.id)
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
-                isJoining = false
-            }
-        }
+        pendingClubId = club.id
+        pendingClubName = club.name
+        showingWaiverSheet = true
     }
 }
 
@@ -897,9 +1019,11 @@ struct CreateClubView: View {
     @State private var clubName = ""
     @State private var clubDescription = ""
     @State private var isPrivate = false
+    @State private var customInviteCode = ""
     @State private var zipcode = ""
     @State private var isCreating = false
     @State private var errorMessage: String?
+    @State private var createdClubCode: String?
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -952,6 +1076,22 @@ struct CreateClubView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(AppColors.surface)
                             )
+                            
+                            // Custom invite code (shown when private)
+                            if isPrivate {
+                                Text("Custom Invite Code")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(AppColors.textSecondary)
+                                
+                                TextField("e.g., MYCLUB-2024", text: $customInviteCode)
+                                    .textFieldStyle(.roundedBorder)
+                                    .textInputAutocapitalization(.characters)
+                                    .autocorrectionDisabled(true)
+                                
+                                Text("Leave blank to auto-generate a code. Custom codes must be unique.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
                             
                             // Zipcode for discoverability
                             Text("Location (Zipcode)")
@@ -1008,15 +1148,20 @@ struct CreateClubView: View {
         
         Task {
             do {
+                // Trim and uppercase the custom code if provided
+                let trimmedCode = customInviteCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+                
                 let newClub = try await communityService.createClub(
                     name: clubName,
                     description: clubDescription,
                     isPrivate: isPrivate,
-                    zipcode: zipcode.isEmpty ? nil : zipcode
+                    zipcode: zipcode.isEmpty ? nil : zipcode,
+                    customJoinCode: trimmedCode.isEmpty ? nil : trimmedCode
                 )
                 
                 // Show success message with join code
                 print("✅ Created club with code: \(newClub.joinCode)")
+                createdClubCode = newClub.joinCode
                 dismiss()
             } catch {
                 errorMessage = error.localizedDescription

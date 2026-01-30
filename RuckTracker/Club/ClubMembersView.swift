@@ -19,6 +19,7 @@ struct ClubMembersView: View {
     @State private var selectedMember: ClubMemberDetails?
     @State private var showingMemberActions = false
     @State private var showingEmergencyContact = false
+    @State private var showingShareInvite = false
     @State private var errorMessage: String?
     
     var body: some View {
@@ -72,6 +73,9 @@ struct ClubMembersView: View {
                         .presentationDetents([.medium])
                 }
             }
+            .sheet(isPresented: $showingShareInvite) {
+                ShareInviteSheet(club: club, joinCode: club.joinCode)
+            }
         }
         .task {
             await loadMembers()
@@ -93,8 +97,8 @@ struct ClubMembersView: View {
                         .font(.system(size: 17))
                         .foregroundColor(AppColors.textSecondary)
                     
-                    // Join code (for founders)
-                    if userRole.canManageMembers {
+                    // Join code (for leaders and founders)
+                    if userRole.canInviteMembers {
                         HStack(spacing: 8) {
                             Text("Join Code:")
                                 .font(.system(size: 14))
@@ -106,6 +110,12 @@ struct ClubMembersView: View {
                             
                             Button(action: copyJoinCode) {
                                 Image(systemName: "doc.on.doc")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(AppColors.primary)
+                            }
+                            
+                            Button(action: { showingShareInvite = true }) {
+                                Image(systemName: "square.and.arrow.up")
                                     .font(.system(size: 14))
                                     .foregroundColor(AppColors.primary)
                             }
