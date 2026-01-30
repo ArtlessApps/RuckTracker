@@ -26,7 +26,7 @@ struct PhoneOnboardingView: View {
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
-                    ForEach(0..<10) { index in
+                    ForEach(0..<11) { index in
                         Capsule()
                             .fill(index <= currentStep ? AppColors.primary : AppColors.accentWarm.opacity(0.3))
                             .frame(height: 4)
@@ -36,23 +36,30 @@ struct PhoneOnboardingView: View {
                 .padding(.horizontal)
                 
                 TabView(selection: $currentStep) {
-                    // Step 1: The Welcome (Identity)
+                    // Step 0: The Welcome (Identity)
                     WelcomeCoachStep(
                         nextAction: { nextStep() },
                         onLogin: { showingAuth = true }
                     )
                     .tag(0)
                     
+                    // Step 1: Profile Setup (Weight & Units)
+                    ProfileSetupStep(
+                        userSettings: userSettings,
+                        nextAction: { nextStepWithFeedback() }
+                    )
+                    .tag(1)
+                    
                     // Step 2: The Goal (Psychology)
                     GoalSelectionStep(selectedGoal: $userSettings.ruckingGoal, nextAction: { nextStepWithFeedback() })
-                        .tag(1)
+                        .tag(2)
                     
                     // Step 3: Experience (Calibration)
                     ExperienceSelectionStep(selectedExperience: $userSettings.experienceLevel, nextAction: { 
                         calculateRecommendation()
                         nextStepWithFeedback() 
                     })
-                    .tag(2)
+                    .tag(3)
                     
                     // Step 4: Baseline Metrics
                     BaselineMetricsStep(
@@ -60,7 +67,7 @@ struct PhoneOnboardingView: View {
                         baselineDistance: $baselineDistanceInput,
                         nextAction: { applyBaselines(); nextStepWithFeedback() }
                     )
-                    .tag(3)
+                    .tag(4)
                     
                     // Step 5: Terrain (Context)
                     TerrainStep(
@@ -68,18 +75,18 @@ struct PhoneOnboardingView: View {
                         hasStairs: $stairsAccess,
                         nextAction: { applyTerrain(); nextStepWithFeedback() }
                     )
-                    .tag(4)
+                    .tag(5)
                     
                     // Step 6: Event (Timeline)
                     EventStep(
                         eventDate: $eventDate,
                         nextAction: { applyEventDate(); nextStepWithFeedback() }
                     )
-                    .tag(5)
+                    .tag(6)
                     
                     // Step 7: Preferred Training Days (Schedule)
                     TrainingDaysSelectionStep(selectedDays: $userSettings.preferredTrainingDays, nextAction: { nextStepWithFeedback() })
-                        .tag(6)
+                        .tag(7)
                     
                     // Step 8: The Reveal (The Product)
                     ProgramRecommendationStep(
@@ -87,7 +94,7 @@ struct PhoneOnboardingView: View {
                         programTitle: recommendedProgramTitle,
                         nextAction: { nextStepWithFeedback() }
                     )
-                    .tag(7)
+                    .tag(8)
                     
                     // Step 9: Pro Upsell (The Gate)
                     ProUpsellStep(
@@ -95,7 +102,7 @@ struct PhoneOnboardingView: View {
                         onSubscribe: { nextStepWithFeedback() },
                         onMaybeLater: { nextStepWithFeedback() }
                     )
-                    .tag(8)
+                    .tag(9)
                     
                     // Step 10: The Buy-in (Permissions)
                     PermissionsStep(
@@ -103,7 +110,7 @@ struct PhoneOnboardingView: View {
                         workoutManager: workoutManager, 
                         onComplete: { hasCompletedOnboarding = true }
                     )
-                    .tag(9)
+                    .tag(10)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentStep)
@@ -117,7 +124,10 @@ struct PhoneOnboardingView: View {
             stairsAccess = userSettings.hasStairsAccess
         }
         .sheet(isPresented: $showingAuth) {
-            AuthenticationView()
+            AuthenticationView(onLoginSuccess: {
+                // When user successfully logs in, skip onboarding and go to main app
+                hasCompletedOnboarding = true
+            })
         }
     }
     
@@ -213,6 +223,213 @@ struct WelcomeCoachStep: View {
             }
             .font(.subheadline)
             .padding(.bottom, 20)
+        }
+    }
+}
+
+// MARK: - Profile Setup Step
+
+struct ProfileSetupStep: View {
+    @ObservedObject var userSettings: UserSettings
+    var nextAction: () -> Void
+    
+    @State private var bodyWeightInput: String = ""
+    @State private var ruckWeightInput: String = ""
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Let's set up your profile")
+                        .font(.title).bold().foregroundColor(AppColors.textPrimary)
+                    
+                    Text("We'll use this to personalize your training and calculate calories.")
+                        .font(.subheadline)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                
+                // Unit Preferences
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Preferred Units")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    // Weight Unit
+                    HStack {
+                        Text("Weight")
+                            .foregroundColor(AppColors.textSecondary)
+                        Spacer()
+                        Picker("Weight Unit", selection: $userSettings.preferredWeightUnit) {
+                            ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
+                                Text(unit.rawValue).tag(unit)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .frame(width: 120)
+                    }
+                    .padding()
+                    .background(AppColors.overlayWhite)
+                    .cornerRadius(12)
+                    
+                    // Distance Unit
+                    HStack {
+                        Text("Distance")
+                            .foregroundColor(AppColors.textSecondary)
+                        Spacer()
+                        Picker("Distance Unit", selection: $userSettings.preferredDistanceUnit) {
+                            ForEach(UserSettings.DistanceUnit.allCases, id: \.self) { unit in
+                                Text(unit.rawValue).tag(unit)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .frame(width: 120)
+                    }
+                    .padding()
+                    .background(AppColors.overlayWhite)
+                    .cornerRadius(12)
+                }
+                
+                // Body Weight
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Your Body Weight")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    HStack {
+                        TextField("Enter weight", text: $bodyWeightInput)
+                            .keyboardType(.decimalPad)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 100)
+                        
+                        Text(userSettings.preferredWeightUnit.rawValue)
+                            .font(.title3)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AppColors.overlayWhite)
+                    .cornerRadius(12)
+                    
+                    Text("Used for accurate calorie calculations")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary.opacity(0.7))
+                }
+                
+                // Default Ruck Weight
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Default Ruck Weight")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    HStack {
+                        TextField("Enter weight", text: $ruckWeightInput)
+                            .keyboardType(.decimalPad)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 100)
+                        
+                        Text(userSettings.preferredWeightUnit.rawValue)
+                            .font(.title3)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(AppColors.overlayWhite)
+                    .cornerRadius(12)
+                    
+                    Text("Starting weight for new workouts")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary.opacity(0.7))
+                }
+                
+                // Common ruck weight suggestions
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Quick select:")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    HStack(spacing: 12) {
+                        ForEach(quickSelectWeights, id: \.self) { weight in
+                            Button(action: {
+                                ruckWeightInput = String(format: "%.0f", weight)
+                            }) {
+                                Text("\(Int(weight))")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(ruckWeightInput == String(format: "%.0f", weight) ? AppColors.textPrimary : AppColors.primary)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(ruckWeightInput == String(format: "%.0f", weight) ? AppColors.primary : AppColors.primary.opacity(0.15))
+                                    )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(minLength: 20)
+                
+                // Continue button
+                Button(action: {
+                    saveSettings()
+                    nextAction()
+                }) {
+                    Text("Continue")
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isFormValid ? AppColors.primaryGradient : LinearGradient(colors: [Color.gray], startPoint: .leading, endPoint: .trailing))
+                        .foregroundColor(AppColors.textPrimary)
+                        .cornerRadius(12)
+                }
+                .disabled(!isFormValid)
+            }
+            .padding()
+        }
+        .onAppear {
+            bodyWeightInput = String(format: "%.0f", userSettings.bodyWeight)
+            ruckWeightInput = String(format: "%.0f", userSettings.defaultRuckWeight)
+        }
+        .onChange(of: userSettings.preferredWeightUnit) { _ in
+            // Convert values when unit changes
+            if let bodyWeight = Double(bodyWeightInput) {
+                let converted = userSettings.preferredWeightUnit == .kilograms ? bodyWeight * 0.453592 : bodyWeight / 0.453592
+                bodyWeightInput = String(format: "%.0f", converted)
+            }
+            if let ruckWeight = Double(ruckWeightInput) {
+                let converted = userSettings.preferredWeightUnit == .kilograms ? ruckWeight * 0.453592 : ruckWeight / 0.453592
+                ruckWeightInput = String(format: "%.0f", converted)
+            }
+        }
+    }
+    
+    private var quickSelectWeights: [Double] {
+        if userSettings.preferredWeightUnit == .kilograms {
+            return [10, 15, 20, 25]
+        } else {
+            return [20, 30, 40, 50]
+        }
+    }
+    
+    private var isFormValid: Bool {
+        guard let bodyWeight = Double(bodyWeightInput),
+              let ruckWeight = Double(ruckWeightInput) else {
+            return false
+        }
+        return userSettings.isValidBodyWeight(bodyWeight) && userSettings.isValidRuckWeight(ruckWeight)
+    }
+    
+    private func saveSettings() {
+        if let bodyWeight = Double(bodyWeightInput) {
+            userSettings.bodyWeight = bodyWeight
+        }
+        if let ruckWeight = Double(ruckWeightInput) {
+            userSettings.defaultRuckWeight = ruckWeight
         }
     }
 }

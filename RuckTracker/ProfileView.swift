@@ -291,7 +291,52 @@ struct ProfileView: View {
     
     private var actionsSection: some View {
         VStack(spacing: 16) {
-            
+            // Logout Button
+            if CommunityService.shared.currentProfile != nil {
+                Button {
+                    showingLogoutAlert = true
+                } label: {
+                    HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 16))
+                        Text("Sign Out")
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.red.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                }
+                .alert("Sign Out", isPresented: $showingLogoutAlert) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Sign Out", role: .destructive) {
+                        Task {
+                            await signOut()
+                        }
+                    }
+                } message: {
+                    Text("Are you sure you want to sign out? You'll need to sign in again to access community features.")
+                }
+            }
+        }
+    }
+    
+    // MARK: - Sign Out
+    
+    private func signOut() async {
+        do {
+            try await CommunityService.shared.signOut()
+            premiumManager.resetPremiumStatusForSignOut()
+            dismiss()
+        } catch {
+            print("❌ Sign out failed: \(error)")
         }
     }
 }

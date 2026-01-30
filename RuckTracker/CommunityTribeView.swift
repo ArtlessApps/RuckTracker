@@ -782,6 +782,9 @@ struct AuthenticationView: View {
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
     
+    /// Optional callback for when login/signup is successful (used by onboarding to skip flow)
+    var onLoginSuccess: (() -> Void)?
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -906,6 +909,8 @@ struct AuthenticationView: View {
                 } else {
                     try await communityService.signIn(email: normalizedEmail, password: password)
                 }
+                // Call the success callback before dismissing (if provided)
+                onLoginSuccess?()
                 dismiss()
             } catch {
                 if let communityError = error as? CommunityError, case .emailConfirmationRequired = communityError {
