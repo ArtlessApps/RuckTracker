@@ -51,7 +51,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../Products.storekit">
+         identifier = "../../MARCHSubscriptions.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

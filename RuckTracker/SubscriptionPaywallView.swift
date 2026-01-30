@@ -248,9 +248,12 @@ struct SubscriptionPaywallView: View {
                         do {
                             let transaction = try await storeManager.purchase(selectedProduct)
                             if transaction != nil {
-                                // Purchase successful, dismiss paywall with a small delay
-                                // to ensure proper sheet transition
+                                // Purchase successful - dismiss the paywall
+                                // Use both methods to ensure dismissal works regardless of how
+                                // the paywall was presented (via $premiumManager.showingPaywall 
+                                // or via a local @State variable)
                                 premiumManager.dismissPaywall()
+                                dismiss()
                                 
                                 // Add a small delay to ensure the post-purchase prompt
                                 // is shown after the paywall is fully dismissed
@@ -299,6 +302,11 @@ struct SubscriptionPaywallView: View {
             Button("Restore Purchases") {
                 Task {
                     await storeManager.restorePurchases()
+                    // If restore found an active subscription, dismiss the paywall
+                    if storeManager.isSubscribed {
+                        premiumManager.dismissPaywall()
+                        dismiss()
+                    }
                 }
             }
             .font(.caption)

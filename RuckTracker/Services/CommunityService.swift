@@ -832,6 +832,31 @@ class CommunityService: ObservableObject {
         let p_limit: Int
     }
     
+    // MARK: - Global Leaderboards (PRO Feature)
+    
+    @Published var globalLeaderboard: [GlobalLeaderboardEntry] = []
+    
+    /// Fetch global leaderboard for a specific metric type
+    /// - Parameter type: The leaderboard metric type (distance, tonnage, elevation, consistency)
+    /// - Returns: Array of leaderboard entries ranked by the metric
+    func fetchGlobalLeaderboard(type: GlobalLeaderboardType) async throws -> [GlobalLeaderboardEntry] {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let entries: [GlobalLeaderboardEntry] = try await supabase
+            .from(type.tableName)
+            .select()
+            .order("rank", ascending: true)
+            .limit(100)
+            .execute()
+            .value
+        
+        globalLeaderboard = entries
+        print("✅ Loaded global leaderboard (\(type.displayName)): \(entries.count) entries")
+        return entries
+    }
+    
     /// Update user's weekly leaderboard entry after a workout
     private func updateLeaderboard(clubId: UUID, distance: Double, weight: Double, elevation: Double = 0) async throws {
         guard let userId = supabase.auth.currentUser?.id else { return }
@@ -1552,6 +1577,120 @@ struct LeaderboardEntry: Codable, Identifiable {
         case totalDistance = "total_distance"
         case totalElevation = "total_elevation"
         case totalWorkouts = "total_workouts"
+    }
+}
+
+// MARK: - Global Leaderboard Types (PRO Feature)
+
+/// The types of global leaderboard metrics available
+enum GlobalLeaderboardType: String, CaseIterable, Identifiable {
+    case distance = "distance"
+    case tonnage = "tonnage"
+    case elevation = "elevation"
+    case consistency = "consistency"
+    
+    var id: String { rawValue }
+    
+    /// Display name shown in the UI
+    var displayName: String {
+        switch self {
+        case .distance:
+            return "Road Warriors"
+        case .tonnage:
+            return "Heavy Haulers"
+        case .elevation:
+            return "Vertical Gainers"
+        case .consistency:
+            return "Iron Discipline"
+        }
+    }
+    
+    /// Short label for picker
+    var shortName: String {
+        switch self {
+        case .distance:
+            return "Distance"
+        case .tonnage:
+            return "Tonnage"
+        case .elevation:
+            return "Elevation"
+        case .consistency:
+            return "Consistency"
+        }
+    }
+    
+    /// Unit label for displaying scores
+    var unit: String {
+        switch self {
+        case .distance:
+            return "mi"
+        case .tonnage:
+            return "lbs-mi"
+        case .elevation:
+            return "ft"
+        case .consistency:
+            return "days"
+        }
+    }
+    
+    /// Time period description
+    var periodDescription: String {
+        switch self {
+        case .distance:
+            return "This Week"
+        case .tonnage:
+            return "All Time"
+        case .elevation:
+            return "This Month"
+        case .consistency:
+            return "Last 30 Days"
+        }
+    }
+    
+    /// SF Symbol icon name
+    var iconName: String {
+        switch self {
+        case .distance:
+            return "figure.walk"
+        case .tonnage:
+            return "scalemass.fill"
+        case .elevation:
+            return "arrow.up.right"
+        case .consistency:
+            return "calendar.badge.checkmark"
+        }
+    }
+    
+    /// The Supabase view name to query
+    var tableName: String {
+        switch self {
+        case .distance:
+            return "global_leaderboard_distance_weekly"
+        case .tonnage:
+            return "global_leaderboard_tonnage_alltime"
+        case .elevation:
+            return "global_leaderboard_elevation_monthly"
+        case .consistency:
+            return "global_leaderboard_consistency"
+        }
+    }
+}
+
+/// Entry in a global leaderboard
+struct GlobalLeaderboardEntry: Codable, Identifiable {
+    var id: UUID { userId }
+    let userId: UUID
+    let username: String
+    let avatarUrl: String?
+    let score: Double
+    let rank: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case username
+        case avatarUrl = "avatar_url"
+        case score
+        case rank
     }
 }
 

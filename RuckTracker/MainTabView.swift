@@ -47,11 +47,17 @@ struct MainTabView: View {
                 }
                 .tag(2)
             
+            RankingsTabView()
+                .tabItem {
+                    Label("Rankings", systemImage: "trophy.fill")
+                }
+                .tag(3)
+            
             ActivityContainer(showSettings: $showingSettings)
                 .tabItem {
                     Label("You", systemImage: "person.crop.circle")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(AppColors.primary)
         .preferredColorScheme(.dark)
