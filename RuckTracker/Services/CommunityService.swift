@@ -1682,6 +1682,7 @@ struct GlobalLeaderboardEntry: Codable, Identifiable {
     let userId: UUID
     let username: String
     let avatarUrl: String?
+    let isPremium: Bool
     let score: Double
     let rank: Int
     
@@ -1689,8 +1690,21 @@ struct GlobalLeaderboardEntry: Codable, Identifiable {
         case userId = "user_id"
         case username
         case avatarUrl = "avatar_url"
+        case isPremium = "is_premium"
         case score
         case rank
+    }
+    
+    /// Custom decoder to handle nil is_premium from database
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        userId = try container.decode(UUID.self, forKey: .userId)
+        username = try container.decode(String.self, forKey: .username)
+        avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
+        // Handle nil is_premium (defaults to false)
+        isPremium = try container.decodeIfPresent(Bool.self, forKey: .isPremium) ?? false
+        score = try container.decode(Double.self, forKey: .score)
+        rank = try container.decode(Int.self, forKey: .rank)
     }
 }
 

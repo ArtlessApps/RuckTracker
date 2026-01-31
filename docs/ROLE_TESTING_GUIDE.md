@@ -1,209 +1,482 @@
-# MARCH v2.0 Role Testing Guide
+# MARCH v2.0 - Complete Feature Testing Guide
+
+A comprehensive guide for testing all club, leaderboard, and badge features in MARCH.
 
 ---
 
-## Setup
+## Table of Contents
 
-Create 4 test accounts and one test club:
-
-- **founder@test.com** → Creates "Test Ruck Club"
-- **leader@test.com** → Joins club, gets promoted to Leader
-- **member@test.com** → Joins club, stays as Member
-- **pro@test.com** → Joins club, purchases Pro subscription
+1. [Setup & Test Accounts](#setup--test-accounts)
+2. [Club Role Testing](#club-role-testing)
+3. [Global Leaderboard Testing](#global-leaderboard-testing)
+4. [Badges & Trophy Case Testing](#badges--trophy-case-testing)
+5. [Event & RSVP Testing](#event--rsvp-testing)
+6. [Free vs PRO Feature Testing](#free-vs-pro-feature-testing)
+7. [Ambassador Program Testing](#ambassador-program-testing)
+8. [Club Discovery Testing](#club-discovery-testing)
+9. [Quick Reference Tables](#quick-reference-tables)
+10. [SQL Debugging Queries](#sql-debugging-queries)
 
 ---
 
-## Scenario 1: Member Experience
+## Setup & Test Accounts
+
+### Create These Test Accounts
+
+| Account | Email | Role | Subscription |
+|---------|-------|------|--------------|
+| **Founder** | founder@test.com | Creates "Test Ruck Club" | Free |
+| **Leader** | leader@test.com | Gets promoted to Leader | Free |
+| **Member** | member@test.com | Basic member | Free |
+| **Pro User** | pro@test.com | Has active subscription | PRO |
+| **Outsider** | outsider@test.com | Not in any club | Free |
+
+### Initial Setup Steps
+
+1. Create all 5 accounts
+2. As **founder@test.com**: Create "Test Ruck Club"
+3. As **leader@test.com**: Join the club, then get promoted by founder
+4. As **member@test.com**: Join the club via invite code
+5. As **pro@test.com**: Purchase subscription, then join the club
+
+---
+
+## Club Role Testing
+
+### Scenario 1: Member Experience
 
 > Sign in as **member@test.com**
 
-### Joining a Club
+#### Joining a Club
 
 1. Go to Community → Join Club
-2. Enter the join code
-3. **Waiver sheet should appear** with 3 steps:
-   - Step 1: Read safety briefing (must scroll)
+2. Enter the invite code
+3. **Waiver flow should appear** with 3 steps:
+   - Step 1: Read safety briefing (must scroll to continue)
    - Step 2: Enter emergency contact name + phone
    - Step 3: Tap to sign digitally
 4. After signing, you're in the club
 
-### What Members CAN Do
+#### What Members CAN Do
 
 - View the Events, Feed, and Leaderboard tabs
 - RSVP to events (Going / Maybe / Out)
-- Enter ruck weight when RSVPing
+- Enter ruck weight when RSVPing "Going"
 - Post comments in The Wire
-- Complete workouts that post to club feed
+- Complete workouts that auto-post to club feed
 - View club leaderboard
+- Like posts in the feed
+- View their own badges in Trophy Case
 
-### What Members CANNOT Do
+#### What Members CANNOT Do
 
-- See the club join code
+- See the club invite code
 - Create or edit events
-- Manage other members
+- Manage other members (promote/demote/remove)
 - View emergency contacts
+- Delete the club
 
-### Test Checklist
+#### Member Test Checklist
 
 ```
-[ ] Waiver flow completes successfully
-[ ] Can view all 3 tabs (Events, Feed, Leaderboard)
+[ ] Waiver flow completes successfully with all 3 steps
+[ ] Can view all tabs (Events, Feed, Leaderboard)
 [ ] Can RSVP to an event with weight declaration
 [ ] Can post a comment in The Wire
+[ ] Can like posts in the feed
 [ ] Cannot see "Create Event" button
-[ ] Cannot see join code in Members view
+[ ] Cannot see invite code in Members view
+[ ] Cannot see member management options (promote/demote/remove)
 ```
 
 ---
 
-## Scenario 2: Leader Experience
+### Scenario 2: Leader Experience
 
 > Sign in as **leader@test.com**
 
-### Getting Promoted
+#### Getting Promoted
 
-1. Ask Founder to promote you (or do it yourself as Founder first)
+1. Ask Founder to promote you (or promote yourself as Founder first)
 2. Refresh the club view
 3. You should now have Leader capabilities
 
-### What Leaders CAN Do
+#### What Leaders CAN Do
 
 Everything Members can do, plus:
-- See the club join code
+- See and share the club invite code
 - Create new events
 - Edit/delete events they created
 
-### What Leaders CANNOT Do
+#### What Leaders CANNOT Do
 
 - Promote or demote other members
 - Remove members from the club
 - View emergency contacts
+- Delete the club
+- Transfer ownership
 
-### Test Checklist
+#### Leader Test Checklist
 
 ```
-[ ] Can see join code at top of Members view
+[ ] Can see invite code at top of Members view
+[ ] Can copy/share invite code
 [ ] "Create Event" button appears in Events tab
-[ ] Can create an event with title, date, location, gear requirements
+[ ] Can create an event with:
+    [ ] Title (required)
+    [ ] Date/time (required)
+    [ ] Address/location
+    [ ] Meeting point description
+    [ ] Required weight
+    [ ] Water requirements
 [ ] Can edit an event after creating it
+[ ] Can delete an event they created
 [ ] Cannot see "Promote to Leader" option on any member
 [ ] Cannot see "View Emergency Contact" option
+[ ] Cannot see "Remove from Club" option
 ```
 
 ---
 
-## Scenario 3: Founder Experience
+### Scenario 3: Founder Experience
 
 > Sign in as **founder@test.com**
 
-### Full Control
+#### Full Control Capabilities
 
 Founders have complete control over the club:
 
-- See and share the join code
-- Create, edit, delete any event
-- Promote members to Leader
-- Demote leaders to Member
-- Remove anyone from the club
-- View emergency contacts for members who signed waivers
+| Capability | Description |
+|------------|-------------|
+| View/Share Invite Code | See and regenerate the club invite code |
+| Create Events | Create, edit, delete any event |
+| Promote to Leader | Upgrade members to leader role |
+| Demote to Member | Downgrade leaders to member role |
+| Remove Members | Kick anyone from the club |
+| View Emergency Contacts | Access waiver info for members |
+| Edit Club Details | Change name, description, privacy |
+| Regenerate Invite Code | Get a new invite code |
+| Transfer Ownership | Make another member the founder |
+| Delete Club | Permanently delete the club |
 
-### Member Management Test
+#### Member Management Test
 
 1. Go to Members tab
-2. Tap on a regular member
-3. You should see options:
-   - Promote to Leader
-   - View Emergency Contact (if waiver signed)
-   - Remove from Club
-4. Tap on a leader
-5. You should see:
-   - Demote to Member
-   - View Emergency Contact
-   - Remove from Club
+2. Tap on a regular member:
+   - You should see: **Promote to Leader**, **View Emergency Contact**, **Remove from Club**
+3. Tap on a leader:
+   - You should see: **Demote to Member**, **View Emergency Contact**, **Remove from Club**
+4. Tap on yourself:
+   - You should see: **Transfer Ownership**, **Leave Club** (with warning)
 
-### Test Checklist
+#### Founder Test Checklist
 
 ```
+[ ] Can see and copy invite code
+[ ] Can regenerate invite code
 [ ] Can promote member@test.com to Leader
 [ ] Can demote them back to Member
-[ ] Can view emergency contact info
+[ ] Can view emergency contact info (has name + phone)
 [ ] Emergency contact has "Call Now" button that opens dialer
 [ ] Can remove a member (test with a throwaway account)
 [ ] Warning appears if trying to leave as Founder
+[ ] Can edit club name and description
+[ ] Can toggle club privacy (public/private)
+[ ] Can transfer ownership to another member
 ```
 
 ---
 
-## Scenario 4: Free vs Pro Features
+## Global Leaderboard Testing
 
-> Compare **member@test.com** (Free) vs **pro@test.com** (Pro)
+> PRO feature - requires subscription to view rankings
 
-### Training Plans
+### Accessing Global Leaderboards
 
-| Action | Free User | Pro User |
-|--------|-----------|----------|
-| View generated plan | Yes | Yes |
-| Start workout from plan | Paywall appears | Starts immediately |
+1. Navigate to the Rankings tab
+2. If not PRO: Should see blur overlay with lock icon and upgrade CTA
+3. If PRO: Should see full leaderboard with rankings
 
-### During Workout
+### Four Leaderboard Types
 
-| Feature | Free | Pro |
+| Type | View Name | Period | Unit | Icon |
+|------|-----------|--------|------|------|
+| **Road Warriors** | Distance | This Week | mi | figure.walk |
+| **Heavy Haulers** | Tonnage | All Time | lbs-mi | scalemass.fill |
+| **Vertical Gainers** | Elevation | This Month | ft | arrow.up.right |
+| **Iron Discipline** | Consistency | Last 30 Days | days | calendar.badge.checkmark |
+
+### Testing Leaderboard Display
+
+> Sign in as **pro@test.com**
+
+1. Navigate to Rankings tab
+2. Verify type selector (horizontal scrollable capsules)
+3. Switch between all 4 leaderboard types
+4. For each type, verify:
+   - Period description displays correctly
+   - Unit label is correct
+   - Entries show: Rank, Avatar, Username, Score
+   - PRO users show crown badge next to username
+   - Current user is highlighted with "That's you!" label
+
+### PRO Gate Testing
+
+> Sign in as **member@test.com** (free user)
+
+1. Navigate to Rankings tab
+2. Should see blur overlay over the leaderboard
+3. Should see lock icon and "Global Rankings" title
+4. Should see "Unlock Global Rankings" button
+5. Tapping button should present subscription paywall
+
+### Leaderboard Test Checklist
+
+```
+[ ] FREE USER: Blur overlay appears on Rankings tab
+[ ] FREE USER: Lock icon and CTA button visible
+[ ] FREE USER: "PRO FEATURE" badge shows
+[ ] FREE USER: Tapping unlock button shows paywall
+[ ] PRO USER: Full leaderboard visible without blur
+[ ] PRO USER: Can switch between all 4 types
+[ ] Distance leaderboard shows "This Week" period
+[ ] Tonnage leaderboard shows "All Time" period
+[ ] Elevation leaderboard shows "This Month" period
+[ ] Consistency leaderboard shows "Last 30 Days" period
+[ ] Top 3 ranks show trophy/medal icons (gold, silver, bronze)
+[ ] Ranks 4+ show numeric rank
+[ ] PRO users show yellow crown next to username
+[ ] Current user's row is highlighted
+[ ] Scores format correctly (distance: 1 decimal, elevation: whole number, consistency: integer)
+```
+
+---
+
+## Badges & Trophy Case Testing
+
+### Badge Categories
+
+| Category | Badges | Tier Colors |
+|----------|--------|-------------|
+| **PRO** | PRO Athlete | Gold/Yellow |
+| **Distance** | 100 Mile Club, 500 Mile Club, 1000 Mile Club | Bronze → Silver → Gold |
+| **Tonnage** | Heavy Hauler, Freight Train, Iron Giant | Bronze → Silver → Gold |
+| **Elevation** | The Sherpa, Everester | Silver, Gold |
+| **Programs** | Light Ready, Heavy Ready, Selection Ready | Silver → Gold → Platinum |
+| **Streaks** | Week Warrior, Month Master, Iron Discipline | Bronze → Silver → Gold |
+| **Community** | Club Founder, Community Leader | Silver, Gold |
+
+### Trophy Case Display
+
+1. Go to Profile → Trophy Case
+2. Verify compact view shows up to 6 badges
+3. Earned badges display in full color with tier gradient
+4. Locked badges display in grayscale with lock overlay
+5. Badge count shows "X earned" label
+6. Tap "Trophy Case" header to see full sheet
+
+### Full Trophy Case Sheet
+
+1. Shows stats header: Earned / Locked / Complete %
+2. Shows all badges in 3-column grid
+3. Earned badges are full color
+4. Locked badges are grayed with lock icon
+5. Tapping any badge shows detail view
+
+### Badge Detail View
+
+1. Shows large badge icon (colored if earned, gray if locked)
+2. Shows badge name and tier label
+3. Shows description of how to earn
+4. If earned: Green "Earned" status
+5. If locked: "Not Yet Earned" with encouragement text
+
+### Badge Test Checklist
+
+```
+[ ] Trophy Case appears in Profile view
+[ ] Compact view shows up to 6 badges
+[ ] Badge count shows "X earned"
+[ ] Earned badges show full color gradient
+[ ] Locked badges show grayscale with lock overlay
+[ ] Tapping header opens full trophy case sheet
+[ ] Full sheet shows Earned/Locked/Complete stats
+[ ] All 17 badges appear in grid
+[ ] Tapping badge opens detail view
+[ ] PRO badge shows if user has subscription
+[ ] Badge details show correct tier (Bronze/Silver/Gold/Platinum/PRO)
+[ ] Locked badges show "Not Yet Earned" status
+[ ] Earned badges show green "Earned" status
+```
+
+### Badge Awarding (Backend)
+
+To award a test badge manually:
+
+```sql
+INSERT INTO user_badges (user_id, badge_id)
+VALUES ('USER_UUID', '100_mile_club');
+```
+
+Available badge IDs:
+- `pro_athlete`, `100_mile_club`, `500_mile_club`, `1000_mile_club`
+- `heavy_hauler`, `freight_train`, `iron_giant`
+- `the_sherpa`, `everester`
+- `selection_ready`, `heavy_ready`, `light_ready`
+- `week_warrior`, `month_master`, `iron_discipline`
+- `club_founder`, `community_leader`
+
+---
+
+## Event & RSVP Testing
+
+### Creating an Event (Leader/Founder)
+
+> Sign in as **leader@test.com** or **founder@test.com**
+
+1. Go to Events tab
+2. Tap "Create Event"
+3. Fill in all fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| Title | Yes | Event name |
+| Date/Time | Yes | When event starts |
+| Address | No | Location address |
+| Meeting Point | No | Specific instructions ("Park behind Wendy's") |
+| Required Weight | No | Minimum ruck weight in lbs |
+| Water Requirements | No | Hydration requirements |
+
+4. Tap Create
+
+### RSVP Flow (Any Member)
+
+1. Tap on an event in the list
+2. View event details (map, time, requirements)
+3. Tap RSVP button
+4. Select status: **Going** / **Maybe** / **Out**
+5. If Going: Enter your ruck weight declaration
+6. Confirm RSVP
+
+### The Wire (Event Comments)
+
+1. Scroll to comments section on event detail
+2. Enter a message
+3. Tap send
+4. Comment appears with username and timestamp
+
+### Attendee List
+
+1. View event detail
+2. Scroll to "Who's Coming" section
+3. Should show:
+   - List of "Going" attendees with declared weights
+   - List of "Maybe" attendees
+   - Total group tonnage calculation
+
+### Event Notifications
+
+1. RSVP "Going" to a future event
+2. A notification should be scheduled for 1 hour before
+3. Change RSVP to "Out" - notification should cancel
+4. Change back to "Going" - notification re-schedules
+
+### Event Test Checklist
+
+```
+[ ] Leader/Founder can create event with all fields
+[ ] Event appears in Events tab list/calendar
+[ ] Event shows location on map
+[ ] RSVP buttons work (Going/Maybe/Out)
+[ ] Weight declaration appears when selecting "Going"
+[ ] Attendee list shows RSVPs with declared weights
+[ ] Group tonnage calculates: Σ(declared weights)
+[ ] Wire comments work - can post and see messages
+[ ] 1-hour reminder notification is scheduled
+[ ] Changing to "Out" cancels notification
+[ ] Leader can edit their own events
+[ ] Founder can edit/delete any event
+[ ] Members cannot create/edit events
+```
+
+---
+
+## Free vs PRO Feature Testing
+
+### Feature Matrix
+
+| Feature | Free | PRO |
 |---------|------|-----|
-| Basic tracking | Yes | Yes |
-| Audio coaching | No | Yes |
-| Heart rate zones | No | Yes |
-| Interval timers | No | Yes |
+| Basic workout tracking | ✓ | ✓ |
+| Open Ruck mode | ✓ | ✓ |
+| Club membership | ✓ | ✓ |
+| Club feed & leaderboards | ✓ | ✓ |
+| RSVP to events | ✓ | ✓ |
+| View training plan | ✓ | ✓ |
+| Start plan workout | Paywall | ✓ |
+| Audio coaching | ✗ | ✓ |
+| Heart rate zones | ✗ | ✓ |
+| Interval timers | ✗ | ✓ |
+| **Global Leaderboards** | Locked | ✓ |
+| Tonnage share metric | Locked | ✓ |
+| Club badge on share card | Locked | ✓ |
 
-### Share Card (Propaganda Mode)
+### Free User Testing
 
-| Feature | Free | Pro |
-|---------|------|-----|
-| Basic share card | Yes | Yes |
-| Toggle calories/weight/elevation | Yes | Yes |
-| Tonnage hero metric | Locked | Yes |
-| Club badge | Locked | Yes |
-
-### Free User Test Checklist
+> Sign in as **member@test.com**
 
 ```
 [ ] Can view training plan
-[ ] Paywall appears when tapping "Start Workout"
+[ ] Paywall appears when tapping "Start Workout" from plan
 [ ] Paywall shows monthly ($4.99) and yearly ($39.99) options
 [ ] "Use Free Version" button dismisses paywall
 [ ] Can complete Open Ruck without restrictions
 [ ] Share card works but Propaganda Mode options are locked
+[ ] Global Rankings tab shows blur overlay with upgrade CTA
 ```
 
-### Pro User Test Checklist
+### PRO User Testing
+
+> Sign in as **pro@test.com**
 
 ```
 [ ] PRO badge appears in profile/settings
-[ ] Can start workout from plan directly
+[ ] Can start workout from training plan directly
 [ ] Audio coaching plays during workout
 [ ] Propaganda Mode toggles work (tonnage + club badge)
 [ ] Share card shows tonnage calculation (weight × distance)
 [ ] Share card shows "TRAINING WITH [CLUB NAME]"
+[ ] Global Rankings fully visible without blur
+[ ] PRO crown appears next to username on leaderboards
+[ ] PRO Athlete badge appears in Trophy Case
 ```
 
 ---
 
-## Scenario 5: Ambassador Program
+## Ambassador Program Testing
 
-> Sign in as Founder of a club
+### Qualification Criteria
 
-### Qualification
+You become an **Ambassador** when:
+1. You are the **Founder** of a club
+2. That club has **5 or more members** (including you)
 
-You become an Ambassador when:
-- You are the **Founder** of a club
-- That club has **5 or more members** (including you)
-
-### Test the Flow
+### Testing the Ambassador Flow
 
 1. Create a new club (or use existing)
-2. Note your premium status (should be Free)
-3. Have 4 other accounts join your club
+2. Note current premium status (should be Free)
+3. Have 4 other accounts join the club
 4. Check premium status again
-5. You should now have Ambassador status with free Pro access
+5. Should now have **Ambassador** status with free PRO access
+
+### Ambassador Status Indicators
+
+| State | Expected Behavior |
+|-------|-------------------|
+| < 5 members | Free user, no special status |
+| ≥ 5 members | AMBASSADOR badge (not PRO badge) |
+| Members leave (< 5) | Status revoked |
+| Members rejoin (≥ 5) | Status restored |
 
 ### Ambassador Test Checklist
 
@@ -211,67 +484,66 @@ You become an Ambassador when:
 [ ] With 4 members (below threshold): No Ambassador status
 [ ] With 5 members: Ambassador status activates
 [ ] AMBASSADOR badge appears (not PRO badge)
-[ ] Pro features work without subscription
+[ ] PRO features work without subscription
+[ ] Global leaderboards unlocked
 [ ] If members leave and drop below 5: Status revoked
-[ ] If members rejoin back to 5: Status restored
+[ ] If members rejoin back to 5: Status restored immediately
+[ ] Ambassador gets PRO features but PRO Athlete badge doesn't appear
+```
+
+### Force Refresh Ambassador Status (iOS)
+
+```swift
+await PremiumManager.shared.checkAmbassadorStatus()
 ```
 
 ---
 
-## Scenario 6: Event Flow
+## Club Discovery Testing
 
-> Sign in as **leader@test.com** or **founder@test.com**
+### Find Nearby Clubs
 
-### Create an Event
+1. Go to Community → Find Clubs
+2. Enter a ZIP code
+3. System should:
+   - Geocode ZIP to coordinates
+   - Search for public clubs within 50 miles
+   - Also show "global" clubs (no location set)
 
-1. Go to Events tab
-2. Tap "Create Event"
-3. Fill in:
-   - Event title (required)
-   - Date and time (required)
-   - Address / location
-   - Meeting point description ("Park behind the Wendy's")
-   - Gear requirements (weight, water, headlamp, etc.)
-4. Tap Create
+### Discovery Results
 
-### RSVP Flow (as any member)
+| Club Type | Description |
+|-----------|-------------|
+| **Nearby** | Public clubs with coordinates within radius |
+| **Global** | Public clubs with no location (appear in all searches) |
+| **Private** | Never appear in discovery (invite-only) |
 
-1. Tap on the event
-2. See event details: map, time, gear requirements
-3. Tap RSVP button
-4. Select: Going / Maybe / Out
-5. If Going: Enter your ruck weight
-6. Confirm
+### Joining from Discovery
 
-### The Wire
+1. Find a club in discovery results
+2. Tap "Join" button
+3. Should trigger waiver flow
+4. After signing, you're a member
 
-1. Scroll to comments section on event
-2. Post a message
-3. Should appear with your name and timestamp
-
-### Notifications
-
-1. RSVP "Going" to a future event
-2. A notification should be scheduled for 1 hour before
-3. If you change to "Out", notification should cancel
-
-### Event Test Checklist
+### Club Discovery Test Checklist
 
 ```
-[ ] Can create event with all fields
-[ ] Event shows on calendar/list view
-[ ] Map displays correct location
-[ ] RSVP buttons work (Going/Maybe/Out)
-[ ] Weight declaration appears for "Going"
-[ ] Attendee list shows RSVPs with declared weights
-[ ] Group tonnage calculates correctly
-[ ] Wire comments work
-[ ] 1-hour reminder notification fires
+[ ] Can enter ZIP code to search
+[ ] Nearby clubs appear sorted by distance
+[ ] Distance shown for each club (e.g., "2.3 mi away")
+[ ] Global clubs appear after nearby clubs
+[ ] Private clubs do NOT appear in search
+[ ] Tapping Join triggers waiver flow
+[ ] After waiver, club appears in My Clubs
+[ ] Can search without ZIP (shows all public clubs)
+[ ] Club member count displays correctly
 ```
 
 ---
 
-## Quick Reference: Who Can Do What
+## Quick Reference Tables
+
+### Role Permissions Matrix
 
 | Action | Member | Leader | Founder |
 |--------|--------|--------|---------|
@@ -279,19 +551,45 @@ You become an Ambassador when:
 | RSVP to events | ✓ | ✓ | ✓ |
 | Post to Wire | ✓ | ✓ | ✓ |
 | View club feed | ✓ | ✓ | ✓ |
-| See join code | | ✓ | ✓ |
+| Like posts | ✓ | ✓ | ✓ |
+| See invite code | | ✓ | ✓ |
 | Create events | | ✓ | ✓ |
-| Edit/delete events | | ✓ | ✓ |
+| Edit own events | | ✓ | ✓ |
+| Edit any event | | | ✓ |
+| Delete any event | | | ✓ |
 | Promote to Leader | | | ✓ |
 | Demote to Member | | | ✓ |
 | Remove members | | | ✓ |
 | View emergency contacts | | | ✓ |
+| Edit club details | | | ✓ |
+| Regenerate invite code | | | ✓ |
+| Transfer ownership | | | ✓ |
+| Delete club | | | ✓ |
+
+### Global Leaderboard Views
+
+| Display Name | Table Name | Metric | Reset Period |
+|--------------|------------|--------|--------------|
+| Road Warriors | global_leaderboard_distance_weekly | Sum of miles | Every Monday |
+| Heavy Haulers | global_leaderboard_tonnage_alltime | Sum of lbs-mi | Never (all-time) |
+| Vertical Gainers | global_leaderboard_elevation_monthly | Sum of ft gained | 1st of month |
+| Iron Discipline | global_leaderboard_consistency | Distinct workout days | Rolling 30 days |
+
+### Badge Tiers & Colors
+
+| Tier | Color | Accent | Use Case |
+|------|-------|--------|----------|
+| Bronze | #CC8033 | #994A26 | Entry-level achievements |
+| Silver | #BFBFCC | #8C8C99 | Mid-tier milestones |
+| Gold | #FFD700 | #D9A600 | Major achievements |
+| Platinum | #E6E6FA | #B3B3D9 | Elite status |
+| PRO | Gold | Orange | Subscription status |
 
 ---
 
-## Debugging
+## SQL Debugging Queries
 
-### Check a user's role
+### Check a User's Role
 
 ```sql
 SELECT p.username, cm.role, c.name 
@@ -301,7 +599,7 @@ JOIN clubs c ON c.id = cm.club_id
 WHERE p.username = 'testuser';
 ```
 
-### Check Ambassador eligibility
+### Check Ambassador Eligibility
 
 ```sql
 SELECT c.name, c.member_count
@@ -312,8 +610,136 @@ WHERE cm.user_id = 'your-uuid'
   AND c.member_count >= 5;
 ```
 
-### Force refresh premium status (iOS code)
+### View User's Badges
+
+```sql
+SELECT ub.badge_id, ub.awarded_at
+FROM user_badges ub
+WHERE ub.user_id = 'your-uuid'
+ORDER BY ub.awarded_at DESC;
+```
+
+### Award a Badge Manually
+
+```sql
+INSERT INTO user_badges (user_id, badge_id)
+VALUES ('user-uuid', 'badge-id')
+ON CONFLICT (user_id, badge_id) DO NOTHING;
+```
+
+### Check Leaderboard Rankings
+
+```sql
+-- Weekly Distance
+SELECT * FROM global_leaderboard_distance_weekly LIMIT 10;
+
+-- All-Time Tonnage  
+SELECT * FROM global_leaderboard_tonnage_alltime LIMIT 10;
+
+-- Monthly Elevation
+SELECT * FROM global_leaderboard_elevation_monthly LIMIT 10;
+
+-- Consistency (30 days)
+SELECT * FROM global_leaderboard_consistency LIMIT 10;
+```
+
+### Check PRO Status in Profiles
+
+```sql
+SELECT id, username, is_premium
+FROM profiles
+WHERE username = 'testuser';
+```
+
+### Update PRO Status Manually
+
+```sql
+UPDATE profiles
+SET is_premium = true
+WHERE username = 'testuser';
+```
+
+### Find Nearby Clubs (Raw Query)
+
+```sql
+SELECT * FROM find_nearby_clubs(
+    user_lat := 32.7157,  -- San Diego latitude
+    user_lon := -117.1611, -- San Diego longitude
+    radius_miles := 50
+);
+```
+
+### Check Event RSVPs with Tonnage
+
+```sql
+SELECT 
+    e.title,
+    COUNT(*) FILTER (WHERE er.status = 'going') AS going_count,
+    SUM(er.declared_weight) FILTER (WHERE er.status = 'going') AS total_tonnage
+FROM club_events e
+LEFT JOIN event_rsvps er ON er.event_id = e.id
+WHERE e.club_id = 'club-uuid'
+GROUP BY e.id, e.title;
+```
+
+---
+
+## iOS Debug Commands
+
+### Force Refresh Premium Status
 
 ```swift
 await PremiumManager.shared.checkAmbassadorStatus()
 ```
+
+### Clear Local Session
+
+```swift
+await CommunityService.shared.signOut()
+```
+
+### Reload Current Profile
+
+```swift
+try await CommunityService.shared.loadCurrentProfile()
+```
+
+### Reload Clubs
+
+```swift
+try await CommunityService.shared.loadMyClubs()
+```
+
+### Force Fetch Global Leaderboard
+
+```swift
+let entries = try await CommunityService.shared.fetchGlobalLeaderboard(type: .distance)
+```
+
+---
+
+## Testing Workflow Summary
+
+### Quick Smoke Test (5 minutes)
+
+1. Sign in as free user → verify leaderboard is locked
+2. Sign in as PRO user → verify leaderboard visible
+3. Check Trophy Case → verify badges display
+4. Join a club → verify waiver flow
+5. Create an event → verify RSVP works
+
+### Full Regression Test (30 minutes)
+
+1. Complete all Member scenarios
+2. Complete all Leader scenarios  
+3. Complete all Founder scenarios
+4. Test Free vs PRO feature gates
+5. Test all 4 leaderboard types
+6. Test badge display and details
+7. Test event creation and RSVP flow
+8. Test club discovery
+9. Test Ambassador flow (if possible)
+
+---
+
+*Last updated: January 2026*

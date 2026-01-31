@@ -355,11 +355,20 @@ struct GlobalLeaderboardRow: View {
                 avatarPlaceholder
             }
             
-            // Username
+            // Username with PRO crown
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.username)
-                    .font(.system(size: 16, weight: isCurrentUser ? .bold : .semibold))
-                    .foregroundColor(isCurrentUser ? AppColors.primary : AppColors.textPrimary)
+                HStack(spacing: 4) {
+                    Text(entry.username)
+                        .font(.system(size: 16, weight: isCurrentUser ? .bold : .semibold))
+                        .foregroundColor(isCurrentUser ? AppColors.primary : AppColors.textPrimary)
+                    
+                    // PRO Crown for premium users
+                    if entry.isPremium {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.yellow)
+                    }
+                }
                 
                 if isCurrentUser {
                     Text("That's you!")

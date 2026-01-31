@@ -28,6 +28,9 @@ struct ProfileView: View {
                     // Simplified Profile Info
                     profileHeaderSection
                     
+                    // Trophy Case (badges/achievements)
+                    trophyCaseSection
+                    
                     // Subscription Details (if premium or show upgrade)
                     subscriptionDetailsSection
                     
@@ -85,6 +88,24 @@ struct ProfileView: View {
         } else {
             return "Free"
         }
+    }
+    
+    // MARK: - Trophy Case Section
+    
+    private var trophyCaseSection: some View {
+        // For now, we use a placeholder for earned badges
+        // In production, this would fetch from CommunityService or local storage
+        let earnedBadgeIds: [String] = {
+            var badges: [String] = []
+            // Add PRO badge if premium user
+            if premiumManager.isPremiumUser {
+                badges.append("pro_athlete")
+            }
+            // Additional badges would be fetched from the database
+            return badges
+        }()
+        
+        return CompactTrophyCaseView(earnedBadgeIds: earnedBadgeIds)
     }
     
     // MARK: - Profile Header Section

@@ -90,9 +90,47 @@ class PremiumManager: ObservableObject {
             if let expiry = newExpiryDate {
                 print("🔐 Subscription expiry: \(expiry)")
             }
+            
+            // Sync premium status to profile for leaderboard crown display
+            syncPremiumStatusToProfile()
         } else {
             // Log current status for debugging
             print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
+        }
+    }
+    
+    // MARK: - Premium Status Sync
+    
+    /// Sync the local premium status to the user's profile in the database
+    /// This enables the PRO crown to show on leaderboards for other users to see
+    func syncPremiumStatusToProfile() {
+        Task {
+            await syncPremiumStatusToProfileAsync()
+        }
+    }
+    
+    /// Async version of premium status sync
+    private func syncPremiumStatusToProfileAsync() async {
+        let communityService = CommunityService.shared
+        
+        // Must be signed in to sync
+        guard communityService.isAuthenticated,
+              let userId = communityService.currentProfile?.id else {
+            print("🔐 Cannot sync premium status - user not authenticated")
+            return
+        }
+        
+        do {
+            // Update the is_premium column in the profiles table
+            try await communityService.supabaseClient
+                .from("profiles")
+                .update(["is_premium": isPremiumUser])
+                .eq("id", value: userId.uuidString)
+                .execute()
+            
+            print("🔐 Premium status synced to profile: \(isPremiumUser ? "PRO" : "Free")")
+        } catch {
+            print("❌ Failed to sync premium status to profile: \(error)")
         }
     }
     
