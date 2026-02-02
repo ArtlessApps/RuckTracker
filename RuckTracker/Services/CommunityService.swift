@@ -164,6 +164,22 @@ class CommunityService: ObservableObject {
         print("✅ Loaded profile: \(response.username)")
     }
     
+    /// Update the user's premium status in the database
+    /// Called by PremiumManager when subscription status changes
+    func updatePremiumStatus(isPremium: Bool) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        try await supabase
+            .from("profiles")
+            .update(["is_premium": AnyJSON.bool(isPremium)])
+            .eq("id", value: userId.uuidString)
+            .execute()
+        
+        print("✅ Updated premium status in profile: \(isPremium ? "PRO" : "Free")")
+    }
+    
     // MARK: - Clubs
     
     /// Create a new club

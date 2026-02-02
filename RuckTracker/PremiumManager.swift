@@ -114,20 +114,14 @@ class PremiumManager: ObservableObject {
         let communityService = CommunityService.shared
         
         // Must be signed in to sync
-        guard communityService.isAuthenticated,
-              let userId = communityService.currentProfile?.id else {
+        guard communityService.isAuthenticated else {
             print("🔐 Cannot sync premium status - user not authenticated")
             return
         }
         
         do {
             // Update the is_premium column in the profiles table
-            try await communityService.supabaseClient
-                .from("profiles")
-                .update(["is_premium": isPremiumUser])
-                .eq("id", value: userId.uuidString)
-                .execute()
-            
+            try await communityService.updatePremiumStatus(isPremium: isPremiumUser)
             print("🔐 Premium status synced to profile: \(isPremiumUser ? "PRO" : "Free")")
         } catch {
             print("❌ Failed to sync premium status to profile: \(error)")
