@@ -11,7 +11,7 @@ MARCH uses a three-tier role system for club management:
 | Role | Description |
 |------|-------------|
 | **Founder** | Club creator with full administrative control |
-| **Leader** | Trusted member who can manage events (delegated "Saturday Q" duty) |
+| **Leader** | Trusted member who can manage events and moderate members (view emergency contacts, remove members) |
 | **Member** | Standard club participant |
 
 ### Club Role Permissions Matrix
@@ -25,8 +25,8 @@ MARCH uses a three-tier role system for club management:
 | **Member Management** |
 | Promote member → leader | ✅ | ❌ | ❌ |
 | Demote leader → member | ✅ | ❌ | ❌ |
-| Remove members | ✅ | ❌ | ❌ |
-| View emergency contacts | ✅ | ❌ | ❌ |
+| Remove members | ✅ | ✅ | ❌ |
+| View emergency contacts | ✅ | ✅ | ❌ |
 | View member list | ✅ | ✅ | ✅ |
 | **Events (Command Center)** |
 | Create events | ✅ | ✅ | ❌ |

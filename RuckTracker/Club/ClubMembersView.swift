@@ -213,7 +213,8 @@ struct ClubMembersView: View {
                 
                 Spacer()
                 
-                if userRole.canManageMembers && member.role != .founder {
+                // Show chevron when viewing another member (any role can tap to view) or when user can manage this member
+                if member.userId != communityService.currentProfile?.id || (userRole.canManageMembers && member.role != .founder) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
                         .foregroundColor(AppColors.textSecondary)
@@ -223,7 +224,6 @@ struct ClubMembersView: View {
             .background(AppColors.surface)
         }
         .buttonStyle(.plain)
-        .disabled(!userRole.canManageMembers && member.userId != communityService.currentProfile?.id)
     }
     
     private func membersWithRole(_ role: ClubRole) -> [ClubMemberDetails] {
@@ -330,9 +330,9 @@ struct MemberActionsSheet: View {
                         }
                     }
                     
-                    if userRole.canManageMembers && member.role != .founder {
+                    if member.role != .founder {
                         VStack(spacing: 12) {
-                            // View emergency contact (founder only)
+                            // View emergency contact (founder + leader)
                             if userRole.canViewEmergencyData && member.hasSignedWaiver {
                                 actionButton(
                                     title: "View Emergency Contact",
@@ -345,36 +345,40 @@ struct MemberActionsSheet: View {
                                 )
                             }
                             
-                            // Promote/Demote
-                            if member.role == .member {
-                                actionButton(
-                                    title: "Promote to Leader",
-                                    icon: "arrow.up.circle.fill",
-                                    color: AppColors.successGreen,
-                                    action: {
-                                        onAction(.promoteToLeader)
-                                        dismiss()
-                                    }
-                                )
-                            } else if member.role == .leader {
-                                actionButton(
-                                    title: "Demote to Member",
-                                    icon: "arrow.down.circle.fill",
-                                    color: AppColors.pauseOrange,
-                                    action: {
-                                        onAction(.demoteToMember)
-                                        dismiss()
-                                    }
-                                )
+                            // Promote/Demote (founder only)
+                            if userRole.canManageMembers {
+                                if member.role == .member {
+                                    actionButton(
+                                        title: "Promote to Leader",
+                                        icon: "arrow.up.circle.fill",
+                                        color: AppColors.successGreen,
+                                        action: {
+                                            onAction(.promoteToLeader)
+                                            dismiss()
+                                        }
+                                    )
+                                } else if member.role == .leader {
+                                    actionButton(
+                                        title: "Demote to Member",
+                                        icon: "arrow.down.circle.fill",
+                                        color: AppColors.pauseOrange,
+                                        action: {
+                                            onAction(.demoteToMember)
+                                            dismiss()
+                                        }
+                                    )
+                                }
                             }
                             
-                            // Remove member
-                            actionButton(
-                                title: "Remove from Club",
-                                icon: "person.crop.circle.badge.minus",
-                                color: AppColors.destructiveRed,
-                                action: { showingRemoveConfirmation = true }
-                            )
+                            // Remove member (founder + leader)
+                            if userRole.canRemoveMembers {
+                                actionButton(
+                                    title: "Remove from Club",
+                                    icon: "person.crop.circle.badge.minus",
+                                    color: AppColors.destructiveRed,
+                                    action: { showingRemoveConfirmation = true }
+                                )
+                            }
                         }
                     } else if member.role == .founder {
                         Text("Founders cannot be modified")

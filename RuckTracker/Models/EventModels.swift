@@ -51,12 +51,19 @@ enum ClubRole: String, Codable, CaseIterable {
         self == .founder || self == .leader
     }
     
+    /// Promote/demote members (founder only)
     var canManageMembers: Bool {
         self == .founder
     }
     
+    /// View emergency contacts (founders and leaders as moderators)
     var canViewEmergencyData: Bool {
-        self == .founder
+        self == .founder || self == .leader
+    }
+    
+    /// Remove members from the club (founders and leaders as moderators)
+    var canRemoveMembers: Bool {
+        self == .founder || self == .leader
     }
     
     var canDeleteClub: Bool {
@@ -87,6 +94,7 @@ struct ClubEvent: Codable, Identifiable {
     let clubId: UUID
     let createdBy: UUID
     var title: String
+    var eventDescription: String?
     var startTime: Date
     var locationLat: Double?
     var locationLong: Double?
@@ -107,6 +115,7 @@ struct ClubEvent: Codable, Identifiable {
         case clubId = "club_id"
         case createdBy = "created_by"
         case title
+        case eventDescription = "description"
         case startTime = "start_time"
         case locationLat = "location_lat"
         case locationLong = "location_long"
@@ -296,6 +305,7 @@ struct ClubMemberDetails: Codable, Identifiable {
 
 struct CreateEventInput {
     var title: String = ""
+    var eventDescription: String = ""
     var startTime: Date = Date().addingTimeInterval(24 * 60 * 60) // Tomorrow by default
     var locationLat: Double?
     var locationLong: Double?

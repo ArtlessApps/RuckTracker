@@ -49,7 +49,21 @@ struct EventListView: View {
             }
         }
         .sheet(item: $selectedEvent) { event in
-            EventDetailView(event: event, clubId: club.id)
+            EventDetailView(
+                event: event,
+                club: club,
+                canEditEvents: userRole.canCreateEvents,
+                onEventDeleted: {
+                    selectedEvent = nil
+                    Task { await loadEvents() }
+                },
+                onEventUpdated: { updated in
+                    Task {
+                        await loadEvents()
+                        selectedEvent = communityService.clubEvents.first { $0.id == updated.id } ?? updated
+                    }
+                }
+            )
         }
     }
     
@@ -171,6 +185,13 @@ struct EventCard: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(AppColors.textPrimary)
                     
+                    if let desc = event.eventDescription, !desc.isEmpty {
+                        Text(desc)
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textSecondary)
+                            .lineLimit(2)
+                    }
+                    
                     Text(formattedTime)
                         .font(.system(size: 15))
                         .foregroundColor(AppColors.textSecondary)
@@ -205,23 +226,8 @@ struct EventCard: View {
                 }
             }
             
-            // Bottom row: Weight requirement + RSVP count
+            // Bottom row: RSVP count
             HStack {
-                if let weight = event.requiredWeight {
-                    HStack(spacing: 4) {
-                        Image(systemName: "scalemass")
-                        Text("\(weight) lbs")
-                    }
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(AppColors.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(AppColors.primary.opacity(0.1))
-                    )
-                }
-                
                 Spacer()
                 
                 if let rsvpCount = event.rsvpCount, rsvpCount > 0 {

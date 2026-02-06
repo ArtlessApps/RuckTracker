@@ -6,6 +6,7 @@ CREATE TABLE public.club_events (
   club_id uuid NOT NULL,
   created_by uuid NOT NULL,
   title text NOT NULL,
+  description text,
   start_time timestamp with time zone NOT NULL,
   location_lat double precision,
   location_long double precision,

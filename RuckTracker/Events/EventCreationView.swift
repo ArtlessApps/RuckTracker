@@ -11,18 +11,19 @@ import MapKit
 
 struct EventCreationView: View {
     let club: Club
+    let existingEvent: ClubEvent?
     let onEventCreated: ((ClubEvent) -> Void)?
+    let onEventUpdated: ((ClubEvent) -> Void)?
     
     @StateObject private var communityService = CommunityService.shared
     @Environment(\.dismiss) private var dismiss
     
     // Form state
     @State private var title = ""
+    @State private var eventDescription = ""
     @State private var startDate = Date().addingTimeInterval(24 * 60 * 60)
     @State private var addressText = ""
     @State private var meetingPointDescription = ""
-    @State private var requiredWeight: String = ""
-    @State private var waterRequirements = ""
     
     // Map state
     @State private var showingMapPicker = false
@@ -36,14 +37,21 @@ struct EventCreationView: View {
     @State private var isCreating = false
     @State private var errorMessage: String?
     
-    init(club: Club, onEventCreated: ((ClubEvent) -> Void)? = nil) {
+    private var isEditMode: Bool { existingEvent != nil }
+    
+    init(club: Club, existingEvent: ClubEvent? = nil, onEventCreated: ((ClubEvent) -> Void)? = nil, onEventUpdated: ((ClubEvent) -> Void)? = nil) {
         self.club = club
+        self.existingEvent = existingEvent
         self.onEventCreated = onEventCreated
+        self.onEventUpdated = onEventUpdated
     }
     
     private var isFormValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        startDate > Date()
+        let titleValid = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if isEditMode {
+            return titleValid
+        }
+        return titleValid && startDate > Date()
     }
     
     var body: some View {
@@ -66,6 +74,16 @@ struct EventCreationView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 12) {
+                                Text("Description")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(AppColors.textSecondary)
+                                
+                                TextField("What to expect, route notes, etc.", text: $eventDescription, axis: .vertical)
+                                    .textFieldStyle(DarkTextFieldStyle())
+                                    .lineLimit(3...6)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 12) {
                                 Text("Date & Time")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(AppColors.textSecondary)
@@ -73,7 +91,7 @@ struct EventCreationView: View {
                                 DatePicker(
                                     "Start Time",
                                     selection: $startDate,
-                                    in: Date()...,
+                                    in: (isEditMode ? startDate : Date())...,
                                     displayedComponents: [.date, .hourAndMinute]
                                 )
                                 .datePickerStyle(.compact)
@@ -129,28 +147,6 @@ struct EventCreationView: View {
                             }
                         }
                         
-                        // Gear Check
-                        formSection(title: "Gear Check") {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Required Weight (lbs)")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppColors.textSecondary)
-                                
-                                TextField("30", text: $requiredWeight)
-                                    .textFieldStyle(DarkTextFieldStyle())
-                                    .keyboardType(.numberPad)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Water Requirements")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppColors.textSecondary)
-                                
-                                TextField("Bring 2L minimum", text: $waterRequirements)
-                                    .textFieldStyle(DarkTextFieldStyle())
-                            }
-                        }
-                        
                         // Error Message
                         if let error = errorMessage {
                             Text(error)
@@ -164,13 +160,13 @@ struct EventCreationView: View {
                                 )
                         }
                         
-                        // Create Button
-                        Button(action: createEvent) {
+                        // Create / Save Button
+                        Button(action: isEditMode ? saveEventChanges : createEvent) {
                             if isCreating {
                                 ProgressView()
                                     .tint(AppColors.textOnLight)
                             } else {
-                                Text("Create Event")
+                                Text(isEditMode ? "Save Changes" : "Create Event")
                                     .font(.system(size: 17, weight: .semibold))
                             }
                         }
@@ -184,7 +180,7 @@ struct EventCreationView: View {
                     .padding()
                 }
             }
-            .navigationTitle("Create Event")
+            .navigationTitle(isEditMode ? "Edit Event" : "Create Event")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -199,6 +195,22 @@ struct EventCreationView: View {
                     region: $mapRegion,
                     selectedLocation: $selectedLocation
                 )
+            }
+            .onAppear {
+                if let event = existingEvent {
+                    title = event.title
+                    eventDescription = event.eventDescription ?? ""
+                    startDate = event.startTime
+                    addressText = event.addressText ?? ""
+                    meetingPointDescription = event.meetingPointDescription ?? ""
+                    if let lat = event.locationLat, let long = event.locationLong {
+                        selectedLocation = CLLocationCoordinate2D(latitude: lat, longitude: long)
+                        mapRegion = MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: lat, longitude: long),
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    }
+                }
             }
         }
     }
@@ -227,18 +239,17 @@ struct EventCreationView: View {
         
         Task {
             do {
-                let weight = Int(requiredWeight)
-                
                 let event = try await communityService.createEvent(
                     clubId: club.id,
                     title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    eventDescription: eventDescription.isEmpty ? nil : eventDescription.trimmingCharacters(in: .whitespacesAndNewlines),
                     startTime: startDate,
                     locationLat: selectedLocation?.latitude,
                     locationLong: selectedLocation?.longitude,
                     addressText: addressText.isEmpty ? nil : addressText,
                     meetingPointDescription: meetingPointDescription.isEmpty ? nil : meetingPointDescription,
-                    requiredWeight: weight,
-                    waterRequirements: waterRequirements.isEmpty ? nil : waterRequirements
+                    requiredWeight: nil,
+                    waterRequirements: nil
                 )
                 
                 onEventCreated?(event)
@@ -247,6 +258,38 @@ struct EventCreationView: View {
             } catch {
                 errorMessage = error.localizedDescription
                 isCreating = false
+            }
+        }
+    }
+    
+    private func saveEventChanges() {
+        guard let event = existingEvent else { return }
+        isCreating = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                let updates = CreateEventInput(
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    eventDescription: eventDescription.trimmingCharacters(in: .whitespacesAndNewlines),
+                    startTime: startDate,
+                    locationLat: selectedLocation?.latitude,
+                    locationLong: selectedLocation?.longitude,
+                    addressText: addressText,
+                    meetingPointDescription: meetingPointDescription,
+                    requiredWeight: nil,
+                    waterRequirements: ""
+                )
+                let updated = try await communityService.updateEvent(eventId: event.id, updates: updates)
+                await MainActor.run {
+                    onEventUpdated?(updated)
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isCreating = false
+                }
             }
         }
     }

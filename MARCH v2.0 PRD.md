@@ -44,8 +44,6 @@ RuckTracker v2.0 will build the engine for **coordination**. We are pivoting fro
 * DateTime (Start time is critical)
 * **Location Pin:** Lat/Long for map integration (clickable to open Apple/Google Maps).
 * **Meeting Point Description:** Text field (e.g., "Park behind the Wendy's").
-* **Gear Check:** Required Weight (e.g., "30lb min") and Water requirements.
-
 
 * **User Story:** "As a Leader, I want to post the Saturday Ruck details once so I don't have to answer 15 texts asking for the address."
 
@@ -117,7 +115,7 @@ RuckTracker v2.0 will build the engine for **coordination**. We are pivoting fro
 
 2. **Create `club_events`:**
 * FK to `club_id` and `created_by` (Profile ID).
-* Fields: `title`, `start_time`, `location_lat`, `location_long`, `address_text`, `required_weight`.
+* Fields: `title`, `start_time`, `location_lat`, `location_long`, `address_text`.
 
 
 3. **Create `event_rsvps`:**

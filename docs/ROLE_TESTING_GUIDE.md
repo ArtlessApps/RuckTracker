@@ -141,13 +141,12 @@ Everything Members can do, plus:
     [ ] Date/time (required)
     [ ] Address/location
     [ ] Meeting point description
-    [ ] Required weight
-    [ ] Water requirements
 [ ] Can edit an event after creating it
 [ ] Can delete an event they created
+[ ] Can tap into other members and see member details
+[ ] Can see "View Emergency Contact" option (for members who signed waiver)
+[ ] Can see "Remove from Club" option
 [ ] Cannot see "Promote to Leader" option on any member
-[ ] Cannot see "View Emergency Contact" option
-[ ] Cannot see "Remove from Club" option
 ```
 
 ---
@@ -358,8 +357,6 @@ Available badge IDs:
 | Date/Time | Yes | When event starts |
 | Address | No | Location address |
 | Meeting Point | No | Specific instructions ("Park behind Wendy's") |
-| Required Weight | No | Minimum ruck weight in lbs |
-| Water Requirements | No | Hydration requirements |
 
 4. Tap Create
 

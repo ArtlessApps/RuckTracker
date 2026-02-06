@@ -11,7 +11,10 @@ import MapKit
 
 struct EventDetailView: View {
     let event: ClubEvent
-    let clubId: UUID
+    let club: Club
+    let canEditEvents: Bool
+    var onEventDeleted: (() -> Void)?
+    var onEventUpdated: ((ClubEvent) -> Void)?
     
     @StateObject private var communityService = CommunityService.shared
     @Environment(\.dismiss) private var dismiss
@@ -25,6 +28,11 @@ struct EventDetailView: View {
     @State private var isLoadingRSVPs = true
     @State private var isLoadingComments = true
     @State private var isSendingComment = false
+    @State private var showingEditEvent = false
+    @State private var showingDeleteConfirm = false
+    @State private var isDeleting = false
+    
+    private var clubId: UUID { club.id }
     
     var body: some View {
         NavigationView {
@@ -50,11 +58,6 @@ struct EventDetailView: View {
                             locationDetailsSection
                         }
                         
-                        // Gear Check
-                        if event.requiredWeight != nil || event.waterRequirements != nil {
-                            gearCheckSection
-                        }
-                        
                         // RSVP Section
                         rsvpSection
                         
@@ -70,12 +73,45 @@ struct EventDetailView: View {
             .navigationTitle("Event Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
                         dismiss()
                     }
                     .foregroundColor(AppColors.primary)
                 }
+                if canEditEvents {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button {
+                                showingEditEvent = true
+                            } label: {
+                                Label("Edit Event", systemImage: "pencil")
+                            }
+                            .disabled(event.isPast)
+                            Button(role: .destructive) {
+                                showingDeleteConfirm = true
+                            } label: {
+                                Label("Delete Event", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundColor(AppColors.primary)
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingEditEvent) {
+                EventCreationView(club: club, existingEvent: event, onEventUpdated: { updated in
+                    onEventUpdated?(updated)
+                })
+            }
+            .alert("Delete Event?", isPresented: $showingDeleteConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteEvent()
+                }
+            } message: {
+                Text("This event will be permanently deleted. This cannot be undone.")
             }
             .sheet(isPresented: $showingRSVPSheet) {
                 RSVPSheet(
@@ -112,6 +148,12 @@ struct EventDetailView: View {
             Text(event.title)
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(AppColors.textPrimary)
+            
+            if let desc = event.eventDescription, !desc.isEmpty {
+                Text(desc)
+                    .font(.system(size: 15))
+                    .foregroundColor(AppColors.textSecondary)
+            }
             
             HStack(spacing: 16) {
                 Label(formattedDate, systemImage: "calendar")
@@ -245,40 +287,6 @@ struct EventDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.surface)
-        )
-    }
-    
-    private var gearCheckSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("GEAR CHECK")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(AppColors.textSecondary)
-                .tracking(1)
-            
-            HStack(spacing: 16) {
-                if let weight = event.requiredWeight {
-                    gearPill(icon: "scalemass.fill", text: "\(weight) lbs min")
-                }
-                
-                if let water = event.waterRequirements, !water.isEmpty {
-                    gearPill(icon: "drop.fill", text: water)
-                }
-            }
-        }
-    }
-    
-    private func gearPill(icon: String, text: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-            Text(text)
-                .font(.system(size: 14, weight: .medium))
-        }
-        .foregroundColor(AppColors.textPrimary)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
                 .fill(AppColors.surface)
         )
     }
@@ -575,6 +583,23 @@ struct EventDetailView: View {
                 newComment = commentText  // Restore on error
             }
             isSendingComment = false
+        }
+    }
+    
+    private func deleteEvent() {
+        isDeleting = true
+        Task {
+            do {
+                try await communityService.deleteEvent(eventId: event.id)
+                await MainActor.run {
+                    onEventDeleted?()
+                }
+            } catch {
+                print("❌ Failed to delete event: \(error)")
+            }
+            await MainActor.run {
+                isDeleting = false
+            }
         }
     }
 }

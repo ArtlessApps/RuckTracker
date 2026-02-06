@@ -926,6 +926,7 @@ class CommunityService: ObservableObject {
     func createEvent(
         clubId: UUID,
         title: String,
+        eventDescription: String? = nil,
         startTime: Date,
         locationLat: Double? = nil,
         locationLong: Double? = nil,
@@ -950,7 +951,9 @@ class CommunityService: ObservableObject {
             "title": .string(title),
             "start_time": .string(ISO8601DateFormatter().string(from: startTime))
         ]
-        
+        if let desc = eventDescription, !desc.isEmpty {
+            eventData["description"] = .string(desc)
+        }
         if let lat = locationLat {
             eventData["location_lat"] = .double(lat)
         }
@@ -987,7 +990,8 @@ class CommunityService: ObservableObject {
     }
     
     /// Update an existing event
-    func updateEvent(eventId: UUID, updates: CreateEventInput) async throws {
+    @discardableResult
+    func updateEvent(eventId: UUID, updates: CreateEventInput) async throws -> ClubEvent {
         var updateData: [String: AnyJSON] = [
             "title": .string(updates.title),
             "start_time": .string(ISO8601DateFormatter().string(from: updates.startTime)),
@@ -995,6 +999,7 @@ class CommunityService: ObservableObject {
             "meeting_point_description": .string(updates.meetingPointDescription),
             "water_requirements": .string(updates.waterRequirements)
         ]
+        updateData["description"] = .string(updates.eventDescription)
         
         if let lat = updates.locationLat {
             updateData["location_lat"] = .double(lat)
@@ -1006,13 +1011,18 @@ class CommunityService: ObservableObject {
             updateData["required_weight"] = .double(Double(weight))
         }
         
-        try await supabase
+        let updated: ClubEvent = try await supabase
             .from("club_events")
             .update(updateData)
             .eq("id", value: eventId.uuidString)
+            .select()
+            .single()
             .execute()
+            .value
         
         print("✅ Updated event: \(eventId)")
+        try await loadClubEvents(clubId: updated.clubId)
+        return updated
     }
     
     /// Delete an event
@@ -1268,10 +1278,10 @@ class CommunityService: ObservableObject {
         try await loadClubMembers(clubId: clubId)
     }
     
-    /// Remove a member from the club (Founder only)
+    /// Remove a member from the club (Founder or Leader)
     func removeMember(userId: UUID, clubId: UUID) async throws {
         let myRole = try await getUserRole(clubId: clubId)
-        guard myRole.canManageMembers else {
+        guard myRole.canRemoveMembers else {
             throw CommunityError.insufficientPermissions
         }
         
