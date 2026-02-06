@@ -482,7 +482,7 @@ struct FeedPostCard: View {
                     )
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.author?.displayName ?? "Unknown")
+                    Text(post.author?.username ?? "Unknown")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(AppColors.textPrimary)
                     
@@ -662,7 +662,7 @@ struct LeaderboardRow: View {
             
             // User info
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.displayName)
+                Text(entry.username)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppColors.textPrimary)
                 
@@ -1191,7 +1191,6 @@ struct AuthenticationView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var username = ""
-    @State private var displayName = ""
     @State private var isSignUp = false
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -1232,17 +1231,10 @@ struct AuthenticationView: View {
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(AppColors.textSecondary)
                             
-                            TextField("username", text: $username)
+                            TextField("Your name", text: $username)
                                 .textFieldStyle(.roundedBorder)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
-                            
-                            Text("Display Name")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(AppColors.textSecondary)
-                            
-                            TextField("Your Name", text: $displayName)
-                                .textFieldStyle(.roundedBorder)
                         }
                     }
                     .padding()
@@ -1292,13 +1284,11 @@ struct AuthenticationView: View {
     private var isFormValid: Bool {
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if isSignUp {
             return isValidEmail(normalizedEmail)
                 && !password.isEmpty
                 && !trimmedUsername.isEmpty
-                && !trimmedDisplayName.isEmpty
         } else {
             return isValidEmail(normalizedEmail) && !password.isEmpty
         }
@@ -1310,7 +1300,6 @@ struct AuthenticationView: View {
 
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         
         Task {
             do {
@@ -1318,8 +1307,7 @@ struct AuthenticationView: View {
                     try await communityService.signUp(
                         email: normalizedEmail,
                         password: password,
-                        username: trimmedUsername,
-                        displayName: trimmedDisplayName
+                        username: trimmedUsername
                     )
                 } else {
                     try await communityService.signIn(email: normalizedEmail, password: password)

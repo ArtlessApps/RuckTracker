@@ -156,7 +156,6 @@ struct EventRSVP: Codable, Identifiable {
     
     // Joined data (from RPC)
     var username: String?
-    var displayName: String?
     var avatarUrl: String?
     
     enum CodingKeys: String, CodingKey {
@@ -168,7 +167,6 @@ struct EventRSVP: Codable, Identifiable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
     }
 }
@@ -184,7 +182,6 @@ struct EventComment: Codable, Identifiable {
     
     // Joined data from profiles
     var username: String?
-    var displayName: String?
     var avatarUrl: String?
     
     enum CodingKeys: String, CodingKey {
@@ -198,7 +195,6 @@ struct EventComment: Codable, Identifiable {
     
     enum ProfileKeys: String, CodingKey {
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
     }
     
@@ -213,7 +209,6 @@ struct EventComment: Codable, Identifiable {
         // Decode nested profiles object
         if let profilesContainer = try? container.nestedContainer(keyedBy: ProfileKeys.self, forKey: .profiles) {
             username = try? profilesContainer.decode(String.self, forKey: .username)
-            displayName = try? profilesContainer.decode(String.self, forKey: .displayName)
             avatarUrl = try? profilesContainer.decode(String.self, forKey: .avatarUrl)
         }
     }
@@ -265,7 +260,6 @@ struct ClubMemberDetails: Codable, Identifiable {
     
     // Joined profile data
     var username: String?
-    var displayName: String?
     var avatarUrl: String?
     
     enum CodingKeys: String, CodingKey {
@@ -276,7 +270,6 @@ struct ClubMemberDetails: Codable, Identifiable {
         case waiverSignedAt = "waiver_signed_at"
         case emergencyContact = "emergency_contact_json"
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
     }
     
@@ -291,7 +284,6 @@ struct ClubMemberDetails: Codable, Identifiable {
         self.waiverSignedAt = try container.decodeIfPresent(Date.self, forKey: .waiverSignedAt)
         self.emergencyContact = try container.decodeIfPresent(EmergencyContact.self, forKey: .emergencyContact)
         self.username = try container.decodeIfPresent(String.self, forKey: .username)
-        self.displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
         self.avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
     }
     

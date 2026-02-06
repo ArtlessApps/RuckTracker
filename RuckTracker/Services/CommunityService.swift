@@ -73,19 +73,17 @@ class CommunityService: ObservableObject {
     // MARK: - Authentication & Profile
     
     /// Sign up a new user with email/password
-    func signUp(email: String, password: String, username: String, displayName: String) async throws {
+    func signUp(email: String, password: String, username: String) async throws {
         do {
             let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-            let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
 
             // Create auth user
             let response = try await supabase.auth.signUp(
                 email: normalizedEmail,
                 password: password,
                 data: [
-                    "username": .string(trimmedUsername),
-                    "display_name": .string(trimmedDisplayName)
+                    "username": .string(trimmedUsername)
                 ]
             )
             
@@ -106,6 +104,17 @@ class CommunityService: ObservableObject {
             if let communityError = error as? CommunityError {
                 throw communityError
             }
+            
+            // Check for duplicate username error (PostgreSQL unique violation on username column)
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("duplicate") ||
+               errorMessage.contains("23505") ||
+               errorMessage.contains("unique") {
+                if errorMessage.contains("username") || errorMessage.contains("profiles_username") {
+                    throw CommunityError.duplicateUsername
+                }
+            }
+            
             throw CommunityError.authenticationFailed(error.localizedDescription)
         }
     }
@@ -778,8 +787,7 @@ class CommunityService: ObservableObject {
                     createdAt: item.createdAt,
                     author: item.authorId != nil ? PostAuthor(
                         id: item.authorId!,
-                        username: item.authorUsername ?? "unknown",
-                        displayName: item.authorDisplayName ?? "Unknown",
+                        username: item.authorUsername ?? "Unknown",
                         avatarUrl: item.authorAvatarUrl,
                         createdAt: item.createdAt
                     ) : nil
@@ -1356,7 +1364,6 @@ class CommunityService: ObservableObject {
 struct UserProfile: Codable, Identifiable {
     let id: UUID
     let username: String
-    let displayName: String
     let avatarUrl: String?
     let bio: String?
     let location: String?
@@ -1369,7 +1376,6 @@ struct UserProfile: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case bio
         case location
@@ -1480,14 +1486,12 @@ struct ClubMember: Codable {
 struct PostAuthor: Codable {
     let id: UUID
     let username: String
-    let displayName: String
     let avatarUrl: String?
     let createdAt: Date
     
     enum CodingKeys: String, CodingKey {
         case id
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case createdAt = "created_at"
     }
@@ -1549,7 +1553,6 @@ struct ClubFeedItem: Codable {
     let createdAt: Date
     let authorId: UUID?
     let authorUsername: String?
-    let authorDisplayName: String?
     let authorAvatarUrl: String?
     
     enum CodingKeys: String, CodingKey {
@@ -1569,7 +1572,6 @@ struct ClubFeedItem: Codable {
         case createdAt = "created_at"
         case authorId = "author_id"
         case authorUsername = "author_username"
-        case authorDisplayName = "author_display_name"
         case authorAvatarUrl = "author_avatar_url"
     }
 }
@@ -1579,7 +1581,6 @@ struct LeaderboardEntry: Codable, Identifiable {
     let rank: Int
     let userId: UUID
     let username: String
-    let displayName: String
     let avatarUrl: String?
     let totalDistance: Double
     let totalElevation: Double
@@ -1589,7 +1590,6 @@ struct LeaderboardEntry: Codable, Identifiable {
         case rank
         case userId = "user_id"
         case username
-        case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case totalDistance = "total_distance"
         case totalElevation = "total_elevation"
@@ -1738,6 +1738,7 @@ enum CommunityError: Error, LocalizedError {
     case insufficientPermissions
     case waiverRequired
     case duplicateInviteCode
+    case duplicateUsername
     case geocodingFailed
     
     var errorDescription: String? {
@@ -1762,6 +1763,8 @@ enum CommunityError: Error, LocalizedError {
             return "You must sign a waiver to join this club"
         case .duplicateInviteCode:
             return "This invite code is already taken. Please choose a different one."
+        case .duplicateUsername:
+            return "This username is already taken. Please choose a different one."
         case .geocodingFailed:
             return "Could not find location for that ZIP code"
         }

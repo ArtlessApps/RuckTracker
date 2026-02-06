@@ -23,21 +23,35 @@ A comprehensive guide for testing all club, leaderboard, and badge features in M
 
 ### Create These Test Accounts
 
-| Account | Email | Role | Subscription |
-|---------|-------|------|--------------|
-| **Founder** | founder@test.com | Creates "Test Ruck Club" | Free |
-| **Leader** | leader@test.com | Gets promoted to Leader | Free |
-| **Member** | member@test.com | Basic member | Free |
-| **Pro User** | pro@test.com | Has active subscription | PRO |
-| **Outsider** | outsider@test.com | Not in any club | Free |
+| Account | Email | Username | Role | Subscription |
+|---------|-------|----------|------|--------------|
+| **Founder** | founder@test.com | founder_nick | Creates "Test Ruck Club" | Free |
+| **Leader** | leader@test.com | leader_sarah | Gets promoted to Leader | Free |
+| **Member** | member@test.com | member_jake | Basic member | Free |
+| **Pro User** | pro@test.com | pro_maria | Has active subscription | PRO |
+| **Outsider** | outsider@test.com | outsider_tom | Not in any club | Free |
+
+### Test Data Seeding (Recommended)
+
+If you run `TEST_DATA_SEED.sql` in Supabase, it creates pre-configured test accounts with the usernames shown above.
+
+> **Note**: The app only uses `username` for display. If you see a different name, the test data may need to be re-seeded.
+
+### Database Trigger Setup
+
+Before testing signups, ensure the profile creation trigger is set up. Run `REMOVE_DISPLAY_NAME_MIGRATION.sql` in Supabase SQL Editor. This trigger:
+- Auto-creates profiles when users sign up
+- Uses the username from signup metadata
+- Handles duplicate usernames with fallback logic
 
 ### Initial Setup Steps
 
-1. Create all 5 accounts
-2. As **founder@test.com**: Create "Test Ruck Club"
-3. As **leader@test.com**: Join the club, then get promoted by founder
-4. As **member@test.com**: Join the club via invite code
-5. As **pro@test.com**: Purchase subscription, then join the club
+1. Run `REMOVE_DISPLAY_NAME_MIGRATION.sql` in Supabase (one-time setup)
+2. Run `TEST_DATA_SEED.sql` OR create accounts manually
+3. As **founder@test.com**: Create "Test Ruck Club"
+4. As **leader@test.com**: Join the club, then get promoted by founder
+5. As **member@test.com**: Join the club via invite code
+6. As **pro@test.com**: Purchase subscription, then join the club
 
 ---
 

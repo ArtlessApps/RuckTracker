@@ -395,12 +395,12 @@ struct EventDetailView: View {
                 .fill(AppColors.primary.opacity(isMaybe ? 0.3 : 0.5))
                 .frame(width: 36, height: 36)
                 .overlay(
-                    Text(rsvp.displayName?.prefix(1).uppercased() ?? "?")
+                    Text(rsvp.username?.prefix(1).uppercased() ?? "?")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(AppColors.primary)
                 )
             
-            Text(rsvp.displayName ?? rsvp.username ?? "Unknown")
+            Text(rsvp.username ?? "Unknown")
                 .font(.system(size: 15))
                 .foregroundColor(isMaybe ? AppColors.textSecondary : AppColors.textPrimary)
             
@@ -469,7 +469,7 @@ struct EventDetailView: View {
     private func commentRow(comment: EventComment) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(comment.displayName ?? comment.username ?? "Unknown")
+                Text(comment.username ?? "Unknown")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(AppColors.textPrimary)
                 

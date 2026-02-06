@@ -182,13 +182,13 @@ struct ClubMembersView: View {
                     .fill(roleColor(member.role).opacity(0.2))
                     .frame(width: 44, height: 44)
                     .overlay(
-                        Text(member.displayName?.prefix(1).uppercased() ?? member.username?.prefix(1).uppercased() ?? "?")
+                        Text(member.username?.prefix(1).uppercased() ?? "?")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(roleColor(member.role))
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(member.displayName ?? member.username ?? "Unknown")
+                    Text(member.username ?? "Unknown")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(AppColors.textPrimary)
                     
@@ -307,12 +307,12 @@ struct MemberActionsSheet: View {
                             .fill(AppColors.primary.opacity(0.2))
                             .frame(width: 80, height: 80)
                             .overlay(
-                                Text(member.displayName?.prefix(1).uppercased() ?? "?")
+                                Text(member.username?.prefix(1).uppercased() ?? "?")
                                     .font(.system(size: 32, weight: .semibold))
                                     .foregroundColor(AppColors.primary)
                             )
                         
-                        Text(member.displayName ?? member.username ?? "Unknown")
+                        Text(member.username ?? "Unknown")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(AppColors.textPrimary)
                         
@@ -403,7 +403,7 @@ struct MemberActionsSheet: View {
                     dismiss()
                 }
             } message: {
-                Text("Are you sure you want to remove \(member.displayName ?? "this member") from the club?")
+                Text("Are you sure you want to remove \(member.username ?? "this member") from the club?")
             }
         }
     }
@@ -457,7 +457,7 @@ struct EmergencyContactView: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(AppColors.textPrimary)
                     
-                    Text("For \(member.displayName ?? member.username ?? "Unknown")")
+                    Text("For \(member.username ?? "Unknown")")
                         .font(.system(size: 15))
                         .foregroundColor(AppColors.textSecondary)
                     

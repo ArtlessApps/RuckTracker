@@ -610,7 +610,7 @@ struct TransferOwnershipSheet: View {
                 }
             } message: {
                 if let member = selectedMember {
-                    Text("Are you sure you want to make \(member.displayName ?? member.username ?? "this member") the new founder? You will become a leader and lose founder privileges.")
+                    Text("Are you sure you want to make \(member.username ?? "this member") the new founder? You will become a leader and lose founder privileges.")
                 }
             }
         }
@@ -661,13 +661,13 @@ struct MemberSelectionRow: View {
                     .fill(AppColors.primary.opacity(0.2))
                     .frame(width: 44, height: 44)
                     .overlay(
-                        Text(member.displayName?.prefix(1).uppercased() ?? "?")
+                        Text(member.username?.prefix(1).uppercased() ?? "?")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(AppColors.primary)
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(member.displayName ?? member.username ?? "Unknown")
+                    Text(member.username ?? "Unknown")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(AppColors.textPrimary)
                     
