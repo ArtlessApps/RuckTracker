@@ -1094,7 +1094,7 @@ class CommunityService: ObservableObject {
             .from("event_rsvps")
             .select("""
                 *,
-                profiles!inner(username, display_name, avatar_url)
+                profiles!inner(username, avatar_url)
             """)
             .eq("event_id", value: eventId.uuidString)
             .execute()
@@ -1176,7 +1176,7 @@ class CommunityService: ObservableObject {
             .from("club_posts")
             .select("""
                 id, event_id, user_id, content, created_at,
-                profiles!inner(username, display_name, avatar_url)
+                profiles!club_posts_user_id_fkey(username, avatar_url)
             """)
             .eq("event_id", value: eventId.uuidString)
             .order("created_at", ascending: true)
@@ -1218,7 +1218,7 @@ class CommunityService: ObservableObject {
             .from("club_members")
             .select("""
                 *,
-                profiles!inner(username, display_name, avatar_url)
+                profiles!inner(username, avatar_url)
             """)
             .eq("club_id", value: clubId.uuidString)
             .execute()

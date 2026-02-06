@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var validationMessage = ""
     @State private var showingDebugLogs = false
     @State private var showingLogoutAlert = false
+    @State private var showingAuth = false
     
     var body: some View {
         NavigationView {
@@ -28,191 +29,36 @@ struct SettingsView: View {
                 AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
-                Form {
-                // MARK: - Body Weight Section
-                Section(header: Text("Body Weight"), footer: Text("Used for accurate calorie calculations")) {
-                    HStack {
-                        Text("Weight")
-                        Spacer()
-                        TextField("Enter weight", text: $bodyWeightInput)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // MARK: - Account Section (moved to top)
+                        accountSection
                         
-                        Picker("Unit", selection: $userSettings.preferredWeightUnit) {
-                            ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
-                                Text(unit.rawValue).tag(unit)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 100)
-                    }
-                    
-                    if !bodyWeightInput.isEmpty {
-                        HStack {
-                            Text("Current:")
-                            Spacer()
-                            Text(userSettings.bodyWeightDisplayString)
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                    }
-                }
-                
-                // MARK: - Default Ruck Weight Section
-                Section(header: Text("Default Ruck Weight"), footer: Text("Starting weight for new workouts")) {
-                    HStack {
-                        Text("Ruck Weight")
-                        Spacer()
-                        TextField("Enter weight", text: $defaultRuckWeightInput)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                        // MARK: - Body Weight Section
+                        bodyWeightSection
                         
-                        Text(userSettings.preferredWeightUnit.rawValue)
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    
-                    if !defaultRuckWeightInput.isEmpty {
-                        HStack {
-                            Text("Current:")
-                            Spacer()
-                            Text("\(String(format: "%.1f", userSettings.defaultRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)")
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                    }
-                }
-                
-                // MARK: - Units Section
-                Section(header: Text("Preferred Units")) {
-                    HStack {
-                        Text("Weight Unit")
-                        Spacer()
-                        Picker("Weight Unit", selection: $userSettings.preferredWeightUnit) {
-                            ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
-                                Text(unit.rawValue).tag(unit)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                    }
-                    
-                    HStack {
-                        Text("Distance Unit")
-                        Spacer()
-                        Picker("Distance Unit", selection: $userSettings.preferredDistanceUnit) {
-                            ForEach(UserSettings.DistanceUnit.allCases, id: \.self) { unit in
-                                Text(unit.rawValue).tag(unit)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                    }
-                }
-                
-                // MARK: - HealthKit Section
-                Section(header: Text("HealthKit Integration"), footer: Text("HealthKit enables workout tracking and integration with the Health app")) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundColor(healthManager.isAuthorized ? AppColors.accentGreen : AppColors.primary)
-                                .font(.system(size: 18))
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("HealthKit Status")
-                                    .font(.headline)
-                                Text(healthManager.getHealthKitStatusMessage())
-                                    .font(.subheadline)
-                                    .foregroundColor(AppColors.textSecondary)
-                            }
-                            
-                            Spacer()
-                        }
+                        // MARK: - Default Ruck Weight Section
+                        defaultRuckWeightSection
                         
-                        // Permission details
-                        VStack(alignment: .leading, spacing: 6) {
-                            PermissionRow(title: "Workouts", granted: healthManager.hasWorkoutPermission)
-                            PermissionRow(title: "Heart Rate", granted: healthManager.hasHeartRatePermission)
-                            PermissionRow(title: "Active Calories", granted: healthManager.hasCaloriesPermission)
-                            PermissionRow(title: "Distance", granted: healthManager.hasDistancePermission)
-                        }
+                        // MARK: - Units Section
+                        unitsSection
                         
-                        if !healthManager.isAuthorized {
-                            Button(action: {
-                                healthManager.requestAuthorization()
-                            }) {
-                                Text("Grant HealthKit Permissions")
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundColor(AppColors.textPrimary)
-                                    .cornerRadius(10)
-                            }
-                        }
+                        // MARK: - HealthKit Section
+                        healthKitSection
                         
-                        // Error display
-                        HealthKitStatusBanner()
+                        // MARK: - Actions Section
+                        actionsSection
+                        
+                        // MARK: - App Info Section
+                        aboutSection
+                        
+                        // MARK: - Debug Section
+                        debugSection
+                        
+                        Spacer(minLength: 100)
                     }
-                    .padding(.vertical, 8)
-                }
-                
-                // MARK: - Actions Section
-                Section {
-                    Button("Save Changes") {
-                        saveSettings()
-                    }
-                    .disabled(!hasChanges())
-                    
-                    Button("Reset to Defaults") {
-                        showingResetAlert = true
-                    }
-                    .foregroundColor(.red)
-                }
-                
-                // MARK: - App Info Section
-                Section(header: Text("About")) {
-                    HStack {
-                        Text("App Version")
-                        Spacer()
-                        Text("1.0")
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    
-                    HStack {
-                        Text("Onboarding Status")
-                        Spacer()
-                        Text(userSettings.hasCompletedOnboarding ? "Completed" : "Pending")
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                }
-                
-                // MARK: - Debug Section
-                Section(header: Text("Debug")) {
-                    Button(action: {
-                        showingDebugLogs = true
-                    }) {
-                        HStack {
-                            Image(systemName: "doc.text.magnifyingglass")
-                            Text("View Debug Logs")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                    }
-                }
-                
-                // MARK: - Account Section
-                if communityService.isAuthenticated {
-                    Section(header: Text("Account")) {
-                        Button(action: {
-                            showingLogoutAlert = true
-                        }) {
-                            HStack {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("Sign Out")
-                            }
-                            .foregroundColor(.red)
-                        }
-                    }
-                }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
                 }
             }
             .navigationTitle("Settings")
@@ -222,6 +68,7 @@ struct SettingsView: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(AppColors.textPrimary)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -232,10 +79,14 @@ struct SettingsView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
+                    .foregroundColor(AppColors.textPrimary)
                 }
             }
             .sheet(isPresented: $showingDebugLogs) {
                 DebugLogViewer()
+            }
+            .sheet(isPresented: $showingAuth) {
+                AuthenticationView()
             }
             .alert("Reset Settings", isPresented: $showingResetAlert) {
                 Button("Reset", role: .destructive) {
@@ -263,6 +114,446 @@ struct SettingsView: View {
             }
             .onAppear {
                 loadCurrentValues()
+            }
+        }
+    }
+    
+    // MARK: - Account Section
+    
+    private var accountSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Account")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            if communityService.isAuthenticated {
+                // Logged in state - show username and logout
+                VStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppColors.primary)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Signed in as")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            Text(communityService.currentProfile?.username ?? "User")
+                                .font(.headline)
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    Button(action: {
+                        showingLogoutAlert = true
+                    }) {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 16))
+                            Text("Sign Out")
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AppColors.surface)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+                )
+            } else {
+                // Not logged in - show login button
+                VStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppColors.textSecondary)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Not signed in")
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.textSecondary)
+                            
+                            Text("Sign in to access community features")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    Button(action: {
+                        showingAuth = true
+                    }) {
+                        HStack {
+                            Image(systemName: "person.badge.plus")
+                                .font(.system(size: 16))
+                            Text("Sign In or Create Account")
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(AppColors.textOnLight)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(AppColors.primary)
+                        .cornerRadius(10)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AppColors.surface)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+                )
+            }
+        }
+    }
+    
+    // MARK: - Body Weight Section
+    
+    private var bodyWeightSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Body Weight")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(AppColors.textSecondary)
+                    .textCase(.uppercase)
+                
+                Text("Used for accurate calorie calculations")
+                    .font(.caption2)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+            
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Weight")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    TextField("Enter weight", text: $bodyWeightInput)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 80)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    Picker("Unit", selection: $userSettings.preferredWeightUnit) {
+                        ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
+                            Text(unit.rawValue).tag(unit)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .frame(width: 100)
+                }
+                
+                if !bodyWeightInput.isEmpty {
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    HStack {
+                        Text("Current:")
+                            .foregroundColor(AppColors.textPrimary)
+                        Spacer()
+                        Text(userSettings.bodyWeightDisplayString)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+    
+    // MARK: - Default Ruck Weight Section
+    
+    private var defaultRuckWeightSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Default Ruck Weight")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(AppColors.textSecondary)
+                    .textCase(.uppercase)
+                
+                Text("Starting weight for new workouts")
+                    .font(.caption2)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+            
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Ruck Weight")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    TextField("Enter weight", text: $defaultRuckWeightInput)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 80)
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    Text(userSettings.preferredWeightUnit.rawValue)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                
+                if !defaultRuckWeightInput.isEmpty {
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    HStack {
+                        Text("Current:")
+                            .foregroundColor(AppColors.textPrimary)
+                        Spacer()
+                        Text("\(String(format: "%.1f", userSettings.defaultRuckWeight)) \(userSettings.preferredWeightUnit.rawValue)")
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+    
+    // MARK: - Units Section
+    
+    private var unitsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Preferred Units")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Weight Unit")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Picker("Weight Unit", selection: $userSettings.preferredWeightUnit) {
+                        ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
+                            Text(unit.rawValue).tag(unit)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                
+                Divider()
+                    .background(AppColors.textSecondary.opacity(0.3))
+                
+                HStack {
+                    Text("Distance Unit")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Picker("Distance Unit", selection: $userSettings.preferredDistanceUnit) {
+                        ForEach(UserSettings.DistanceUnit.allCases, id: \.self) { unit in
+                            Text(unit.rawValue).tag(unit)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+    
+    // MARK: - HealthKit Section
+    
+    private var healthKitSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("HealthKit Integration")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(AppColors.textSecondary)
+                    .textCase(.uppercase)
+                
+                Text("HealthKit enables workout tracking and integration with the Health app")
+                    .font(.caption2)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: healthManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                        .foregroundColor(healthManager.isAuthorized ? AppColors.accentGreen : AppColors.primary)
+                        .font(.system(size: 18))
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("HealthKit Status")
+                            .font(.headline)
+                            .foregroundColor(AppColors.textPrimary)
+                        Text(healthManager.getHealthKitStatusMessage())
+                            .font(.subheadline)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                }
+                
+                Divider()
+                    .background(AppColors.textSecondary.opacity(0.3))
+                
+                // Permission details
+                VStack(alignment: .leading, spacing: 6) {
+                    PermissionRow(title: "Workouts", granted: healthManager.hasWorkoutPermission)
+                    PermissionRow(title: "Heart Rate", granted: healthManager.hasHeartRatePermission)
+                    PermissionRow(title: "Active Calories", granted: healthManager.hasCaloriesPermission)
+                    PermissionRow(title: "Distance", granted: healthManager.hasDistancePermission)
+                }
+                
+                if !healthManager.isAuthorized {
+                    Button(action: {
+                        healthManager.requestAuthorization()
+                    }) {
+                        Text("Grant HealthKit Permissions")
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(AppColors.textPrimary)
+                            .cornerRadius(10)
+                    }
+                }
+                
+                // Error display
+                HealthKitStatusBanner()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+    
+    // MARK: - Actions Section
+    
+    private var actionsSection: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                saveSettings()
+            }) {
+                Text("Save Changes")
+                    .fontWeight(.medium)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(hasChanges() ? AppColors.primary : AppColors.surface)
+                    .foregroundColor(hasChanges() ? AppColors.textOnLight : AppColors.textSecondary)
+                    .cornerRadius(12)
+            }
+            .disabled(!hasChanges())
+            
+            Button(action: {
+                showingResetAlert = true
+            }) {
+                Text("Reset to Defaults")
+                    .fontWeight(.medium)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .foregroundColor(.red)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                    )
+            }
+        }
+    }
+    
+    // MARK: - About Section
+    
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("About")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            VStack(spacing: 12) {
+                HStack {
+                    Text("App Version")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Text("1.0")
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                
+                Divider()
+                    .background(AppColors.textSecondary.opacity(0.3))
+                
+                HStack {
+                    Text("Onboarding Status")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Text(userSettings.hasCompletedOnboarding ? "Completed" : "Pending")
+                        .foregroundColor(AppColors.textSecondary)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+            )
+        }
+    }
+    
+    // MARK: - Debug Section
+    
+    private var debugSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Debug")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            Button(action: {
+                showingDebugLogs = true
+            }) {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .foregroundColor(AppColors.textPrimary)
+                    Text("View Debug Logs")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AppColors.surface)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+                )
             }
         }
     }
@@ -337,17 +628,18 @@ struct PermissionRow: View {
     var body: some View {
         HStack {
             Image(systemName: granted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(granted ? .green : .red)
+                .foregroundColor(granted ? AppColors.accentGreen : .red)
                 .font(.system(size: 14))
             
             Text(title)
                 .font(.subheadline)
+                .foregroundColor(AppColors.textPrimary)
             
             Spacer()
             
             Text(granted ? "Granted" : "Denied")
                 .font(.caption)
-                .foregroundColor(granted ? .green : .red)
+                .foregroundColor(granted ? AppColors.accentGreen : .red)
         }
     }
 }
