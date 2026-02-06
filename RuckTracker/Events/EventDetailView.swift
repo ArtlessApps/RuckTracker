@@ -569,7 +569,7 @@ struct EventDetailView: View {
         
         Task {
             do {
-                try await communityService.postEventComment(eventId: event.id, content: commentText)
+                try await communityService.postEventComment(eventId: event.id, clubId: clubId, content: commentText)
             } catch {
                 print("❌ Failed to send comment: \(error)")
                 newComment = commentText  // Restore on error

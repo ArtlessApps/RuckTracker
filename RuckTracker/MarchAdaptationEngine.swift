@@ -2,7 +2,6 @@ import Foundation
 
 struct MarchFeedback: Codable {
     let rpe: Int
-    let soreness: Bool
     let timestamp: Date
 }
 
@@ -22,14 +21,14 @@ enum MarchAdaptationEngine {
         return try? decoder.decode(MarchFeedback.self, from: data)
     }
     
-    /// Light-touch adaptation: if RPE was high or soreness flagged, reduce upcoming distances 10% and relabel.
+    /// Light-touch adaptation: if RPE was high, reduce upcoming distances 10% and relabel.
     static func adapt(schedule: [ScheduledWorkout]) -> [ScheduledWorkout] {
         guard let feedback = latestFeedback(),
               Calendar.current.dateComponents([.day], from: feedback.timestamp, to: Date()).day ?? 0 <= 7 else {
             return schedule
         }
         
-        let shouldDeload = feedback.rpe >= 8 || feedback.soreness
+        let shouldDeload = feedback.rpe >= 8
         guard shouldDeload else { return schedule }
         
         return schedule.map { workout in

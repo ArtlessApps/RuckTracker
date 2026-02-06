@@ -309,16 +309,15 @@ struct ClubDetailView: View {
                                 }
                             }
                             
-                            // Founder/Leader: Share invite
+                            // Founder/Leader: Share invite and copy join code
                             if userRole.canInviteMembers {
                                 Button(action: { showingShareInvite = true }) {
                                     Label("Invite Members", systemImage: "person.badge.plus")
                                 }
-                            }
-                            
-                            // Copy join code (all members)
-                            Button(action: copyJoinCode) {
-                                Label("Copy Join Code", systemImage: "doc.on.doc")
+                                
+                                Button(action: copyJoinCode) {
+                                    Label("Copy Join Code", systemImage: "doc.on.doc")
+                                }
                             }
                             
                             Divider()
@@ -467,6 +466,7 @@ struct FeedPostCard: View {
     let post: ClubPost
     @StateObject private var communityService = CommunityService.shared
     @State private var isLiked = false
+    @State private var likeCount: Int = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -521,7 +521,7 @@ struct FeedPostCard: View {
                     HStack(spacing: 6) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .foregroundColor(isLiked ? AppColors.accentWarm : AppColors.textSecondary)
-                        Text("\(post.likeCount)")
+                        Text("\(likeCount)")
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.textSecondary)
                     }
@@ -543,16 +543,29 @@ struct FeedPostCard: View {
                 .fill(AppColors.surface)
                 .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 1)
         )
+        .onAppear {
+            likeCount = post.likeCount
+        }
     }
     
     private func toggleLike() {
+        // Optimistic UI update
+        isLiked.toggle()
+        likeCount += isLiked ? 1 : -1
+        
         Task {
-            if isLiked {
-                try? await communityService.unlikePost(postId: post.id)
-            } else {
-                try? await communityService.likePost(postId: post.id)
+            do {
+                if isLiked {
+                    try await communityService.likePost(postId: post.id)
+                } else {
+                    try await communityService.unlikePost(postId: post.id)
+                }
+            } catch {
+                // Revert on error
+                isLiked.toggle()
+                likeCount += isLiked ? 1 : -1
+                print("❌ Failed to toggle like: \(error)")
             }
-            isLiked.toggle()
         }
     }
 }

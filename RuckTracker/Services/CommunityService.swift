@@ -1137,13 +1137,14 @@ class CommunityService: ObservableObject {
     // MARK: - Event Comments (The Wire)
     
     /// Post a comment to an event
-    func postEventComment(eventId: UUID, content: String) async throws {
+    func postEventComment(eventId: UUID, clubId: UUID, content: String) async throws {
         guard let userId = supabase.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
         }
         
         let commentData: [String: AnyJSON] = [
             "event_id": .string(eventId.uuidString),
+            "club_id": .string(clubId.uuidString),
             "user_id": .string(userId.uuidString),
             "content": .string(content),
             "post_type": .string("event_comment")

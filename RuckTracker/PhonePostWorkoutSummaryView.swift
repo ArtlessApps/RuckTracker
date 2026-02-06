@@ -11,7 +11,6 @@ struct PhonePostWorkoutSummaryView: View {
     @State private var showingShare = false
     @State private var hasScheduledSharePrompt = false
     @State private var perceivedEffort: Double = 5
-    @State private var experiencedSoreness: Bool = false
     
     // Final workout stats
     let finalElapsedTime: TimeInterval
@@ -119,8 +118,6 @@ struct PhonePostWorkoutSummaryView: View {
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
-                        Toggle("Soreness or niggles", isOn: $experiencedSoreness)
-                    .toggleStyle(SwitchToggleStyle(tint: AppColors.primary))
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 16).fill(AppColors.primary.opacity(0.08)))
@@ -144,7 +141,6 @@ struct PhonePostWorkoutSummaryView: View {
                     Button(action: {
                         let feedback = MarchFeedback(
                             rpe: Int(perceivedEffort),
-                            soreness: experiencedSoreness,
                             timestamp: Date()
                         )
                         MarchAdaptationEngine.saveFeedback(feedback)

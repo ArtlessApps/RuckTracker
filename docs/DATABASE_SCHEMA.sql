@@ -131,6 +131,13 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
+CREATE TABLE public.user_badges (
+  user_id uuid NOT NULL,
+  badge_id text NOT NULL,
+  awarded_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_badges_pkey PRIMARY KEY (user_id, badge_id),
+  CONSTRAINT user_badges_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.user_subscriptions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL,

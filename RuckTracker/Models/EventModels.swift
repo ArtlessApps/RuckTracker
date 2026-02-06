@@ -182,7 +182,7 @@ struct EventComment: Codable, Identifiable {
     var content: String
     let createdAt: Date
     
-    // Joined data
+    // Joined data from profiles
     var username: String?
     var displayName: String?
     var avatarUrl: String?
@@ -193,9 +193,38 @@ struct EventComment: Codable, Identifiable {
         case userId = "user_id"
         case content
         case createdAt = "created_at"
+        case profiles
+    }
+    
+    enum ProfileKeys: String, CodingKey {
         case username
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        eventId = try container.decode(UUID.self, forKey: .eventId)
+        userId = try container.decode(UUID.self, forKey: .userId)
+        content = try container.decode(String.self, forKey: .content)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        
+        // Decode nested profiles object
+        if let profilesContainer = try? container.nestedContainer(keyedBy: ProfileKeys.self, forKey: .profiles) {
+            username = try? profilesContainer.decode(String.self, forKey: .username)
+            displayName = try? profilesContainer.decode(String.self, forKey: .displayName)
+            avatarUrl = try? profilesContainer.decode(String.self, forKey: .avatarUrl)
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(eventId, forKey: .eventId)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(content, forKey: .content)
+        try container.encode(createdAt, forKey: .createdAt)
     }
 }
 
