@@ -32,6 +32,7 @@ struct GlobalLeaderboardView: View {
     @State private var entries: [GlobalLeaderboardEntry] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var isSignedOut = false
     @State private var showingPaywall = false
     
     var body: some View {
@@ -42,7 +43,9 @@ struct GlobalLeaderboardView: View {
                 
                 // Content area
                 ZStack {
-                    if isLoading {
+                    if isSignedOut {
+                        signedOutView
+                    } else if isLoading {
                         loadingView
                     } else if let error = errorMessage {
                         errorView(message: error)
@@ -56,7 +59,7 @@ struct GlobalLeaderboardView: View {
             }
             
             // PRO Gate overlay — top level so it covers ALL content states
-            if !premiumManager.isPremiumUser {
+            if !premiumManager.isPremiumUser && !isSignedOut {
                 proGateOverlay
             }
         }
@@ -213,6 +216,26 @@ struct GlobalLeaderboardView: View {
         }
     }
     
+    // MARK: - Signed-Out State
+    
+    private var signedOutView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.crop.circle.badge.questionmark")
+                .font(.system(size: 48))
+                .foregroundColor(AppColors.textSecondary)
+            
+            Text("Sign In for Rankings")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(AppColors.textPrimary)
+            
+            Text("Create an account or sign in to see how you stack up against ruckers worldwide.")
+                .font(.system(size: 14))
+                .foregroundColor(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+    }
+    
     // MARK: - Loading/Error/Empty States
     
     private var loadingView: some View {
@@ -273,12 +296,17 @@ struct GlobalLeaderboardView: View {
     private func loadLeaderboard() async {
         isLoading = true
         errorMessage = nil
+        isSignedOut = false
         
         do {
             entries = try await communityService.fetchGlobalLeaderboard(type: selectedType)
         } catch {
-            errorMessage = error.localizedDescription
-            print("❌ Failed to load global leaderboard: \(error)")
+            if case CommunityError.notAuthenticated = error {
+                isSignedOut = true
+            } else {
+                errorMessage = error.localizedDescription
+                print("❌ Failed to load global leaderboard: \(error)")
+            }
         }
         
         isLoading = false

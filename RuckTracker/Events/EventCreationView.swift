@@ -8,6 +8,7 @@
 
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct EventCreationView: View {
     let club: Club
@@ -25,7 +26,7 @@ struct EventCreationView: View {
     @State private var addressText = ""
     @State private var meetingPointDescription = ""
     
-    // Map state
+    // Map state (default region; may be updated to user location when opening picker)
     @State private var showingMapPicker = false
     @State private var selectedLocation: CLLocationCoordinate2D?
     @State private var mapRegion = MKCoordinateRegion(
@@ -307,15 +308,74 @@ struct DarkTextFieldStyle: TextFieldStyle {
     }
 }
 
+// MARK: - One-shot current location fetcher for map picker
+
+private final class CurrentLocationFetcher: NSObject, ObservableObject, CLLocationManagerDelegate {
+    /// Toggles when a location fix arrives (used as an Equatable trigger for .onChange)
+    @Published var locationReceived: Bool = false
+    /// The resolved coordinate (read after locationReceived changes)
+    var currentCoordinate: CLLocationCoordinate2D?
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+
+    func fetchOnce() {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+            // Will retry after authorization in didChangeAuthorization
+            return
+        case .denied, .restricted:
+            currentCoordinate = nil
+            return
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        @unknown default:
+            currentCoordinate = nil
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        let coord = location.coordinate
+        Task { @MainActor in
+            self.currentCoordinate = coord
+            self.locationReceived.toggle()
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            self.currentCoordinate = nil
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+                manager.requestLocation()
+            } else {
+                self.currentCoordinate = nil
+            }
+        }
+    }
+}
+
 // MARK: - Map Location Picker
 
 struct MapLocationPicker: View {
     @Binding var region: MKCoordinateRegion
     @Binding var selectedLocation: CLLocationCoordinate2D?
     @Environment(\.dismiss) private var dismiss
-    
+
+    @StateObject private var locationFetcher = CurrentLocationFetcher()
     @State private var pinLocation: CLLocationCoordinate2D?
-    
+    @State private var hasAppliedInitialLocation = false
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -327,7 +387,7 @@ struct MapLocationPicker: View {
                     // Note: This is a simplified approach
                     // For production, you'd use UIKit gesture recognizer
                 }
-                
+
                 // Center pin indicator
                 VStack {
                     Spacer()
@@ -336,7 +396,7 @@ struct MapLocationPicker: View {
                         .foregroundColor(AppColors.accentWarm)
                     Spacer()
                 }
-                
+
                 // Instructions
                 VStack {
                     Text("Drag map to position pin")
@@ -347,7 +407,7 @@ struct MapLocationPicker: View {
                         .background(AppColors.overlayBlack)
                         .cornerRadius(8)
                         .padding(.top, 16)
-                    
+
                     Spacer()
                 }
             }
@@ -360,7 +420,7 @@ struct MapLocationPicker: View {
                     }
                     .foregroundColor(AppColors.primary)
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Confirm") {
                         selectedLocation = region.center
@@ -370,9 +430,23 @@ struct MapLocationPicker: View {
                     .fontWeight(.semibold)
                 }
             }
+            .onAppear {
+                if selectedLocation == nil, !hasAppliedInitialLocation {
+                    locationFetcher.fetchOnce()
+                }
+            }
+            .onChange(of: locationFetcher.locationReceived) { _ in
+                guard let coord = locationFetcher.currentCoordinate, selectedLocation == nil, !hasAppliedInitialLocation else { return }
+                hasAppliedInitialLocation = true
+                region = MKCoordinateRegion(
+                    center: coord,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+                selectedLocation = coord
+            }
         }
     }
-    
+
     private var annotations: [MapAnnotationItem] {
         if let loc = pinLocation {
             return [MapAnnotationItem(coordinate: loc)]

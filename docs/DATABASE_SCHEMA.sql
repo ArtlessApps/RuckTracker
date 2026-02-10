@@ -6,7 +6,6 @@ CREATE TABLE public.club_events (
   club_id uuid NOT NULL,
   created_by uuid NOT NULL,
   title text NOT NULL,
-  description text,
   start_time timestamp with time zone NOT NULL,
   location_lat double precision,
   location_long double precision,
@@ -16,6 +15,7 @@ CREATE TABLE public.club_events (
   water_requirements text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  description text,
   CONSTRAINT club_events_pkey PRIMARY KEY (id),
   CONSTRAINT club_events_club_id_fkey FOREIGN KEY (club_id) REFERENCES public.clubs(id),
   CONSTRAINT club_events_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
@@ -118,7 +118,7 @@ CREATE TABLE public.post_likes (
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   username text NOT NULL UNIQUE,
-  display_name text NOT NULL,
+  display_name text,
   avatar_url text,
   bio text,
   location text,
@@ -152,3 +152,62 @@ CREATE TABLE public.user_subscriptions (
   CONSTRAINT user_subscriptions_pkey PRIMARY KEY (id),
   CONSTRAINT user_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+
+-- ============================================================
+-- RPC: get_club_feed
+-- Returns club posts with author info and event title (if linked).
+-- Run this in the Supabase SQL Editor to create/replace the function.
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_club_feed(p_club_id UUID, p_limit INT DEFAULT 50)
+RETURNS TABLE (
+    id UUID,
+    club_id UUID,
+    user_id UUID,
+    post_type TEXT,
+    content TEXT,
+    workout_id UUID,
+    distance_miles DOUBLE PRECISION,
+    duration_minutes INT,
+    weight_lbs DOUBLE PRECISION,
+    calories INT,
+    elevation_gain DOUBLE PRECISION,
+    like_count INT,
+    comment_count INT,
+    created_at TIMESTAMPTZ,
+    author_id UUID,
+    author_username TEXT,
+    author_avatar_url TEXT,
+    event_id UUID,
+    event_title TEXT
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+    SELECT
+        cp.id,
+        cp.club_id,
+        cp.user_id,
+        cp.post_type,
+        cp.content,
+        cp.workout_id,
+        cp.distance_miles,
+        cp.duration_minutes,
+        cp.weight_lbs,
+        cp.calories,
+        cp.elevation_gain,
+        cp.like_count,
+        cp.comment_count,
+        cp.created_at,
+        p.id        AS author_id,
+        p.username   AS author_username,
+        p.avatar_url AS author_avatar_url,
+        cp.event_id,
+        ce.title     AS event_title
+    FROM club_posts cp
+    LEFT JOIN profiles p ON p.id = cp.user_id
+    LEFT JOIN club_events ce ON ce.id = cp.event_id
+    WHERE cp.club_id = p_club_id
+    ORDER BY cp.created_at DESC
+    LIMIT p_limit;
+$$;

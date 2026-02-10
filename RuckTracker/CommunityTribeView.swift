@@ -496,6 +496,24 @@ struct FeedPostCard: View {
                 Spacer()
             }
             
+            // Event reference (for event comments)
+            if let eventTitle = post.eventTitle, !eventTitle.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 12))
+                    Text(eventTitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .lineLimit(1)
+                }
+                .foregroundColor(AppColors.accentTeal)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(AppColors.accentTeal.opacity(0.12))
+                )
+            }
+            
             // Workout stats
             if post.postType == "workout" {
                 HStack(spacing: 12) {
@@ -529,14 +547,6 @@ struct FeedPostCard: View {
                     }
                 }
                 
-                // Comment button (future)
-                HStack(spacing: 6) {
-                    Image(systemName: "bubble.right")
-                        .foregroundColor(AppColors.textSecondary)
-                    Text("\(post.commentCount)")
-                        .font(.system(size: 14))
-                        .foregroundColor(AppColors.textSecondary)
-                }
             }
         }
         .padding()

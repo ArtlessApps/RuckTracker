@@ -122,10 +122,10 @@ final class BadgeCatalog {
     
     // MARK: - PRO Badge
     
-    /// PRO Athlete badge - shown for premium subscribers
+    /// PRO Subscriber badge - shown for premium subscribers
     static let proAthlete = Badge(
         id: "pro_athlete",
-        name: "PRO Athlete",
+        name: "PRO Subscriber",
         description: "Premium subscriber supporting MARCH development",
         iconSystemName: "crown.fill",
         tier: .pro,

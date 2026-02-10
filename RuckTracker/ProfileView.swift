@@ -97,8 +97,10 @@ struct ProfileView: View {
         // In production, this would fetch from CommunityService or local storage
         let earnedBadgeIds: [String] = {
             var badges: [String] = []
-            // Add PRO badge if premium user
-            if premiumManager.isPremiumUser {
+            // PRO badge requires both premium status AND being signed in
+            // Premium features remain active regardless (tied to Apple ID),
+            // but the trophy badge is a user-facing achievement
+            if premiumManager.isPremiumUser && CommunityService.shared.isAuthenticated {
                 badges.append("pro_athlete")
             }
             // Additional badges would be fetched from the database

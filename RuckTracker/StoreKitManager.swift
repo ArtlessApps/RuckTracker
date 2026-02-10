@@ -76,12 +76,22 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Purchase Flow
     
-    func purchase(_ product: Product) async throws -> StoreKit.Transaction? {
+    /// Purchase a product, optionally tagging it with the current user's UUID via appAccountToken.
+    /// When `appAccountToken` is provided, the transaction is permanently linked to that user account
+    /// in Apple's system, enabling per-user subscription verification on sign-in.
+    func purchase(_ product: Product, appAccountToken: UUID? = nil) async throws -> StoreKit.Transaction? {
         isLoading = true
         defer { isLoading = false }
         
         do {
-            let result = try await product.purchase()
+            // Build purchase options
+            var options: Set<Product.PurchaseOption> = []
+            if let token = appAccountToken {
+                options.insert(.appAccountToken(token))
+                print("🛒 Purchase tagged with appAccountToken: \(token)")
+            }
+            
+            let result = try await product.purchase(options: options)
             
             switch result {
             case .success(let verification):
@@ -114,6 +124,43 @@ class StoreKitManager: NSObject, ObservableObject {
             handlePurchaseError(.purchaseFailed(error))
             throw error
         }
+    }
+    
+    // MARK: - Per-User Entitlement Check
+    
+    /// Check if there's an active subscription entitlement tagged with the given user UUID.
+    /// Returns the matching transaction if found. This is the per-user subscription check
+    /// that prevents one user's subscription from leaking to another user on the same device.
+    func activeEntitlement(for userId: UUID) async -> StoreKit.Transaction? {
+        do {
+            for await result in StoreKit.Transaction.currentEntitlements {
+                let transaction = try checkVerified(result)
+                
+                // Only match subscription products tagged with this user's UUID
+                guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID else {
+                    continue
+                }
+                guard transaction.appAccountToken == userId else {
+                    print("🔍 Found entitlement for different user (token: \(transaction.appAccountToken?.uuidString ?? "none"))")
+                    continue
+                }
+                
+                // Verify it's still active
+                if let expirationDate = transaction.expirationDate, expirationDate > Date() {
+                    print("✅ Found active entitlement for user \(userId): \(transaction.productID), expires \(expirationDate)")
+                    return transaction
+                } else if transaction.expirationDate == nil {
+                    // Non-expiring (shouldn't happen for subscriptions, but handle it)
+                    print("✅ Found non-expiring entitlement for user \(userId)")
+                    return transaction
+                }
+            }
+        } catch {
+            print("❌ Failed to check entitlements for user \(userId): \(error)")
+        }
+        
+        print("🔍 No active entitlement found for user \(userId)")
+        return nil
     }
     
     // MARK: - Subscription Status

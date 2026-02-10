@@ -15,7 +15,8 @@ A comprehensive guide for testing all club, leaderboard, and badge features in M
 7. [Ambassador Program Testing](#ambassador-program-testing)
 8. [Club Discovery Testing](#club-discovery-testing)
 9. [Quick Reference Tables](#quick-reference-tables)
-10. [SQL Debugging Queries](#sql-debugging-queries)
+
+> **Admin queries, badge management, and debug commands** have been moved to [ADMIN_REFERENCE.md](ADMIN_REFERENCE.md).
 
 ---
 
@@ -305,7 +306,7 @@ ON CONFLICT (user_id, week_start) DO UPDATE SET
 
 | Category | Badges | Tier Colors |
 |----------|--------|-------------|
-| **PRO** | PRO Athlete | Gold/Yellow |
+| **PRO** | PRO Subscriber | Gold/Yellow |
 | **Distance** | 100 Mile Club, 500 Mile Club, 1000 Mile Club | Bronze → Silver → Gold |
 | **Tonnage** | Heavy Hauler, Freight Train, Iron Giant | Bronze → Silver → Gold |
 | **Elevation** | The Sherpa, Everester | Silver, Gold |
@@ -355,23 +356,6 @@ ON CONFLICT (user_id, week_start) DO UPDATE SET
 [ ] Locked badges show "Not Yet Earned" status
 [ ] Earned badges show green "Earned" status
 ```
-
-### Badge Awarding (Backend)
-
-To award a test badge manually:
-
-```sql
-INSERT INTO user_badges (user_id, badge_id)
-VALUES ('USER_UUID', '100_mile_club');
-```
-
-Available badge IDs:
-- `pro_athlete`, `100_mile_club`, `500_mile_club`, `1000_mile_club`
-- `heavy_hauler`, `freight_train`, `iron_giant`
-- `the_sherpa`, `everester`
-- `selection_ready`, `heavy_ready`, `light_ready`
-- `week_warrior`, `month_master`, `iron_discipline`
-- `club_founder`, `community_leader`
 
 ---
 
@@ -493,7 +477,7 @@ Available badge IDs:
 [ ] Share card shows "TRAINING WITH [CLUB NAME]"
 [ ] Global Rankings fully visible without blur
 [ ] PRO crown appears next to username on leaderboards
-[ ] PRO Athlete badge appears in Trophy Case
+[ ] PRO Subscriber badge appears in Trophy Case
 ```
 
 ---
@@ -533,7 +517,7 @@ You become an **Ambassador** when:
 [ ] Global leaderboards unlocked
 [ ] If members leave and drop below 5: Status revoked
 [ ] If members rejoin back to 5: Status restored immediately
-[ ] Ambassador gets PRO features but PRO Athlete badge doesn't appear
+[ ] Ambassador gets PRO features but PRO Subscriber badge doesn't appear
 ```
 
 ### Force Refresh Ambassador Status (iOS)
@@ -629,137 +613,6 @@ await PremiumManager.shared.checkAmbassadorStatus()
 | Gold | #FFD700 | #D9A600 | Major achievements |
 | Platinum | #E6E6FA | #B3B3D9 | Elite status |
 | PRO | Gold | Orange | Subscription status |
-
----
-
-## SQL Debugging Queries
-
-### Check a User's Role
-
-```sql
-SELECT p.username, cm.role, c.name 
-FROM club_members cm
-JOIN profiles p ON p.id = cm.user_id
-JOIN clubs c ON c.id = cm.club_id
-WHERE p.username = 'testuser';
-```
-
-### Check Ambassador Eligibility
-
-```sql
-SELECT c.name, c.member_count
-FROM clubs c
-JOIN club_members cm ON cm.club_id = c.id
-WHERE cm.user_id = 'your-uuid' 
-  AND cm.role = 'founder'
-  AND c.member_count >= 5;
-```
-
-### View User's Badges
-
-```sql
-SELECT ub.badge_id, ub.awarded_at
-FROM user_badges ub
-WHERE ub.user_id = 'your-uuid'
-ORDER BY ub.awarded_at DESC;
-```
-
-### Award a Badge Manually
-
-```sql
-INSERT INTO user_badges (user_id, badge_id)
-VALUES ('user-uuid', 'badge-id')
-ON CONFLICT (user_id, badge_id) DO NOTHING;
-```
-
-### Check Leaderboard Rankings
-
-```sql
--- Weekly Distance
-SELECT * FROM global_leaderboard_distance_weekly LIMIT 10;
-
--- All-Time Tonnage  
-SELECT * FROM global_leaderboard_tonnage_alltime LIMIT 10;
-
--- Monthly Elevation
-SELECT * FROM global_leaderboard_elevation_monthly LIMIT 10;
-
--- Consistency (30 days)
-SELECT * FROM global_leaderboard_consistency LIMIT 10;
-```
-
-### Check PRO Status in Profiles
-
-```sql
-SELECT id, username, is_premium
-FROM profiles
-WHERE username = 'testuser';
-```
-
-### Update PRO Status Manually
-
-```sql
-UPDATE profiles
-SET is_premium = true
-WHERE username = 'testuser';
-```
-
-### Find Nearby Clubs (Raw Query)
-
-```sql
-SELECT * FROM find_nearby_clubs(
-    user_lat := 32.7157,  -- San Diego latitude
-    user_lon := -117.1611, -- San Diego longitude
-    radius_miles := 50
-);
-```
-
-### Check Event RSVPs with Tonnage
-
-```sql
-SELECT 
-    e.title,
-    COUNT(*) FILTER (WHERE er.status = 'going') AS going_count,
-    SUM(er.declared_weight) FILTER (WHERE er.status = 'going') AS total_tonnage
-FROM club_events e
-LEFT JOIN event_rsvps er ON er.event_id = e.id
-WHERE e.club_id = 'club-uuid'
-GROUP BY e.id, e.title;
-```
-
----
-
-## iOS Debug Commands
-
-### Force Refresh Premium Status
-
-```swift
-await PremiumManager.shared.checkAmbassadorStatus()
-```
-
-### Clear Local Session
-
-```swift
-await CommunityService.shared.signOut()
-```
-
-### Reload Current Profile
-
-```swift
-try await CommunityService.shared.loadCurrentProfile()
-```
-
-### Reload Clubs
-
-```swift
-try await CommunityService.shared.loadMyClubs()
-```
-
-### Force Fetch Global Leaderboard
-
-```swift
-let entries = try await CommunityService.shared.fetchGlobalLeaderboard(type: .distance)
-```
 
 ---
 

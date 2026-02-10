@@ -1345,9 +1345,12 @@ struct ProUpsellStep: View {
                     Task {
                         if let product = selectedProduct {
                             do {
-                                let transaction = try await storeManager.purchase(product)
-                                if transaction != nil {
-                                    // Purchase successful
+                                // Tag purchase with current user's UUID if signed in
+                                let userToken = CommunityService.shared.currentProfile?.id
+                                let transaction = try await storeManager.purchase(product, appAccountToken: userToken)
+                                if let transaction = transaction {
+                                    // Purchase successful - record in user_subscriptions
+                                    PremiumManager.shared.handleSuccessfulPurchase(transaction: transaction)
                                     onSubscribe()
                                 }
                             } catch {
@@ -1400,7 +1403,11 @@ struct ProUpsellStep: View {
                 Button {
                     Task {
                         await storeManager.restorePurchases()
-                        if premiumManager.isPremiumUser {
+                        if let userId = CommunityService.shared.currentProfile?.id,
+                           let entitlement = await storeManager.activeEntitlement(for: userId) {
+                            PremiumManager.shared.handleSuccessfulPurchase(transaction: entitlement)
+                            onSubscribe()
+                        } else if !CommunityService.shared.isAuthenticated && storeManager.isSubscribed {
                             onSubscribe()
                         }
                     }

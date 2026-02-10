@@ -62,6 +62,10 @@ class CommunityService: ObservableObject {
             try await loadCurrentProfile()
             try await loadMyClubs()
             print("✅ Session restored with \(myClubs.count) clubs")
+            
+            // Re-evaluate premium status for the restored user
+            // Ensures ambassador status is checked for this specific user
+            PremiumManager.shared.evaluatePremiumForNewUser()
         } catch {
             print("❌ Failed to restore session data: \(error)")
             // Session might be expired, clear local state
@@ -136,6 +140,10 @@ class CommunityService: ObservableObject {
             // Load their clubs
             try await loadMyClubs()
             
+            // Re-evaluate premium status for the new user
+            // This resets ambassador status and re-checks for the signed-in user
+            PremiumManager.shared.evaluatePremiumForNewUser()
+            
         } catch {
             print("❌ Sign in failed: \(error)")
             throw CommunityError.authenticationFailed(error.localizedDescription)
@@ -146,13 +154,20 @@ class CommunityService: ObservableObject {
     func signOut() async throws {
         try await supabase.auth.signOut()
         
-        // Clear local state
+        // Clear ALL local state to prevent data leaking to the next user
         currentProfile = nil
         myClubs = []
         clubFeed = []
         weeklyLeaderboard = []
+        globalLeaderboard = []
+        clubEvents = []
+        currentEventRSVPs = []
+        eventComments = []
+        clubMembers = []
+        nearbyClubs = []
+        errorMessage = nil
         
-        print("✅ User signed out")
+        print("✅ User signed out - all local state cleared")
     }
     
     /// Load the current user's profile
@@ -187,6 +202,87 @@ class CommunityService: ObservableObject {
             .execute()
         
         print("✅ Updated premium status in profile: \(isPremium ? "PRO" : "Free")")
+    }
+    
+    // MARK: - User Subscriptions
+    
+    /// Get the current user's active subscription from the database, if any
+    func getActiveSubscription() async throws -> UserSubscription? {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        let response: [UserSubscription] = try await supabase
+            .from("user_subscriptions")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "active")
+            .order("created_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value
+        
+        let subscription = response.first
+        print("✅ Active subscription check: \(subscription != nil ? subscription!.subscriptionType : "none")")
+        return subscription
+    }
+    
+    /// Create or update a subscription record after a successful StoreKit purchase.
+    /// - Parameters:
+    ///   - type: "monthly" or "yearly"
+    ///   - appleTransactionId: The StoreKit transaction ID
+    ///   - expiresAt: When the subscription expires
+    func recordSubscription(type: String, appleTransactionId: String, expiresAt: Date?) async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        // Expire any existing active subscriptions for this user first
+        try await supabase
+            .from("user_subscriptions")
+            .update(["status": AnyJSON.string("expired"), "updated_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date()))])
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "active")
+            .execute()
+        
+        // Insert the new subscription record
+        let params: [String: AnyJSON] = [
+            "user_id": .string(userId.uuidString),
+            "subscription_type": .string(type),
+            "status": .string("active"),
+            "apple_transaction_id": .string(appleTransactionId),
+            "expires_at": expiresAt != nil ? .string(ISO8601DateFormatter().string(from: expiresAt!)) : .null,
+            "started_at": .string(ISO8601DateFormatter().string(from: Date()))
+        ]
+        
+        try await supabase
+            .from("user_subscriptions")
+            .insert(params)
+            .execute()
+        
+        // Also update the profile's is_premium flag
+        try await updatePremiumStatus(isPremium: true)
+        
+        print("✅ Recorded \(type) subscription (transaction: \(appleTransactionId))")
+    }
+    
+    /// Mark the current user's active subscription as expired
+    func expireSubscription() async throws {
+        guard let userId = supabase.auth.currentUser?.id else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        try await supabase
+            .from("user_subscriptions")
+            .update(["status": AnyJSON.string("expired"), "updated_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date()))])
+            .eq("user_id", value: userId.uuidString)
+            .eq("status", value: "active")
+            .execute()
+        
+        // Also update the profile's is_premium flag
+        try await updatePremiumStatus(isPremium: false)
+        
+        print("✅ Expired subscription for user")
     }
     
     // MARK: - Clubs
@@ -805,6 +901,8 @@ class CommunityService: ObservableObject {
                     likeCount: item.likeCount,
                     commentCount: item.commentCount,
                     createdAt: item.createdAt,
+                    eventId: item.eventId,
+                    eventTitle: item.eventTitle,
                     author: item.authorId != nil ? PostAuthor(
                         id: item.authorId!,
                         username: item.authorUsername ?? "Unknown",
@@ -1448,6 +1546,7 @@ struct UserProfile: Codable, Identifiable {
     let totalWorkouts: Int?
     let currentStreak: Int?
     let longestStreak: Int?
+    let isPremium: Bool
     let createdAt: Date
     
     enum CodingKeys: String, CodingKey {
@@ -1460,8 +1559,51 @@ struct UserProfile: Codable, Identifiable {
         case totalWorkouts = "total_workouts"
         case currentStreak = "current_streak"
         case longestStreak = "longest_streak"
+        case isPremium = "is_premium"
         case createdAt = "created_at"
     }
+    
+    /// Custom decoder to handle `is_premium` being null in older profiles
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        username = try container.decode(String.self, forKey: .username)
+        avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
+        bio = try container.decodeIfPresent(String.self, forKey: .bio)
+        location = try container.decodeIfPresent(String.self, forKey: .location)
+        totalDistance = try container.decodeIfPresent(Double.self, forKey: .totalDistance)
+        totalWorkouts = try container.decodeIfPresent(Int.self, forKey: .totalWorkouts)
+        currentStreak = try container.decodeIfPresent(Int.self, forKey: .currentStreak)
+        longestStreak = try container.decodeIfPresent(Int.self, forKey: .longestStreak)
+        isPremium = try container.decodeIfPresent(Bool.self, forKey: .isPremium) ?? false
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+    }
+}
+
+struct UserSubscription: Codable, Identifiable {
+    let id: UUID
+    let userId: UUID
+    let subscriptionType: String   // "monthly", "yearly", "ambassador"
+    let status: String             // "active", "expired", "cancelled"
+    let startedAt: Date?
+    let expiresAt: Date?
+    let appleTransactionId: String?
+    let createdAt: Date?
+    let updatedAt: Date?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case subscriptionType = "subscription_type"
+        case status
+        case startedAt = "started_at"
+        case expiresAt = "expires_at"
+        case appleTransactionId = "apple_transaction_id"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+    
+    var isActive: Bool { status == "active" }
 }
 
 struct Club: Codable, Identifiable {
@@ -1613,6 +1755,8 @@ struct ClubPost: Codable, Identifiable {
     let likeCount: Int
     let commentCount: Int
     let createdAt: Date
+    let eventId: UUID?
+    let eventTitle: String?
     
     // Joined profile data
     let author: PostAuthor?
@@ -1632,6 +1776,8 @@ struct ClubPost: Codable, Identifiable {
         case likeCount = "like_count"
         case commentCount = "comment_count"
         case createdAt = "created_at"
+        case eventId = "event_id"
+        case eventTitle = "event_title"
         case author = "profiles"
     }
 }
@@ -1655,6 +1801,8 @@ struct ClubFeedItem: Codable {
     let authorId: UUID?
     let authorUsername: String?
     let authorAvatarUrl: String?
+    let eventId: UUID?
+    let eventTitle: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -1674,6 +1822,8 @@ struct ClubFeedItem: Codable {
         case authorId = "author_id"
         case authorUsername = "author_username"
         case authorAvatarUrl = "author_avatar_url"
+        case eventId = "event_id"
+        case eventTitle = "event_title"
     }
 }
 

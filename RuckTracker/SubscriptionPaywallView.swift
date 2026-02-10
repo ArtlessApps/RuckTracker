@@ -246,9 +246,14 @@ struct SubscriptionPaywallView: View {
                 Button {
                     Task {
                         do {
-                            let transaction = try await storeManager.purchase(selectedProduct)
-                            if transaction != nil {
-                                // Purchase successful - dismiss the paywall
+                            // Tag purchase with current user's UUID for per-user subscription tracking
+                            let userToken = CommunityService.shared.currentProfile?.id
+                            let transaction = try await storeManager.purchase(selectedProduct, appAccountToken: userToken)
+                            if let transaction = transaction {
+                                // Purchase successful - record in user_subscriptions + grant premium
+                                premiumManager.handleSuccessfulPurchase(transaction: transaction)
+                                
+                                // Dismiss the paywall
                                 // Use both methods to ensure dismissal works regardless of how
                                 // the paywall was presented (via $premiumManager.showingPaywall 
                                 // or via a local @State variable)
@@ -302,8 +307,14 @@ struct SubscriptionPaywallView: View {
             Button("Restore Purchases") {
                 Task {
                     await storeManager.restorePurchases()
-                    // If restore found an active subscription, dismiss the paywall
-                    if storeManager.isSubscribed {
+                    // Check if restored entitlements include one for the current user
+                    if let userId = CommunityService.shared.currentProfile?.id,
+                       let entitlement = await storeManager.activeEntitlement(for: userId) {
+                        premiumManager.handleSuccessfulPurchase(transaction: entitlement)
+                        premiumManager.dismissPaywall()
+                        dismiss()
+                    } else if !CommunityService.shared.isAuthenticated && storeManager.isSubscribed {
+                        // Anonymous user - any active entitlement counts
                         premiumManager.dismissPaywall()
                         dismiss()
                     }

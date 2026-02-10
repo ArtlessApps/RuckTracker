@@ -1,15 +1,19 @@
 import Foundation
 import SwiftUI
+import StoreKit
 import Combine
 
-/// PremiumManager handles premium subscription status
+/// PremiumManager handles premium subscription status using `user_subscriptions` as the
+/// per-user source of truth, with StoreKit `appAccountToken` linking purchases to users.
 ///
-/// Key Design Principle:
-/// Premium status is determined by StoreKit subscription OR Ambassador status
-/// - Premium is tied to Apple ID, NOT user email/authentication
-/// - Anonymous users CAN have premium (they purchased via Apple Pay)
-/// - Premium persists across sign in/sign out (tied to device's Apple ID)
-/// - Club Founders with 5+ members get Pro for free ("Ambassador" status)
+/// Key Design Principles:
+/// - **Authenticated users**: Premium determined by their `user_subscriptions` record in the database
+///   OR Ambassador status (club founder with 5+ members). StoreKit purchases are tagged with the
+///   user's UUID via `appAccountToken` so they can be verified on sign-in.
+/// - **Anonymous users**: Premium comes directly from StoreKit (tied to Apple ID / device).
+///   Once they sign in, their entitlement is matched via `appAccountToken`.
+/// - **Single source of truth**: The `user_subscriptions` table tracks who has a subscription,
+///   when it expires, and the Apple transaction ID for auditability.
 @MainActor
 class PremiumManager: ObservableObject {
     static let shared = PremiumManager()
@@ -29,6 +33,10 @@ class PremiumManager: ObservableObject {
     }
     @Published var premiumSource: PremiumSource = .none
     
+    /// Whether the current authenticated user has an active subscription in the database.
+    /// Loaded from `user_subscriptions` on sign-in; set on purchase; cleared on sign-out.
+    private(set) var hasActiveSubscription = false
+    
     private let storeKitManager = StoreKitManager.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -38,14 +46,13 @@ class PremiumManager: ObservableObject {
     }
     
     private func setupSubscriptions() {
-        // Listen to subscription status changes with a small delay to ensure stability
+        // Listen to subscription status changes (for anonymous users and expiry detection)
         storeKitManager.$subscriptionStatus
             .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
-            .sink { [weak self] status in
-                self?.updatePremiumStatus()
+            .sink { [weak self] _ in
+                self?.handleSubscriptionStatusChange()
             }
             .store(in: &cancellables)
-        
         
         // Listen to post-purchase prompt from StoreKitManager
         storeKitManager.$showingPostPurchasePrompt
@@ -53,27 +60,40 @@ class PremiumManager: ObservableObject {
                 self?.showingPostPurchasePrompt = showing
             }
             .store(in: &cancellables)
-        
-        // Note: Removed duplicate notification listener since we already listen to 
-        // storeKitManager.$subscriptionStatus changes above
     }
     
+    // MARK: - Premium Status Calculation
+    
+    /// Recalculate `isPremiumUser` based on the current state.
+    /// - Authenticated: `hasActiveSubscription` (from DB) OR `isAmbassador`
+    /// - Anonymous: StoreKit device-level subscription
     private func updatePremiumStatus() {
         let wasPremium = isPremiumUser
-        let storeKitSubscribed = storeKitManager.isSubscribed
-        let newExpiryDate = storeKitManager.subscriptionExpiryDate
+        let communityService = CommunityService.shared
         
-        // Premium status is based on StoreKit subscription status OR Ambassador status
-        // Users with valid subscriptions get premium access regardless of authentication status
-        // This allows anonymous users who purchase subscriptions to access premium features
-        let newPremiumStatus = storeKitSubscribed || isAmbassador
+        let newPremiumStatus: Bool
         
-        // Always update the status, even if it's the same
+        if communityService.isAuthenticated {
+            // Per-user: database subscription record + ambassador
+            newPremiumStatus = hasActiveSubscription || isAmbassador
+        } else {
+            // Device-level: StoreKit entitlement
+            newPremiumStatus = storeKitManager.isSubscribed
+        }
+        
         isPremiumUser = newPremiumStatus
-        subscriptionExpiryDate = storeKitSubscribed ? newExpiryDate : nil
         
-        // Update premium source
-        if storeKitSubscribed {
+        // Expiry date
+        if hasActiveSubscription {
+            subscriptionExpiryDate = storeKitManager.subscriptionExpiryDate
+        } else if !communityService.isAuthenticated && storeKitManager.isSubscribed {
+            subscriptionExpiryDate = storeKitManager.subscriptionExpiryDate
+        } else {
+            subscriptionExpiryDate = nil
+        }
+        
+        // Premium source
+        if hasActiveSubscription || (!communityService.isAuthenticated && storeKitManager.isSubscribed) {
             premiumSource = .subscription
         } else if isAmbassador {
             premiumSource = .ambassador
@@ -81,61 +101,173 @@ class PremiumManager: ObservableObject {
             premiumSource = .none
         }
         
-        // Log status changes with more detail
         if wasPremium != isPremiumUser {
-            print("🔐 Premium status updated: \(isPremiumUser ? "Premium" : "Free")")
-            print("🔐 StoreKit subscription: \(storeKitSubscribed)")
-            print("🔐 Ambassador status: \(isAmbassador)")
-            print("🔐 Premium source: \(premiumSource)")
-            if let expiry = newExpiryDate {
-                print("🔐 Subscription expiry: \(expiry)")
-            }
-            
-            // Sync premium status to profile for leaderboard crown display
-            syncPremiumStatusToProfile()
-        } else {
-            // Log current status for debugging
-            print("🔐 Premium status unchanged: \(isPremiumUser ? "Premium" : "Free")")
+            print("🔐 Premium status changed: \(isPremiumUser ? "Premium" : "Free")")
+            print("🔐   Authenticated: \(communityService.isAuthenticated)")
+            print("🔐   DB subscription: \(hasActiveSubscription)")
+            print("🔐   Ambassador: \(isAmbassador)")
+            print("🔐   StoreKit subscribed: \(storeKitManager.isSubscribed)")
+            print("🔐   Source: \(premiumSource)")
         }
     }
     
-    // MARK: - Premium Status Sync
-    
-    /// Sync the local premium status to the user's profile in the database
-    /// This enables the PRO crown to show on leaderboards for other users to see
-    func syncPremiumStatusToProfile() {
-        Task {
-            await syncPremiumStatusToProfileAsync()
-        }
-    }
-    
-    /// Async version of premium status sync
-    private func syncPremiumStatusToProfileAsync() async {
+    /// Handle StoreKit subscription status changes (expiry detection + anonymous updates).
+    private func handleSubscriptionStatusChange() {
         let communityService = CommunityService.shared
         
-        // Must be signed in to sync
+        if communityService.isAuthenticated && hasActiveSubscription && premiumSource == .subscription {
+            // Detect subscription expiry for authenticated user
+            if !storeKitManager.isSubscribed {
+                print("🔐 StoreKit reports expired - checking user's entitlement")
+                Task {
+                    await verifyAndSyncSubscription()
+                }
+            }
+        }
+        
+        // Always recalculate (important for anonymous users)
+        updatePremiumStatus()
+    }
+    
+    // MARK: - Purchase Handling
+    
+    /// Record a successful purchase: write to `user_subscriptions` + update profile.
+    /// Called from the paywall after `StoreKitManager.purchase()` returns a transaction.
+    func handleSuccessfulPurchase(transaction: StoreKit.Transaction) {
+        let communityService = CommunityService.shared
+        
         guard communityService.isAuthenticated else {
-            print("🔐 Cannot sync premium status - user not authenticated")
+            // Anonymous user - StoreKit handles it at device level
+            print("🔐 Purchase by anonymous user - StoreKit provides device-level premium")
+            updatePremiumStatus()
+            return
+        }
+        
+        // Determine subscription type from product ID
+        let subType = transaction.productID.contains("yearly") ? "yearly" : "monthly"
+        let transactionId = String(transaction.id)
+        
+        // Set local state immediately for responsive UI
+        hasActiveSubscription = true
+        updatePremiumStatus()
+        
+        // Write to database in background
+        Task {
+            do {
+                try await communityService.recordSubscription(
+                    type: subType,
+                    appleTransactionId: transactionId,
+                    expiresAt: transaction.expirationDate
+                )
+                print("🔐 Subscription recorded in database: \(subType) (tx: \(transactionId))")
+            } catch {
+                print("❌ Failed to record subscription in database: \(error)")
+                // Local state is already set - will be synced on next sign-in
+            }
+        }
+    }
+    
+    // MARK: - Sign In: Load & Verify Subscription
+    
+    /// Called after sign-in or session restore. Loads the user's subscription from the database,
+    /// then verifies it against StoreKit entitlements tagged with their UUID.
+    func evaluatePremiumForNewUser() {
+        // Reset all user-level state
+        hasActiveSubscription = false
+        isAmbassador = false
+        updatePremiumStatus()
+        
+        // Load subscription + ambassador status asynchronously
+        Task {
+            await loadSubscriptionForCurrentUser()
+            await checkAmbassadorStatus()
+        }
+    }
+    
+    /// Load and verify the subscription for the current authenticated user.
+    private func loadSubscriptionForCurrentUser() async {
+        let communityService = CommunityService.shared
+        
+        guard let userId = communityService.currentProfile?.id else {
+            print("🔐 No profile - skipping subscription load")
             return
         }
         
         do {
-            // Update the is_premium column in the profiles table
-            try await communityService.updatePremiumStatus(isPremium: isPremiumUser)
-            print("🔐 Premium status synced to profile: \(isPremiumUser ? "PRO" : "Free")")
+            // 1. Check the database for an active subscription record
+            let dbSubscription = try await communityService.getActiveSubscription()
+            
+            // 2. Verify against StoreKit: does this user have a tagged entitlement?
+            let storeKitEntitlement = await storeKitManager.activeEntitlement(for: userId)
+            
+            if dbSubscription != nil {
+                if storeKitEntitlement != nil {
+                    // DB says active, StoreKit confirms - all good
+                    hasActiveSubscription = true
+                    print("🔐 Subscription verified: DB ✓ StoreKit ✓")
+                } else {
+                    // DB says active but StoreKit doesn't confirm on this device.
+                    // Could be: purchased on another device, or expired.
+                    // Trust the DB (it's the cross-device source of truth).
+                    hasActiveSubscription = true
+                    print("🔐 Subscription from DB (not verified on this device - may be from another device)")
+                }
+            } else if let entitlement = storeKitEntitlement {
+                // StoreKit has an entitlement for this user but DB doesn't know about it.
+                // This can happen if the DB write failed on purchase. Reconcile it now.
+                hasActiveSubscription = true
+                let subType = entitlement.productID.contains("yearly") ? "yearly" : "monthly"
+                try await communityService.recordSubscription(
+                    type: subType,
+                    appleTransactionId: String(entitlement.id),
+                    expiresAt: entitlement.expirationDate
+                )
+                print("🔐 Reconciled: StoreKit entitlement written to DB")
+            } else {
+                // No subscription anywhere
+                hasActiveSubscription = false
+                print("🔐 No active subscription for user \(userId)")
+            }
+            
+            updatePremiumStatus()
+            
         } catch {
-            print("❌ Failed to sync premium status to profile: \(error)")
+            print("❌ Failed to load subscription: \(error)")
+            // Fall back to profile is_premium as last resort
+            hasActiveSubscription = communityService.currentProfile?.isPremium ?? false
+            updatePremiumStatus()
+        }
+    }
+    
+    /// Verify the current user's subscription against StoreKit and expire if needed.
+    private func verifyAndSyncSubscription() async {
+        let communityService = CommunityService.shared
+        
+        guard let userId = communityService.currentProfile?.id else { return }
+        
+        let entitlement = await storeKitManager.activeEntitlement(for: userId)
+        
+        if entitlement == nil && hasActiveSubscription && premiumSource == .subscription {
+            // Subscription expired on this device
+            hasActiveSubscription = false
+            updatePremiumStatus()
+            
+            do {
+                try await communityService.expireSubscription()
+                print("🔐 Subscription expired and synced to database")
+            } catch {
+                print("❌ Failed to expire subscription in database: \(error)")
+            }
         }
     }
     
     // MARK: - Ambassador System
     
-    /// Check if user qualifies for Ambassador (free Pro) status
-    /// Club Founders with 5+ members get Pro for free
+    /// Check if user qualifies for Ambassador (free Pro) status.
+    /// Club Founders with 5+ members get Pro for free.
     func checkAmbassadorStatus() async {
         let communityService = CommunityService.shared
         
-        // Must be signed in
         guard communityService.currentProfile != nil else {
             isAmbassador = false
             updatePremiumStatus()
@@ -143,14 +275,10 @@ class PremiumManager: ObservableObject {
         }
         
         do {
-            // Load user's clubs
             try await communityService.loadMyClubs()
             
-            // Check for clubs where user is founder with 5+ members
             var qualifiesAsAmbassador = false
-            
             for club in communityService.myClubs {
-                // Check if user is founder
                 let role = try await communityService.getUserRole(clubId: club.id)
                 if role == .founder && club.memberCount >= 5 {
                     qualifiesAsAmbassador = true
@@ -164,8 +292,18 @@ class PremiumManager: ObservableObject {
             if wasAmbassador != isAmbassador {
                 print("🎖️ Ambassador status changed: \(isAmbassador ? "Granted" : "Revoked")")
                 updatePremiumStatus()
+                
+                // Sync ambassador status to profile and user_subscriptions
+                if isAmbassador {
+                    Task {
+                        try? await communityService.recordSubscription(
+                            type: "ambassador",
+                            appleTransactionId: "ambassador",
+                            expiresAt: nil
+                        )
+                    }
+                }
             }
-            
         } catch {
             print("❌ Failed to check ambassador status: \(error)")
             isAmbassador = false
@@ -209,18 +347,15 @@ class PremiumManager: ObservableObject {
         showingPaywall = false
     }
     
-    // MARK: - Sign Out Handling
+    // MARK: - Sign Out
     
-    /// This method is intentionally a no-op
-    /// Premium status is tied to Apple ID / StoreKit, not authentication state
-    /// When a user signs out, they get a NEW anonymous session but keep their premium
-    /// status if their device's Apple ID has an active subscription
+    /// Reset all user-level premium state on sign out.
     func resetPremiumStatusForSignOut() {
-        print("🔐 Sign out detected - premium status remains unchanged")
-        print("🔐 Premium is tied to Apple ID, not authentication")
-        print("🔐 Current premium status: \(isPremiumUser ? "Premium" : "Free")")
-        // Premium status remains tied to device's Apple ID subscription
-        // No action needed
+        print("🔐 Sign out - resetting all user-level premium state")
+        hasActiveSubscription = false
+        isAmbassador = false
+        updatePremiumStatus()
+        print("🔐 After sign-out: \(isPremiumUser ? "Premium (anonymous StoreKit)" : "Free")")
     }
     
     // MARK: - Free Trial Logic
@@ -524,7 +659,7 @@ struct PremiumBadge: View {
         .padding(.vertical, size.padding.vertical)
         .background(
             LinearGradient(
-                colors: [Color("PrimaryMain"), Color("PrimaryMedium")],
+                colors: [AppColors.primary, AppColors.accentTeal],
                 startPoint: .leading,
                 endPoint: .trailing
             )

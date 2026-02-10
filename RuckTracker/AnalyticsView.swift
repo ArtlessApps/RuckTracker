@@ -17,6 +17,19 @@ struct AnalyticsView: View {
     @State private var showingDeleteAlert = false
     @State private var workoutToDelete: WorkoutEntity?
     
+    /// Earned badge IDs for the trophy case
+    private var earnedBadgeIds: [String] {
+        var badges: [String] = []
+        // PRO badge requires both premium status AND being signed in
+        // Premium features remain active regardless (tied to Apple ID),
+        // but the trophy badge is a user-facing achievement
+        if premiumManager.isPremiumUser && CommunityService.shared.isAuthenticated {
+            badges.append("pro_athlete")
+        }
+        // Additional badges would be fetched from the database
+        return badges
+    }
+    
     var body: some View {
         ZStack {
             AppColors.backgroundGradient
@@ -24,6 +37,9 @@ struct AnalyticsView: View {
             
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 20) {
+                    // Trophy Case - always visible
+                    CompactTrophyCaseView(earnedBadgeIds: earnedBadgeIds)
+                    
                     if workoutDataManager.workouts.isEmpty {
                         emptyStateView
                     } else {
