@@ -29,8 +29,6 @@ struct ImprovedPhoneMainView: View {
     @State private var selectedUserProgram: UserProgram?
     @State private var selectedProgramId: UUID?
     @State private var pendingShareCode: String?
-    @State private var selectedSessionType: SessionType?
-    @State private var showingSessionConfig = false
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -50,65 +48,6 @@ struct ImprovedPhoneMainView: View {
             case .trainingPrograms: return 4
             case .challenges: return 5
             case .dataExport: return 6
-            }
-        }
-    }
-    
-    // MARK: - Quick Session Types
-    enum SessionType: CaseIterable {
-        case justRuck
-        case recovery
-        case pacePusher
-        case vertical
-        case benchmark
-        
-        var title: String {
-            switch self {
-            case .justRuck: return "Just Ruck"
-            case .recovery: return "Recovery"
-            case .pacePusher: return "Pace Pusher"
-            case .vertical: return "Vertical"
-            case .benchmark: return "Benchmark"
-            }
-        }
-        
-        var subtitle: String {
-            switch self {
-            case .justRuck: return "Open-ended. Stop when you're done."
-            case .recovery: return "Zone 2 focus. Choose duration."
-            case .pacePusher: return "Intervals for speed."
-            case .vertical: return "Hill repeats. Choose elevation."
-            case .benchmark: return "Standards for distance/time."
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .justRuck: return "figure.walk"
-            case .recovery: return "bolt.heart"
-            case .pacePusher: return "hare.fill"
-            case .vertical: return "mountain.2.fill"
-            case .benchmark: return "trophy.fill"
-            }
-        }
-        
-        var accent: Color {
-            switch self {
-            case .justRuck: return AppColors.primary
-            case .recovery: return AppColors.accentGreenLight
-            case .pacePusher: return AppColors.accentGreenDeep
-            case .vertical: return AppColors.accentWarm
-            case .benchmark: return AppColors.accentGreen
-            }
-        }
-        
-        var contextLabel: String {
-            switch self {
-            case .justRuck: return "Just Ruck"
-            case .recovery: return "Recovery Ruck"
-            case .pacePusher: return "Pace Pusher Ruck"
-            case .vertical: return "Vertical Grind Ruck"
-            case .benchmark: return "Standard Test Ruck"
             }
         }
     }
@@ -164,13 +103,17 @@ struct ImprovedPhoneMainView: View {
             ActiveWorkoutFullScreenView()
                 .environmentObject(workoutManager)
         }
-        .sheet(isPresented: $showingSessionConfig) {
-            SessionConfiguratorSheet(
-                sessionType: $selectedSessionType,
-                onStart: { type, config in
-                    startQuickSession(type: type, config: config)
-                },
-                onCancel: { showingSessionConfig = false }
+        .sheet(isPresented: $showingWeightSelector) {
+            WorkoutWeightSelector(
+                selectedWeight: $selectedWorkoutWeight,
+                isPresented: $showingWeightSelector,
+                recommendedWeight: nil,
+                context: "Open Goal Ruck",
+                onStart: {
+                    workoutManager.setProgramContext(programId: nil, day: nil)
+                    workoutManager.startWorkout(weight: selectedWorkoutWeight)
+                    showingActiveWorkout = true
+                }
             )
         }
         .sheet(item: $selectedProgramWorkout, onDismiss: {
@@ -227,14 +170,24 @@ struct ImprovedPhoneMainView: View {
             }
         }
     }
+    
     // MARK: - Main Content View
     
     private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 20) {
-                heroCard
-                sessionGrid
-                trainingProgramsSection
+                // 1. Hero Button
+                HeroRuckButton {
+                    selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+                    showingWeightSelector = true
+                }
+                
+                // 2. Active Program Card (Conditional)
+                activeProgramCard
+                
+                // 3. Recent Activity
+                recentActivitySection
+                
                 Spacer(minLength: 80)
             }
             .padding(.horizontal, 20)
@@ -244,11 +197,12 @@ struct ImprovedPhoneMainView: View {
         .background(Color.clear)
     }
     
-    // MARK: - Coach + Quick Sessions
+    // MARK: - Active Program Card
     
-    private var heroCard: some View {
+    private var activeProgramCard: some View {
         Group {
             if let planned = todaysPlannedWorkout {
+                // Active program — show next workout
                 Button {
                     startPlannedWorkout(planned)
                 } label: {
@@ -281,7 +235,6 @@ struct ImprovedPhoneMainView: View {
                         
                         Spacer()
                         
-                        // Play button CTA
                         ZStack {
                             Circle()
                                 .fill(AppColors.primary)
@@ -307,41 +260,46 @@ struct ImprovedPhoneMainView: View {
                 }
                 .buttonStyle(.plain)
             } else {
+                // No active program — prompt to start one
                 Button {
                     activeSheet = .trainingPrograms
                 } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("PERSONALIZED PLAN")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(AppColors.primary)
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(AppColors.primary.opacity(0.15))
+                                .frame(width: 44, height: 44)
                             
-                            Text("Create My Plan")
-                                .font(.title2)
-                                .fontWeight(.bold)
+                            Image(systemName: "calendar.badge.plus")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(AppColors.primary)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Start a Training Plan")
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(AppColors.textPrimary)
-                        Text("We’ll build your schedule from MARCH sessions.")
-                                .font(.subheadline)
+                            
+                            Text("Follow a structured program")
+                                .font(.system(size: 13))
                                 .foregroundColor(AppColors.textSecondary)
                         }
                         
                         Spacer()
                         
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 36))
-                            .foregroundColor(AppColors.primary)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(AppColors.textSecondary.opacity(0.5))
                     }
-                    .padding(18)
+                    .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(AppColors.surface)
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(AppColors.surface.opacity(0.6))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(AppColors.primary.opacity(0.4), lineWidth: 1.5)
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
                             )
-                            .shadow(color: AppColors.primary.opacity(0.25), radius: 16, x: 0, y: 6)
                     )
                 }
                 .buttonStyle(.plain)
@@ -349,50 +307,62 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
-    private var sessionGrid: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Ruck")
-                .font(.headline)
-                .foregroundColor(AppColors.textPrimary)
-            
-            VStack(spacing: 0) {
-                ForEach(Array(SessionType.allCases.enumerated()), id: \.element) { index, type in
-                    sessionCard(for: type)
+    // MARK: - Recent Activity
+    
+    private var recentActivitySection: some View {
+        Group {
+            if let lastWorkout = workoutDataManager.workouts.sorted(by: {
+                ($0.date ?? .distantPast) > ($1.date ?? .distantPast)
+            }).first {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Last Ruck")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
                     
-                    if index < SessionType.allCases.count - 1 {
-                        Divider()
-                            .background(AppColors.textSecondary.opacity(0.2))
-                    }
+                    lastRuckCard(lastWorkout)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(AppColors.surface.opacity(0.5))
-            )
         }
     }
     
-    private func sessionCard(for type: SessionType) -> some View {
+    private func lastRuckCard(_ workout: WorkoutEntity) -> some View {
         Button {
-            selectedSessionType = type
-            showingSessionConfig = true
+            activeSheet = .workoutHistory
         } label: {
             HStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(type.accent.opacity(0.15))
-                        .frame(width: 36, height: 36)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppColors.accentGreen.opacity(0.15))
+                        .frame(width: 48, height: 48)
                     
-                    Image(systemName: type.icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(type.accent)
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(AppColors.accentGreen)
                 }
                 
-                Text(type.title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                VStack(alignment: .leading, spacing: 3) {
+                    if let date = workout.date {
+                        Text(date, style: .relative)
+                            .font(.system(size: 13))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    
+                    HStack(spacing: 16) {
+                        Label(String(format: "%.1f mi", workout.distance), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppColors.textPrimary)
+                        
+                        Label(formattedDuration(workout.duration), systemImage: "clock")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppColors.textPrimary)
+                        
+                        if workout.ruckWeight > 0 {
+                            Label("\(Int(workout.ruckWeight)) lbs", systemImage: "scalemass")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                    }
+                }
                 
                 Spacer()
                 
@@ -400,141 +370,29 @@ struct ImprovedPhoneMainView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppColors.textSecondary.opacity(0.4))
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 10)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    private var trainingProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Training Programs")
-                .font(.headline)
-                .foregroundColor(AppColors.textPrimary)
-            
-            VStack(spacing: 12) {
-                ForEach(programCardData) { card in
-                    Button {
-                        if premiumManager.isPremiumUser {
-                            activeSheet = .trainingPrograms
-                        } else {
-                            premiumManager.showPaywall(context: .programAccess)
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(card.accent.opacity(0.15))
-                                    .frame(width: 48, height: 48)
-                                
-                                Image(systemName: card.icon)
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(card.accent)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(card.title)
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                Text(card.subtitle)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(AppColors.textSecondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(AppColors.textSecondary.opacity(0.5))
-                        }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.surface)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(card.accent.opacity(0.25), lineWidth: 1)
-                                )
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-    
-    private var programCardData: [ProgramCard] {
-        [
-            // Basics
-            ProgramCard(title: "Foundation Builder", subtitle: "6-week starter program", icon: "leaf.fill", accent: AppColors.accentTealLight),
-            // Attributes
-            ProgramCard(title: "Pace Pusher", subtitle: "Speed & threshold training", icon: "hare.fill", accent: AppColors.primary),
-            ProgramCard(title: "Heavy Hauler", subtitle: "Strength under load (45lb+)", icon: "figure.strengthtraining.traditional", accent: AppColors.accentGreen),
-            ProgramCard(title: "Endurance", subtitle: "Long-distance durability", icon: "map.fill", accent: AppColors.accentTealLight),
-            // Event Prep
-            ProgramCard(title: "GORUCK Selection", subtitle: "8-week mental & physical test", icon: "flame.fill", accent: AppColors.accentGreenDeep),
-            ProgramCard(title: "GORUCK Heavy/Tough", subtitle: "12-24 hour grind prep", icon: "bolt.fill", accent: AppColors.accentGreenDeep),
-            ProgramCard(title: "Army ACFT", subtitle: "Combat Fitness Test prep", icon: "shield.fill", accent: AppColors.primary),
-            ProgramCard(title: "Marathon Ruck", subtitle: "26.2 miles under load", icon: "figure.hiking", accent: AppColors.accentGreen)
-        ]
-    }
-    
-    private struct ProgramCard: Identifiable {
-        let id = UUID()
-        let title: String
-        let subtitle: String
-        let icon: String
-        let accent: Color
-    }
-    
-    
-    
-    private var dataCard: some View {
-        Button(action: {
-            if premiumManager.isPremiumUser {
-                activeSheet = .dataExport
-            } else {
-                premiumManager.showPaywall(context: .featureUpsell)
-            }
-        }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                    Text("Export Data")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppColors.textOnLight)
-                        
-                        Spacer()
-                    }
-                    Text("Export your workout data")
-                        .font(.subheadline)
-                    .foregroundColor(AppColors.textSecondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.title2)
-                    .foregroundColor(AppColors.accentWarm)
-            }
-            .padding()
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(AppColors.surface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
             )
         }
         .buttonStyle(.plain)
     }
     
-    // MARK: - Bottom Navigation Bar
+    private func formattedDuration(_ seconds: Double) -> String {
+        let total = Int(seconds)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
+    }
     
     // MARK: - Coach Plan Helpers
     
@@ -555,8 +413,6 @@ struct ImprovedPhoneMainView: View {
         
         coachPlanTitle = programService.getProgramTitle(programId: programId) ?? "Custom Plan"
         
-        // Anchor the schedule to the actual enrollment date so week numbers advance correctly
-        // instead of restarting at Week 1 each time this view loads.
         let enrollmentStartDate = LocalProgramStorage.shared.getEnrollmentDate() ?? Date()
         var schedule = ProgramScheduler.generateSchedule(
             for: weeks,
@@ -564,76 +420,48 @@ struct ImprovedPhoneMainView: View {
             preferredDays: normalizedTrainingDays
         )
         
-        // Apply light adaptation based on recent feedback.
         schedule = MarchAdaptationEngine.adapt(schedule: schedule)
         
-        // Mark completed workouts by ordinal completion count (ordered by date) to avoid duplicate dayNumber issues across weeks.
         let completedWorkouts = WorkoutDataManager.shared.workouts
             .filter { $0.programId == programId.uuidString }
             .sorted { ($0.date ?? .distantPast) < ($1.date ?? .distantPast) }
         let completedCount = completedWorkouts.count
         
-        // Assign completion and lock state: first completedCount items completed, next one unlocked, others locked.
         schedule = schedule.enumerated().map { index, workout in
             var mutable = workout
             mutable.isCompleted = index < completedCount
-            // Unlock the next available workout; lock those beyond.
             mutable.isLocked = index > completedCount
             return mutable
         }
         
-        // Debug logging to trace mapping
-        print("📋 CoachPlan refresh for program \(programId.uuidString)")
-        print("📋 Schedule count: \(schedule.count), Completed count: \(completedCount)")
-        if !completedWorkouts.isEmpty {
-            let sample = completedWorkouts.prefix(5).enumerated().map { idx, w -> String in
-                let dateString = w.date?.formatted() ?? "nil"
-                return "#\(idx + 1) day=\(w.programWorkoutDay) date=\(dateString)"
-            }
-            print("📋 Completed sample: \(sample.joined(separator: " | "))")
-        }
-        let mappedSample = schedule.prefix(5).enumerated().map { idx, w -> String in
-            return "#\(idx + 1) title=\(w.title) completed=\(w.isCompleted) dayNumber=\(w.dayNumber?.description ?? "nil") date=\(w.date.formatted())"
-        }
-        print("📋 Schedule sample: \(mappedSample.joined(separator: " | "))")
-        
-        // Only surface future items and hide completed; if today is completed, keep it once with a check for immediate feedback
         let today = Calendar.current.startOfDay(for: Date())
         let filtered = schedule.filter { workout in
             if workout.isCompleted {
-                // Show completed items only if they are today to give immediate confirmation
                 return Calendar.current.isDate(workout.date, inSameDayAs: today)
             }
-            // Hide past items entirely and keep upcoming
             return workout.date >= today
         }
         
         let futureWorkouts = filtered.filter { !$0.isCompleted }
         let todayCompleted = filtered.filter { $0.isCompleted }
         
-        // Prefer showing future pending workouts; if none, still show today's completed once
         upcomingWorkouts = futureWorkouts.isEmpty ? todayCompleted : futureWorkouts
     }
     
     private func handleCoachPlanWorkoutTap(_ scheduledWorkout: ScheduledWorkout) {
         guard let workoutIdString = scheduledWorkout.workoutID,
               let workoutId = UUID(uuidString: workoutIdString) else {
-            print("❌ Missing workout ID for scheduled workout \(scheduledWorkout.title)")
             return
         }
         
         guard let programIdString = userSettings.activeProgramID,
               let programId = UUID(uuidString: programIdString) else {
-            print("❌ No active program found for coach plan tap")
             return
         }
         
         Task {
             let programWorkouts = await programService.loadProgramWorkouts(programId: programId)
-            guard !programWorkouts.isEmpty else {
-                print("❌ No workouts available for program \(programId)")
-                return
-            }
+            guard !programWorkouts.isEmpty else { return }
             
             let completedIndices = WorkoutDataManager.shared.workouts
                 .filter { $0.programId == programId.uuidString }
@@ -664,24 +492,27 @@ struct ImprovedPhoneMainView: View {
             }
             
             guard let targetWorkout = workoutsWithState.first(where: { $0.workout.id == workoutId }) else {
-                print("❌ Scheduled workout id not found in program data")
                 return
             }
             
             await MainActor.run {
                 selectedUserProgram = programService.userPrograms.first(where: { $0.programId == programId })
-                print("📌 Selected programId set for detail: \(programId.uuidString)")
                 selectedProgramId = programId
-                // Trust the coach plan lock state; allow opening even if ProgramWorkoutsView logic marks locked due to duplicated day numbers.
-                var unlocked = targetWorkout
-                unlocked = ProgramWorkoutWithState(
+                var unlocked = ProgramWorkoutWithState(
                     workout: targetWorkout.workout,
                     weekNumber: targetWorkout.weekNumber,
                     isCompleted: targetWorkout.isCompleted,
                     isLocked: false,
                     completionDate: targetWorkout.completionDate
                 )
-                selectedProgramWorkout = unlocked
+                _ = unlocked
+                selectedProgramWorkout = ProgramWorkoutWithState(
+                    workout: targetWorkout.workout,
+                    weekNumber: targetWorkout.weekNumber,
+                    isCompleted: targetWorkout.isCompleted,
+                    isLocked: false,
+                    completionDate: targetWorkout.completionDate
+                )
             }
         }
     }
@@ -689,6 +520,56 @@ struct ImprovedPhoneMainView: View {
     private var normalizedTrainingDays: [Int] {
         let uniqueDays = Array(Set(userSettings.preferredTrainingDays))
         return uniqueDays.isEmpty ? [2, 4, 7] : uniqueDays
+    }
+}
+
+// MARK: - Helpers for Coach / Sessions
+extension ImprovedPhoneMainView {
+    fileprivate var todaysPlannedWorkout: ScheduledWorkout? {
+        upcomingWorkouts.first
+    }
+    
+    fileprivate var programEyebrow: String {
+        if let programIdString = userSettings.activeProgramID,
+           let programId = UUID(uuidString: programIdString),
+           let title = programService.getProgramTitle(programId: programId) {
+            return title.uppercased()
+        }
+        return userSettings.ruckingGoal.rawValue.uppercased()
+    }
+    
+    fileprivate func durationLabel(for workout: ScheduledWorkout) -> String {
+        switch workout.workoutType.lowercased() {
+        case "recovery ruck": return "40 min est."
+        case "pace pusher ruck": return "50 min est."
+        case "vertical grind ruck": return "45 min est."
+        case "standard test ruck": return "90 min est."
+        default: return "60 min est."
+        }
+    }
+    
+    fileprivate func intensityLabel(for workout: ScheduledWorkout) -> String {
+        switch workout.workoutType.lowercased() {
+        case "recovery ruck": return "Low"
+        case "pace pusher ruck": return "Medium"
+        case "vertical grind ruck": return "Medium"
+        case "standard test ruck": return "High"
+        default: return "Medium"
+        }
+    }
+    
+    fileprivate func startPlannedWorkout(_ scheduled: ScheduledWorkout) {
+        guard let workoutIdString = scheduled.workoutID,
+              let _ = UUID(uuidString: workoutIdString),
+              let programIdString = userSettings.activeProgramID,
+              let programId = UUID(uuidString: programIdString) else {
+            return
+        }
+        
+        workoutManager.setProgramContext(programId: programId, day: scheduled.dayNumber ?? 1)
+        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        showingActiveWorkout = true
     }
 }
 
@@ -749,7 +630,6 @@ struct CoachPlanCard: View {
                     .foregroundColor(AppColors.primary)
             }
             
-            // Preferred days
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(orderedDays.filter { preferredDays.contains($0) }, id: \.self) { day in
@@ -808,66 +688,6 @@ struct CoachPlanCard: View {
     private func shortLabel(for day: Int) -> String {
         let index = (day - 1 + 7) % 7
         return calendar.shortWeekdaySymbols[index]
-    }
-}
-
-// MARK: - Helpers for Coach / Sessions
-extension ImprovedPhoneMainView {
-    private var todaysPlannedWorkout: ScheduledWorkout? {
-        upcomingWorkouts.first
-    }
-    
-    private var programEyebrow: String {
-        if let programIdString = userSettings.activeProgramID,
-           let programId = UUID(uuidString: programIdString),
-           let title = programService.getProgramTitle(programId: programId) {
-            return title.uppercased()
-        }
-        return userSettings.ruckingGoal.rawValue.uppercased()
-    }
-    
-    private func durationLabel(for workout: ScheduledWorkout) -> String {
-        switch workout.workoutType.lowercased() {
-        case "recovery ruck": return "40 min est."
-        case "pace pusher ruck": return "50 min est."
-        case "vertical grind ruck": return "45 min est."
-        case "standard test ruck": return "90 min est."
-        default: return "60 min est."
-        }
-    }
-    
-    private func intensityLabel(for workout: ScheduledWorkout) -> String {
-        switch workout.workoutType.lowercased() {
-        case "recovery ruck": return "Low"
-        case "pace pusher ruck": return "Medium"
-        case "vertical grind ruck": return "Medium"
-        case "standard test ruck": return "High"
-        default: return "Medium"
-        }
-    }
-    
-    private func startPlannedWorkout(_ scheduled: ScheduledWorkout) {
-        guard let workoutIdString = scheduled.workoutID,
-              let _ = UUID(uuidString: workoutIdString),
-              let programIdString = userSettings.activeProgramID,
-              let programId = UUID(uuidString: programIdString) else {
-            return
-        }
-        
-        // Mark program context for save
-        workoutManager.setProgramContext(programId: programId, day: scheduled.dayNumber ?? 1)
-        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-        workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        showingActiveWorkout = true
-    }
-    
-    private func startQuickSession(type: SessionType, config: SessionConfiguratorSheet.SessionConfig) {
-        // For now we start with default weight; params can be threaded to AudioCoach later.
-        workoutManager.setProgramContext(programId: nil, day: nil)
-        selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
-        workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        showingSessionConfig = false
-        showingActiveWorkout = true
     }
 }
 
@@ -1001,127 +821,6 @@ struct ClickableWeightPill: View {
         }
     }
 }
-
-// MARK: - Session Configurator Sheet
-private struct SessionConfiguratorSheet: View {
-    @Binding var sessionType: ImprovedPhoneMainView.SessionType?
-    let onStart: (ImprovedPhoneMainView.SessionType, SessionConfig) -> Void
-    let onCancel: () -> Void
-    
-    @State private var recoveryDuration: Int = 45
-    @State private var paceIntensity: PaceIntensity = .beginner
-    @State private var verticalElevation: Int = 500
-    @State private var benchmark: BenchmarkOption = .twelveThree
-    
-    enum PaceIntensity: String, CaseIterable, Identifiable {
-        case beginner, pro
-        var id: String { rawValue }
-        var label: String {
-            switch self {
-            case .beginner: return "Beginner (15/15)"
-            case .pro: return "Pro (10/5)"
-            }
-        }
-    }
-    
-    enum BenchmarkOption: String, CaseIterable, Identifiable {
-        case twelveThree = "12 mi / 3 hr"
-        case sixNinety = "6 mi / 1.5 hr"
-        var id: String { rawValue }
-    }
-    
-    struct SessionConfig {
-        var durationMinutes: Int?
-        var paceIntensity: PaceIntensity?
-        var elevationFeet: Int?
-        var benchmark: BenchmarkOption?
-    }
-    
-    var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(currentTitle)
-                    .font(.title2).bold()
-                
-                configContent
-                
-                Spacer()
-                
-                HStack {
-                    Button("Cancel", action: onCancel)
-                        .foregroundColor(AppColors.textSecondary)
-                    Spacer()
-                    Button("Start") {
-                        let type = sessionType ?? .justRuck
-                        let config = SessionConfig(
-                            durationMinutes: type == .recovery ? recoveryDuration : nil,
-                            paceIntensity: type == .pacePusher ? paceIntensity : nil,
-                            elevationFeet: type == .vertical ? verticalElevation : nil,
-                            benchmark: type == .benchmark ? benchmark : nil
-                        )
-                        onStart(type, config)
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-            }
-            .padding()
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-    
-    private var currentTitle: String {
-        (sessionType ?? .justRuck).title
-    }
-    
-    @ViewBuilder
-    private var configContent: some View {
-        switch sessionType ?? .justRuck {
-        case .justRuck:
-            Text("Open-ended. We’ll record until you stop.")
-                .foregroundColor(AppColors.textSecondary)
-        case .recovery:
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Choose duration")
-                Picker("", selection: $recoveryDuration) {
-                    Text("30 min").tag(30)
-                    Text("45 min").tag(45)
-                    Text("60 min").tag(60)
-                }
-                .pickerStyle(.segmented)
-            }
-        case .pacePusher:
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Intensity")
-                Picker("", selection: $paceIntensity) {
-                    ForEach(PaceIntensity.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-        case .vertical:
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Elevation goal (ft)")
-                Picker("", selection: $verticalElevation) {
-                    Text("500 ft").tag(500)
-                    Text("1000 ft").tag(1000)
-                }
-                .pickerStyle(.segmented)
-            }
-        case .benchmark:
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Select benchmark")
-                Picker("", selection: $benchmark) {
-                    ForEach(BenchmarkOption.allCases) { option in
-                        Text(option.rawValue).tag(option)
-                    }
-                }
-                .pickerStyle(.inline)
-            }
-        }
-    }
-}
-
 
 // MARK: - Preview
 #Preview {

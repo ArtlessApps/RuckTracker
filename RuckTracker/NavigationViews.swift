@@ -10,8 +10,7 @@ struct TrainingProgramsView: View {
     
     var body: some View {
         ZStack {
-            // Background - Match PhoneMainView
-            Color(.systemBackground)
+            AppColors.backgroundGradient
                 .ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
@@ -20,11 +19,11 @@ struct TrainingProgramsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Training Programs")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(.primary)
+                            .foregroundColor(AppColors.textPrimary)
                         
                         Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
@@ -36,7 +35,7 @@ struct TrainingProgramsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Active")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                                 .padding(.horizontal, 24)
                             
                             ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
@@ -59,7 +58,7 @@ struct TrainingProgramsView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Available")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                             .padding(.horizontal, 24)
                         
                         ForEach(availablePrograms) { program in
@@ -76,6 +75,7 @@ struct TrainingProgramsView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
         .sheet(item: $selectedProgram) { program in
             ProgramDetailView(
                 program: program,
@@ -127,7 +127,6 @@ struct ActiveProgramCard: View {
         VStack(alignment: .leading, spacing: 16) {
             // Header with icon and duration
             HStack {
-                // Dynamic accent circle with icon based on program type
                 ZStack {
                     Circle()
                         .fill(iconColor.opacity(0.15))
@@ -141,12 +140,12 @@ struct ActiveProgramCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(program.title)
                         .font(.system(size: 22, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textPrimary)
                     
                     if let description = program.description {
                         Text(description)
                             .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                             .lineLimit(2)
                     }
                 }
@@ -156,12 +155,12 @@ struct ActiveProgramCard: View {
                 // Duration badge
                 Text("\(program.durationWeeks)w")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color("WarmGray").opacity(0.1))
+                            .fill(AppColors.textSecondary.opacity(0.15))
                     )
             }
             
@@ -170,26 +169,24 @@ struct ActiveProgramCard: View {
                 HStack {
                     Text("\(Int(progress * 100))% complete")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(Color("WarmGray"))
+                        .foregroundColor(AppColors.textSecondary.opacity(0.5))
                 }
                 
-                // Progress bar with terracotta
+                // Progress bar
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        // Background
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color("WarmGray").opacity(0.15))
+                            .fill(AppColors.textSecondary.opacity(0.15))
                             .frame(height: 6)
                         
-                        // Progress - using PrimaryMain (terracotta)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color("PrimaryMain"))
+                            .fill(AppColors.primary)
                             .frame(width: geometry.size.width * progress, height: 6)
                     }
                 }
@@ -199,16 +196,14 @@ struct ActiveProgramCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .fill(AppColors.surface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                        .strokeBorder(AppColors.primary.opacity(0.3), lineWidth: 1)
                 )
         )
     }
     
-    // Helper to determine icon and color based on program type
     private var iconName: String {
         let title = program.title.lowercased()
         if title.contains("ruck ready") {
@@ -217,36 +212,48 @@ struct ActiveProgramCard: View {
             return "square.stack.3d.up"
         } else if title.contains("active lifestyle") {
             return "heart.fill"
-        } else if title.contains("endurance build") {
-            return "bolt.fill"
+        } else if title.contains("endurance") {
+            return "map.fill"
         } else if title.contains("goruck light") {
             return "flame.fill"
         } else if title.contains("goruck heavy") || title.contains("goruck tough") {
-            return "flame.fill"
+            return "bolt.fill"
         } else if title.contains("army acft") {
-            return "figure.strengthtraining.traditional"
+            return "shield.fill"
         } else if title.contains("strength") && title.contains("conditioning") {
             return "dumbbell.fill"
         } else if title.contains("marathon ruck") {
-            return "figure.run"
+            return "figure.hiking"
         } else if title.contains("goruck selection") {
-            return "star.fill"
+            return "flame.fill"
+        } else if title.contains("pace pusher") {
+            return "hare.fill"
+        } else if title.contains("heavy hauler") {
+            return "figure.strengthtraining.traditional"
         }
         return "figure.walk"
     }
     
     private var iconColor: Color {
         let title = program.title.lowercased()
-        if title.contains("ruck ready") || title.contains("foundation builder") {
-            return Color("PrimaryMain") // Terracotta
-        } else if title.contains("active lifestyle") || title.contains("endurance build") {
-            return Color("AccentTeal") // Dusty Teal
-        } else if title.contains("goruck light") || title.contains("goruck heavy") || title.contains("goruck tough") || title.contains("army acft") {
-            return Color("AccentGreen") // Sage Green
-        } else if title.contains("strength") && title.contains("conditioning") || title.contains("marathon ruck") || title.contains("goruck selection") {
-            return Color("BackgroundDark") // Charcoal
+        if title.contains("foundation builder") {
+            return AppColors.accentTealLight
+        } else if title.contains("pace pusher") {
+            return AppColors.primary
+        } else if title.contains("heavy hauler") {
+            return AppColors.accentGreen
+        } else if title.contains("endurance") {
+            return AppColors.accentTealLight
+        } else if title.contains("goruck selection") {
+            return AppColors.accentGreenDeep
+        } else if title.contains("goruck heavy") || title.contains("goruck tough") {
+            return AppColors.accentGreenDeep
+        } else if title.contains("army acft") {
+            return AppColors.primary
+        } else if title.contains("marathon ruck") {
+            return AppColors.accentGreen
         }
-        return Color("PrimaryMain")
+        return AppColors.primary
     }
 }
 
@@ -256,8 +263,8 @@ struct AvailableProgramCard: View {
     let program: Program
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Icon with accent color based on program type
+        HStack(spacing: 14) {
+            // Icon
             ZStack {
                 Circle()
                     .fill(iconColor.opacity(0.15))
@@ -269,48 +276,41 @@ struct AvailableProgramCard: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(program.title)
-                        .font(.system(size: 22, weight: .bold, design: .default))
-                        .foregroundColor(Color("BackgroundDark"))
-                    
-                    Spacer()
-                }
+                Text(program.title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(AppColors.textPrimary)
                 
                 if let description = program.description {
                     Text(description)
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                 }
             }
             
             Spacer()
             
-            // Duration and chevron
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(program.durationWeeks)w")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
                 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color("WarmGray"))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary.opacity(0.5))
             }
         }
-        .padding(20)
+        .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: Color("WarmGray").opacity(0.15), radius: 8, x: 0, y: 4)
+                .fill(AppColors.surface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(Color("WarmGray").opacity(0.1), lineWidth: 1)
+                        .strokeBorder(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
                 )
         )
     }
     
-    // Helper to determine icon and color based on program type
     private var iconName: String {
         let title = program.title.lowercased()
         if title.contains("ruck ready") {
@@ -319,36 +319,48 @@ struct AvailableProgramCard: View {
             return "square.stack.3d.up"
         } else if title.contains("active lifestyle") {
             return "heart.fill"
-        } else if title.contains("endurance build") {
-            return "bolt.fill"
+        } else if title.contains("endurance") {
+            return "map.fill"
         } else if title.contains("goruck light") {
             return "flame.fill"
         } else if title.contains("goruck heavy") || title.contains("goruck tough") {
-            return "flame.fill"
+            return "bolt.fill"
         } else if title.contains("army acft") {
-            return "figure.strengthtraining.traditional"
+            return "shield.fill"
         } else if title.contains("strength") && title.contains("conditioning") {
             return "dumbbell.fill"
         } else if title.contains("marathon ruck") {
-            return "figure.run"
+            return "figure.hiking"
         } else if title.contains("goruck selection") {
-            return "star.fill"
+            return "flame.fill"
+        } else if title.contains("pace pusher") {
+            return "hare.fill"
+        } else if title.contains("heavy hauler") {
+            return "figure.strengthtraining.traditional"
         }
         return "figure.walk"
     }
     
     private var iconColor: Color {
         let title = program.title.lowercased()
-        if title.contains("ruck ready") || title.contains("foundation builder") {
-            return Color("PrimaryMain") // Terracotta
-        } else if title.contains("active lifestyle") || title.contains("endurance build") {
-            return Color("AccentTeal") // Dusty Teal
-        } else if title.contains("goruck light") || title.contains("goruck heavy") || title.contains("goruck tough") || title.contains("army acft") {
-            return Color("AccentGreen") // Sage Green
-        } else if title.contains("strength") && title.contains("conditioning") || title.contains("marathon ruck") || title.contains("goruck selection") {
-            return Color("BackgroundDark") // Charcoal
+        if title.contains("foundation builder") {
+            return AppColors.accentTealLight
+        } else if title.contains("pace pusher") {
+            return AppColors.primary
+        } else if title.contains("heavy hauler") {
+            return AppColors.accentGreen
+        } else if title.contains("endurance") {
+            return AppColors.accentTealLight
+        } else if title.contains("goruck selection") {
+            return AppColors.accentGreenDeep
+        } else if title.contains("goruck heavy") || title.contains("goruck tough") {
+            return AppColors.accentGreenDeep
+        } else if title.contains("army acft") {
+            return AppColors.primary
+        } else if title.contains("marathon ruck") {
+            return AppColors.accentGreen
         }
-        return Color("PrimaryMain")
+        return AppColors.primary
     }
 }
 
@@ -382,22 +394,21 @@ struct ProgramRowView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(program.title)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textPrimary)
                     
                     if let description = program.description {
                         Text(description)
                             .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                             .lineLimit(2)
                     }
                 }
                 
                 Spacer()
                 
-                // Duration badge
                 Text("\(program.durationWeeks)w")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             // Progress bar (if active)
@@ -405,14 +416,12 @@ struct ProgramRowView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     GeometryReader { geometry in
                         ZStack(alignment: .leading) {
-                            // Background
                             Rectangle()
-                                .fill(Color("BackgroundDark").opacity(0.1))
+                                .fill(AppColors.textSecondary.opacity(0.15))
                                 .frame(height: 4)
                             
-                            // Progress
                             Rectangle()
-                                .fill(Color("PrimaryMain"))
+                                .fill(AppColors.primary)
                                 .frame(width: geometry.size.width * progress, height: 4)
                         }
                     }
@@ -420,15 +429,18 @@ struct ProgramRowView: View {
                     
                     Text("\(Int(progress * 100))% complete")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                 }
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: AppColors.shadowBlackSubtle, radius: 8, x: 0, y: 2)
+                .fill(AppColors.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
+                )
         )
     }
 }
@@ -449,8 +461,7 @@ struct ChallengesView: View {
     
     var body: some View {
         ZStack {
-            // Background - Match PhoneMainView
-            Color(.systemBackground)
+            AppColors.backgroundGradient
                 .ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
@@ -459,11 +470,11 @@ struct ChallengesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Challenges")
                             .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(.primary)
+                            .foregroundColor(AppColors.textPrimary)
                         
                         Text("Test your limits with focused challenges designed to build specific skills and mental toughness.")
                             .font(.system(size: 15, weight: .regular, design: .default))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                             .lineSpacing(4)
                     }
                     .padding(.horizontal, 24)
@@ -475,7 +486,7 @@ struct ChallengesView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Active")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                                 .padding(.horizontal, 24)
                             
                             ForEach(enrolledChallenges, id: \.0.id) { userChallenge, challenge in
@@ -498,7 +509,7 @@ struct ChallengesView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Available")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                             .padding(.horizontal, 24)
                         
                         ForEach(availableChallenges) { challenge in
@@ -515,6 +526,7 @@ struct ChallengesView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
         .sheet(item: $selectedChallenge) { challenge in
             ChallengeDetailView(
                 challenge: challenge,
@@ -610,30 +622,28 @@ struct FixedSizeProgramCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
-                // Header with title and difficulty
                 VStack(alignment: .leading, spacing: 8) {
                     Text(title)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .lineLimit(2)
-                        .foregroundColor(isLocked ? .secondary : .primary)
+                        .foregroundColor(isLocked ? AppColors.textSecondary : AppColors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 Spacer()
                 
-                // Bottom section with difficulty and weeks
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Label(difficulty, systemImage: "star.fill")
                             .font(.caption2)
-                            .foregroundColor(isLocked ? .secondary : difficultyColor)
+                            .foregroundColor(isLocked ? AppColors.textSecondary : difficultyColor)
                         
                         Spacer()
                         
@@ -641,22 +651,21 @@ struct FixedSizeProgramCard: View {
                             Text("\(weeks)w")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         } else {
                             Text("Ongoing")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                     
-                    // Lock indicator or action button
                     if isLocked {
                         HStack {
                             Spacer()
                             Image(systemName: "lock.fill")
                                 .font(.caption)
-                                .foregroundColor(Color("PrimaryMain"))
+                                .foregroundColor(AppColors.accentWarm)
                             Spacer()
                         }
                     } else {
@@ -666,15 +675,15 @@ struct FixedSizeProgramCard: View {
                     }
                 }
             }
-            .frame(height: 160) // Fixed height for all cards
+            .frame(height: 160)
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .fill(AppColors.surface.opacity(isLocked ? 0.5 : 1.0))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isLocked ? Color("PrimaryMain").opacity(0.3) : Color.blue.opacity(0.2), 
+                                isLocked ? AppColors.accentWarm.opacity(0.3) : AppColors.textSecondary.opacity(0.15),
                                 lineWidth: 1
                             )
                     )
@@ -685,11 +694,11 @@ struct FixedSizeProgramCard: View {
     
     private var difficultyColor: Color {
         switch difficulty.lowercased() {
-        case "beginner": return Color("AccentGreen")
-        case "intermediate": return .yellow
-        case "advanced": return Color("PrimaryMain")
-        case "elite": return Color("PrimaryMedium")
-        default: return .blue
+        case "beginner": return AppColors.accentGreenLight
+        case "intermediate": return AppColors.primary
+        case "advanced": return AppColors.accentWarm
+        case "elite": return AppColors.accentGreenDeep
+        default: return AppColors.primary
         }
     }
 }
@@ -703,19 +712,18 @@ struct DatabaseProgramCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
-                // Header with title and difficulty
                 VStack(alignment: .leading, spacing: 8) {
                     Text(program.title)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .lineLimit(2)
-                        .foregroundColor(isLocked ? .secondary : .primary)
+                        .foregroundColor(isLocked ? AppColors.textSecondary : AppColors.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     if let description = program.description {
                         Text(description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(AppColors.textSecondary)
                             .lineLimit(2)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -723,12 +731,11 @@ struct DatabaseProgramCard: View {
                 
                 Spacer()
                 
-                // Bottom section with difficulty and weeks
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Label(program.difficulty.rawValue.capitalized, systemImage: "star.fill")
                             .font(.caption2)
-                            .foregroundColor(isLocked ? .secondary : difficultyColor)
+                            .foregroundColor(isLocked ? AppColors.textSecondary : difficultyColor)
                         
                         Spacer()
                         
@@ -736,12 +743,12 @@ struct DatabaseProgramCard: View {
                             Text("\(program.durationWeeks)w")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         } else {
                             Text("Ongoing")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(AppColors.textSecondary)
                         }
                     }
                     
@@ -760,17 +767,16 @@ struct DatabaseProgramCard: View {
                         if program.isFeatured {
                             Image(systemName: "star.fill")
                                 .font(.caption2)
-                                .foregroundColor(.yellow)
+                                .foregroundColor(AppColors.primary)
                         }
                     }
                     
-                    // Lock indicator or action button
                     if isLocked {
                         HStack {
                             Spacer()
                             Image(systemName: "lock.fill")
                                 .font(.caption)
-                                .foregroundColor(Color("PrimaryMain"))
+                                .foregroundColor(AppColors.accentWarm)
                             Spacer()
                         }
                     } else {
@@ -780,15 +786,15 @@ struct DatabaseProgramCard: View {
                     }
                 }
             }
-            .frame(height: 180) // Slightly taller to accommodate category badge
+            .frame(height: 180)
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(isLocked ? 0.03 : 0.08))
+                    .fill(AppColors.surface.opacity(isLocked ? 0.5 : 1.0))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                isLocked ? Color("PrimaryMain").opacity(0.3) : Color.blue.opacity(0.2), 
+                                isLocked ? AppColors.accentWarm.opacity(0.3) : AppColors.textSecondary.opacity(0.15),
                                 lineWidth: 1
                             )
                     )
@@ -799,19 +805,19 @@ struct DatabaseProgramCard: View {
     
     private var difficultyColor: Color {
         switch program.difficulty {
-        case .beginner: return Color("AccentGreen")
-        case .intermediate: return .yellow
-        case .advanced: return Color("PrimaryMain")
-        case .elite: return Color("PrimaryMedium")
+        case .beginner: return AppColors.accentGreenLight
+        case .intermediate: return AppColors.primary
+        case .advanced: return AppColors.accentWarm
+        case .elite: return AppColors.accentGreenDeep
         }
     }
     
     private var categoryColor: Color {
         switch program.category {
-        case .military: return .red
-        case .adventure: return .green
-        case .fitness: return .blue
-        case .historical: return .purple
+        case .military: return AppColors.accentWarm
+        case .adventure: return AppColors.accentGreen
+        case .fitness: return AppColors.primary
+        case .historical: return AppColors.accentTealLight
         }
     }
 }
