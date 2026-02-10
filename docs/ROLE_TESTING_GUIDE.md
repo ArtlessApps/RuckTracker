@@ -155,6 +155,8 @@ Everything Members can do, plus:
 
 > Sign in as **founder@test.com**
 
+**Important:** Founder permissions are **per club**. You should only see founder capabilities (Settings, Promote/Demote, Transfer Ownership, Delete Club, etc.) in clubs where you are the founder. In any other club, you are a **member** by default (or leader only if promoted there); you must see only that role’s capabilities.
+
 #### Full Control Capabilities
 
 Founders have complete control over the club:
@@ -196,6 +198,7 @@ Founders have complete control over the club:
 [ ] Can edit club name and description
 [ ] Can toggle club privacy (public/private)
 [ ] Can transfer ownership to another member
+[ ] In a club where founder@test.com is NOT the founder: they are a member by default (or leader only if promoted). No Settings, no Promote/Demote, no Transfer/Delete; only that role’s capabilities for that club
 ```
 
 ---
@@ -218,6 +221,35 @@ Founders have complete control over the club:
 | **Heavy Haulers** | Tonnage | All Time | lbs-mi | scalemass.fill |
 | **Vertical Gainers** | Elevation | This Month | ft | arrow.up.right |
 | **Iron Discipline** | Consistency | Last 30 Days | days | calendar.badge.checkmark |
+
+### Prerequisite: Seed Global Leaderboard Data
+
+Before testing leaderboards you must have data in `global_leaderboard_entries` for
+the **current** week. Run the SQL in `docs/GLOBAL_LEADERBOARD_VIEWS.sql` to create
+the views and update function, then seed test data:
+
+```sql
+-- Get test user IDs
+SELECT id, username FROM profiles ORDER BY created_at LIMIT 10;
+
+-- Insert seed entries for the current week (replace UUIDs)
+INSERT INTO global_leaderboard_entries
+  (user_id, week_start, total_distance, total_elevation, total_tonnage, total_workouts)
+VALUES
+  ('<pro_user_uuid>',    date_trunc('week', CURRENT_DATE)::date, 12.5, 850,  312.5, 3),
+  ('<member_user_uuid>', date_trunc('week', CURRENT_DATE)::date, 8.3,  420,  207.5, 2),
+  ('<other_user_uuid>',  date_trunc('week', CURRENT_DATE)::date, 15.1, 1200, 453.0, 4)
+ON CONFLICT (user_id, week_start) DO UPDATE SET
+  total_distance  = EXCLUDED.total_distance,
+  total_elevation = EXCLUDED.total_elevation,
+  total_tonnage   = EXCLUDED.total_tonnage,
+  total_workouts  = EXCLUDED.total_workouts,
+  updated_at      = now();
+```
+
+> **Note**: Distance (weekly) and Elevation (monthly) leaderboards are time-sensitive.
+> If entries have a `week_start` outside the current week/month, those capsules will be empty.
+> The seed data above uses `date_trunc('week', CURRENT_DATE)` to always match the current period.
 
 ### Testing Leaderboard Display
 
@@ -246,16 +278,18 @@ Founders have complete control over the club:
 ### Leaderboard Test Checklist
 
 ```
+[ ] PREREQUISITE: global_leaderboard_entries seeded for current week (see above)
+[ ] PREREQUISITE: 4 views created in Supabase (see GLOBAL_LEADERBOARD_VIEWS.sql)
 [ ] FREE USER: Blur overlay appears on Rankings tab
 [ ] FREE USER: Lock icon and CTA button visible
 [ ] FREE USER: "PRO FEATURE" badge shows
 [ ] FREE USER: Tapping unlock button shows paywall
 [ ] PRO USER: Full leaderboard visible without blur
 [ ] PRO USER: Can switch between all 4 types
-[ ] Distance leaderboard shows "This Week" period
-[ ] Tonnage leaderboard shows "All Time" period
-[ ] Elevation leaderboard shows "This Month" period
-[ ] Consistency leaderboard shows "Last 30 Days" period
+[ ] Distance leaderboard shows entries AND "This Week" period
+[ ] Tonnage leaderboard shows entries AND "All Time" period
+[ ] Elevation leaderboard shows entries AND "This Month" period
+[ ] Consistency leaderboard shows entries AND "Last 30 Days" period
 [ ] Top 3 ranks show trophy/medal icons (gold, silver, bronze)
 [ ] Ranks 4+ show numeric rank
 [ ] PRO users show yellow crown next to username

@@ -258,7 +258,7 @@ struct WaiverInfo: Codable {
 
 // MARK: - Extended Club Member (with waiver info)
 
-struct ClubMemberDetails: Codable, Identifiable {
+struct ClubMemberDetails: Decodable, Identifiable {
     let id: UUID  // Same as userId for Identifiable
     let clubId: UUID
     let userId: UUID
@@ -278,6 +278,10 @@ struct ClubMemberDetails: Codable, Identifiable {
         case joinedAt = "joined_at"
         case waiverSignedAt = "waiver_signed_at"
         case emergencyContact = "emergency_contact_json"
+        case profiles
+    }
+    
+    enum ProfileKeys: String, CodingKey {
         case username
         case avatarUrl = "avatar_url"
     }
@@ -291,9 +295,29 @@ struct ClubMemberDetails: Codable, Identifiable {
         self.role = try container.decode(ClubRole.self, forKey: .role)
         self.joinedAt = try container.decode(Date.self, forKey: .joinedAt)
         self.waiverSignedAt = try container.decodeIfPresent(Date.self, forKey: .waiverSignedAt)
-        self.emergencyContact = try container.decodeIfPresent(EmergencyContact.self, forKey: .emergencyContact)
-        self.username = try container.decodeIfPresent(String.self, forKey: .username)
-        self.avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
+        // emergency_contact_json: DB may return jsonb as object or (if stored as string) as JSON string
+        self.emergencyContact = Self.decodeEmergencyContact(from: container)
+        // Username and avatar come from joined profiles object (Supabase returns nested "profiles": { "username", "avatar_url" })
+        self.username = nil
+        self.avatarUrl = nil
+        if let profilesContainer = try? container.nestedContainer(keyedBy: ProfileKeys.self, forKey: .profiles) {
+            self.username = try? profilesContainer.decode(String.self, forKey: .username)
+            self.avatarUrl = try? profilesContainer.decode(String.self, forKey: .avatarUrl)
+        }
+    }
+    
+    /// Decode emergency_contact_json whether Supabase returns it as a jsonb object or as a JSON string.
+    private static func decodeEmergencyContact(from container: KeyedDecodingContainer<CodingKeys>) -> EmergencyContact? {
+        guard container.contains(.emergencyContact) else { return nil }
+        do {
+            return try container.decode(EmergencyContact.self, forKey: .emergencyContact)
+        } catch {
+            if let jsonString = try? container.decode(String.self, forKey: .emergencyContact),
+               let data = jsonString.data(using: .utf8) {
+                return try? JSONDecoder().decode(EmergencyContact.self, from: data)
+            }
+            return nil
+        }
     }
     
     var hasSignedWaiver: Bool {

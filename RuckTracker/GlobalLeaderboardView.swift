@@ -27,7 +27,7 @@ struct RankingsTabView: View {
 
 struct GlobalLeaderboardView: View {
     @StateObject private var communityService = CommunityService.shared
-    @StateObject private var premiumManager = PremiumManager.shared
+    @EnvironmentObject var premiumManager: PremiumManager
     @State private var selectedType: GlobalLeaderboardType = .distance
     @State private var entries: [GlobalLeaderboardEntry] = []
     @State private var isLoading = false
@@ -35,23 +35,30 @@ struct GlobalLeaderboardView: View {
     @State private var showingPaywall = false
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Type selector (horizontal scrollable capsules)
-            leaderboardTypePicker
-            
-            // Content area
-            ZStack {
-                if isLoading {
-                    loadingView
-                } else if let error = errorMessage {
-                    errorView(message: error)
-                } else if entries.isEmpty {
-                    emptyView
-                } else {
-                    leaderboardContent
+        ZStack {
+            VStack(spacing: 0) {
+                // Type selector (horizontal scrollable capsules)
+                leaderboardTypePicker
+                
+                // Content area
+                ZStack {
+                    if isLoading {
+                        loadingView
+                    } else if let error = errorMessage {
+                        errorView(message: error)
+                    } else if entries.isEmpty {
+                        emptyView
+                    } else {
+                        leaderboardList
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // PRO Gate overlay — top level so it covers ALL content states
+            if !premiumManager.isPremiumUser {
+                proGateOverlay
+            }
         }
         .background(AppColors.backgroundGradient)
         .task(id: selectedType) {
@@ -84,37 +91,29 @@ struct GlobalLeaderboardView: View {
         .background(AppColors.surface.opacity(0.5))
     }
     
-    // MARK: - Leaderboard Content
+    // MARK: - Leaderboard List
     
-    private var leaderboardContent: some View {
-        ZStack {
-            // The actual leaderboard list
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header with metric info
-                    leaderboardHeader
-                    
-                    // Leaderboard entries
-                    LazyVStack(spacing: 1) {
-                        ForEach(entries) { entry in
-                            GlobalLeaderboardRow(
-                                entry: entry,
-                                type: selectedType,
-                                isCurrentUser: entry.userId == communityService.currentProfile?.id
-                            )
-                        }
+    private var leaderboardList: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // Header with metric info
+                leaderboardHeader
+                
+                // Leaderboard entries
+                LazyVStack(spacing: 1) {
+                    ForEach(entries) { entry in
+                        GlobalLeaderboardRow(
+                            entry: entry,
+                            type: selectedType,
+                            isCurrentUser: entry.userId == communityService.currentProfile?.id
+                        )
                     }
-                    .background(AppColors.surface)
-                    .cornerRadius(16)
-                    .padding(.horizontal)
                 }
-                .padding(.bottom, 100) // Extra space for overlay
+                .background(AppColors.surface)
+                .cornerRadius(16)
+                .padding(.horizontal)
             }
-            
-            // PRO Gate overlay (if not premium)
-            if !premiumManager.isPremiumUser {
-                proGateOverlay
-            }
+            .padding(.bottom, 100) // Extra space for overlay
         }
     }
     
@@ -440,4 +439,5 @@ struct GlobalLeaderboardRow: View {
 
 #Preview {
     GlobalLeaderboardView()
+        .environmentObject(PremiumManager.shared)
 }

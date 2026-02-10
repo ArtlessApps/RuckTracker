@@ -690,7 +690,9 @@ class CommunityService: ObservableObject {
         print("✅ Joined club by ID: \(clubId)")
     }
     
-    /// Load all clubs the user is a member of
+    /// Load all clubs the user is a member of.
+    /// Member counts are fetched from club_members so the list shows live counts,
+    /// not the possibly stale clubs.member_count column.
     func loadMyClubs() async throws {
         guard let userId = supabase.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
@@ -707,8 +709,26 @@ class CommunityService: ObservableObject {
             .execute()
             .value
         
-        myClubs = clubs
-        print("✅ Loaded \(clubs.count) clubs")
+        guard !clubs.isEmpty else {
+            myClubs = []
+            print("✅ Loaded 0 clubs")
+            return
+        }
+        
+        // Fetch actual member counts from club_members so tribe list stays correct when members join/leave
+        let clubIds = clubs.map(\.id)
+        let countRows: [ClubIdRow] = try await supabase
+            .from("club_members")
+            .select("club_id")
+            .in("club_id", values: clubIds.map(\.uuidString))
+            .execute()
+            .value
+        let countByClubId = Dictionary(grouping: countRows, by: \.clubId).mapValues(\.count)
+        
+        myClubs = clubs.map { club in
+            club.with(memberCount: countByClubId[club.id] ?? 0)
+        }
+        print("✅ Loaded \(myClubs.count) clubs")
     }
     
     // MARK: - Activity Feed
@@ -859,6 +879,45 @@ class CommunityService: ObservableObject {
     // MARK: - Global Leaderboards (PRO Feature)
     
     @Published var globalLeaderboard: [GlobalLeaderboardEntry] = []
+    
+    private struct UpdateGlobalLeaderboardParams: Encodable {
+        let p_user_id: UUID
+        let p_distance: Double
+        let p_elevation: Double
+        let p_tonnage: Double
+    }
+    
+    /// Update the global leaderboard entry for the current user after a workout.
+    /// This upserts into `global_leaderboard_entries` via the
+    /// `update_global_leaderboard_entry` database function so that all 4 views
+    /// (distance weekly, tonnage all-time, elevation monthly, consistency) stay current.
+    func updateGlobalLeaderboard(distance: Double, elevation: Double, weight: Double) async {
+        guard let userId = supabase.auth.currentUser?.id else {
+            print("⚠️ Not authenticated, skipping global leaderboard update")
+            return
+        }
+        
+        // Tonnage = weight carried (lbs) × distance (miles)
+        let tonnage = weight * distance
+        
+        do {
+            try await supabase
+                .rpc(
+                    "update_global_leaderboard_entry",
+                    params: UpdateGlobalLeaderboardParams(
+                        p_user_id: userId,
+                        p_distance: distance,
+                        p_elevation: elevation,
+                        p_tonnage: tonnage
+                    )
+                )
+                .execute()
+            
+            print("✅ Updated global leaderboard: dist=\(String(format: "%.1f", distance))mi, elev=\(Int(elevation))ft, tonnage=\(String(format: "%.1f", tonnage))lbs-mi")
+        } catch {
+            print("❌ Failed to update global leaderboard: \(error)")
+        }
+    }
     
     /// Fetch global leaderboard for a specific metric type
     /// - Parameter type: The leaderboard metric type (distance, tonnage, elevation, consistency)
@@ -1234,8 +1293,10 @@ class CommunityService: ObservableObject {
             .execute()
             .value
         
-        clubMembers = members
-        print("✅ Loaded \(members.count) club members")
+        // Ensure UI update on main thread so SwiftUI refreshes the members list
+        await MainActor.run {
+            clubMembers = members
+        }
     }
     
     /// Promote a member to leader (Founder only)
@@ -1251,8 +1312,6 @@ class CommunityService: ObservableObject {
             .eq("club_id", value: clubId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
-        
-        print("✅ Promoted user to leader")
         
         // Reload members
         try await loadClubMembers(clubId: clubId)
@@ -1271,8 +1330,6 @@ class CommunityService: ObservableObject {
             .eq("club_id", value: clubId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
-        
-        print("✅ Demoted user to member")
         
         // Reload members
         try await loadClubMembers(clubId: clubId)
@@ -1307,16 +1364,14 @@ class CommunityService: ObservableObject {
         }
         
         let emergencyContact = EmergencyContact(name: emergencyContactName, phone: emergencyContactPhone)
-        let encoder = JSONEncoder()
-        let emergencyContactData = try encoder.encode(emergencyContact)
-        let emergencyContactJSON = String(data: emergencyContactData, encoding: .utf8) ?? "{}"
+        let payload = WaiverUpdatePayload(
+            waiverSignedAt: ISO8601DateFormatter().string(from: Date()),
+            emergencyContactJson: emergencyContact
+        )
         
         try await supabase
             .from("club_members")
-            .update([
-                "waiver_signed_at": AnyJSON.string(ISO8601DateFormatter().string(from: Date())),
-                "emergency_contact_json": AnyJSON.string(emergencyContactJSON)
-            ])
+            .update(payload)
             .eq("club_id", value: clubId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
@@ -1332,7 +1387,7 @@ class CommunityService: ObservableObject {
         
         let members: [ClubMemberDetails] = try await supabase
             .from("club_members")
-            .select("waiver_signed_at")
+            .select("club_id, user_id, role, joined_at, waiver_signed_at, emergency_contact_json")
             .eq("club_id", value: clubId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
@@ -1348,9 +1403,10 @@ class CommunityService: ObservableObject {
             throw CommunityError.insufficientPermissions
         }
         
+        // Select all fields ClubMemberDetails needs to decode (including emergency_contact_json)
         let members: [ClubMemberDetails] = try await supabase
             .from("club_members")
-            .select("emergency_contact_json")
+            .select("club_id, user_id, role, joined_at, waiver_signed_at, emergency_contact_json")
             .eq("club_id", value: clubId.uuidString)
             .eq("user_id", value: userId.uuidString)
             .execute()
@@ -1367,6 +1423,17 @@ class CommunityService: ObservableObject {
         let random = Int.random(in: 1000...9999)
         return "\(prefix)-\(random)"
     }
+}
+
+// MARK: - Waiver Update Payload (writes emergency_contact_json as JSON object for jsonb column)
+
+private struct WaiverUpdatePayload: Encodable {
+    enum CodingKeys: String, CodingKey {
+        case waiverSignedAt = "waiver_signed_at"
+        case emergencyContactJson = "emergency_contact_json"
+    }
+    let waiverSignedAt: String
+    let emergencyContactJson: EmergencyContact
 }
 
 // MARK: - Models
@@ -1425,6 +1492,30 @@ struct Club: Codable, Identifiable {
         case longitude
         case createdAt = "created_at"
     }
+    
+    /// Returns a copy of this club with a different member count (e.g. from live club_members count).
+    func with(memberCount: Int) -> Club {
+        Club(
+            id: id,
+            name: name,
+            description: description,
+            joinCode: joinCode,
+            createdBy: createdBy,
+            isPrivate: isPrivate,
+            avatarUrl: avatarUrl,
+            memberCount: memberCount,
+            zipcode: zipcode,
+            latitude: latitude,
+            longitude: longitude,
+            createdAt: createdAt
+        )
+    }
+}
+
+/// Used to fetch only club_id from club_members for counting
+private struct ClubIdRow: Codable {
+    let clubId: UUID
+    enum CodingKeys: String, CodingKey { case clubId = "club_id" }
 }
 
 /// Club with distance information (returned from nearby search)

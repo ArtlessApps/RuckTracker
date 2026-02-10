@@ -212,10 +212,8 @@ class WorkoutManager: NSObject, ObservableObject {
     func setProgramContext(programId: UUID?, day: Int?) {
         if let programId, let day {
             overrideProgramContext = (programId, day)
-            print("🟣 Override program context set: \(programId.uuidString), day \(day)")
         } else {
             overrideProgramContext = nil
-            print("🟣 Override program context cleared")
         }
     }
     
@@ -690,37 +688,24 @@ extension WorkoutManager: CLLocationManagerDelegate {
     
     // MARK: - Local Data Storage
     private func saveWorkoutToLocalStorage(startDate: Date) {
-        print("\n🟣 ===== WORKOUT MANAGER: SAVING WORKOUT =====")
-        print("🟣 Start Date: \(startDate)")
-        print("🟣 Elapsed Time: \(Int(elapsedTime))s")
-        print("🟣 Distance: \(String(format: "%.2f", distance))mi")
-        print("🟣 Calories: \(Int(calories))")
-        print("🟣 Ruck Weight: \(Int(ruckWeight))lbs")
-        print("🟣 Elevation Gain: \(Int(elevationGain))ft")
-        
         // Use actual heart rate if available, otherwise 0 (will show as N/A)
         let avgHeartRate = currentHeartRate > 0 ? currentHeartRate : 0
-        print("🟣 Heart Rate: \(Int(avgHeartRate)) bpm")
         
         // Check if currently enrolled in a program, allowing an explicit override set by UI
         let programId = overrideProgramContext?.programId ?? LocalProgramService.shared.getEnrolledProgramId()
         let programWorkoutDay = overrideProgramContext?.day ?? calculateCurrentProgramWorkoutDay()
-        print("🟣 Enrolled Program ID (override-aware): \(programId?.uuidString ?? "NONE")")
-        print("🟣 Program Workout Day (override-aware): \(programWorkoutDay?.description ?? "NONE")")
-        if overrideProgramContext != nil {
-            print("🟣 Using overrideProgramContext for save")
-        } else {
-            print("🟣 No overrideProgramContext present at save time")
-        }
         
         // Check if currently enrolled in a challenge
         let challengeId = LocalChallengeService.shared.getEnrolledChallengeId()
         let challengeWorkoutDay = calculateCurrentChallengeWorkoutDay()
-        print("🟣 Enrolled Challenge ID: \(challengeId?.uuidString ?? "NONE")")
-        print("🟣 Challenge Workout Day: \(challengeWorkoutDay?.description ?? "NONE")")
         
-        // Save to CoreData with program and challenge metadata
-        print("🟣 About to call WorkoutDataManager.saveWorkout()...")
+        #if DEBUG
+        print("\n🟣 ===== WORKOUT MANAGER: SAVING WORKOUT =====")
+        print("🟣 Start Date: \(startDate), Elapsed: \(Int(elapsedTime))s, Distance: \(String(format: "%.2f", distance))mi")
+        print("🟣 Program: \(programId?.uuidString ?? "NONE"), Day: \(programWorkoutDay?.description ?? "NONE")")
+        print("🟣 Challenge: \(challengeId?.uuidString ?? "NONE"), Day: \(challengeWorkoutDay?.description ?? "NONE")")
+        #endif
+        
         let savedWorkoutId = WorkoutDataManager.shared.saveWorkout(
             date: startDate,
             duration: elapsedTime,
@@ -734,7 +719,6 @@ extension WorkoutManager: CLLocationManagerDelegate {
             challengeId: challengeId,
             challengeDay: challengeWorkoutDay
         )
-        print("🟣 WorkoutDataManager.saveWorkout() completed")
         
         // Auto-share to community clubs (background)
         Task {
@@ -750,24 +734,16 @@ extension WorkoutManager: CLLocationManagerDelegate {
         
         // Clear override once persisted
         overrideProgramContext = nil
-        print("🟣 Override program context cleared after save")
         
         // If this was a program workout, update progress
         if let programId = programId, let day = programWorkoutDay {
-            print("🟣 This was a program workout - refreshing progress...")
-            // Workout is already saved with program metadata above
-            // Just need to refresh the program progress
             Task { @MainActor in
                 LocalProgramService.shared.refreshProgramProgress()
             }
-            print("🟣 Program progress refresh initiated for day \(day)")
-        } else {
-            print("🟣 This was NOT a program workout (standalone workout)")
         }
         
         // If this was a challenge workout, mark it complete
         if let challengeId = challengeId, let day = challengeWorkoutDay {
-            print("🟣 This was a challenge workout - marking complete...")
             LocalChallengeService.shared.completeWorkout(
                 challengeId: challengeId,
                 workoutDay: day,
@@ -775,21 +751,14 @@ extension WorkoutManager: CLLocationManagerDelegate {
                 weightLbs: ruckWeight,
                 durationMinutes: Int(elapsedTime / 60)
             )
-            print("🟣 Challenge workout completion initiated")
         }
-        
-        print("🟣 ===== WORKOUT MANAGER: SAVE COMPLETE =====\n")
     }
     
     private func calculateCurrentProgramWorkoutDay() -> Int? {
-        // Get the next workout day from program progress
         guard let progress = LocalProgramService.shared.programProgress else {
-            print("🟣 calculateCurrentProgramWorkoutDay: No program progress found")
             return nil
         }
-        let nextDay = progress.completed + 1
-        print("🟣 calculateCurrentProgramWorkoutDay: Completed=\(progress.completed), NextDay=\(nextDay)")
-        return nextDay
+        return progress.completed + 1
     }
     
     private func calculateCurrentChallengeWorkoutDay() -> Int? {

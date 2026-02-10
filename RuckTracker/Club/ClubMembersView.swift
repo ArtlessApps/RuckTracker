@@ -138,13 +138,20 @@ struct ClubMembersView: View {
                         .padding()
                 }
                 
-                // Members grouped by role
+                // Members grouped by role (id forces SwiftUI to refresh when roles change)
                 memberSection(title: "Founders", members: membersWithRole(.founder))
                 memberSection(title: "Leaders", members: membersWithRole(.leader))
                 memberSection(title: "Members", members: membersWithRole(.member))
             }
             .padding()
+            .id(membersListIdentity)
         }
+    }
+    
+    /// Identity that changes when member roles change so the list view refreshes
+    private var membersListIdentity: String {
+        let parts = communityService.clubMembers.map { "\($0.userId.uuidString.prefix(8))=\($0.role.rawValue)" }
+        return parts.joined(separator: "|")
     }
     
     private func memberSection(title: String, members: [ClubMemberDetails]) -> some View {
@@ -245,7 +252,7 @@ struct ClubMembersView: View {
         do {
             try await communityService.loadClubMembers(clubId: club.id)
         } catch {
-            print("❌ Failed to load members: \(error)")
+            errorMessage = error.localizedDescription
         }
         isLoading = false
     }
@@ -267,6 +274,8 @@ struct ClubMembersView: View {
                 case .removeMember:
                     try await communityService.removeMember(userId: member.userId, clubId: club.id)
                 }
+                await loadMembers()
+                selectedMember = nil
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -332,8 +341,9 @@ struct MemberActionsSheet: View {
                     
                     if member.role != .founder {
                         VStack(spacing: 12) {
-                            // View emergency contact (founder + leader)
-                            if userRole.canViewEmergencyData && member.hasSignedWaiver {
+                            // View emergency contact (founder + leader) – show for any non-founder member;
+                            // detail view will show contact or "No emergency contact on file" (waiver is per-club).
+                            if userRole.canViewEmergencyData {
                                 actionButton(
                                     title: "View Emergency Contact",
                                     icon: "phone.circle.fill",

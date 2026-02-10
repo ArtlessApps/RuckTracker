@@ -357,11 +357,13 @@ struct ClubDetailView: View {
                 Text("Are you sure you want to leave \(currentClub.name)? You'll need to rejoin with the club code to access it again.")
             }
         }
-        .task {
-            // Load user role first
+        .task(id: club.id) {
+            // Reset role until we load (avoids showing previous club's role when sheet item changes)
+            userRole = .member
+            // Load user role for this specific club (founder only in clubs they founded)
             do {
                 userRole = try await communityService.getUserRole(clubId: club.id)
-                print("✅ User role: \(userRole.displayText)")
+                print("✅ User role: \(userRole.displayText) for club \(club.name)")
             } catch {
                 print("❌ Failed to get user role: \(error)")
             }
@@ -893,30 +895,25 @@ struct JoinClubView: View {
         
         Task {
             do {
-                // First fetch the club to get its info for the waiver
                 let club = try await communityService.getClubByCode(joinCode)
+                // Join first (insert row) so signWaiver can update it; then show waiver sheet
+                try await communityService.joinClubById(club.id)
                 pendingClubId = club.id
                 pendingClubName = club.name
-                isJoining = false
                 showingWaiverSheet = true
             } catch {
                 errorMessage = error.localizedDescription
-                isJoining = false
             }
+            isJoining = false
         }
     }
     
+    /// Called after user signs the waiver; we already joined in the previous step, so just dismiss and refresh.
     private func completeJoin() {
-        guard let clubId = pendingClubId else { return }
-        
         Task {
-            do {
-                try await communityService.joinClubById(clubId)
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+            try? await communityService.loadMyClubs()
         }
+        dismiss()
     }
     
     private func searchClubs() {
@@ -938,9 +935,21 @@ struct JoinClubView: View {
     }
     
     private func joinDiscoveredClub(_ club: Club) {
-        pendingClubId = club.id
-        pendingClubName = club.name
-        showingWaiverSheet = true
+        isJoining = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                // Join first (insert row) so signWaiver can update it; then show waiver sheet
+                try await communityService.joinClubById(club.id)
+                pendingClubId = club.id
+                pendingClubName = club.name
+                showingWaiverSheet = true
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isJoining = false
+        }
     }
 }
 

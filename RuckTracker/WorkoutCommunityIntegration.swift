@@ -11,6 +11,7 @@ import SwiftUI
 extension WorkoutManager {
     
     /// Call this after saving a workout to post it to user's clubs
+    /// and update the global leaderboard.
     /// Add this to your existing saveWorkout() or endWorkout() flow
     func shareWorkoutToClubs(
         workoutId: UUID,
@@ -28,9 +29,16 @@ extension WorkoutManager {
             return
         }
         
-        // Only share if user has clubs
+        // Always update the global leaderboard (independent of club membership)
+        await communityService.updateGlobalLeaderboard(
+            distance: distance,
+            elevation: elevationGain,
+            weight: weight
+        )
+        
+        // Only share to clubs if user has clubs
         guard !communityService.myClubs.isEmpty else {
-            print("⚠️ User has no clubs, skipping community share")
+            print("⚠️ User has no clubs, skipping club share")
             return
         }
         

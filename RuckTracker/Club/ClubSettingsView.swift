@@ -156,7 +156,9 @@ struct ClubSettingsView: View {
                         .foregroundColor(AppColors.textSecondary)
                     
                     TextField("Club Name", text: $editedName)
-                        .textFieldStyle(.roundedBorder)
+                        .padding(10)
+                        .background(AppColors.surfaceAlt)
+                        .cornerRadius(8)
                 }
                 
                 // Description
@@ -167,10 +169,10 @@ struct ClubSettingsView: View {
                     
                     TextEditor(text: $editedDescription)
                         .frame(height: 80)
-                        .padding(8)
-                        .background(AppColors.surface)
-                        .cornerRadius(8)
+                        .padding(4)
                         .scrollContentBackground(.hidden)
+                        .background(AppColors.surfaceAlt)
+                        .cornerRadius(8)
                 }
                 
                 // Zipcode
@@ -180,7 +182,9 @@ struct ClubSettingsView: View {
                         .foregroundColor(AppColors.textSecondary)
                     
                     TextField("92101", text: $editedZipcode)
-                        .textFieldStyle(.roundedBorder)
+                        .padding(10)
+                        .background(AppColors.surfaceAlt)
+                        .cornerRadius(8)
                         .keyboardType(.numberPad)
                 }
                 
