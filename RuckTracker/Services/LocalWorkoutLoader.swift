@@ -8,16 +8,14 @@ class LocalWorkoutLoader {
     
     // Define all workout files to load
     private let workoutFiles = [
-        "RuckReadyWorkouts",
         "FoundationBuilderWorkouts",
-        "ActiveLifestyleWorkouts",
-        "EnduranceBuildWorkouts",
-        "GORUCKLightPrepWorkouts",
+        "PacePusherWorkouts",
+        "HeavyHaulerWorkouts",
+        "EnduranceWorkouts",
+        "GORUCKSelectionPrepWorkouts",
         "GORUCKHeavyToughPrepWorkouts",
         "ArmyACFTPrepWorkouts",
-        "StrengthConditioningWorkouts",
-        "MarathonRuckPrepWorkouts",
-        "GORUCKSelectionPrepWorkouts"
+        "MarathonRuckPrepWorkouts"
     ]
     
     private init() {
@@ -86,7 +84,7 @@ private struct WorkoutJSON: Codable {
     let targetPaceMinutes: Double?
     let instructions: String?
     let createdAt: String
-    let idx: Int?  // Optional index field (present in some JSONs like RuckReadyWorkouts)
+    let idx: Int?  // Optional index field (present in some workout JSONs)
     
     enum CodingKeys: String, CodingKey {
         case id

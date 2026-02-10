@@ -8,16 +8,9 @@ class LocalChallengeWorkoutLoader {
     private var workoutsByChallengeId: [UUID: [ChallengeWorkout]] = [:]
     
     // Legacy challenge workout files to load (fallback)
-    private let challengeWorkoutFiles = [
-        "PowerWeekWorkouts",
-        "SpeedWeekWorkouts",
-        "DistanceWeekWorkouts",
-        "ActiveRecoveryWorkouts",
-        "LoadCarrierWorkouts",
-        "PacePusherWorkouts",
-        "DistanceMasterWorkouts",
-        "TacticalReadyWorkouts"
-    ]
+    // Note: Legacy challenge files were consolidated into program workouts
+    // as part of the Rule of 3 cleanup. Challenges now use playlist-based loading.
+    private let challengeWorkoutFiles: [String] = []
     
     private let challengePlaylistFile = "RuckChallengePlaylists"
     

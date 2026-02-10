@@ -1,31 +1,14 @@
 [
   {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "title": "Ruck Ready",
-    "description": "Beginner habit-building using Recovery and Endurance units.",
-    "difficulty": "beginner",
-    "category": "fitness",
-    "durationWeeks": 4,
-    "isFeatured": true,
-    "isActive": true,
-    "sortOrder": 1,
-    "weeks": [
-      { "week_number": 1, "units": ["Recovery Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
-      { "week_number": 2, "units": ["Recovery Ruck", "Pace Pusher Ruck", "Endurance Ruck", "Recovery Ruck"] },
-      { "week_number": 3, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
-      { "week_number": 4, "units": ["Pace Pusher Ruck", "Endurance Ruck", "Standard Test Ruck"] }
-    ]
-  },
-  {
     "id": "22222222-2222-2222-2222-222222222222",
     "title": "Foundation Builder",
-    "description": "Higher volume progression with periodic load tests.",
+    "description": "The perfect starting point. Build your rucking engine from scratch.",
     "difficulty": "beginner",
     "category": "fitness",
     "durationWeeks": 6,
     "isFeatured": true,
     "isActive": true,
-    "sortOrder": 2,
+    "sortOrder": 1,
     "weeks": [
       { "week_number": 1, "units": ["Recovery Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
       { "week_number": 2, "units": ["Recovery Ruck", "Pace Pusher Ruck", "Endurance Ruck", "Integrated PT Ruck"] },
@@ -36,9 +19,28 @@
     ]
   },
   {
-    "id": "44444444-4444-4444-4444-444444444444",
-    "title": "Endurance Build",
-    "description": "Elevation-biased build for hikers and long events.",
+    "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "title": "Pace Pusher",
+    "description": "Master the 15:00/mile standard. Speed work and threshold training.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 6,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 2,
+    "weeks": [
+      { "week_number": 1, "units": ["Pace Pusher Ruck", "Recovery Ruck", "Pace Pusher Ruck"] },
+      { "week_number": 2, "units": ["Pace Pusher Ruck", "Endurance Ruck", "Pace Pusher Ruck"] },
+      { "week_number": 3, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 4, "units": ["Pace Pusher Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 5, "units": ["Pace Pusher Ruck", "Pace Pusher Ruck", "Standard Test Ruck"] },
+      { "week_number": 6, "units": ["Pace Pusher Ruck", "Recovery Ruck", "Standard Test Ruck"] }
+    ]
+  },
+  {
+    "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "title": "Heavy Hauler",
+    "description": "Forged in iron. Get comfortable under heavy loads (45lb+).",
     "difficulty": "intermediate",
     "category": "fitness",
     "durationWeeks": 8,
@@ -46,26 +48,91 @@
     "isActive": true,
     "sortOrder": 3,
     "weeks": [
-      { "week_number": 1, "units": ["Recovery Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
-      { "week_number": 2, "units": ["Vertical Grind Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
-      { "week_number": 3, "units": ["Vertical Grind Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
-      { "week_number": 4, "units": ["Vertical Grind Ruck", "Endurance Ruck", "Load Test Ruck"] },
-      { "week_number": 5, "units": ["Pace Pusher Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
-      { "week_number": 6, "units": ["Vertical Grind Ruck", "Endurance Ruck", "Standard Test Ruck"] },
-      { "week_number": 7, "units": ["Pace Pusher Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
-      { "week_number": 8, "units": ["Vertical Grind Ruck", "Endurance Ruck", "Standard Test Ruck"] }
+      { "week_number": 1, "units": ["Load Test Ruck", "Recovery Ruck", "Endurance Ruck"] },
+      { "week_number": 2, "units": ["Load Test Ruck", "Recovery Ruck", "Load Test Ruck"] },
+      { "week_number": 3, "units": ["Load Test Ruck", "Integrated PT Ruck", "Load Test Ruck", "Endurance Ruck"] },
+      { "week_number": 4, "units": ["Load Test Ruck", "Pace Pusher Ruck", "Load Test Ruck"] },
+      { "week_number": 5, "units": ["Load Test Ruck", "Load Test Ruck", "Endurance Ruck"] },
+      { "week_number": 6, "units": ["Load Test Ruck", "Integrated PT Ruck", "Load Test Ruck"] },
+      { "week_number": 7, "units": ["Load Test Ruck", "Load Test Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 8, "units": ["Load Test Ruck", "Recovery Ruck", "Standard Test Ruck"] }
+    ]
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "title": "Endurance",
+    "description": "Go further. Volume building for long-distance durability.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 4,
+    "weeks": [
+      { "week_number": 1, "units": ["Recovery Ruck", "Endurance Ruck", "Endurance Ruck"] },
+      { "week_number": 2, "units": ["Endurance Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 3, "units": ["Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
+      { "week_number": 4, "units": ["Endurance Ruck", "Endurance Ruck", "Recovery Ruck"] },
+      { "week_number": 5, "units": ["Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck", "Pace Pusher Ruck"] },
+      { "week_number": 6, "units": ["Endurance Ruck", "Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
+      { "week_number": 7, "units": ["Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
+      { "week_number": 8, "units": ["Endurance Ruck", "Recovery Ruck", "Standard Test Ruck"] }
+    ]
+  },
+  {
+    "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "title": "GORUCK Selection",
+    "description": "The ultimate test. 8 weeks of mental and physical hardening.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 5,
+    "weeks": [
+      { "week_number": 1, "units": ["Endurance Ruck", "Integrated PT Ruck", "Load Test Ruck"] },
+      { "week_number": 2, "units": ["Load Test Ruck", "Endurance Ruck", "Integrated PT Ruck", "Pace Pusher Ruck"] },
+      { "week_number": 3, "units": ["Endurance Ruck", "Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 4, "units": ["Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 5, "units": ["Endurance Ruck", "Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 6, "units": ["Load Test Ruck", "Endurance Ruck", "Integrated PT Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 7, "units": ["Endurance Ruck", "Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck", "Vertical Grind Ruck"] },
+      { "week_number": 8, "units": ["Recovery Ruck", "Integrated PT Ruck", "Standard Test Ruck"] }
+    ]
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "title": "GORUCK Heavy/Tough",
+    "description": "Prepare for the 12-24 hour grind. Teamwork and suffering.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 10,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 6,
+    "weeks": [
+      { "week_number": 1, "units": ["Recovery Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 2, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 3, "units": ["Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 4, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 5, "units": ["Load Test Ruck", "Endurance Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 6, "units": ["Pace Pusher Ruck", "Load Test Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
+      { "week_number": 7, "units": ["Load Test Ruck", "Endurance Ruck", "Integrated PT Ruck", "Endurance Ruck", "Load Test Ruck"] },
+      { "week_number": 8, "units": ["Endurance Ruck", "Load Test Ruck", "Standard Test Ruck"] },
+      { "week_number": 9, "units": ["Recovery Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 10, "units": ["Recovery Ruck", "Standard Test Ruck"] }
     ]
   },
   {
     "id": "77777777-7777-7777-7777-777777777777",
-    "title": "Army ACFT Prep",
-    "description": "ACFT-focused playlist of Pace Pusher and Load Test units.",
+    "title": "Army ACFT",
+    "description": "Max your score. Specific prep for the Army Combat Fitness Test.",
     "difficulty": "intermediate",
     "category": "military",
     "durationWeeks": 8,
-    "isFeatured": false,
+    "isFeatured": true,
     "isActive": true,
-    "sortOrder": 4,
+    "sortOrder": 7,
     "weeks": [
       { "week_number": 1, "units": ["Pace Pusher Ruck", "Recovery Ruck", "Integrated PT Ruck"] },
       { "week_number": 2, "units": ["Pace Pusher Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
@@ -78,23 +145,28 @@
     ]
   },
   {
-    "id": "55555555-5555-5555-5555-555555555555",
-    "title": "GORUCK Basic Prep",
-    "description": "Event playlist with load progression and PT stops.",
-    "difficulty": "intermediate",
+    "id": "99999999-9999-9999-9999-999999999999",
+    "title": "Marathon Ruck",
+    "description": "26.2 Miles under load. Taper and build for the long haul.",
+    "difficulty": "advanced",
     "category": "event",
-    "durationWeeks": 6,
+    "durationWeeks": 12,
     "isFeatured": true,
     "isActive": true,
-    "sortOrder": 5,
+    "sortOrder": 8,
     "weeks": [
-      { "week_number": 1, "units": ["Recovery Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
-      { "week_number": 2, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Endurance Ruck"] },
-      { "week_number": 3, "units": ["Pace Pusher Ruck", "Load Test Ruck", "Endurance Ruck"] },
-      { "week_number": 4, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Vertical Grind Ruck"] },
-      { "week_number": 5, "units": ["Pace Pusher Ruck", "Load Test Ruck", "Endurance Ruck"] },
-      { "week_number": 6, "units": ["Pace Pusher Ruck", "Integrated PT Ruck", "Standard Test Ruck"] }
+      { "week_number": 1, "units": ["Endurance Ruck", "Recovery Ruck", "Endurance Ruck"] },
+      { "week_number": 2, "units": ["Endurance Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 3, "units": ["Endurance Ruck", "Endurance Ruck", "Vertical Grind Ruck"] },
+      { "week_number": 4, "units": ["Endurance Ruck", "Recovery Ruck", "Endurance Ruck"] },
+      { "week_number": 5, "units": ["Endurance Ruck", "Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
+      { "week_number": 6, "units": ["Endurance Ruck", "Endurance Ruck", "Pace Pusher Ruck", "Endurance Ruck"] },
+      { "week_number": 7, "units": ["Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck", "Endurance Ruck"] },
+      { "week_number": 8, "units": ["Endurance Ruck", "Endurance Ruck", "Endurance Ruck", "Vertical Grind Ruck"] },
+      { "week_number": 9, "units": ["Endurance Ruck", "Endurance Ruck", "Vertical Grind Ruck", "Endurance Ruck"] },
+      { "week_number": 10, "units": ["Endurance Ruck", "Recovery Ruck", "Endurance Ruck"] },
+      { "week_number": 11, "units": ["Recovery Ruck", "Endurance Ruck"] },
+      { "week_number": 12, "units": ["Recovery Ruck", "Standard Test Ruck"] }
     ]
   }
 ]
-

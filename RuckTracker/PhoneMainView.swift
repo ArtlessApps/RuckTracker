@@ -467,10 +467,17 @@ struct ImprovedPhoneMainView: View {
     
     private var programCardData: [ProgramCard] {
         [
-            ProgramCard(title: "Beginner Ruck", subtitle: "4-week habit build", icon: "leaf.fill", accent: AppColors.accentTealLight),
-            ProgramCard(title: "Pro Pathfinder", subtitle: "8-week performance", icon: "figure.strengthtraining.traditional", accent: AppColors.primary),
-            ProgramCard(title: "Endurance Base", subtitle: "Mileage focus", icon: "map.fill", accent: AppColors.accentGreen),
-            ProgramCard(title: "Selection Prep", subtitle: "High-load grind", icon: "flame.fill", accent: AppColors.accentGreenDeep)
+            // Basics
+            ProgramCard(title: "Foundation Builder", subtitle: "6-week starter program", icon: "leaf.fill", accent: AppColors.accentTealLight),
+            // Attributes
+            ProgramCard(title: "Pace Pusher", subtitle: "Speed & threshold training", icon: "hare.fill", accent: AppColors.primary),
+            ProgramCard(title: "Heavy Hauler", subtitle: "Strength under load (45lb+)", icon: "figure.strengthtraining.traditional", accent: AppColors.accentGreen),
+            ProgramCard(title: "Endurance", subtitle: "Long-distance durability", icon: "map.fill", accent: AppColors.accentTealLight),
+            // Event Prep
+            ProgramCard(title: "GORUCK Selection", subtitle: "8-week mental & physical test", icon: "flame.fill", accent: AppColors.accentGreenDeep),
+            ProgramCard(title: "GORUCK Heavy/Tough", subtitle: "12-24 hour grind prep", icon: "bolt.fill", accent: AppColors.accentGreenDeep),
+            ProgramCard(title: "Army ACFT", subtitle: "Combat Fitness Test prep", icon: "shield.fill", accent: AppColors.primary),
+            ProgramCard(title: "Marathon Ruck", subtitle: "26.2 miles under load", icon: "figure.hiking", accent: AppColors.accentGreen)
         ]
     }
     
