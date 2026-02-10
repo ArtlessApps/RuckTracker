@@ -8,8 +8,6 @@ struct PlanView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
     
-    @AppStorage("hasCompletedPhoneOnboarding") private var hasCompletedPhoneOnboarding = false
-    
     @State private var planTitle: String?
     @State private var schedule: [ScheduledWorkout] = []
     @State private var loadError: String?
@@ -29,7 +27,7 @@ struct PlanView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Switch Goal") {
                         // Kicks the user back into the personalized onboarding flow (ContentView observes this).
-                        hasCompletedPhoneOnboarding = false
+                        userSettings.hasCompletedOnboarding = false
                     }
                     .foregroundColor(AppColors.primary)
                 }
@@ -81,7 +79,7 @@ struct PlanView: View {
                 .padding(.horizontal, 28)
             
             Button {
-                hasCompletedPhoneOnboarding = false
+                userSettings.hasCompletedOnboarding = false
             } label: {
                 Text("Build My Plan")
                     .font(.headline)

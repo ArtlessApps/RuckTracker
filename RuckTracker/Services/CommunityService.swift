@@ -41,6 +41,10 @@ class CommunityService: ObservableObject {
         supabaseKey: "sb_publishable_g7C7bFmxE77NOpeWikCQnw_0zI43Paw"
     )
     
+    /// Public accessor so other services (UserSettings, etc.) can query Supabase
+    /// without duplicating the client.
+    var supabaseClient: SupabaseClient { supabase }
+    
     // MARK: - Initialization
     
     private init() {
@@ -53,7 +57,7 @@ class CommunityService: ObservableObject {
     /// Check for existing auth session and load user data
     func restoreSessionIfNeeded() async {
         // Supabase automatically persists sessions - check if we have one
-        guard supabase.auth.currentUser != nil else {
+        guard let user = supabase.auth.currentUser else {
             print("ℹ️ No existing session found")
             return
         }
@@ -66,6 +70,9 @@ class CommunityService: ObservableObject {
             // Re-evaluate premium status for the restored user
             // Ensures ambassador status is checked for this specific user
             PremiumManager.shared.evaluatePremiumForNewUser()
+            
+            // Switch UserSettings to this user's per-user suite + load remote prefs
+            await UserSettings.shared.switchToUser(user.id)
         } catch {
             print("❌ Failed to restore session data: \(error)")
             // Session might be expired, clear local state
@@ -102,6 +109,9 @@ class CommunityService: ObservableObject {
 
             // Load the new profile (session exists => authenticated)
             try await loadCurrentProfile()
+            
+            // Switch UserSettings to this user's per-user suite (migrates anonymous settings)
+            await UserSettings.shared.switchToUser(response.user.id)
             
         } catch {
             print("❌ Sign up failed: \(error)")
@@ -144,6 +154,9 @@ class CommunityService: ObservableObject {
             // This resets ambassador status and re-checks for the signed-in user
             PremiumManager.shared.evaluatePremiumForNewUser()
             
+            // Switch UserSettings to this user's per-user suite + load remote prefs
+            await UserSettings.shared.switchToUser(response.user.id)
+            
         } catch {
             print("❌ Sign in failed: \(error)")
             throw CommunityError.authenticationFailed(error.localizedDescription)
@@ -152,6 +165,9 @@ class CommunityService: ObservableObject {
     
     /// Sign out current user
     func signOut() async throws {
+        // Save user preferences to DB before clearing the session
+        await UserSettings.shared.syncToRemoteIfNeeded()
+        
         try await supabase.auth.signOut()
         
         // Clear ALL local state to prevent data leaking to the next user
@@ -166,6 +182,9 @@ class CommunityService: ObservableObject {
         clubMembers = []
         nearbyClubs = []
         errorMessage = nil
+        
+        // Switch UserSettings back to anonymous (resets to defaults)
+        UserSettings.shared.switchToAnonymous()
         
         print("✅ User signed out - all local state cleared")
     }

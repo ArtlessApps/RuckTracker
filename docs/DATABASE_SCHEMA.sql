@@ -152,6 +152,42 @@ CREATE TABLE public.user_subscriptions (
   CONSTRAINT user_subscriptions_pkey PRIMARY KEY (id),
   CONSTRAINT user_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.user_preferences (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  body_weight double precision DEFAULT 180.0,
+  preferred_weight_unit text DEFAULT 'lbs',
+  preferred_distance_unit text DEFAULT 'mi',
+  default_ruck_weight double precision DEFAULT 20.0,
+  rucking_goal text DEFAULT 'Longevity & Health',
+  experience_level text DEFAULT 'New to Rucking',
+  preferred_training_days integer[] DEFAULT '{2,4,7}',
+  active_program_id text,
+  target_event_date timestamp with time zone,
+  baseline_pace_minutes_per_mile double precision DEFAULT 16.0,
+  baseline_longest_distance_miles double precision DEFAULT 4.0,
+  has_hill_access boolean DEFAULT true,
+  has_stairs_access boolean DEFAULT false,
+  injury_flags text[] DEFAULT '{}',
+  has_completed_onboarding boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_preferences_pkey PRIMARY KEY (id),
+  CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT user_preferences_user_id_key UNIQUE (user_id)
+);
+-- RLS for user_preferences: each user can only access their own row
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can read own preferences"
+  ON public.user_preferences FOR SELECT
+  USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own preferences"
+  ON public.user_preferences FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own preferences"
+  ON public.user_preferences FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- ============================================================
 -- RPC: get_club_feed
