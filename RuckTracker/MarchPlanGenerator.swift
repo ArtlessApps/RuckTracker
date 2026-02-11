@@ -14,6 +14,8 @@ enum MarchSessionType: String, CaseIterable {
 struct MarchSessionDescriptor {
     let type: MarchSessionType
     let purpose: String
+    /// ⚠️ FUTURE FEATURE: These hooks describe planned premium audio/coaching prompts
+    /// that are NOT yet implemented. See docs/FUTURE_FEATURES.md.
     let premiumHook: String
     let defaultDistanceMiles: Double
     let targetPaceMinutes: Double?

@@ -6,6 +6,7 @@ import Combine
 struct TrainingProgramsView: View {
     @Binding var isPresentingWorkoutFlow: Bool
     @StateObject private var programService = LocalProgramService.shared
+    @StateObject private var premiumManager = PremiumManager.shared
     @State private var selectedProgram: Program?
     
     var body: some View {
@@ -17,9 +18,15 @@ struct TrainingProgramsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     // Header Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Training Programs")
-                            .font(.system(size: 34, weight: .bold, design: .default))
-                            .foregroundColor(AppColors.textPrimary)
+                        HStack {
+                            Text("Training Programs")
+                                .font(.system(size: 34, weight: .bold, design: .default))
+                                .foregroundColor(AppColors.textPrimary)
+                            
+                            if !premiumManager.isPremiumUser {
+                                PremiumBadge(size: .medium)
+                            }
+                        }
                         
                         Text("Structured training plans to build strength, endurance, and consistent rucking habits.")
                             .font(.system(size: 15, weight: .regular, design: .default))
@@ -40,7 +47,7 @@ struct TrainingProgramsView: View {
                             
                             ForEach(enrolledPrograms, id: \.0.id) { userProgram, program in
                                 Button(action: {
-                                    selectedProgram = program
+                                    handleProgramTap(program)
                                 }) {
                                     ActiveProgramCard(
                                         program: program,
@@ -63,9 +70,9 @@ struct TrainingProgramsView: View {
                         
                         ForEach(availablePrograms) { program in
                             Button(action: {
-                                selectedProgram = program
+                                handleProgramTap(program)
                             }) {
-                                AvailableProgramCard(program: program)
+                                AvailableProgramCard(program: program, showProBadge: !premiumManager.isPremiumUser)
                             }
                             .buttonStyle(.plain)
                             .padding(.horizontal, 24)
@@ -85,10 +92,23 @@ struct TrainingProgramsView: View {
                 }
             )
         }
+        .sheet(isPresented: $premiumManager.showingPaywall) {
+            SubscriptionPaywallView(context: premiumManager.paywallContext)
+        }
         .onAppear {
             programService.loadPrograms()
             programService.loadUserPrograms()
             programService.loadEnrollmentStatus()
+        }
+    }
+    
+    // MARK: - Premium Gating
+    
+    private func handleProgramTap(_ program: Program) {
+        if premiumManager.isPremiumUser {
+            selectedProgram = program
+        } else {
+            premiumManager.showPaywall(context: .programAccess)
         }
     }
     
@@ -261,6 +281,7 @@ struct ActiveProgramCard: View {
 
 struct AvailableProgramCard: View {
     let program: Program
+    var showProBadge: Bool = false
     
     var body: some View {
         HStack(spacing: 14) {
@@ -276,9 +297,15 @@ struct AvailableProgramCard: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(program.title)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                HStack(spacing: 6) {
+                    Text(program.title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    if showProBadge {
+                        LockedFeatureBadge(feature: .trainingPrograms)
+                    }
+                }
                 
                 if let description = program.description {
                     Text(description)
@@ -295,9 +322,9 @@ struct AvailableProgramCard: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(AppColors.textSecondary)
                 
-                Image(systemName: "chevron.right")
+                Image(systemName: showProBadge ? "lock.fill" : "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary.opacity(0.5))
+                    .foregroundColor(showProBadge ? AppColors.primary : AppColors.textSecondary.opacity(0.5))
             }
         }
         .padding(18)
@@ -306,7 +333,7 @@ struct AvailableProgramCard: View {
                 .fill(AppColors.surface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
+                        .strokeBorder(showProBadge ? AppColors.primary.opacity(0.2) : AppColors.textSecondary.opacity(0.15), lineWidth: 1)
                 )
         )
     }

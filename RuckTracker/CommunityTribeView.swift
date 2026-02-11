@@ -23,19 +23,24 @@ struct CommunityTribeView: View {
     var body: some View {
         let _ = print("🔑 [AUTH][TribeView] body evaluated — currentProfile=\(String(describing: communityService.currentProfile?.username)), myClubs=\(communityService.myClubs.count), isAuthenticated=\(communityService.isAuthenticated)")
         NavigationView {
-            Group {
-                if communityService.currentProfile == nil {
-                    // Not signed in - show sign in prompt
-                    let _ = print("🔑 [AUTH][TribeView] → showing authPromptView (currentProfile is nil)")
-                    authPromptView
-                } else if communityService.myClubs.isEmpty {
-                    // Signed in but no clubs - show onboarding
-                    let _ = print("🔑 [AUTH][TribeView] → showing emptyClubsView")
-                    emptyClubsView
-                } else {
-                    // Has clubs - show list
-                    let _ = print("🔑 [AUTH][TribeView] → showing clubsListView")
-                    clubsListView
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                Group {
+                    if communityService.currentProfile == nil {
+                        // Not signed in - show sign in prompt
+                        let _ = print("🔑 [AUTH][TribeView] → showing authPromptView (currentProfile is nil)")
+                        authPromptView
+                    } else if communityService.myClubs.isEmpty {
+                        // Signed in but no clubs - show onboarding
+                        let _ = print("🔑 [AUTH][TribeView] → showing emptyClubsView")
+                        emptyClubsView
+                    } else {
+                        // Has clubs - show list
+                        let _ = print("🔑 [AUTH][TribeView] → showing clubsListView")
+                        clubsListView
+                    }
                 }
             }
             .navigationTitle("Tribe")
@@ -273,24 +278,29 @@ struct ClubDetailView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Tab picker
-                Picker("View", selection: $selectedTab) {
-                    ForEach(ClubTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding()
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
                 
-                // Content based on tab
-                switch selectedTab {
-                case .events:
-                    EventListView(club: currentClub, userRole: userRole)
-                case .feed:
-                    ClubFeedView(club: currentClub)
-                case .leaderboard:
-                    ClubLeaderboardView(club: currentClub)
+                VStack(spacing: 0) {
+                    // Tab picker
+                    Picker("View", selection: $selectedTab) {
+                        ForEach(ClubTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
+                    
+                    // Content based on tab
+                    switch selectedTab {
+                    case .events:
+                        EventListView(club: currentClub, userRole: userRole)
+                    case .feed:
+                        ClubFeedView(club: currentClub)
+                    case .leaderboard:
+                        ClubLeaderboardView(club: currentClub)
+                    }
                 }
             }
             .navigationTitle(currentClub.name)

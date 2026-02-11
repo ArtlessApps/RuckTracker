@@ -1300,7 +1300,6 @@ struct ProUpsellStep: View {
                         .foregroundColor(AppColors.textSecondary)
                     
                     ProFeatureRow(icon: "sparkles", text: "Your personalized training plan")
-                    ProFeatureRow(icon: "waveform.circle.fill", text: "Smart audio coaching cues")
                     ProFeatureRow(icon: "chart.xyaxis.line", text: "Progress tracking & analytics")
                     ProFeatureRow(icon: "figure.hiking", text: "10+ structured programs")
                 }

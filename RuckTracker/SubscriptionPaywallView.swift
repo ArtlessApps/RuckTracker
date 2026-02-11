@@ -124,9 +124,9 @@ struct SubscriptionPaywallView: View {
     private var contextDescription: String {
         switch context {
         case .planGeneration:
-            return "Train effectively with audio coaching, progress tracking, and smart targets."
+            return "Train effectively with progress tracking and smart targets."
         case .onboarding:
-            return "Get personalized training plans and smart coaching for serious ruckers"
+            return "Get personalized training plans and analytics for serious ruckers"
         case .programAccess:
             return "Access all 10+ military-backed training programs and weekly challenges"
         case .settings:
@@ -151,12 +151,6 @@ struct SubscriptionPaywallView: View {
                     icon: "sparkles",
                     title: "Dynamic Plan Generator",
                     description: "AI-generated training tailored to your goals and schedule"
-                )
-                
-                FeatureRow(
-                    icon: "waveform.circle.fill",
-                    title: "Smart Audio Coaching",
-                    description: "Real-time cues: 'Speed up', 'Halfway there', pace guidance"
                 )
                 
                 FeatureRow(

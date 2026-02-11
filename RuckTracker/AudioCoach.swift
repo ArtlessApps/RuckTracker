@@ -1,6 +1,9 @@
 import AVFoundation
 import Combine
 
+// MARK: - ⚠️ FUTURE FEATURE — Not yet integrated
+// This class exists but is never called from any view or workout tracker.
+// See docs/FUTURE_FEATURES.md for implementation plan.
 class AudioCoach: NSObject, ObservableObject {
     static let shared = AudioCoach()
     private let synthesizer = AVSpeechSynthesizer()

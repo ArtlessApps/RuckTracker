@@ -443,9 +443,9 @@ ON CONFLICT (user_id, week_start) DO UPDATE SET
 | RSVP to events | ✓ | ✓ |
 | View training plan | ✓ | ✓ |
 | Start plan workout | Paywall | ✓ |
-| Audio coaching | ✗ | ✓ |
-| Heart rate zones | ✗ | ✓ |
-| Interval timers | ✗ | ✓ |
+| ~~Audio coaching~~ | — | — | *Future feature (not yet built)* |
+| ~~Heart rate zones~~ | — | — | *Future feature (not yet built)* |
+| ~~Interval timers~~ | — | — | *Future feature (not yet built)* |
 | **Global Leaderboards** | Locked | ✓ |
 | Tonnage share metric | Locked | ✓ |
 | Club badge on share card | Locked | ✓ |
@@ -471,7 +471,7 @@ ON CONFLICT (user_id, week_start) DO UPDATE SET
 ```
 [ ] PRO badge appears in profile/settings
 [ ] Can start workout from training plan directly
-[ ] Audio coaching plays during workout
+[ ] ~~Audio coaching plays during workout~~ — *Future feature, not yet implemented*
 [ ] Propaganda Mode toggles work (tonnage + club badge)
 [ ] Share card shows tonnage calculation (weight × distance)
 [ ] Share card shows "TRAINING WITH [CLUB NAME]"

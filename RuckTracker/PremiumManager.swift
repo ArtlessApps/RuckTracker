@@ -391,10 +391,10 @@ enum PremiumFeature {
     case weeklyChallenges       // Weekly challenges
     case planExecution          // Starting/executing workouts from plans
     
-    // Smart Coaching (Pro)
-    case audioCoaching          // Audio cues during workouts
-    case heartRateZones         // Heart rate zone tracking
-    case intervalTimers         // Smart interval timers
+    // Smart Coaching (Pro) — ⚠️ FUTURE FEATURES: Not yet implemented. See docs/FUTURE_FEATURES.md
+    case audioCoaching          // Audio cues during workouts — NOT WIRED UP
+    case heartRateZones         // Heart rate zone tracking — NOT WIRED UP
+    case intervalTimers         // Smart interval timers — NOT WIRED UP
     
     // Analytics (Pro)
     case advancedAnalytics      // Tonnage trends, progress charts
@@ -898,7 +898,7 @@ struct PremiumStatusView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    Text("Unlock training programs, smart coaching, and more")
+                    Text("Unlock training programs, analytics, and more")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

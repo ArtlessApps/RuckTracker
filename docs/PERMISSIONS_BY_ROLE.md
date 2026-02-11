@@ -75,9 +75,9 @@ MARCH uses a "Trojan Horse" monetization model:
 | **Tracking** |
 | Basic GPS tracking (Open Ruck) | ✅ | ✅ |
 | Time, distance, pace | ✅ | ✅ |
-| Audio coaching cues | ❌ | ✅ |
-| Heart rate zones | ❌ | ✅ |
-| Interval timers | ❌ | ✅ |
+| ~~Audio coaching cues~~ | — | — | *Future feature* |
+| ~~Heart rate zones~~ | — | — | *Future feature* |
+| ~~Interval timers~~ | — | — | *Future feature* |
 | **Analytics** |
 | Session summary | ✅ | ✅ |
 | Basic map and stats | ✅ | ✅ |
