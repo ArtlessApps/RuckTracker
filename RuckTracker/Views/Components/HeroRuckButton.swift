@@ -6,8 +6,16 @@ import SwiftUI
 struct HeroRuckButton: View {
     let action: () -> Void
     
-    /// Vibrant solid sage green
-    private let heroGreen = Color(hex: "00C896")
+    /// Sage green to darker teal gradient
+    private let heroGradient = LinearGradient(
+        colors: [
+            AppColors.primary,              // Sage green #00C896
+            Color(hex: "007A6E"),           // Mid teal
+            Color(hex: "005F56")            // Dark teal
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
     
     var body: some View {
         Button(action: action) {
@@ -15,6 +23,7 @@ struct HeroRuckButton: View {
                 Text("START RUCK")
                     .font(.system(size: 36, weight: .black))
                     .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.35), radius: 2, x: 0, y: 2)
                 
                 Text("No plan. Just walk with weight.")
                     .font(.system(size: 15, weight: .medium))
@@ -24,8 +33,8 @@ struct HeroRuckButton: View {
             .frame(height: 160)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(heroGreen)
-                    .shadow(color: heroGreen.opacity(0.4), radius: 12, x: 0, y: 6)
+                    .fill(heroGradient)
+                    .shadow(color: AppColors.primary.opacity(0.35), radius: 12, x: 0, y: 6)
             )
         }
         .buttonStyle(HeroButtonStyle())

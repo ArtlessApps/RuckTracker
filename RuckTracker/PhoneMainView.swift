@@ -32,7 +32,7 @@ struct ImprovedPhoneMainView: View {
     @State private var nextEventTime: Date?
     
     // Rankings tile data
-    @State private var globalRank: Int?
+    @State private var globalRanks: [GlobalLeaderboardType: Int] = [:]
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -158,6 +158,7 @@ struct ImprovedPhoneMainView: View {
         }
         .onAppear {
             refreshCoachPlan()
+            programService.loadEnrollmentStatus()
             loadTileData()
         }
         .onChange(of: userSettings.activeProgramID) { _, _ in
@@ -200,6 +201,7 @@ struct ImprovedPhoneMainView: View {
                     selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
                     showingWeightSelector = true
                 }
+                .padding(.bottom, 8)
                 
                 // Section 2: The Bento Grid (2x2)
                 bentoGrid
@@ -327,12 +329,25 @@ struct ImprovedPhoneMainView: View {
     }
     
     private var programsTileSubtitle: String {
+        // Check active coach plan first (set via activeProgramID)
         if let title = coachPlanTitle {
             if let workout = todaysPlannedWorkout {
                 return "Next: \(title) • Wk \(workout.weekNumber)"
             }
             return title
         }
+        
+        // Fallback: check program enrollment via LocalProgramService
+        if let enrolled = programService.enrolledProgram {
+            if let progress = programService.programProgress {
+                if let nextDay = progress.nextWorkoutDay {
+                    return "Next: \(enrolled.title) • Day \(nextDay)"
+                }
+                return "\(enrolled.title) • Wk \(progress.currentWeek)"
+            }
+            return enrolled.title
+        }
+        
         return "Start a Program"
     }
     
@@ -345,16 +360,38 @@ struct ImprovedPhoneMainView: View {
             icon: "chart.bar.fill",
             color: .purple,
             action: {
-                showingGlobalLeaderboard = true
+                if premiumManager.isPremiumUser {
+                    showingGlobalLeaderboard = true
+                } else {
+                    premiumManager.showPaywall(context: .featureUpsell)
+                }
             }
         )
     }
     
     private var rankingsTileSubtitle: String {
-        if let rank = globalRank {
-            return "#\(rank) in Global Distance"
+        guard premiumManager.isPremiumUser else {
+            return "PRO Membership Required"
         }
-        return "View Global Rankings"
+        
+        if globalRanks.isEmpty {
+            return "View Global Rankings"
+        }
+        
+        // Build compact multi-category ranking display
+        let labels: [(GlobalLeaderboardType, String)] = [
+            (.distance, "Dist"),
+            (.tonnage, "Ton"),
+            (.elevation, "Elev"),
+            (.consistency, "Streak")
+        ]
+        
+        let parts = labels.compactMap { type, label -> String? in
+            guard let rank = globalRanks[type] else { return nil }
+            return "#\(rank) \(label)"
+        }
+        
+        return parts.isEmpty ? "View Global Rankings" : parts.joined(separator: " · ")
     }
     
     // MARK: - Header Helpers
@@ -404,14 +441,20 @@ struct ImprovedPhoneMainView: View {
                 }
             }
             
-            // Rankings: fetch global leaderboard to find user rank
-            if communityService.isAuthenticated {
-                _ = try? await communityService.fetchGlobalLeaderboard(type: .distance)
-                
+            // Rankings: fetch global leaderboards across all categories for pro users
+            if communityService.isAuthenticated && premiumManager.isPremiumUser {
                 if let userId = communityService.currentProfile?.id {
-                    let myEntry = communityService.globalLeaderboard.first { $0.userId == userId }
+                    var ranks: [GlobalLeaderboardType: Int] = [:]
+                    
+                    for type in GlobalLeaderboardType.allCases {
+                        let entries = try? await communityService.fetchGlobalLeaderboard(type: type)
+                        if let myEntry = entries?.first(where: { $0.userId == userId }) {
+                            ranks[type] = myEntry.rank
+                        }
+                    }
+                    
                     await MainActor.run {
-                        globalRank = myEntry?.rank
+                        globalRanks = ranks
                     }
                 }
             }
