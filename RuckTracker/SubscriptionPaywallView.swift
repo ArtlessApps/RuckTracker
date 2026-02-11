@@ -171,11 +171,6 @@ struct SubscriptionPaywallView: View {
                     description: "Rank against ruckers worldwide, not just your club"
                 )
                 
-                FeatureRow(
-                    icon: "photo.artframe",
-                    title: "Propaganda Mode",
-                    description: "Massive tonnage overlay, club badge, military-stencil shares"
-                )
             }
         }
     }

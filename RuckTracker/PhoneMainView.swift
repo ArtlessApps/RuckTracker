@@ -360,11 +360,7 @@ struct ImprovedPhoneMainView: View {
             icon: "chart.bar.fill",
             color: .purple,
             action: {
-                if premiumManager.isPremiumUser {
-                    showingGlobalLeaderboard = true
-                } else {
-                    premiumManager.showPaywall(context: .featureUpsell)
-                }
+                showingGlobalLeaderboard = true
             }
         )
     }

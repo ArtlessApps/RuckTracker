@@ -319,5 +319,4 @@ struct PremiumFeatureCard: View {
     }
 }
 
-// Note: PremiumAnalyticsSection, AnalyticsEmptyState, WeeklyProgressChart, 
-// PerformanceInsightsCard, and InsightRow are already defined in PremiumIntegration.swift
+// Note: PremiumAnalyticsSection, AnalyticsEmptyState, WeeklyProgressChart are already defined in PremiumIntegration.swift

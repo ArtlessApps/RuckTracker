@@ -405,8 +405,8 @@ enum PremiumFeature {
     case globalLeaderboards     // Global rankings (vs local club only)
     case proBadges              // Exclusive Pro badges
     
-    // Social/Sharing (Pro)
-    case propagandaMode         // Enhanced share cards (tonnage, club badge, stencil theme)
+    // Social/Sharing (Free)
+    case enhancedShareCard      // Enhanced share cards (tonnage, club badge)
     
     // Free Features (always available)
     case basicTracking          // Open Ruck GPS tracking
@@ -420,11 +420,11 @@ enum PremiumFeature {
         case .trainingPrograms, .weeklyChallenges, .planExecution,
              .audioCoaching, .heartRateZones, .intervalTimers,
              .advancedAnalytics, .achievementSystem, .exportData,
-             .globalLeaderboards, .proBadges, .propagandaMode:
+             .globalLeaderboards, .proBadges:
             return true
             
         // Free features
-        case .basicTracking, .clubAccess, .localLeaderboards, .standardShareCard:
+        case .basicTracking, .clubAccess, .localLeaderboards, .standardShareCard, .enhancedShareCard:
             return false
         }
     }
@@ -453,8 +453,8 @@ enum PremiumFeature {
             return "Global Leaderboards"
         case .proBadges:
             return "Pro Badges"
-        case .propagandaMode:
-            return "Propaganda Mode"
+        case .enhancedShareCard:
+            return "Enhanced Share Card"
         case .basicTracking:
             return "Basic Tracking"
         case .clubAccess:
@@ -490,8 +490,8 @@ enum PremiumFeature {
             return "Rank against ruckers worldwide, not just your club"
         case .proBadges:
             return "Exclusive Pro badges to show off your status"
-        case .propagandaMode:
-            return "Massive tonnage overlay, club badge, military-stencil share cards"
+        case .enhancedShareCard:
+            return "Tonnage overlay, club badge on share cards"
         case .basicTracking:
             return "GPS tracking for distance, time, and pace"
         case .clubAccess:
@@ -527,7 +527,7 @@ enum PremiumFeature {
             return "globe"
         case .proBadges:
             return "crown.fill"
-        case .propagandaMode:
+        case .enhancedShareCard:
             return "photo.artframe"
         case .basicTracking:
             return "location.fill"
@@ -551,7 +551,7 @@ enum PremiumFeature {
             return .analytics
         case .globalLeaderboards, .proBadges:
             return .competition
-        case .propagandaMode, .standardShareCard:
+        case .enhancedShareCard, .standardShareCard:
             return .sharing
         case .basicTracking, .clubAccess, .localLeaderboards:
             return .free

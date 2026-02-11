@@ -8,6 +8,8 @@ struct WorkoutWeightSelector: View {
     @Binding var isPresented: Bool
     let recommendedWeight: Double?
     let context: String
+    let subtitle: String?
+    let instructions: String?
     let onStart: () -> Void
     
     @State private var showingGuidelines = false
@@ -17,12 +19,16 @@ struct WorkoutWeightSelector: View {
         isPresented: Binding<Bool>,
         recommendedWeight: Double? = nil,
         context: String = "Free Ruck",
+        subtitle: String? = nil,
+        instructions: String? = nil,
         onStart: @escaping () -> Void
     ) {
         self._selectedWeight = selectedWeight
         self._isPresented = isPresented
         self.recommendedWeight = recommendedWeight
         self.context = context
+        self.subtitle = subtitle
+        self.instructions = instructions
         self.onStart = onStart
         
         // Initialize with recommended weight if available
@@ -33,14 +39,30 @@ struct WorkoutWeightSelector: View {
     
     var body: some View {
         ZStack {
-            // Clean white background
-            AppColors.cardBackground
+            // Background gradient
+            AppColors.backgroundGradient
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Top section with context
-                HStack {
+                VStack(spacing: 4) {
                     Text(context)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(AppColors.textPrimary)
+                    
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                }
+                .padding(.top, 60)
+                .padding(.bottom, 24)
+                
+                HStack {
+                    Spacer()
+                    
+                    Text("Set Ruck Weight")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(AppColors.textSecondary)
                     
@@ -50,26 +72,19 @@ struct WorkoutWeightSelector: View {
                         showingGuidelines = true
                     } label: {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 20))
+                            .font(.system(size: 18))
                             .foregroundColor(AppColors.textSecondary)
                     }
+                    .padding(.trailing, 24)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 60)
-                
-                Text("Set Ruck Weight")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(AppColors.textOnLight)
-                    .padding(.top, 8)
-                    .padding(.bottom, 40)
+                .padding(.bottom, 20)
                 
                 // HERO - Selected Weight
-                Text("\(Int(selectedWeight))")
+                (Text("\(Int(selectedWeight))")
                     .font(.system(size: 100, weight: .medium))
-                    .foregroundColor(AppColors.textOnLight)
-                + Text(" lbs")
-                    .font(.system(size: 36, weight: .regular))
-                    .foregroundColor(AppColors.textOnLight)
+                 + Text(" lbs")
+                    .font(.system(size: 36, weight: .regular)))
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Spacer()
                     .frame(height: 60)
@@ -77,7 +92,7 @@ struct WorkoutWeightSelector: View {
                 // Slider
                 VStack(spacing: 16) {
                     Slider(value: $selectedWeight, in: 0...100, step: 1)
-                        .tint(AppColors.textOnLight)
+                        .tint(AppColors.primary)
                     
                     HStack {
                         Text("0 lbs")
@@ -94,6 +109,38 @@ struct WorkoutWeightSelector: View {
                 .padding(.horizontal, 40)
                 
                 Spacer()
+                    .frame(minHeight: 20)
+                
+                // Instructions (if provided)
+                if let instructions = instructions {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "list.bullet.clipboard")
+                                .font(.system(size: 14))
+                                .foregroundColor(AppColors.primary)
+                            
+                            Text("Instructions")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(AppColors.textPrimary)
+                        }
+                        
+                        Text(instructions)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(AppColors.textSecondary)
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(AppColors.surfaceAlt.opacity(0.5))
+                    )
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 20)
+                }
+                
+                Spacer()
                 
                 // Action Buttons
                 HStack(spacing: 16) {
@@ -103,12 +150,12 @@ struct WorkoutWeightSelector: View {
                     }) {
                         Text("Cancel")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(AppColors.textOnLight)
+                            .foregroundColor(AppColors.textSecondary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(AppColors.textOnLight.opacity(0.08))
+                                    .fill(AppColors.overlayWhite)
                             )
                     }
                     .buttonStyle(.plain)

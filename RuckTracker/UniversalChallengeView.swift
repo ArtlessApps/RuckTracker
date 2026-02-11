@@ -13,10 +13,12 @@ struct UniversalChallengeView: View {
     @StateObject private var challengeManager = ChallengeManager()
     @EnvironmentObject var challengeService: LocalChallengeService
     @EnvironmentObject var premiumManager: PremiumManager
+    @EnvironmentObject var workoutManager: WorkoutManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingEnrollment = false
     @State private var showingLeaveWarning = false
     @State private var selectedWorkout: ChallengeWorkout?
+    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
     
     var body: some View {
         NavigationView {
@@ -53,12 +55,34 @@ struct UniversalChallengeView: View {
             ChallengeEnrollmentView(challenge: challenge, challengeManager: challengeManager)
         }
         .sheet(item: $selectedWorkout) { workout in
-            ChallengeWorkoutDetailView(
-                workout: workout,
-                challenge: challenge,
-                challengeManager: challengeManager,
-                isPresentingWorkoutFlow: $isPresentingWorkoutFlow
-            )
+            if !workout.isRestDay && !challengeManager.isWorkoutCompleted(workout.id) && !challengeManager.isWorkoutLocked(workout) {
+                // Ruck/active workout ready to start → use unified weight selector
+                WorkoutWeightSelector(
+                    selectedWeight: $selectedWorkoutWeight,
+                    isPresented: Binding(
+                        get: { selectedWorkout != nil },
+                        set: { if !$0 { selectedWorkout = nil } }
+                    ),
+                    recommendedWeight: workout.weightLbs,
+                    context: workout.getWorkoutTitle(for: challenge),
+                    subtitle: "Day \(workout.dayNumber)",
+                    instructions: workout.instructions,
+                    onStart: {
+                        startChallengeWorkout(workout)
+                    }
+                )
+                .onAppear {
+                    selectedWorkoutWeight = workout.weightLbs ?? UserSettings.shared.defaultRuckWeight
+                }
+            } else {
+                // Rest day, completed, or locked → show detail view
+                ChallengeWorkoutDetailView(
+                    workout: workout,
+                    challenge: challenge,
+                    challengeManager: challengeManager,
+                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow
+                )
+            }
         }
         .sheet(isPresented: $showingLeaveWarning) {
             if let progress = challengeService.challengeProgress {
@@ -88,6 +112,17 @@ struct UniversalChallengeView: View {
         challengeService.unenrollFromChallenge()
         showingLeaveWarning = false
         dismiss()
+    }
+    
+    private func startChallengeWorkout(_ workout: ChallengeWorkout) {
+        // Set the weight in workout manager
+        workoutManager.ruckWeight = selectedWorkoutWeight
+        
+        // Start the workout
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        
+        // Trigger the workout flow presentation
+        isPresentingWorkoutFlow = true
     }
     
     // MARK: - Subviews
@@ -344,18 +379,15 @@ struct LoadingView: View {
     }
 }
 
-// MARK: - Challenge Workout Detail View
+// MARK: - Challenge Workout Detail View (Rest Day / Completed States)
 struct ChallengeWorkoutDetailView: View {
     let workout: ChallengeWorkout
     let challenge: Challenge
     @ObservedObject var challengeManager: ChallengeManager
     @Binding var isPresentingWorkoutFlow: Bool
-    @EnvironmentObject private var workoutManager: WorkoutManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingCompletionConfirmation = false
     @State private var isCompleting = false
-    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
-    @State private var showingGuidelines = false
     
     var isCompleted: Bool {
         challengeManager.isWorkoutCompleted(workout.id)
@@ -370,50 +402,49 @@ struct ChallengeWorkoutDetailView: View {
         self.challenge = challenge
         self.challengeManager = challengeManager
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
-        // Initialize with recommended or default weight
-        self._selectedWorkoutWeight = State(initialValue: workout.weightLbs ?? UserSettings.shared.defaultRuckWeight)
     }
     
     var body: some View {
         NavigationView {
             ZStack {
-                // Clean white background
-                AppColors.surface
+                // Background gradient
+                AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Top section with context
-                        VStack(spacing: 8) {
-                            Text(workout.getWorkoutTitle(for: challenge))
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(AppColors.textOnLight)
-                            
-                            Text("Day \(workout.dayNumber)")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                        .padding(.top, 60)
-                        .padding(.bottom, 40)
+                VStack(spacing: 0) {
+                    Spacer()
+                    
+                    // Top section with context
+                    VStack(spacing: 8) {
+                        Text(workout.getWorkoutTitle(for: challenge))
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(AppColors.textPrimary)
                         
-                        // Weight Selector (only for ruck workouts)
-                        if !workout.isRestDay {
-                            weightSelectorSection
-                        } else {
-                            restDaySection
-                        }
-                        
-                        Spacer()
-                            .frame(minHeight: 20)
-                        
-                        // Instructions at bottom
-                        if let instructions = workout.instructions {
-                            instructionsSection(instructions)
-                        }
-                        
-                        // Action Buttons
-                        actionButtons
+                        Text("Day \(workout.dayNumber)")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(AppColors.textSecondary)
                     }
+                    .padding(.bottom, 40)
+                    
+                    // Content based on state
+                    if isCompleted {
+                        completedSection
+                    } else {
+                        restDaySection
+                    }
+                    
+                    Spacer()
+                        .frame(minHeight: 20)
+                    
+                    // Instructions at bottom
+                    if let instructions = workout.instructions {
+                        instructionsSection(instructions)
+                    }
+                    
+                    Spacer()
+                    
+                    // Action Buttons
+                    actionButtons
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -435,62 +466,26 @@ struct ChallengeWorkoutDetailView: View {
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
             }
-            .sheet(isPresented: $showingGuidelines) {
-                RuckingGuidelinesSheet()
-            }
         }
     }
     
+    // MARK: - Subviews
     
-    private var weightSelectorSection: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                
-                Text("Set Ruck Weight")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(AppColors.textSecondary)
-                
-                Spacer()
-                
-                Button {
-                    showingGuidelines = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 18))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                .padding(.trailing, 24)
-            }
-            .padding(.bottom, 20)
+    private var completedSection: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(AppColors.accentGreen)
             
-            // HERO - Selected Weight
-            (Text("\(Int(selectedWorkoutWeight))")
-                .font(.system(size: 100, weight: .medium))
-             + Text(" lbs")
-                .font(.system(size: 36, weight: .regular)))
-                .foregroundColor(AppColors.textOnLight)
-                .padding(.bottom, 60)
+            Text("Completed")
+                .font(.system(size: 32, weight: .semibold))
+                .foregroundColor(AppColors.textPrimary)
             
-            // Slider
-            VStack(spacing: 16) {
-                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
-                    .tint(AppColors.textOnLight)
-                
-                HStack {
-                    Text("0 lbs")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppColors.textSecondary)
-                    
-                    Spacer()
-                    
-                    Text("100 lbs")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-            }
-            .padding(.horizontal, 40)
+            Text("Great work!")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(AppColors.textSecondary)
         }
+        .padding(.vertical, 40)
     }
     
     private var restDaySection: some View {
@@ -501,7 +496,7 @@ struct ChallengeWorkoutDetailView: View {
             
             Text("Rest Day")
                 .font(.system(size: 32, weight: .semibold))
-                .foregroundColor(AppColors.textOnLight)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("Recovery is essential")
                 .font(.system(size: 15, weight: .regular))
@@ -519,7 +514,7 @@ struct ChallengeWorkoutDetailView: View {
                 
                 Text("Instructions")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppColors.textOnLight)
+                    .foregroundColor(AppColors.textPrimary)
             }
             
             Text(instructions)
@@ -532,7 +527,7 @@ struct ChallengeWorkoutDetailView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.accentTeal.opacity(0.08))
+                .fill(AppColors.surfaceAlt.opacity(0.5))
         )
         .padding(.horizontal, 40)
         .padding(.bottom, 20)
@@ -560,31 +555,15 @@ struct ChallengeWorkoutDetailView: View {
                     )
                 }
                 .buttonStyle(.plain)
-            } else if !isLocked {
-                // Cancel Button
+            } else if !isLocked && workout.isRestDay {
+                // Rest day - mark complete
                 Button(action: {
-                    dismiss()
-                }) {
-                    Text("Cancel")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(AppColors.textOnLight)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.background.opacity(0.08))
-                        )
-                }
-                .buttonStyle(.plain)
-                
-                // Start Button
-                Button(action: {
-                    startWorkout()
+                    showingCompletionConfirmation = true
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
+                        Image(systemName: "checkmark")
                             .font(.system(size: 16))
-                        Text("Start Workout")
+                        Text("Mark Complete")
                             .font(.system(size: 17, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -602,35 +581,7 @@ struct ChallengeWorkoutDetailView: View {
         .padding(.bottom, 40)
     }
     
-    
-    private var workoutIcon: String {
-        switch workout.workoutType {
-        case .ruck:
-            return "figure.walk"
-        case .rest:
-            return "bed.double.fill"
-        case .run:
-            return "figure.run"
-        case .strength:
-            return "dumbbell.fill"
-        case .cardio:
-            return "heart.fill"
-        }
-    }
-    
-    private func startWorkout() {
-        // Set the weight in workout manager
-        workoutManager.ruckWeight = selectedWorkoutWeight
-        
-        // Start the workout
-        workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        
-        // Trigger the workout flow presentation
-        isPresentingWorkoutFlow = true
-        
-        // Dismiss this view
-        dismiss()
-    }
+    // MARK: - Methods
     
     private func completeWorkout() async {
         isCompleting = true

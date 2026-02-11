@@ -116,11 +116,9 @@ struct AnalyticsView: View {
                 
             }
             
-            // Use existing WeeklyProgressChart and PerformanceInsightsCard
             if premiumManager.isPremiumUser {
                 VStack(spacing: 16) {
                     WeeklyProgressChart()
-                    PerformanceInsightsCard()
                 }
             } else {
                 lockedAnalyticsView
@@ -299,7 +297,7 @@ struct MetricView: View {
     }
 }
 
-// Re-use existing PremiumBadge, WeeklyProgressChart, PerformanceInsightsCard from PremiumIntegration.swift
+// Re-use existing PremiumBadge, WeeklyProgressChart from PremiumIntegration.swift
 
 #Preview {
     AnalyticsView(showAllWorkouts: .constant(false))

@@ -141,7 +141,6 @@ struct PremiumAnalyticsSection: View {
     private var activeAnalyticsView: some View {
         VStack(spacing: 16) {
             WeeklyProgressChart()
-            PerformanceInsightsCard()
         }
     }
     
@@ -330,66 +329,6 @@ struct WeeklyDataPoint {
     let weekStart: Date
     let distance: Double
     let workoutCount: Int
-}
-
-struct PerformanceInsightsCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(AppColors.primary)
-                
-                Text("Performance Insights")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                InsightRow(
-                    icon: "arrow.up.circle.fill",
-                    text: "Pace improving by 5% over last month",
-                    color: .green
-                )
-                
-                InsightRow(
-                    icon: "target",
-                    text: "Recommended: Increase ruck weight by 5lbs",
-                    color: .blue
-                )
-                
-                InsightRow(
-                    icon: "calendar",
-                    text: "3 days since last workout - consider scheduling",
-                    color: AppColors.primary
-                )
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.05))
-        )
-    }
-}
-
-struct InsightRow: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(color)
-            
-            Text(text)
-                .font(.caption)
-                .foregroundColor(AppColors.textPrimary)
-            
-            Spacer()
-        }
-    }
 }
 
 // MARK: - App Store Configuration Helper
@@ -890,6 +829,7 @@ struct ProgramWorkoutsView: View {
     @State private var isLoading = true
     @State private var selectedWorkout: ProgramWorkoutWithState?
     @State private var showingLeaveWarning = false
+    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
     @EnvironmentObject var workoutManager: WorkoutManager
     
     init(userProgram: UserProgram?, program: Program?, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -934,19 +874,43 @@ struct ProgramWorkoutsView: View {
                 }
             }
             .sheet(item: $selectedWorkout) { workout in
-                WorkoutDetailView(
-                    workout: workout,
-                    programId: program?.id,
-                    userProgram: userProgram,
-                    onComplete: {
-                        Task {
-                            await loadWorkouts()
+                if workout.workout.workoutType == .ruck && !workout.isCompleted && !workout.isLocked {
+                    // Ruck workout ready to start → use unified weight selector
+                    WorkoutWeightSelector(
+                        selectedWeight: $selectedWorkoutWeight,
+                        isPresented: Binding(
+                            get: { selectedWorkout != nil },
+                            set: { if !$0 { selectedWorkout = nil } }
+                        ),
+                        recommendedWeight: userProgram?.currentWeightLbs,
+                        context: workout.displayTitle,
+                        subtitle: "Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)",
+                        instructions: workout.workout.instructions,
+                        onStart: {
+                            startProgramWorkout(workout)
                         }
-                    },
-                    isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
-                    onDismiss: onDismiss
-                )
-                .environmentObject(workoutManager)
+                    )
+                    .onAppear {
+                        // Initialize weight for this workout
+                        let initialWeight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
+                        selectedWorkoutWeight = max(initialWeight, UserSettings.shared.defaultRuckWeight)
+                    }
+                } else {
+                    // Rest day, completed, or non-ruck → show detail view
+                    WorkoutDetailView(
+                        workout: workout,
+                        programId: program?.id,
+                        userProgram: userProgram,
+                        onComplete: {
+                            Task {
+                                await loadWorkouts()
+                            }
+                        },
+                        isPresentingWorkoutFlow: $isPresentingWorkoutFlow,
+                        onDismiss: onDismiss
+                    )
+                    .environmentObject(workoutManager)
+                }
             }
             .sheet(isPresented: $showingLeaveWarning) {
                 if let program = program,
@@ -979,6 +943,26 @@ struct ProgramWorkoutsView: View {
         programService.unenrollFromProgram()
         showingLeaveWarning = false
         onDismiss?()
+    }
+    
+    private func startProgramWorkout(_ workout: ProgramWorkoutWithState) {
+        // Set the weight in workout manager
+        workoutManager.ruckWeight = selectedWorkoutWeight
+        
+        // Provide program context so the save is tagged
+        let resolvedProgramId = program?.id
+            ?? userProgram?.programId
+            ?? LocalProgramService.shared.getEnrolledProgramId()
+            ?? (UUID(uuidString: UserSettings.shared.activeProgramID ?? ""))
+        let resolvedDay = workout.workout.dayNumber
+        print("📌 ProgramWorkoutsView startWorkout resolvedProgramId=\(resolvedProgramId?.uuidString ?? "nil") day=\(resolvedDay)")
+        workoutManager.setProgramContext(programId: resolvedProgramId, day: resolvedDay)
+        
+        // Start the workout
+        workoutManager.startWorkout(weight: selectedWorkoutWeight)
+        
+        // Trigger the workout flow presentation
+        isPresentingWorkoutFlow = true
     }
     
     // MARK: - Subviews
@@ -1016,7 +1000,7 @@ struct ProgramWorkoutsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(program?.title ?? "Program")
                         .font(.system(size: 28, weight: .bold, design: .default))
-                        .foregroundColor(AppColors.textOnLight)
+                        .foregroundColor(AppColors.textPrimary)
                     
                     Text("\(completedCount) of \(workouts.count) workouts")
                         .font(.system(size: 15, weight: .regular))
@@ -1028,7 +1012,7 @@ struct ProgramWorkoutsView: View {
                 // Progress Ring
                 ZStack {
                     Circle()
-                        .stroke(AppColors.accentWarm.opacity(0.2), lineWidth: 6)
+                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 6)
                         .frame(width: 64, height: 64)
                     
                     Circle()
@@ -1040,15 +1024,18 @@ struct ProgramWorkoutsView: View {
                     
                     Text("\(Int(progressPercentage * 100))%")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(AppColors.textOnLight)
+                        .foregroundColor(AppColors.textPrimary)
                 }
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cardBackground)
-                .shadow(color: AppColors.shadowBlackSubtle, radius: 8, x: 0, y: 2)
+                .fill(AppColors.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(AppColors.primary.opacity(0.3), lineWidth: 1)
+                )
         )
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -1072,7 +1059,7 @@ struct ProgramWorkoutsView: View {
             
             Text("No Workouts Found")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(AppColors.textOnLight)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("This program doesn't have any workouts yet.")
                 .font(.system(size: 15, weight: .regular))
@@ -1109,6 +1096,12 @@ struct ProgramWorkoutsView: View {
             // Load workouts from local service
             let programWorkouts = try await programService.loadProgramWorkouts(programId: program.id)
             
+            // Load weeks to resolve weekId -> weekNumber
+            let weeks = programService.getProgramWeeks(programId: program.id)
+            let weekNumberByID: [UUID: Int] = Dictionary(
+                uniqueKeysWithValues: weeks.map { ($0.id, $0.weekNumber) }
+            )
+            
             // Get completions from CoreData (via local service)
             let completedWorkoutIndices = WorkoutDataManager.shared.workouts
                 .filter { $0.programId == program.id.uuidString }
@@ -1132,9 +1125,12 @@ struct ProgramWorkoutsView: View {
                     isLocked = index > lastCompletedIndex + 1
                 }
                 
+                // Resolve actual week number from the program's week data
+                let resolvedWeekNumber = weekNumberByID[workout.weekId] ?? 1
+                
                 return ProgramWorkoutWithState(
                     workout: workout,
-                    weekNumber: (workout.dayNumber - 1) / 7 + 1,
+                    weekNumber: resolvedWeekNumber,
                     isCompleted: isCompleted,
                     isLocked: isLocked,
                     completionDate: nil
@@ -1178,7 +1174,7 @@ struct WorkoutRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.displayTitle)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(workout.isLocked ? AppColors.textSecondary.opacity(0.5) : AppColors.textOnLight)
+                    .foregroundColor(workout.isLocked ? AppColors.textSecondary.opacity(0.5) : AppColors.textPrimary)
                 
                 Text(workout.displaySubtitle)
                     .font(.system(size: 14, weight: .regular))
@@ -1201,18 +1197,19 @@ struct WorkoutRowView: View {
                     .foregroundColor(AppColors.textSecondary)
             }
         }
-        .padding(20)
+        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(workout.isLocked ? AppColors.overlayWhiteDisabled : AppColors.cardBackground)
-                .shadow(
-                    color: workout.isLocked ? AppColors.shadowBlackVeryLight : AppColors.shadowBlackSubtle,
-                    radius: 8,
-                    x: 0,
-                    y: 2
+                .fill(AppColors.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            workout.isLocked ? AppColors.textSecondary.opacity(0.1) : AppColors.textSecondary.opacity(0.15),
+                            lineWidth: 1
+                        )
                 )
         )
-        .opacity(workout.isLocked ? 0.7 : 1.0)
+        .opacity(workout.isLocked ? 0.5 : 1.0)
     }
     
     private var statusColor: Color {
@@ -1257,7 +1254,7 @@ struct CircularProgressView: View {
     }
 }
 
-// MARK: - Workout Detail View (Simplified Weight Selector Style)
+// MARK: - Workout Detail View (Rest Day / Completed States)
 struct WorkoutDetailView: View {
     let workout: ProgramWorkoutWithState
     let programId: UUID?
@@ -1271,8 +1268,6 @@ struct WorkoutDetailView: View {
     @ObservedObject private var programService = LocalProgramService.shared
     @State private var isCompleting = false
     @State private var showingCompletionConfirmation = false
-    @State private var selectedWorkoutWeight: Double = UserSettings.shared.defaultRuckWeight
-    @State private var showingGuidelines = false
     
     init(workout: ProgramWorkoutWithState, programId: UUID?, userProgram: UserProgram?, onComplete: @escaping () -> Void, isPresentingWorkoutFlow: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
         self.workout = workout
@@ -1281,9 +1276,6 @@ struct WorkoutDetailView: View {
         self.onComplete = onComplete
         self._isPresentingWorkoutFlow = isPresentingWorkoutFlow
         self.onDismiss = onDismiss
-        // Initialize with recommended or default weight
-        let initialWeight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
-        self._selectedWorkoutWeight = State(initialValue: max(initialWeight, UserSettings.shared.defaultRuckWeight))
     }
     
     var body: some View {
@@ -1293,39 +1285,40 @@ struct WorkoutDetailView: View {
                 AppColors.backgroundGradient
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Top section with context
-                        VStack(spacing: 8) {
-                            Text(workout.displayTitle)
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(AppColors.textOnLight)
-                            
-                            Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                        .padding(.top, 60)
-                        .padding(.bottom, 40)
+                VStack(spacing: 0) {
+                    Spacer()
+                    
+                    // Top section with context
+                    VStack(spacing: 8) {
+                        Text(workout.displayTitle)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(AppColors.textPrimary)
                         
-                        // Weight Selector (only for ruck workouts)
-                        if workout.workout.workoutType == .ruck {
-                            weightSelectorSection
-                        } else {
-                            restDaySection
-                        }
-                        
-                        Spacer()
-                            .frame(minHeight: 20)
-                        
-                        // Instructions at bottom
-                        if let instructions = workout.workout.instructions {
-                            instructionsSection(instructions)
-                        }
-                        
-                        // Action Buttons
-                        actionButtons
+                        Text("Day \(workout.workout.dayNumber) • Week \(workout.weekNumber)")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(AppColors.textSecondary)
                     }
+                    .padding(.bottom, 40)
+                    
+                    // Content based on state
+                    if workout.isCompleted {
+                        completedSection
+                    } else {
+                        restDaySection
+                    }
+                    
+                    Spacer()
+                        .frame(minHeight: 20)
+                    
+                    // Instructions at bottom
+                    if let instructions = workout.workout.instructions {
+                        instructionsSection(instructions)
+                    }
+                    
+                    Spacer()
+                    
+                    // Action Buttons
+                    actionButtons
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -1347,63 +1340,26 @@ struct WorkoutDetailView: View {
             } message: {
                 Text("Mark this workout as completed and unlock the next workout.")
             }
-            .sheet(isPresented: $showingGuidelines) {
-                RuckingGuidelinesSheet()
-            }
         }
     }
     
     // MARK: - Subviews
     
-    private var weightSelectorSection: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                
-                Text("Set Ruck Weight")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(AppColors.textSecondary)
-                
-                Spacer()
-                
-                Button {
-                    showingGuidelines = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 18))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                .padding(.trailing, 24)
-            }
-            .padding(.bottom, 20)
+    private var completedSection: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(AppColors.accentGreen)
             
-            // HERO - Selected Weight
-            (Text("\(Int(selectedWorkoutWeight))")
-                .font(.system(size: 100, weight: .medium))
-             + Text(" lbs")
-                .font(.system(size: 36, weight: .regular)))
-                .foregroundColor(AppColors.textOnLight)
-                .padding(.bottom, 60)
+            Text("Completed")
+                .font(.system(size: 32, weight: .semibold))
+                .foregroundColor(AppColors.textPrimary)
             
-            // Slider
-            VStack(spacing: 16) {
-                Slider(value: $selectedWorkoutWeight, in: 0...100, step: 1)
-                    .tint(AppColors.textOnLight)
-                
-                HStack {
-                    Text("0 lbs")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppColors.textSecondary)
-                    
-                    Spacer()
-                    
-                    Text("100 lbs")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-            }
-            .padding(.horizontal, 40)
+            Text("Great work!")
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(AppColors.textSecondary)
         }
+        .padding(.vertical, 40)
     }
     
     private var restDaySection: some View {
@@ -1414,7 +1370,7 @@ struct WorkoutDetailView: View {
             
             Text("Rest Day")
                 .font(.system(size: 32, weight: .semibold))
-                .foregroundColor(AppColors.textOnLight)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("Recovery is essential")
                 .font(.system(size: 15, weight: .regular))
@@ -1432,7 +1388,7 @@ struct WorkoutDetailView: View {
                 
                 Text("Instructions")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppColors.textOnLight)
+                    .foregroundColor(AppColors.textPrimary)
             }
             
             Text(instructions)
@@ -1445,7 +1401,7 @@ struct WorkoutDetailView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.accentTeal.opacity(0.08))
+                .fill(AppColors.surfaceAlt.opacity(0.5))
         )
         .padding(.horizontal, 40)
         .padding(.bottom, 20)
@@ -1473,34 +1429,18 @@ struct WorkoutDetailView: View {
                     )
                 }
                 .buttonStyle(.plain)
-            } else if !workout.isLocked {
-                // Cancel Button
+            } else if !workout.isLocked && workout.workout.workoutType == .rest {
+                // Rest day - mark complete
                 Button(action: {
-                    dismiss()
-                }) {
-                    Text("Cancel")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(AppColors.textOnLight)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.textOnLight.opacity(0.08))
-                        )
-                }
-                .buttonStyle(.plain)
-                
-                // Start Button
-                Button(action: {
-                    startWorkout()
+                    showingCompletionConfirmation = true
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
+                        Image(systemName: "checkmark")
                             .font(.system(size: 16))
-                        Text("Start Workout")
+                        Text("Mark Complete")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
@@ -1517,40 +1457,18 @@ struct WorkoutDetailView: View {
     
     // MARK: - Methods
     
-    private func startWorkout() {
-        // Set the weight in workout manager
-        workoutManager.ruckWeight = selectedWorkoutWeight
-        
-        // Provide program context so the save is tagged even if not formally enrolled
-        let resolvedProgramId = programId
-            ?? userProgram?.programId
-            ?? LocalProgramService.shared.getEnrolledProgramId()
-            ?? (UUID(uuidString: UserSettings.shared.activeProgramID ?? ""))
-        let resolvedDay = workout.workout.dayNumber
-        print("📌 WorkoutDetailView startWorkout resolvedProgramId=\(resolvedProgramId?.uuidString ?? "nil") day=\(resolvedDay)")
-        workoutManager.setProgramContext(programId: resolvedProgramId, day: resolvedDay)
-        
-        // Start the workout
-        workoutManager.startWorkout(weight: selectedWorkoutWeight)
-        
-        // Trigger the workout flow presentation
-        isPresentingWorkoutFlow = true
-        
-        // Dismiss this view
-        dismiss()
-    }
-    
     private func completeWorkout() async {
         isCompleting = true
         defer { isCompleting = false }
         
         // Record the completion in CoreData
+        let weight = userProgram?.currentWeightLbs ?? UserSettings.shared.defaultRuckWeight
         WorkoutDataManager.shared.saveWorkout(
             date: Date(),
             duration: 0,
             distance: workout.workout.distanceMiles ?? 0,
             calories: 0,
-            ruckWeight: selectedWorkoutWeight,
+            ruckWeight: weight,
             heartRate: 0,
             programId: programId ?? userProgram?.programId,
             programWorkoutDay: workout.workout.dayNumber,

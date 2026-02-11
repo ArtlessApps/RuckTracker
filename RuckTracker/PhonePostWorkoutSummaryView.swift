@@ -9,8 +9,6 @@ struct PhonePostWorkoutSummaryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingAnalytics = false
     @State private var showingShare = false
-    @State private var hasScheduledSharePrompt = false
-    @State private var perceivedEffort: Double = 5
     
     // Final workout stats
     let finalElapsedTime: TimeInterval
@@ -105,48 +103,10 @@ struct PhonePostWorkoutSummaryView: View {
                 
                 // Action Buttons
                 VStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("How did it feel?")
-                            .font(.headline)
-                        .foregroundColor(AppColors.textOnLight)
-                        HStack {
-                            Text("Easy")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                            Slider(value: $perceivedEffort, in: 1...10, step: 1)
-                            Text("Hard")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 16).fill(AppColors.primary.opacity(0.08)))
-                    
                     Button(action: {
                         showingShare = true
                     }) {
                         Text("Share this Ruck")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(AppColors.textOnLight)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                .fill(AppColors.primary.opacity(0.12))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Done Button
-                    Button(action: {
-                        let feedback = MarchFeedback(
-                            rpe: Int(perceivedEffort),
-                            timestamp: Date()
-                        )
-                        MarchAdaptationEngine.saveFeedback(feedback)
-                        dismiss()
-                    }) {
-                        Text("Done")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -154,6 +114,22 @@ struct PhonePostWorkoutSummaryView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                 .fill(AppColors.primaryGradient)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Done Button
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("Done")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(AppColors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                .fill(AppColors.overlayWhite)
                             )
                     }
                     .buttonStyle(.plain)
@@ -182,14 +158,6 @@ struct PhonePostWorkoutSummaryView: View {
             AnalyticsView(showAllWorkouts: .constant(false))
                 .environmentObject(WorkoutDataManager.shared)
                 .environmentObject(PremiumManager.shared)
-        }
-        .onAppear {
-            if !hasScheduledSharePrompt {
-                hasScheduledSharePrompt = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    showingShare = true
-                }
-            }
         }
         .sheet(isPresented: $showingShare) {
             WorkoutShareSheet(data: shareData)
@@ -250,7 +218,7 @@ struct StatRow: View {
         HStack(alignment: .bottom, spacing: 0) {
             Text(label)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
                 .tracking(1)
                 .frame(width: 90, alignment: .leading)
             
@@ -258,7 +226,7 @@ struct StatRow: View {
             
             Text(value)
                 .font(.system(size: 44, weight: .regular))
-                .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textOnLight)
+                .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textPrimary)
         }
         .padding(.horizontal, 40)
         .padding(.vertical, 12)
@@ -277,7 +245,7 @@ struct StatRowWithUnit: View {
         HStack(alignment: .bottom, spacing: 0) {
             Text(label)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color("TextSecondary"))
+                .foregroundColor(AppColors.textSecondary)
                 .tracking(1)
                 .frame(width: 90, alignment: .leading)
             
@@ -286,11 +254,11 @@ struct StatRowWithUnit: View {
             HStack(alignment: .lastTextBaseline, spacing: 3) {
                 Text(value)
                     .font(.system(size: 44, weight: .regular))
-                    .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textOnLight)
+                    .foregroundColor(isSecondary ? AppColors.textSecondary : AppColors.textPrimary)
                 
                 Text(unit)
                     .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(isSecondary ? Color("TextSecondary").opacity(0.5) : Color("TextSecondary").opacity(0.6))
+                    .foregroundColor(AppColors.textSecondary.opacity(isSecondary ? 0.5 : 0.6))
             }
         }
         .padding(.horizontal, 40)
