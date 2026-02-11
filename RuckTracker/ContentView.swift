@@ -12,6 +12,7 @@ struct ContentView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @StateObject private var workoutDataManager = WorkoutDataManager.shared
     @StateObject private var premiumManager = PremiumManager.shared
+    @StateObject private var tabSelection = MainTabSelection()
     @ObservedObject private var userSettings = UserSettings.shared
     @State private var showingSplash = true
     
@@ -35,6 +36,7 @@ struct ContentView: View {
                     .environmentObject(workoutManager)
                     .environmentObject(workoutDataManager)
                     .environmentObject(premiumManager)
+                    .environmentObject(tabSelection)
             }
         }
     }

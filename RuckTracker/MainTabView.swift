@@ -5,8 +5,8 @@ struct MainTabView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
+    @EnvironmentObject var tabSelection: MainTabSelection
     
-    @State private var selectedTab: Int = 0
     @State private var showingSettings = false
     
     init() {
@@ -28,36 +28,36 @@ struct MainTabView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $tabSelection.selectedTab) {
             ImprovedPhoneMainView()
                 .tabItem {
                     Label("Ruck", systemImage: "figure.walk")
                 }
-                .tag(0)
+                .tag(MainTabSelection.Tab.ruck)
             
             PlanView()
                 .tabItem {
                     Label("Plan", systemImage: "calendar")
                 }
-                .tag(1)
+                .tag(MainTabSelection.Tab.coach)
             
             CommunityTribeView()
                 .tabItem {
                     Label("Tribe", systemImage: "person.3.fill")
                 }
-                .tag(2)
+                .tag(MainTabSelection.Tab.tribe)
             
             RankingsTabView()
                 .tabItem {
                     Label("Rankings", systemImage: "trophy.fill")
                 }
-                .tag(3)
+                .tag(MainTabSelection.Tab.rankings)
             
             ActivityContainer(showSettings: $showingSettings)
                 .tabItem {
                     Label("You", systemImage: "person.crop.circle")
                 }
-                .tag(4)
+                .tag(MainTabSelection.Tab.you)
         }
         .accentColor(AppColors.primary)
         .preferredColorScheme(.dark)
@@ -74,6 +74,7 @@ struct MainTabView: View {
         .environmentObject(WorkoutManager())
         .environmentObject(WorkoutDataManager.shared)
         .environmentObject(PremiumManager.shared)
+        .environmentObject(MainTabSelection())
 }
 
 private struct ActivityContainer: View {
@@ -99,4 +100,3 @@ private struct ActivityContainer: View {
         }
     }
 }
-

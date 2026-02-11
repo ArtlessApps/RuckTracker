@@ -8,18 +8,14 @@ struct ImprovedPhoneMainView: View {
     @EnvironmentObject var workoutDataManager: WorkoutDataManager
     @EnvironmentObject var premiumManager: PremiumManager
     @EnvironmentObject var deepLinkManager: DeepLinkManager
+    @EnvironmentObject var tabSelection: MainTabSelection
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
+    @StateObject private var communityService = CommunityService.shared
     
+    // MARK: - State
     @State private var upcomingWorkouts: [ScheduledWorkout] = []
     @State private var coachPlanTitle: String?
-    @State private var showingProfile = false
-    @State private var showingSettings = false
-    @State private var showingAnalytics = false
-    @State private var showingWorkoutHistory = false
-    @State private var showingTrainingPrograms = false
-    @State private var showingChallenges = false
-    @State private var showingDataExport = false
     @State private var activeSheet: ActiveSheet? = nil
     @State private var isPresentingWorkoutFlow = false
     @State private var showingWeightSelector = false
@@ -29,6 +25,14 @@ struct ImprovedPhoneMainView: View {
     @State private var selectedUserProgram: UserProgram?
     @State private var selectedProgramId: UUID?
     @State private var pendingShareCode: String?
+    @State private var showingGlobalLeaderboard = false
+    
+    // Tribe tile data
+    @State private var nextEventTitle: String?
+    @State private var nextEventTime: Date?
+    
+    // Rankings tile data
+    @State private var globalRank: Int?
     
     enum ActiveSheet: Identifiable {
         case profile
@@ -52,6 +56,8 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
+    // MARK: - Body
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -65,6 +71,7 @@ struct ImprovedPhoneMainView: View {
             .navigationBarHidden(true)
         }
         .preferredColorScheme(.dark)
+        // Sheet presentations (preserved)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .profile:
@@ -72,7 +79,7 @@ struct ImprovedPhoneMainView: View {
             case .settings:
                 SettingsView()
             case .analytics:
-                AnalyticsView(showAllWorkouts: $showingWorkoutHistory)
+                AnalyticsView(showAllWorkouts: .constant(false))
                     .environmentObject(workoutDataManager)
                     .environmentObject(premiumManager)
             case .workoutHistory:
@@ -133,6 +140,14 @@ struct ImprovedPhoneMainView: View {
             )
             .environmentObject(workoutManager)
         }
+        .sheet(isPresented: $showingGlobalLeaderboard) {
+            NavigationView {
+                GlobalLeaderboardView()
+                    .environmentObject(premiumManager)
+            }
+        }
+        
+        // Lifecycle
         .onChange(of: workoutManager.isActive) { oldValue, newValue in
             if newValue && !oldValue {
                 activeSheet = nil
@@ -143,6 +158,7 @@ struct ImprovedPhoneMainView: View {
         }
         .onAppear {
             refreshCoachPlan()
+            loadTileData()
         }
         .onChange(of: userSettings.activeProgramID) { _, _ in
             refreshCoachPlan()
@@ -171,227 +187,285 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
-    // MARK: - Main Content View
+    // MARK: - Main Content View (Bento Grid)
     
     private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // 1. Hero Button
+                // Header — Greeting + Streak
+                dashboardHeader
+                
+                // Section 1: The Hero
                 HeroRuckButton {
                     selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
                     showingWeightSelector = true
                 }
                 
-                // 2. Active Program Card (Conditional)
-                activeProgramCard
-                
-                // 3. Recent Activity
-                recentActivitySection
-                
-                Spacer(minLength: 80)
+                // Section 2: The Bento Grid (2x2)
+                bentoGrid
             }
             .padding(.horizontal, 20)
-            .padding(.top, 40)
-            .padding(.bottom, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 100) // tab bar clearance
         }
-        .background(Color.clear)
     }
     
-    // MARK: - Active Program Card
+    // MARK: - Dashboard Header
     
-    private var activeProgramCard: some View {
-        Group {
-            if let planned = todaysPlannedWorkout {
-                // Active program — show next workout
-                Button {
-                    startPlannedWorkout(planned)
-                } label: {
-                    HStack(spacing: 0) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(programEyebrow)
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(AppColors.primary)
-                            
-                            Text(planned.title)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(AppColors.textPrimary)
-                            
-                            Text("Week \(planned.weekNumber), Day \(planned.dayNumber ?? 1)")
-                                .font(.subheadline)
-                                .foregroundColor(AppColors.textSecondary)
-                            
-                            HStack(spacing: 12) {
-                                Label(durationLabel(for: planned), systemImage: "clock")
-                                    .font(.caption)
-                                    .foregroundColor(AppColors.primary)
-                                Label(intensityLabel(for: planned), systemImage: "flame.fill")
-                                    .font(.caption)
-                                    .foregroundColor(AppColors.primary)
-                            }
-                            .padding(.top, 4)
-                        }
-                        
-                        Spacer()
-                        
-                        ZStack {
-                            Circle()
-                                .fill(AppColors.primary)
-                                .frame(width: 52, height: 52)
-                            
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.white)
-                                .offset(x: 2)
-                        }
-                    }
-                    .padding(18)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(AppColors.surface)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(AppColors.primary.opacity(0.4), lineWidth: 1.5)
-                            )
-                            .shadow(color: AppColors.primary.opacity(0.25), radius: 16, x: 0, y: 6)
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                // No active program — prompt to start one
-                Button {
-                    activeSheet = .trainingPrograms
-                } label: {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(AppColors.primary.opacity(0.15))
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "calendar.badge.plus")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(AppColors.primary)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Start a Training Plan")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(AppColors.textPrimary)
-                            
-                            Text("Follow a structured program")
-                                .font(.system(size: 13))
-                                .foregroundColor(AppColors.textSecondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary.opacity(0.5))
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(AppColors.surface.opacity(0.6))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
-                            )
-                    )
-                }
-                .buttonStyle(.plain)
+    private var dashboardHeader: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(greetingText)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(AppColors.textSecondary)
+                
+                Text(displayName)
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(AppColors.textPrimary)
             }
-        }
-    }
-    
-    // MARK: - Recent Activity
-    
-    private var recentActivitySection: some View {
-        Group {
-            if let lastWorkout = workoutDataManager.workouts.sorted(by: {
-                ($0.date ?? .distantPast) > ($1.date ?? .distantPast)
-            }).first {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Last Ruck")
-                        .font(.headline)
+            
+            Spacer()
+            
+            // Streak badge
+            if currentStreak > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(AppColors.accentWarm)
+                    
+                    Text("\(currentStreak)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
-                    
-                    lastRuckCard(lastWorkout)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(AppColors.accentWarm.opacity(0.12))
+                        .overlay(
+                            Capsule()
+                                .stroke(AppColors.accentWarm.opacity(0.25), lineWidth: 1)
+                        )
+                )
             }
         }
     }
     
-    private func lastRuckCard(_ workout: WorkoutEntity) -> some View {
-        Button {
-            activeSheet = .workoutHistory
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.accentGreen.opacity(0.15))
-                        .frame(width: 48, height: 48)
-                    
-                    Image(systemName: "figure.walk")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(AppColors.accentGreen)
-                }
-                
-                VStack(alignment: .leading, spacing: 3) {
-                    if let date = workout.date {
-                        Text(date, style: .relative)
-                            .font(.system(size: 13))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    
-                    HStack(spacing: 16) {
-                        Label(String(format: "%.1f mi", workout.distance), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(AppColors.textPrimary)
-                        
-                        Label(formattedDuration(workout.duration), systemImage: "clock")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(AppColors.textPrimary)
-                        
-                        if workout.ruckWeight > 0 {
-                            Label("\(Int(workout.ruckWeight)) lbs", systemImage: "scalemass")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppColors.textPrimary)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary.opacity(0.4))
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(AppColors.surface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1)
-                    )
-            )
+    // MARK: - Bento Grid
+    
+    private let gridColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    
+    private var bentoGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 12) {
+            // Tile 1: Plan
+            planTile
+            
+            // Tile 2: Tribe
+            tribeTile
+            
+            // Tile 3: Challenges
+            challengesTile
+            
+            // Tile 4: Rankings
+            rankingsTile
         }
-        .buttonStyle(.plain)
     }
     
-    private func formattedDuration(_ seconds: Double) -> String {
-        let total = Int(seconds)
-        let hours = total / 3600
-        let minutes = (total % 3600) / 60
-        if hours > 0 {
-            return "\(hours)h \(minutes)m"
+    // MARK: - Tile 1: Plan
+    
+    private var planTile: some View {
+        DashboardTile(
+            title: "Plan",
+            value: planTileValue,
+            subtitle: planTileSubtitle,
+            icon: "calendar",
+            color: AppColors.primary,
+            action: {
+                tabSelection.selectedTab = .coach
+            }
+        )
+    }
+    
+    private var planTileValue: String {
+        guard let workout = todaysPlannedWorkout else {
+            return "No Plan"
         }
-        return "\(minutes)m"
+        return "Week \(workout.weekNumber)"
+    }
+    
+    private var planTileSubtitle: String {
+        guard let workout = todaysPlannedWorkout else {
+            return "Tap to browse plans"
+        }
+        if let day = workout.dayNumber {
+            return "Day \(day) • \(workout.workoutType.capitalized)"
+        }
+        return coachPlanTitle ?? "Active"
+    }
+    
+    // MARK: - Tile 2: Tribe
+    
+    private var tribeTile: some View {
+        DashboardTile(
+            title: "Tribe",
+            value: tribeTileValue,
+            subtitle: tribeTileSubtitle,
+            icon: "person.3.fill",
+            color: AppColors.accentGreen,
+            action: {
+                tabSelection.selectedTab = .tribe
+            }
+        )
+    }
+    
+    private var tribeTileValue: String {
+        if nextEventTitle != nil {
+            return "Event"
+        }
+        if let club = communityService.myClubs.first {
+            return "\(club.memberCount)"
+        }
+        return "Join"
+    }
+    
+    private var tribeTileSubtitle: String {
+        if let title = nextEventTitle, let time = nextEventTime {
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .abbreviated
+            return "\(title) \(formatter.localizedString(for: time, relativeTo: Date()))"
+        }
+        if let club = communityService.myClubs.first {
+            return "\(club.name)"
+        }
+        return "Find your crew"
+    }
+    
+    // MARK: - Tile 3: Programs
+    
+    private var challengesTile: some View {
+        DashboardTile(
+            title: "Programs",
+            value: programsTileValue,
+            subtitle: programsTileSubtitle,
+            icon: "list.clipboard.fill",
+            color: AppColors.accentWarm,
+            action: {
+                activeSheet = .trainingPrograms
+            }
+        )
+    }
+    
+    private var programsTileValue: String {
+        if let workout = todaysPlannedWorkout {
+            return "Day \(workout.dayNumber ?? 1)"
+        }
+        if coachPlanTitle != nil {
+            return "Active"
+        }
+        return "Browse"
+    }
+    
+    private var programsTileSubtitle: String {
+        if let title = coachPlanTitle {
+            if let workout = todaysPlannedWorkout {
+                return "\(title) • Wk \(workout.weekNumber)"
+            }
+            return title
+        }
+        return "Find a training plan"
+    }
+    
+    // MARK: - Tile 4: Rankings
+    
+    private var rankingsTile: some View {
+        DashboardTile(
+            title: "Rankings",
+            value: rankingsTileValue,
+            subtitle: rankingsTileSubtitle,
+            icon: "chart.bar.fill",
+            color: .purple,
+            action: {
+                showingGlobalLeaderboard = true
+            }
+        )
+    }
+    
+    private var rankingsTileValue: String {
+        if let rank = globalRank {
+            return "#\(rank)"
+        }
+        return "—"
+    }
+    
+    private var rankingsTileSubtitle: String {
+        if globalRank != nil {
+            return "Global • Distance"
+        }
+        return "View leaderboard"
+    }
+    
+    // MARK: - Header Helpers
+    
+    private var greetingText: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<22: return "Good evening"
+        default: return "Late night"
+        }
+    }
+    
+    private var displayName: String {
+        if let profile = CommunityService.shared.currentProfile {
+            return profile.username
+        }
+        return userSettings.username ?? "Rucker"
+    }
+    
+    private var currentStreak: Int {
+        CommunityService.shared.currentProfile?.currentStreak ?? 0
+    }
+    
+    // MARK: - Tile Data Loading
+    
+    private func loadTileData() {
+        Task {
+            // Tribe: fetch next event from primary club
+            if communityService.myClubs.isEmpty {
+                try? await communityService.loadMyClubs()
+            }
+            
+            if let club = communityService.myClubs.first {
+                try? await communityService.loadClubEvents(clubId: club.id)
+                
+                let cutoff = Date().addingTimeInterval(48 * 60 * 60)
+                let upcoming = communityService.clubEvents
+                    .filter { $0.startTime > Date() && $0.startTime <= cutoff }
+                    .sorted { $0.startTime < $1.startTime }
+                    .first
+                
+                await MainActor.run {
+                    nextEventTitle = upcoming?.title
+                    nextEventTime = upcoming?.startTime
+                }
+            }
+            
+            // Rankings: fetch global leaderboard to find user rank
+            if communityService.isAuthenticated {
+                _ = try? await communityService.fetchGlobalLeaderboard(type: .distance)
+                
+                if let userId = communityService.currentProfile?.id {
+                    let myEntry = communityService.globalLeaderboard.first { $0.userId == userId }
+                    await MainActor.run {
+                        globalRank = myEntry?.rank
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Coach Plan Helpers
@@ -498,14 +572,6 @@ struct ImprovedPhoneMainView: View {
             await MainActor.run {
                 selectedUserProgram = programService.userPrograms.first(where: { $0.programId == programId })
                 selectedProgramId = programId
-                var unlocked = ProgramWorkoutWithState(
-                    workout: targetWorkout.workout,
-                    weekNumber: targetWorkout.weekNumber,
-                    isCompleted: targetWorkout.isCompleted,
-                    isLocked: false,
-                    completionDate: targetWorkout.completionDate
-                )
-                _ = unlocked
                 selectedProgramWorkout = ProgramWorkoutWithState(
                     workout: targetWorkout.workout,
                     weekNumber: targetWorkout.weekNumber,
@@ -829,6 +895,8 @@ struct ClickableWeightPill: View {
             .environmentObject(WorkoutManager())
             .environmentObject(WorkoutDataManager.shared)
             .environmentObject(PremiumManager.shared)
+            .environmentObject(DeepLinkManager())
+            .environmentObject(MainTabSelection())
     } else {
         Text("Requires iOS 17.0+")
     }
