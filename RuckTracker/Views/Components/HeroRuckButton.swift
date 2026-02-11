@@ -1,51 +1,34 @@
 import SwiftUI
 
 // MARK: - Hero Ruck Button
-/// Large, action-first CTA that launches an Open Goal ruck session.
+/// Primary CTA card that launches an Open Goal ruck session.
+/// Styled to match the dashboard tile cards with a primary accent.
 struct HeroRuckButton: View {
     let action: () -> Void
     
+    /// Vibrant solid sage green
+    private let heroGreen = Color(hex: "00C896")
+    
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 16) {
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(AppColors.primary.opacity(0.15))
-                        .frame(width: 64, height: 64)
-                    
-                    Image("MarchIconWhite")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 44, height: 44)
-                }
+            VStack(spacing: 8) {
+                Text("START RUCK")
+                    .font(.system(size: 36, weight: .black))
+                    .foregroundColor(.white)
                 
-                // Title
-                Text("GO RUCK")
-                    .font(.system(size: 28, weight: .heavy))
-                    .foregroundColor(AppColors.textPrimary)
-                
-                // Subtitle
-                Text("Open Goal  •  GPS Tracking")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
+                Text("No plan. Just walk with weight.")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(Color.white.opacity(0.85))
             }
             .frame(maxWidth: .infinity)
             .frame(height: 160)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(AppColors.surface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                AppColors.primaryGradient,
-                                lineWidth: 1.5
-                            )
-                    )
-                    .shadow(color: AppColors.primary.opacity(0.25), radius: 16, x: 0, y: 6)
+                    .fill(heroGreen)
+                    .shadow(color: heroGreen.opacity(0.4), radius: 12, x: 0, y: 6)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HeroButtonStyle())
     }
 }
 
@@ -56,7 +39,7 @@ struct HeroRuckButton: View {
             .ignoresSafeArea()
         
         HeroRuckButton {
-            print("GO RUCK tapped")
+            print("START RUCK tapped")
         }
         .padding(.horizontal, 20)
     }

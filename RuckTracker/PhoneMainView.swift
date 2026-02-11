@@ -251,104 +251,72 @@ struct ImprovedPhoneMainView: View {
         }
     }
     
-    // MARK: - Bento Grid
-    
-    private let gridColumns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
+    // MARK: - Card Stack
     
     private var bentoGrid: some View {
-        LazyVGrid(columns: gridColumns, spacing: 12) {
-            // Tile 1: Plan
+        VStack(spacing: 16) {
             planTile
-            
-            // Tile 2: Tribe
             tribeTile
-            
-            // Tile 3: Challenges
             challengesTile
-            
-            // Tile 4: Rankings
             rankingsTile
         }
     }
     
-    // MARK: - Tile 1: Plan
+    // MARK: - Tile 1: My Plan
     
     private var planTile: some View {
         DashboardTile(
-            title: "Plan",
-            value: planTileValue,
+            title: "MY PLAN",
             subtitle: planTileSubtitle,
             icon: "calendar",
-            color: AppColors.primary,
+            color: Color(hex: "4A9FD9"),
             action: {
                 tabSelection.selectedTab = .coach
             }
         )
     }
     
-    private var planTileValue: String {
-        guard let workout = todaysPlannedWorkout else {
-            return "No Plan"
-        }
-        return "Week \(workout.weekNumber)"
-    }
-    
     private var planTileSubtitle: String {
         guard let workout = todaysPlannedWorkout else {
-            return "Tap to browse plans"
+            return "Build a Customized Plan"
         }
         if let day = workout.dayNumber {
-            return "Day \(day) • \(workout.workoutType.capitalized)"
+            return "Next: Day \(day) • \(workout.workoutType.capitalized)"
         }
-        return coachPlanTitle ?? "Active"
+        return coachPlanTitle ?? "Next Workout"
     }
     
-    // MARK: - Tile 2: Tribe
+    // MARK: - Tile 2: My Tribe
     
     private var tribeTile: some View {
         DashboardTile(
-            title: "Tribe",
-            value: tribeTileValue,
+            title: "MY TRIBE",
             subtitle: tribeTileSubtitle,
             icon: "person.3.fill",
-            color: AppColors.accentGreen,
+            color: Color(hex: "D4A844"),
             action: {
                 tabSelection.selectedTab = .tribe
             }
         )
     }
     
-    private var tribeTileValue: String {
-        if nextEventTitle != nil {
-            return "Event"
-        }
-        if let club = communityService.myClubs.first {
-            return "\(club.memberCount)"
-        }
-        return "Join"
-    }
-    
     private var tribeTileSubtitle: String {
         if let title = nextEventTitle, let time = nextEventTime {
             let formatter = RelativeDateTimeFormatter()
             formatter.unitsStyle = .abbreviated
-            return "\(title) \(formatter.localizedString(for: time, relativeTo: Date()))"
+            return "Next event: \(title) \(formatter.localizedString(for: time, relativeTo: Date()))"
         }
         if let club = communityService.myClubs.first {
-            return "\(club.name)"
+            return "Next event in \(club.name)"
         }
-        return "Find your crew"
+        return "Join a Tribe"
     }
     
     // MARK: - Tile 3: Programs
     
     private var challengesTile: some View {
         DashboardTile(
-            title: "Programs",
-            value: programsTileValue,
+            title: "PROGRAMS",
             subtitle: programsTileSubtitle,
             icon: "list.clipboard.fill",
             color: AppColors.accentWarm,
@@ -358,32 +326,21 @@ struct ImprovedPhoneMainView: View {
         )
     }
     
-    private var programsTileValue: String {
-        if let workout = todaysPlannedWorkout {
-            return "Day \(workout.dayNumber ?? 1)"
-        }
-        if coachPlanTitle != nil {
-            return "Active"
-        }
-        return "Browse"
-    }
-    
     private var programsTileSubtitle: String {
         if let title = coachPlanTitle {
             if let workout = todaysPlannedWorkout {
-                return "\(title) • Wk \(workout.weekNumber)"
+                return "Next: \(title) • Wk \(workout.weekNumber)"
             }
             return title
         }
-        return "Find a training plan"
+        return "Start a Program"
     }
     
-    // MARK: - Tile 4: Rankings
+    // MARK: - Tile 4: Leaderboard
     
     private var rankingsTile: some View {
         DashboardTile(
-            title: "Rankings",
-            value: rankingsTileValue,
+            title: "LEADERBOARD",
             subtitle: rankingsTileSubtitle,
             icon: "chart.bar.fill",
             color: .purple,
@@ -393,18 +350,11 @@ struct ImprovedPhoneMainView: View {
         )
     }
     
-    private var rankingsTileValue: String {
-        if let rank = globalRank {
-            return "#\(rank)"
-        }
-        return "—"
-    }
-    
     private var rankingsTileSubtitle: String {
-        if globalRank != nil {
-            return "Global • Distance"
+        if let rank = globalRank {
+            return "#\(rank) in Global Distance"
         }
-        return "View leaderboard"
+        return "View Global Rankings"
     }
     
     // MARK: - Header Helpers

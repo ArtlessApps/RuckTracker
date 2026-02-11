@@ -34,8 +34,12 @@ struct MainTabView: View {
                     Label {
                         Text("")
                     } icon: {
-                        Image("MarchIconGreen")
-                            .renderingMode(.template)
+                        if let img = UIImage(named: "MarchV5White")?
+                            .trimmed()
+                            .scaledToFit(size: CGSize(width: 28, height: 28))
+                            .withRenderingMode(.alwaysTemplate) {
+                            Image(uiImage: img)
+                        }
                     }
                 }
                 .tag(MainTabSelection.Tab.ruck)
@@ -102,6 +106,57 @@ private struct ActivityContainer: View {
                         }
                     }
                 }
+        }
+    }
+}
+
+// MARK: - UIImage Helpers
+
+private extension UIImage {
+    /// Trims transparent pixels from all edges.
+    func trimmed() -> UIImage {
+        guard let cgImage = self.cgImage,
+              let dataProvider = cgImage.dataProvider,
+              let data = dataProvider.data,
+              let bytes = CFDataGetBytePtr(data) else { return self }
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        let bytesPerPixel = cgImage.bitsPerPixel / 8
+        let bytesPerRow = cgImage.bytesPerRow
+        
+        var minX = width, minY = height, maxX = 0, maxY = 0
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * bytesPerPixel
+                let alpha = bytes[offset + 3] // RGBA — alpha is last byte
+                if alpha > 0 {
+                    minX = min(minX, x)
+                    minY = min(minY, y)
+                    maxX = max(maxX, x)
+                    maxY = max(maxY, y)
+                }
+            }
+        }
+        
+        guard maxX > minX, maxY > minY else { return self }
+        
+        let cropRect = CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
+        guard let cropped = cgImage.cropping(to: cropRect) else { return self }
+        return UIImage(cgImage: cropped, scale: self.scale, orientation: self.imageOrientation)
+    }
+    
+    /// Scales image to fit within the target size, preserving aspect ratio.
+    func scaledToFit(size targetSize: CGSize) -> UIImage {
+        let widthRatio = targetSize.width / self.size.width
+        let heightRatio = targetSize.height / self.size.height
+        let ratio = min(widthRatio, heightRatio)
+        let newSize = CGSize(width: self.size.width * ratio, height: self.size.height * ratio)
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
 }
