@@ -31,31 +31,36 @@ struct MainTabView: View {
         TabView(selection: $tabSelection.selectedTab) {
             ImprovedPhoneMainView()
                 .tabItem {
-                    Label("Ruck", systemImage: "figure.walk")
+                    Label {
+                        Text("")
+                    } icon: {
+                        Image("MarchIconGreen")
+                            .renderingMode(.template)
+                    }
                 }
                 .tag(MainTabSelection.Tab.ruck)
             
             PlanView()
                 .tabItem {
-                    Label("Plan", systemImage: "calendar")
+                    Label("", systemImage: "calendar")
                 }
                 .tag(MainTabSelection.Tab.coach)
             
             CommunityTribeView()
                 .tabItem {
-                    Label("Tribe", systemImage: "person.3.fill")
+                    Label("", systemImage: "person.3.fill")
                 }
                 .tag(MainTabSelection.Tab.tribe)
             
             RankingsTabView()
                 .tabItem {
-                    Label("Rankings", systemImage: "trophy.fill")
+                    Label("", systemImage: "trophy.fill")
                 }
                 .tag(MainTabSelection.Tab.rankings)
             
             ActivityContainer(showSettings: $showingSettings)
                 .tabItem {
-                    Label("You", systemImage: "person.crop.circle")
+                    Label("", systemImage: "person.crop.circle")
                 }
                 .tag(MainTabSelection.Tab.you)
         }

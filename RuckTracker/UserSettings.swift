@@ -175,7 +175,13 @@ class UserSettings: ObservableObject {
         
         username = userDefaults.string(forKey: "username")
         email = userDefaults.string(forKey: "email")
-        hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedPhoneOnboarding")
+        
+        // Onboarding is "sticky true": once the user has completed it, never revert.
+        let storedOnboarding = userDefaults.bool(forKey: "hasCompletedPhoneOnboarding")
+        if storedOnboarding {
+            hasCompletedOnboarding = true
+        }
+        
         targetEventDate = userDefaults.object(forKey: "targetEventDate") as? Date
         baselinePaceMinutesPerMile = userDefaults.double(forKey: "baselinePaceMinutesPerMile")
         if baselinePaceMinutesPerMile == 0 { baselinePaceMinutesPerMile = 16.0 }
@@ -294,11 +300,13 @@ class UserSettings: ObservableObject {
     }
     
     /// Reset the anonymous (standard) UserDefaults so the next user doesn't inherit data.
+    /// NOTE: We intentionally preserve `hasCompletedPhoneOnboarding` so that on the next
+    /// cold launch the app shows the main UI while the async session restore runs.
     private func clearStandardDefaults() {
         let standard = UserDefaults.standard
         let keysToRemove = [
             "bodyWeight", "preferredWeightUnit", "preferredDistanceUnit",
-            "defaultRuckWeight", "username", "email", "hasCompletedPhoneOnboarding",
+            "defaultRuckWeight", "username", "email",
             "ruckingGoal", "experienceLevel", "preferredTrainingDays", "activeProgramID",
             "targetEventDate", "baselinePaceMinutesPerMile", "baselineLongestDistanceMiles",
             "hasHillAccess", "hasStairsAccess", "injuryFlags"
@@ -439,7 +447,14 @@ class UserSettings: ObservableObject {
         hasHillAccess = row.hasHillAccess ?? true
         hasStairsAccess = row.hasStairsAccess ?? false
         injuryFlags = row.injuryFlags ?? []
-        hasCompletedOnboarding = row.hasCompletedOnboarding ?? false
+        
+        // Onboarding is "sticky true": once completed locally, never revert to false.
+        // The remote DB may have null/false if it was saved before the user onboarded.
+        let remoteOnboarding = row.hasCompletedOnboarding ?? false
+        if remoteOnboarding {
+            hasCompletedOnboarding = true
+        }
+        // If remote says false but local is already true, keep true (don't downgrade).
     }
     
     // MARK: - Public: Save to Remote (called before sign-out or on demand)

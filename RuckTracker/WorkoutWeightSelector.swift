@@ -42,7 +42,7 @@ struct WorkoutWeightSelector: View {
                 HStack {
                     Text(context)
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color("TextSecondary"))
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
@@ -51,7 +51,7 @@ struct WorkoutWeightSelector: View {
                     } label: {
                         Image(systemName: "info.circle")
                             .font(.system(size: 20))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -59,17 +59,17 @@ struct WorkoutWeightSelector: View {
                 
                 Text("Set Ruck Weight")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(Color("BackgroundDark"))
+                    .foregroundColor(AppColors.textOnLight)
                     .padding(.top, 8)
                     .padding(.bottom, 40)
                 
                 // HERO - Selected Weight
                 Text("\(Int(selectedWeight))")
                     .font(.system(size: 100, weight: .medium))
-                    .foregroundColor(Color("BackgroundDark"))
+                    .foregroundColor(AppColors.textOnLight)
                 + Text(" lbs")
                     .font(.system(size: 36, weight: .regular))
-                    .foregroundColor(Color("BackgroundDark"))
+                    .foregroundColor(AppColors.textOnLight)
                 
                 Spacer()
                     .frame(height: 60)
@@ -77,18 +77,18 @@ struct WorkoutWeightSelector: View {
                 // Slider
                 VStack(spacing: 16) {
                     Slider(value: $selectedWeight, in: 0...100, step: 1)
-                        .tint(Color("BackgroundDark"))
+                        .tint(AppColors.textOnLight)
                     
                     HStack {
                         Text("0 lbs")
                             .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                         
                         Spacer()
                         
                         Text("100 lbs")
                             .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
                 .padding(.horizontal, 40)
@@ -103,12 +103,12 @@ struct WorkoutWeightSelector: View {
                     }) {
                         Text("Cancel")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .foregroundColor(AppColors.textOnLight)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color("BackgroundDark").opacity(0.08))
+                                    .fill(AppColors.textOnLight.opacity(0.08))
                             )
                     }
                     .buttonStyle(.plain)
@@ -129,7 +129,7 @@ struct WorkoutWeightSelector: View {
                         .frame(height: 56)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color("PrimaryMain"))
+                                .fill(AppColors.primary)
                         )
                     }
                     .buttonStyle(.plain)
@@ -156,11 +156,11 @@ struct RuckingGuidelinesSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Rucking Guidelines")
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(Color("BackgroundDark"))
+                            .foregroundColor(AppColors.textOnLight)
                         
                         Text("Safe weight recommendations based on experience level")
                             .font(.system(size: 15))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                     }
                     .padding(.top, 8)
                     
@@ -170,14 +170,14 @@ struct RuckingGuidelinesSheet: View {
                             title: "Beginner",
                             weight: "10-15% body weight",
                             description: "Start light and focus on form",
-                            color: Color("AccentGreen")
+                            color: AppColors.accentGreen
                         )
                         
                         GuidelineRow(
                             title: "Intermediate",
                             weight: "15-20% body weight",
                             description: "Build endurance and distance",
-                            color: Color("PrimaryMain")
+                            color: AppColors.primary
                         )
                         
                         GuidelineRow(
@@ -207,7 +207,7 @@ struct RuckingGuidelinesSheet: View {
                         
                         Text("Always start lighter than you think you need. Gradually increase weight as your body adapts. Listen to your body and prioritize proper form over heavier loads.")
                             .font(.system(size: 15))
-                            .foregroundColor(Color("TextSecondary"))
+                            .foregroundColor(AppColors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(16)
@@ -224,7 +224,7 @@ struct RuckingGuidelinesSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color("PrimaryMain"))
+                    .foregroundColor(AppColors.primary)
                 }
             }
         }
@@ -251,7 +251,7 @@ struct GuidelineRow: View {
                 HStack {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(Color("BackgroundDark"))
+                        .foregroundColor(AppColors.textOnLight)
                     
                     Spacer()
                     
@@ -262,7 +262,7 @@ struct GuidelineRow: View {
                 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(Color("TextSecondary"))
+                    .foregroundColor(AppColors.textSecondary)
             }
         }
         .padding(16)

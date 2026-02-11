@@ -21,16 +21,20 @@ struct CommunityTribeView: View {
     @State private var showingAuth = false
     
     var body: some View {
+        let _ = print("🔑 [AUTH][TribeView] body evaluated — currentProfile=\(String(describing: communityService.currentProfile?.username)), myClubs=\(communityService.myClubs.count), isAuthenticated=\(communityService.isAuthenticated)")
         NavigationView {
             Group {
                 if communityService.currentProfile == nil {
                     // Not signed in - show sign in prompt
+                    let _ = print("🔑 [AUTH][TribeView] → showing authPromptView (currentProfile is nil)")
                     authPromptView
                 } else if communityService.myClubs.isEmpty {
                     // Signed in but no clubs - show onboarding
+                    let _ = print("🔑 [AUTH][TribeView] → showing emptyClubsView")
                     emptyClubsView
                 } else {
                     // Has clubs - show list
+                    let _ = print("🔑 [AUTH][TribeView] → showing clubsListView")
                     clubsListView
                 }
             }
@@ -49,6 +53,7 @@ struct CommunityTribeView: View {
             }
         }
         .task(id: communityService.currentProfile?.id) {
+            print("🔑 [AUTH][TribeView] .task fired — profile id = \(String(describing: communityService.currentProfile?.id))")
             // Load clubs when profile becomes available
             if communityService.currentProfile != nil && communityService.myClubs.isEmpty {
                 try? await communityService.loadMyClubs()

@@ -34,6 +34,14 @@ struct RuckTrackerApp: App {
                         print("🛒 StoreKit products loaded")
                     }
                     
+                    // Eagerly restore any persisted Supabase session so the
+                    // user doesn't have to log in again after a cold launch.
+                    // CommunityService.init already fires restoreSessionIfNeeded(),
+                    // but accessing .shared here ensures it runs early.
+                    print("🔑 [AUTH][App] onAppear — initializing CommunityService.shared")
+                    _ = CommunityService.shared
+                    print("🔑 [AUTH][App] onAppear — CommunityService.shared initialized, isAuthenticated=\(CommunityService.shared.isAuthenticated)")
+                    
                     // Request workouts from watch if available
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         watchConnectivityManager.requestWorkoutsFromWatch()

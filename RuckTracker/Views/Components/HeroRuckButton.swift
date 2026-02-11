@@ -14,9 +14,10 @@ struct HeroRuckButton: View {
                         .fill(AppColors.primary.opacity(0.15))
                         .frame(width: 64, height: 64)
                     
-                    Image(systemName: "figure.walk")
-                        .font(.system(size: 30, weight: .bold))
-                        .foregroundColor(AppColors.primary)
+                    Image("MarchIconWhite")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 44, height: 44)
                 }
                 
                 // Title

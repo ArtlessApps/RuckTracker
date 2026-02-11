@@ -30,7 +30,9 @@ class CommunityService: ObservableObject {
     
     /// Returns true if there's an authenticated user session
     var isAuthenticated: Bool {
-        supabase.auth.currentUser != nil
+        let result = supabase.auth.currentUser != nil
+        print("🔑 [AUTH] isAuthenticated checked → \(result) (currentUser=\(String(describing: supabase.auth.currentUser?.id)), currentProfile=\(String(describing: currentProfile?.username)))")
+        return result
     }
     
     // MARK: - Supabase Client
@@ -48,34 +50,66 @@ class CommunityService: ObservableObject {
     // MARK: - Initialization
     
     private init() {
-        // Check for existing session on init
+        print("🔑 [AUTH] CommunityService.init — starting session restore")
+        print("🔑 [AUTH]   currentUser (sync) = \(String(describing: supabase.auth.currentUser?.id))")
         Task {
             await restoreSessionIfNeeded()
         }
     }
     
-    /// Check for existing auth session and load user data
+    /// Check for existing auth session and load user data.
+    ///
+    /// The Supabase SDK stores sessions in the Keychain, but the synchronous
+    /// `currentUser` property is `nil` on a fresh launch until the persisted
+    /// session has been loaded.  Calling `supabase.auth.session` (async)
+    /// triggers that load (and a token-refresh when needed), so we must use
+    /// that instead of the synchronous check.
     func restoreSessionIfNeeded() async {
-        // Supabase automatically persists sessions - check if we have one
-        guard let user = supabase.auth.currentUser else {
-            print("ℹ️ No existing session found")
-            return
-        }
+        print("🔑 [AUTH] restoreSessionIfNeeded — BEGIN")
+        print("🔑 [AUTH]   currentUser (sync, pre-await) = \(String(describing: supabase.auth.currentUser?.id))")
         
         do {
+            // This async call loads the persisted session from Keychain,
+            // refreshes the token if expired, and populates `currentUser`.
+            print("🔑 [AUTH]   Calling supabase.auth.session (async)...")
+            let session = try await supabase.auth.session
+            let user = session.user
+            print("🔑 [AUTH]   ✅ Got session! user.id = \(user.id), email = \(user.email ?? "nil")")
+            print("🔑 [AUTH]   Token expires at: \(Date(timeIntervalSince1970: session.expiresAt))")
+            print("🔑 [AUTH]   currentUser (sync, post-await) = \(String(describing: supabase.auth.currentUser?.id))")
+            
+            print("🔑 [AUTH]   Loading profile...")
             try await loadCurrentProfile()
+            print("🔑 [AUTH]   ✅ Profile loaded: \(currentProfile?.username ?? "nil")")
+            
+            print("🔑 [AUTH]   Loading clubs...")
             try await loadMyClubs()
-            print("✅ Session restored with \(myClubs.count) clubs")
+            print("🔑 [AUTH]   ✅ Session restored for \(user.id) with \(myClubs.count) clubs")
             
             // Re-evaluate premium status for the restored user
-            // Ensures ambassador status is checked for this specific user
             PremiumManager.shared.evaluatePremiumForNewUser()
             
-            // Switch UserSettings to this user's per-user suite + load remote prefs
+            // Switch UserSettings to this user's per-user suite + load remote prefs.
+            // The user clearly completed onboarding (they have a profile), so make sure
+            // that flag is set *before* switchToUser saves/loads the remote row.
+            UserSettings.shared.hasCompletedOnboarding = true
             await UserSettings.shared.switchToUser(user.id)
+            
+            // After the switch, ensure onboarding is still true and sync it to remote
+            // (fixes stale null/false in the DB).
+            if !UserSettings.shared.hasCompletedOnboarding {
+                print("🔑 [AUTH]   ⚠️ Onboarding was reset to false by switchToUser, forcing true")
+                UserSettings.shared.hasCompletedOnboarding = true
+            }
+            await UserSettings.shared.syncToRemoteIfNeeded()
+            
+            print("🔑 [AUTH]   ✅ restoreSessionIfNeeded — COMPLETE (authenticated, onboarding=\(UserSettings.shared.hasCompletedOnboarding))")
         } catch {
-            print("❌ Failed to restore session data: \(error)")
-            // Session might be expired, clear local state
+            print("🔑 [AUTH]   ❌ restoreSessionIfNeeded FAILED")
+            print("🔑 [AUTH]   Error type: \(type(of: error))")
+            print("🔑 [AUTH]   Error: \(error)")
+            print("🔑 [AUTH]   Localized: \(error.localizedDescription)")
+            print("🔑 [AUTH]   currentUser (sync, after error) = \(String(describing: supabase.auth.currentUser?.id))")
             currentProfile = nil
             myClubs = []
         }
