@@ -259,7 +259,8 @@ class CommunityService: ObservableObject {
     
     // MARK: - User Subscriptions
     
-    /// Get the current user's active subscription from the database, if any
+    /// Get the current user's active *paid* subscription from the database, if any.
+    /// Excludes ambassador records so they don't masquerade as paid subscriptions.
     func getActiveSubscription() async throws -> UserSubscription? {
         guard let userId = supabase.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
@@ -270,6 +271,7 @@ class CommunityService: ObservableObject {
             .select()
             .eq("user_id", value: userId.uuidString)
             .eq("status", value: "active")
+            .neq("subscription_type", value: "ambassador")
             .order("created_at", ascending: false)
             .limit(1)
             .execute()

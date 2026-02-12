@@ -15,6 +15,7 @@ import SwiftUI
 
 struct CommunityTribeView: View {
     @StateObject private var communityService = CommunityService.shared
+    @EnvironmentObject var tabSelection: MainTabSelection
     @State private var selectedClub: Club?
     @State private var showingJoinClub = false
     @State private var showingCreateClub = false
@@ -45,7 +46,9 @@ struct CommunityTribeView: View {
             }
             .navigationTitle("Tribe")
             .sheet(isPresented: $showingAuth) {
-                AuthenticationView()
+                AuthenticationView(onLoginSuccess: {
+                    tabSelection.selectedTab = .ruck
+                })
             }
             .sheet(isPresented: $showingJoinClub) {
                 JoinClubView()
@@ -100,10 +103,13 @@ struct CommunityTribeView: View {
     // MARK: - Empty Clubs
     
     private var emptyClubsView: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "figure.hiking")
-                .font(.system(size: 64))
-                .foregroundColor(AppColors.primary)
+        VStack(spacing: 16) {
+            Image("MarchV5Green")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 320, height: 320)
+                .padding(.top, -80)
+                .padding(.bottom, -60)
             
             Text("Join Your First Club")
                 .font(.system(size: 28, weight: .bold))

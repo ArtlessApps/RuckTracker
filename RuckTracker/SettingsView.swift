@@ -13,6 +13,7 @@ struct SettingsView: View {
     @StateObject private var premiumManager = PremiumManager.shared
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var healthManager: HealthManager
+    @EnvironmentObject var tabSelection: MainTabSelection
     
     @State private var bodyWeightInput: String = ""
     @State private var defaultRuckWeightInput: String = ""
@@ -86,7 +87,10 @@ struct SettingsView: View {
                 DebugLogViewer()
             }
             .sheet(isPresented: $showingAuth) {
-                AuthenticationView()
+                AuthenticationView(onLoginSuccess: {
+                    tabSelection.selectedTab = .ruck
+                    dismiss()
+                })
             }
             .alert("Reset Settings", isPresented: $showingResetAlert) {
                 Button("Reset", role: .destructive) {
@@ -114,6 +118,57 @@ struct SettingsView: View {
             }
             .onAppear {
                 loadCurrentValues()
+            }
+        }
+    }
+    
+    // MARK: - Tier Badge
+    
+    private var tierBadge: some View {
+        Group {
+            switch premiumManager.premiumSource {
+            case .ambassador:
+                HStack(spacing: 4) {
+                    Image(systemName: "star.circle.fill")
+                        .font(.system(size: 12))
+                    Text("AMBASSADOR")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    LinearGradient(
+                        colors: [Color.orange, Color.yellow],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(6)
+            case .subscription:
+                HStack(spacing: 4) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 12))
+                    Text("PRO")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(AppColors.primary)
+                .cornerRadius(6)
+            case .none:
+                HStack(spacing: 4) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 12))
+                    Text("FREE")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(AppColors.textSecondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(AppColors.textSecondary.opacity(0.15))
+                .cornerRadius(6)
             }
         }
     }
@@ -147,6 +202,9 @@ struct SettingsView: View {
                         }
                         
                         Spacer()
+                        
+                        // Tier badge
+                        tierBadge
                     }
                     
                     Divider()
