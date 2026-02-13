@@ -1015,7 +1015,17 @@ struct NearbyClubCard: View {
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.textSecondary)
                         
-                        if let zipcode = club.zipcode {
+                        if let distanceLabel = club.distanceLabel {
+                            Text("•")
+                                .foregroundColor(AppColors.textSecondary)
+                            HStack(spacing: 4) {
+                                Image(systemName: club.isGlobal ? "globe" : "location.fill")
+                                    .font(.system(size: 12))
+                                Text(distanceLabel)
+                                    .font(.system(size: 14))
+                            }
+                            .foregroundColor(club.isGlobal ? AppColors.primary : AppColors.textSecondary)
+                        } else if let zipcode = club.zipcode {
                             Text("•")
                                 .foregroundColor(AppColors.textSecondary)
                             HStack(spacing: 4) {

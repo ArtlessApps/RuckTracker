@@ -575,7 +575,7 @@ await PremiumManager.shared.checkAmbassadorStatus()
 ### Role Permissions Matrix
 
 | Action | Member | Leader | Founder |
-|--------|--------|--------|---------|
+|--------|:------:|:------:|:-------:|
 | View events | ✓ | ✓ | ✓ |
 | RSVP to events | ✓ | ✓ | ✓ |
 | Post to Wire | ✓ | ✓ | ✓ |
@@ -583,13 +583,11 @@ await PremiumManager.shared.checkAmbassadorStatus()
 | Like posts | ✓ | ✓ | ✓ |
 | See invite code | | ✓ | ✓ |
 | Create events | | ✓ | ✓ |
-| Edit own events | | ✓ | ✓ |
-| Edit any event | | | ✓ |
-| Delete any event | | | ✓ |
+| Edit/delete events | | ✓ | ✓ |
+| View emergency contacts | | ✓ | ✓ |
+| Remove members | | ✓ | ✓ |
 | Promote to Leader | | | ✓ |
 | Demote to Member | | | ✓ |
-| Remove members | | | ✓ |
-| View emergency contacts | | | ✓ |
 | Edit club details | | | ✓ |
 | Regenerate invite code | | | ✓ |
 | Transfer ownership | | | ✓ |
@@ -608,11 +606,11 @@ await PremiumManager.shared.checkAmbassadorStatus()
 
 | Tier | Color | Accent | Use Case |
 |------|-------|--------|----------|
-| Bronze | #CC8033 | #994A26 | Entry-level achievements |
+| Bronze | #CC8033 | #995926 | Entry-level achievements |
 | Silver | #BFBFCC | #8C8C99 | Mid-tier milestones |
-| Gold | #FFD700 | #D9A600 | Major achievements |
+| Gold | #FFD600 | #D9A600 | Major achievements |
 | Platinum | #E6E6FA | #B3B3D9 | Elite status |
-| PRO | Gold | Orange | Subscription status |
+| PRO | #FFD600 (Gold) | Orange | Subscription status |
 
 ---
 

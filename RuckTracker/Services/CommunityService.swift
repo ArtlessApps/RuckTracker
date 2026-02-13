@@ -418,13 +418,17 @@ class CommunityService: ObservableObject {
     
     /// Get a club by its join code (for waiver flow)
     func getClubByCode(_ code: String) async throws -> Club {
-        let club: Club = try await supabase
+        let clubs: [Club] = try await supabase
             .from("clubs")
             .select()
             .eq("join_code", value: code.uppercased())
-            .single()
+            .limit(1)
             .execute()
             .value
+        
+        guard let club = clubs.first else {
+            throw CommunityError.clubNotFound
+        }
         
         return club
     }
@@ -539,7 +543,7 @@ class CommunityService: ObservableObject {
         
         // Delete leaderboard entries
         try await supabase
-            .from("weekly_leaderboard")
+            .from("leaderboard_entries")
             .delete()
             .eq("club_id", value: clubId.uuidString)
             .execute()
@@ -1674,6 +1678,8 @@ struct Club: Codable, Identifiable {
     let latitude: Double?
     let longitude: Double?
     let createdAt: Date
+    /// Distance in miles from the search location (only populated from nearby search)
+    let distanceMiles: Double?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -1688,6 +1694,22 @@ struct Club: Codable, Identifiable {
         case latitude
         case longitude
         case createdAt = "created_at"
+        case distanceMiles = "distance_miles"
+    }
+    
+    /// Whether this club is global (no location set)
+    var isGlobal: Bool {
+        latitude == nil && longitude == nil
+    }
+    
+    /// Human-readable distance label: e.g. "2.3 mi away" or "Global"
+    var distanceLabel: String? {
+        if isGlobal {
+            return "Global"
+        } else if let miles = distanceMiles {
+            return String(format: "%.1f mi away", miles)
+        }
+        return nil
     }
     
     /// Returns a copy of this club with a different member count (e.g. from live club_members count).
@@ -1704,7 +1726,8 @@ struct Club: Codable, Identifiable {
             zipcode: zipcode,
             latitude: latitude,
             longitude: longitude,
-            createdAt: createdAt
+            createdAt: createdAt,
+            distanceMiles: distanceMiles
         )
     }
 }
@@ -1747,7 +1770,7 @@ struct NearbyClub: Codable, Identifiable {
         case distanceMiles = "distance_miles"
     }
     
-    /// Convert to regular Club for compatibility
+    /// Convert to regular Club for compatibility (preserves distance)
     var asClub: Club {
         Club(
             id: id,
@@ -1761,7 +1784,8 @@ struct NearbyClub: Codable, Identifiable {
             zipcode: zipcode,
             latitude: latitude,
             longitude: longitude,
-            createdAt: createdAt
+            createdAt: createdAt,
+            distanceMiles: distanceMiles
         )
     }
 }
@@ -2045,6 +2069,7 @@ enum CommunityError: Error, LocalizedError {
     case waiverRequired
     case duplicateInviteCode
     case duplicateUsername
+    case clubNotFound
     case geocodingFailed
     
     var errorDescription: String? {
@@ -2071,6 +2096,8 @@ enum CommunityError: Error, LocalizedError {
             return "This invite code is already taken. Please choose a different one."
         case .duplicateUsername:
             return "This username is already taken. Please choose a different one."
+        case .clubNotFound:
+            return "No club found with that code. Check the code and try again, or use 'Find a Club' to search by zipcode."
         case .geocodingFailed:
             return "Could not find location for that ZIP code"
         }

@@ -105,7 +105,8 @@ CREATE TABLE public.leaderboard_entries (
   total_elevation numeric DEFAULT 0,
   CONSTRAINT leaderboard_entries_pkey PRIMARY KEY (id),
   CONSTRAINT leaderboard_entries_club_id_fkey FOREIGN KEY (club_id) REFERENCES public.clubs(id),
-  CONSTRAINT leaderboard_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT leaderboard_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT leaderboard_entries_club_user_week_key UNIQUE (club_id, user_id, week_start)
 );
 CREATE TABLE public.post_likes (
   post_id uuid NOT NULL,
@@ -188,6 +189,74 @@ CREATE POLICY "Users can update own preferences"
   ON public.user_preferences FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================
+-- RPC: get_weekly_leaderboard
+-- Returns ranked weekly leaderboard entries for a specific club,
+-- joined with profile data (username, avatar).
+-- Run this in the Supabase SQL Editor to create/replace the function.
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_weekly_leaderboard(p_club_id UUID)
+RETURNS TABLE (
+    rank        BIGINT,
+    user_id     UUID,
+    username    TEXT,
+    avatar_url  TEXT,
+    total_distance  NUMERIC,
+    total_elevation NUMERIC,
+    total_workouts  INTEGER
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY le.total_distance DESC)::BIGINT AS rank,
+        le.user_id,
+        p.username,
+        p.avatar_url,
+        le.total_distance,
+        le.total_elevation,
+        le.total_workouts
+    FROM leaderboard_entries le
+    JOIN profiles p ON p.id = le.user_id
+    WHERE le.club_id = p_club_id
+      AND le.week_start = date_trunc('week', CURRENT_DATE)::date
+    ORDER BY le.total_distance DESC;
+$$;
+
+-- ============================================================
+-- RPC: update_leaderboard_entry
+-- Upserts a user's weekly leaderboard entry for a club.
+-- Adds the workout distance/elevation to the existing totals,
+-- or inserts a new row if none exists for the current week.
+-- Run this in the Supabase SQL Editor to create/replace the function.
+-- ============================================================
+CREATE OR REPLACE FUNCTION update_leaderboard_entry(
+    p_club_id   UUID,
+    p_user_id   UUID,
+    p_distance  DOUBLE PRECISION,
+    p_weight    DOUBLE PRECISION,
+    p_elevation DOUBLE PRECISION
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_week_start DATE := date_trunc('week', CURRENT_DATE)::date;
+BEGIN
+    INSERT INTO leaderboard_entries (club_id, user_id, week_start, total_distance, total_workouts, total_weight_carried, total_elevation)
+    VALUES (p_club_id, p_user_id, v_week_start, p_distance, 1, p_weight, p_elevation)
+    ON CONFLICT ON CONSTRAINT leaderboard_entries_club_user_week_key
+    DO UPDATE SET
+        total_distance       = leaderboard_entries.total_distance + EXCLUDED.total_distance,
+        total_workouts       = leaderboard_entries.total_workouts + EXCLUDED.total_workouts,
+        total_weight_carried = leaderboard_entries.total_weight_carried + EXCLUDED.total_weight_carried,
+        total_elevation      = leaderboard_entries.total_elevation + EXCLUDED.total_elevation,
+        updated_at           = now();
+END;
+$$;
 
 -- ============================================================
 -- RPC: get_club_feed

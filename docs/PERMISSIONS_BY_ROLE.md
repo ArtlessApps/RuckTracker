@@ -165,6 +165,11 @@ func checkAmbassadorStatus() async {
 // Permission helpers on ClubRole enum
 var canCreateEvents: Bool { self == .founder || self == .leader }
 var canManageMembers: Bool { self == .founder }
-var canViewEmergencyData: Bool { self == .founder }
+var canViewEmergencyData: Bool { self == .founder || self == .leader }
+var canRemoveMembers: Bool { self == .founder || self == .leader }
 var canDeleteClub: Bool { self == .founder }
+var canTransferOwnership: Bool { self == .founder }
+var canEditClubDetails: Bool { self == .founder }
+var canRegenerateJoinCode: Bool { self == .founder }
+var canInviteMembers: Bool { self == .founder || self == .leader }
 ```

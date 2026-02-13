@@ -230,4 +230,48 @@ let entries = try await CommunityService.shared.fetchGlobalLeaderboard(type: .di
 
 ---
 
+## Quick Reference Tables
+
+### Role Permissions Matrix
+
+| Action | Member | Leader | Founder |
+|--------|:------:|:------:|:-------:|
+| View events | ✓ | ✓ | ✓ |
+| RSVP to events | ✓ | ✓ | ✓ |
+| Post to Wire | ✓ | ✓ | ✓ |
+| View club feed | ✓ | ✓ | ✓ |
+| Like posts | ✓ | ✓ | ✓ |
+| See invite code | | ✓ | ✓ |
+| Create events | | ✓ | ✓ |
+| Edit/delete events | | ✓ | ✓ |
+| View emergency contacts | | ✓ | ✓ |
+| Remove members | | ✓ | ✓ |
+| Promote to Leader | | | ✓ |
+| Demote to Member | | | ✓ |
+| Edit club details | | | ✓ |
+| Regenerate invite code | | | ✓ |
+| Transfer ownership | | | ✓ |
+| Delete club | | | ✓ |
+
+### Global Leaderboard Views
+
+| Display Name | Table Name | Metric | Reset Period |
+|--------------|------------|--------|--------------|
+| Road Warriors | global_leaderboard_distance_weekly | Sum of miles | Every Monday |
+| Heavy Haulers | global_leaderboard_tonnage_alltime | Sum of lbs-mi | Never (all-time) |
+| Vertical Gainers | global_leaderboard_elevation_monthly | Sum of ft gained | 1st of month |
+| Iron Discipline | global_leaderboard_consistency | Distinct workout days | Rolling 30 days |
+
+### Badge Tiers & Colors
+
+| Tier | Color | Accent | Use Case |
+|------|-------|--------|----------|
+| Bronze | #CC8033 | #995926 | Entry-level achievements |
+| Silver | #BFBFCC | #8C8C99 | Mid-tier milestones |
+| Gold | #FFD600 | #D9A600 | Major achievements |
+| Platinum | #E6E6FA | #B3B3D9 | Elite status |
+| PRO | #FFD600 (Gold) | Orange | Subscription status |
+
+---
+
 *Last updated: February 2026*
