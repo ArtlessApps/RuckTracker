@@ -82,7 +82,7 @@ struct WorkoutView: View {
                         if workoutManager.ruckWeight > 0 {
                             Text("LOADED")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(AppColors.accentWarm)
+                                .foregroundColor(AppColors.primary)
                                 .padding(.top, 2)
                         }
                     }
