@@ -56,32 +56,20 @@ class HealthManager: ObservableObject {
         let typesToRead: Set<HKObjectType>
         let typesToWrite: Set<HKSampleType>
         
-        if isWatchApp {
-            // Watch can read and write everything
-            typesToRead = [
-                heartRateType,
-                caloriesType,
-                distanceType,
-                HKWorkoutType.workoutType()
-            ]
-            typesToWrite = [
-                HKWorkoutType.workoutType(),
-                caloriesType,
-                distanceType
-            ]
-        } else {
-            // iPhone: Don't request heart rate (it will be denied anyway)
-            typesToRead = [
-                caloriesType,
-                distanceType,
-                HKWorkoutType.workoutType()
-            ]
-            typesToWrite = [
-                HKWorkoutType.workoutType(),
-                caloriesType,
-                distanceType
-            ]
-        }
+        // Both platforms request the same permissions now.
+        // iPhone uses HKWorkoutSession (iOS 17+) which can receive heart rate
+        // from a connected Apple Watch during a workout session.
+        typesToRead = [
+            heartRateType,
+            caloriesType,
+            distanceType,
+            HKWorkoutType.workoutType()
+        ]
+        typesToWrite = [
+            HKWorkoutType.workoutType(),
+            caloriesType,
+            distanceType
+        ]
         
         // Add timeout handling for simulator
         let timeout: TimeInterval = 30.0
@@ -210,17 +198,10 @@ class HealthManager: ObservableObject {
             }
             
             // Consider authorized if we have essential permissions
-            let hasEssentialPermissions: Bool
-            if self.isWatchApp {
-                // Watch needs workout, calories, and ideally heart rate
-                hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
-                                        caloriesStatus == .sharingAuthorized &&
-                                        heartRateStatus == .sharingAuthorized
-            } else {
-                // iPhone just needs workout and calories (heart rate not available)
-                hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
+            // Both platforms need workout + calories. Heart rate is a bonus on iPhone
+            // (available via connected Apple Watch during HKWorkoutSession).
+            let hasEssentialPermissions = workoutStatus == .sharingAuthorized &&
                                         caloriesStatus == .sharingAuthorized
-            }
             
             self.isAuthorized = hasEssentialPermissions
             
@@ -236,7 +217,7 @@ class HealthManager: ObservableObject {
             if self.isWatchApp {
                 print("📱 Watch: Full HealthKit integration available")
             } else {
-                print("📱 iPhone: Limited HealthKit (no heart rate) - use Watch for full tracking")
+                print("📱 iPhone: HKWorkoutSession active — heart rate available with connected Apple Watch")
             }
         }
     }

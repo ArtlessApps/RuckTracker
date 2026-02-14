@@ -39,7 +39,9 @@ struct PhoneOnboardingView: View {
                     // Step 0: The Welcome (Identity)
                     WelcomeCoachStep(
                         nextAction: { nextStep() },
-                        onLogin: { showingAuth = true }
+                        onLogin: { showingAuth = true },
+                        onSkip: { hasCompletedOnboarding = true },
+                        isAuthenticated: CommunityService.shared.isAuthenticated
                     )
                     .tag(0)
                     
@@ -176,6 +178,8 @@ struct PhoneOnboardingView: View {
 struct WelcomeCoachStep: View {
     var nextAction: () -> Void
     var onLogin: () -> Void
+    var onSkip: () -> Void
+    var isAuthenticated: Bool
     
     var body: some View {
         VStack(spacing: 20) {
@@ -186,13 +190,8 @@ struct WelcomeCoachStep: View {
                 .font(.system(size: 60, weight: .black))
                 .foregroundColor(AppColors.primary)
             
-            Text("WALK STRONGER")
-                .font(.headline)
-                .tracking(4)
-                .foregroundColor(AppColors.textPrimary)
-            
             // Main value prop
-            Text("Training for longevity, hunting, or a GORUCK event?\n\nWe build the plan. You do the work.")
+            Text("Looking for a Ruck Club?\n\nTraining for longevity or a GORUCK event?\n\nWe build the plan. You do the work.")
                 .multilineTextAlignment(.center)
                 .foregroundColor(AppColors.textSecondary)
                 .padding(.horizontal, 30)
@@ -212,17 +211,27 @@ struct WelcomeCoachStep: View {
             }
             .padding(.horizontal, 30)
             
-            // Existing user login link
-            Button(action: onLogin) {
-                Text("Existing User? ")
-                    .foregroundColor(AppColors.textSecondary)
-                +
-                Text("Login")
-                    .foregroundColor(AppColors.primary)
-                    .fontWeight(.semibold)
+            // Show Login or Skip depending on auth state
+            if isAuthenticated {
+                Button(action: onSkip) {
+                    Text("Skip")
+                        .foregroundColor(AppColors.textSecondary)
+                        .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .padding(.bottom, 20)
+            } else {
+                Button(action: onLogin) {
+                    Text("Existing User? ")
+                        .foregroundColor(AppColors.textSecondary)
+                    +
+                    Text("Login")
+                        .foregroundColor(AppColors.primary)
+                        .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .padding(.bottom, 20)
             }
-            .font(.subheadline)
-            .padding(.bottom, 20)
         }
     }
 }
@@ -346,32 +355,6 @@ struct ProfileSetupStep: View {
                         .foregroundColor(AppColors.textSecondary.opacity(0.7))
                 }
                 
-                // Common ruck weight suggestions
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Quick select:")
-                        .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
-                    
-                    HStack(spacing: 12) {
-                        ForEach(quickSelectWeights, id: \.self) { weight in
-                            Button(action: {
-                                ruckWeightInput = String(format: "%.0f", weight)
-                            }) {
-                                Text("\(Int(weight))")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(ruckWeightInput == String(format: "%.0f", weight) ? AppColors.textPrimary : AppColors.primary)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(ruckWeightInput == String(format: "%.0f", weight) ? AppColors.primary : AppColors.primary.opacity(0.15))
-                                    )
-                            }
-                        }
-                    }
-                }
-                
                 Spacer(minLength: 20)
                 
                 // Continue button
@@ -391,6 +374,9 @@ struct ProfileSetupStep: View {
             }
             .padding()
         }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear {
             bodyWeightInput = String(format: "%.0f", userSettings.bodyWeight)
             ruckWeightInput = String(format: "%.0f", userSettings.defaultRuckWeight)
@@ -405,14 +391,6 @@ struct ProfileSetupStep: View {
                 let converted = userSettings.preferredWeightUnit == .kilograms ? ruckWeight * 0.453592 : ruckWeight / 0.453592
                 ruckWeightInput = String(format: "%.0f", converted)
             }
-        }
-    }
-    
-    private var quickSelectWeights: [Double] {
-        if userSettings.preferredWeightUnit == .kilograms {
-            return [10, 15, 20, 25]
-        } else {
-            return [20, 30, 40, 50]
         }
     }
     
