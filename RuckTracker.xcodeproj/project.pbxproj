@@ -374,6 +374,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MARCH uses motion data to accurately track your steps, pace, and cadence during rucking workouts.";
 				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
@@ -409,6 +410,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to read your heart rate and workout data to provide accurate rucking tracking on your Apple Watch.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data (calories, distance, time) to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MARCH uses motion data to accurately track your steps, pace, and cadence during rucking workouts.";
 				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Artless.RuckTracker;
@@ -447,6 +449,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MARCH uses motion data to accurately track your steps, pace, and cadence during rucking workouts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = location;
@@ -487,6 +490,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "MARCH needs access to your health data to track your workouts and save them to your Health app.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MARCH needs permission to save your ruck workout data to your Health app.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "MARCH needs location access to accurately track your distance during rucking workouts using GPS.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "MARCH uses motion data to accurately track your steps, pace, and cadence during rucking workouts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = location;
