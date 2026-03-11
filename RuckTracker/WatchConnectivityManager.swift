@@ -147,6 +147,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
     
+    // Handles workouts queued via transferUserInfo (delivered even when app was in background)
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        DispatchQueue.main.async {
+            self.handleReceivedMessage(userInfo)
+        }
+    }
+    
     private func handleReceivedMessage(_ message: [String: Any]) {
         // Handle workout data from watch
         if let workoutData = message[WatchConnectivityKeys.workoutData] as? Data {
@@ -164,39 +171,42 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
     
+    private func saveTransferData(_ transferData: WorkoutTransferData) -> Bool {
+        guard let workoutDataManager = workoutDataManager else {
+            print("❌ No WorkoutDataManager available to save workout")
+            return false
+        }
+        
+        let existingWorkouts = workoutDataManager.workouts.filter { workout in
+            guard let workoutDate = workout.date else { return false }
+            return abs(workoutDate.timeIntervalSince(transferData.date)) < 60 &&
+                   abs(workout.duration - transferData.duration) < 10
+        }
+        
+        guard existingWorkouts.isEmpty else {
+            print("📱 Workout already exists, skipping duplicate")
+            return false
+        }
+        
+        workoutDataManager.saveWorkout(
+            date: transferData.date,
+            duration: transferData.duration,
+            distance: transferData.distance,
+            calories: transferData.calories,
+            ruckWeight: transferData.ruckWeight,
+            heartRate: transferData.heartRate,
+            elevationGain: transferData.elevationGain
+        )
+        return true
+    }
+    
     private func handleReceivedWorkoutData(_ data: Data) {
         do {
             let transferData = try JSONDecoder().decode(WorkoutTransferData.self, from: data)
-            
-            guard let workoutDataManager = workoutDataManager else {
-                print("❌ No WorkoutDataManager available to save workout")
-                return
-            }
-            
-            // Check if workout already exists (by date and duration)
-            let existingWorkouts = workoutDataManager.workouts.filter { workout in
-                guard let workoutDate = workout.date else { return false }
-                return abs(workoutDate.timeIntervalSince(transferData.date)) < 60 && // Within 1 minute
-                       abs(workout.duration - transferData.duration) < 10 // Within 10 seconds
-            }
-            
-            if existingWorkouts.isEmpty {
-                // Save new workout
-                workoutDataManager.saveWorkout(
-                    date: transferData.date,
-                    duration: transferData.duration,
-                    distance: transferData.distance,
-                    calories: transferData.calories,
-                    ruckWeight: transferData.ruckWeight,
-                    heartRate: transferData.heartRate
-                )
-                
+            if saveTransferData(transferData) {
                 print("📱 Received and saved workout from watch: \(transferData.date.formatted())")
                 lastSyncDate = Date()
-            } else {
-                print("📱 Workout already exists, skipping duplicate")
             }
-            
         } catch {
             print("❌ Failed to decode workout data from watch: \(error.localizedDescription)")
         }
@@ -205,37 +215,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
     private func handleReceivedAllWorkouts(_ data: Data) {
         do {
             let allWorkouts = try JSONDecoder().decode([WorkoutTransferData].self, from: data)
-            
-            guard let workoutDataManager = workoutDataManager else {
-                print("❌ No WorkoutDataManager available to save workouts")
-                return
-            }
-            
-            var savedCount = 0
-            for transferData in allWorkouts {
-                // Check if workout already exists
-                let existingWorkouts = workoutDataManager.workouts.filter { workout in
-                    guard let workoutDate = workout.date else { return false }
-                    return abs(workoutDate.timeIntervalSince(transferData.date)) < 60 &&
-                           abs(workout.duration - transferData.duration) < 10
-                }
-                
-                if existingWorkouts.isEmpty {
-                    workoutDataManager.saveWorkout(
-                        date: transferData.date,
-                        duration: transferData.duration,
-                        distance: transferData.distance,
-                        calories: transferData.calories,
-                        ruckWeight: transferData.ruckWeight,
-                        heartRate: transferData.heartRate
-                    )
-                    savedCount += 1
-                }
-            }
-            
+            let savedCount = allWorkouts.filter { saveTransferData($0) }.count
             print("📱 Received and saved \(savedCount) workouts from watch")
-            lastSyncDate = Date()
-            
+            if savedCount > 0 { lastSyncDate = Date() }
         } catch {
             print("❌ Failed to decode all workouts data from watch: \(error.localizedDescription)")
         }

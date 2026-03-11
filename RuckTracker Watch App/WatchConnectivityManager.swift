@@ -19,6 +19,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     private var workoutDataManager: WorkoutDataManager?
     private var cancellables = Set<AnyCancellable>()
     
+    // Workouts encoded before session activation completes are held here and
+    // flushed once activationDidCompleteWith fires.
+    private var pendingWorkoutData: [Data] = []
+    
+    private var isSessionActivated: Bool {
+        WCSession.isSupported() && WCSession.default.activationState == .activated
+    }
+    
     override init() {
         super.init()
         
@@ -34,27 +42,48 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     
     // MARK: - Public Methods
     
-    /// Send a single workout to the phone
+    /// Send a single workout to the phone.
+    /// Uses sendMessage (instant) when the phone is reachable; falls back to
+    /// transferUserInfo (guaranteed queued delivery) when it is not.
+    /// If the WCSession is not yet activated the data is held in pendingWorkoutData
+    /// and flushed automatically once activationDidCompleteWith fires.
     func sendWorkoutToPhone(_ workout: WorkoutEntity) {
-        guard isPhoneReachable else {
-            print("⌚ Phone not reachable, cannot send workout")
+        guard let data = try? JSONEncoder().encode(WorkoutTransferData(from: workout)) else {
+            print("❌ Failed to encode workout data")
+            return
+        }
+        transferWorkoutData(data, date: workout.date)
+    }
+    
+    private func transferWorkoutData(_ data: Data, date: Date?) {
+        guard isSessionActivated else {
+            print("⌚ WCSession not yet activated — queuing workout for later delivery")
+            pendingWorkoutData.append(data)
             return
         }
         
-        let transferData = WorkoutTransferData(from: workout)
-        
-        do {
-            let data = try JSONEncoder().encode(transferData)
-            let message = [WatchConnectivityKeys.workoutData: data]
-            
-            WCSession.default.sendMessage(message, replyHandler: nil) { error in
-                print("❌ Failed to send workout to phone: \(error.localizedDescription)")
+        if isPhoneReachable {
+            WCSession.default.sendMessage([WatchConnectivityKeys.workoutData: data], replyHandler: nil) { [weak self] error in
+                print("❌ sendMessage failed (\(error.localizedDescription)) — queuing via transferUserInfo")
+                guard self?.isSessionActivated == true else { return }
+                WCSession.default.transferUserInfo([WatchConnectivityKeys.workoutData: data])
             }
-            
-            print("⌚ Sent workout to phone: \(workout.date?.formatted() ?? "unknown date")")
-            lastSyncDate = Date()
-        } catch {
-            print("❌ Failed to encode workout data: \(error.localizedDescription)")
+            print("⌚ Sent workout to phone via sendMessage: \(date?.formatted() ?? "unknown date")")
+        } else {
+            WCSession.default.transferUserInfo([WatchConnectivityKeys.workoutData: data])
+            print("⌚ Queued workout via transferUserInfo (phone not reachable): \(date?.formatted() ?? "unknown date")")
+        }
+        
+        lastSyncDate = Date()
+    }
+    
+    private func flushPendingWorkouts() {
+        guard !pendingWorkoutData.isEmpty else { return }
+        print("⌚ Flushing \(pendingWorkoutData.count) pending workout(s) after session activation")
+        let toSend = pendingWorkoutData
+        pendingWorkoutData.removeAll()
+        for data in toSend {
+            transferWorkoutData(data, date: nil)
         }
     }
     
@@ -108,15 +137,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
     
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
+            if let error = error {
+                print("❌ WatchConnectivity activation error: \(error.localizedDescription)")
+            }
             switch activationState {
             case .activated:
-                print("⌚ WatchConnectivity activated")
+                print("⌚ WatchConnectivity activated — reachable: \(session.isReachable), pending: \(self.pendingWorkoutData.count)")
                 self.isPhoneReachable = session.isReachable
+                self.flushPendingWorkouts()
             case .inactive:
                 print("⌚ WatchConnectivity inactive")
                 self.isPhoneReachable = false
             case .notActivated:
-                print("⌚ WatchConnectivity not activated")
+                print("❌ WatchConnectivity NOT activated\(error.map { " — \($0.localizedDescription)" } ?? "")")
                 self.isPhoneReachable = false
             @unknown default:
                 print("⌚ WatchConnectivity unknown state")
@@ -189,7 +222,8 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     distance: transferData.distance,
                     calories: transferData.calories,
                     ruckWeight: transferData.ruckWeight,
-                    heartRate: transferData.heartRate
+                    heartRate: transferData.heartRate,
+                    elevationGain: transferData.elevationGain
                 )
                 
                 print("⌚ Received and saved workout from phone: \(transferData.date.formatted())")
@@ -227,7 +261,8 @@ extension WatchConnectivityManager: WCSessionDelegate {
                         distance: transferData.distance,
                         calories: transferData.calories,
                         ruckWeight: transferData.ruckWeight,
-                        heartRate: transferData.heartRate
+                        heartRate: transferData.heartRate,
+                        elevationGain: transferData.elevationGain
                     )
                     savedCount += 1
                 }

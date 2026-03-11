@@ -15,7 +15,6 @@ struct OnboardingView: View {
     @State private var ruckWeight: Double = 20.0
     @State private var selectedWeightUnit: UserSettings.WeightUnit = .pounds
     @State private var selectedDistanceUnit: UserSettings.DistanceUnit = .miles
-    @State private var showingBodyWeightPicker = false
     @State private var showingRuckWeightPicker = false
     @State private var showingUnitsPicker = false
     
@@ -29,9 +28,8 @@ struct OnboardingView: View {
                     WelcomeStep(nextAction: nextStep)
                 case 1:
                     BodyWeightSetupStep(
-                        bodyWeight: bodyWeight,
+                        bodyWeight: $bodyWeight,
                         weightUnit: selectedWeightUnit,
-                        showingPicker: $showingBodyWeightPicker,
                         nextAction: nextStep,
                         backAction: previousStep
                     )
@@ -137,15 +135,17 @@ struct WelcomeStep: View {
 
 // MARK: - Body Weight Setup Step
 struct BodyWeightSetupStep: View {
-    let bodyWeight: Double
+    @Binding var bodyWeight: Double
     let weightUnit: UserSettings.WeightUnit
-    @Binding var showingPicker: Bool
     let nextAction: () -> Void
     let backAction: () -> Void
     
+    private var minWeight: Double { weightUnit == .pounds ? 80.0 : 35.0 }
+    private var maxWeight: Double { weightUnit == .pounds ? 400.0 : 180.0 }
+    private var step: Double      { weightUnit == .pounds ? 1.0  : 0.5  }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // CHANGED: Uses AppColors.textPrimary instead of .white
             Text("Body Weight")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(AppColors.textPrimary)
@@ -154,29 +154,40 @@ struct BodyWeightSetupStep: View {
             Spacer()
             
             VStack(spacing: 8) {
-                // CHANGED: Uses AppColors.textPrimary instead of .white
-                Text(String(format: "%.0f", bodyWeight))
+                Text(weightUnit == .pounds
+                     ? String(format: "%.0f", bodyWeight)
+                     : String(format: "%.1f", bodyWeight))
                     .font(.system(size: 40, weight: .semibold))
                     .foregroundColor(AppColors.textPrimary)
+                    .focusable()
+                    .digitalCrownRotation(
+                        $bodyWeight,
+                        from: minWeight,
+                        through: maxWeight,
+                        by: step,
+                        sensitivity: .medium,
+                        isContinuous: false,
+                        isHapticFeedbackEnabled: true
+                    )
                 
-                // CHANGED: Uses AppColors.textSecondary instead of .gray
                 Text(weightUnit.rawValue)
                     .font(.caption)
                     .foregroundColor(AppColors.textSecondary)
+                
+                Text("Turn the crown to adjust")
+                    .font(.system(size: 10))
+                    .foregroundColor(AppColors.textSecondary.opacity(0.6))
             }
             
             Spacer()
             
-            // Navigation buttons
             HStack(spacing: 10) {
                 Button("Back") {
                     backAction()
                 }
                 .frame(maxWidth: .infinity)
-                // CHANGED: Uses AppColors.textPrimary instead of .white
                 .foregroundColor(AppColors.textPrimary)
                 .padding(.vertical, 10)
-                // CHANGED: Uses AppColors.surface instead of .gray.opacity(0.5)
                 .background(AppColors.surface)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
@@ -185,10 +196,8 @@ struct BodyWeightSetupStep: View {
                     nextAction()
                 }
                 .frame(maxWidth: .infinity)
-                // CHANGED: Uses AppColors.textPrimary instead of .white
                 .foregroundColor(AppColors.textPrimary)
                 .padding(.vertical, 10)
-                // CHANGED: Uses AppColors.primary instead of .orange
                 .background(AppColors.primary)
                 .cornerRadius(8)
                 .buttonStyle(PlainButtonStyle())
@@ -196,7 +205,6 @@ struct BodyWeightSetupStep: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
         }
-        // CHANGED: Uses AppColors.background instead of .black
         .background(AppColors.background)
     }
 }

@@ -16,6 +16,7 @@ struct WorkoutTransferData: Codable {
     let calories: Double
     let ruckWeight: Double
     let heartRate: Double
+    let elevationGain: Double
     let programId: String?
     let programWorkoutDay: Int16
     let challengeId: String?
@@ -29,6 +30,7 @@ struct WorkoutTransferData: Codable {
         self.calories = workout.calories
         self.ruckWeight = workout.ruckWeight
         self.heartRate = workout.heartRate
+        self.elevationGain = workout.elevationGain
         self.programId = workout.programId
         self.programWorkoutDay = workout.programWorkoutDay
         self.challengeId = workout.challengeId
@@ -44,6 +46,7 @@ struct WorkoutTransferData: Codable {
         workout.calories = self.calories
         workout.ruckWeight = self.ruckWeight
         workout.heartRate = self.heartRate
+        workout.elevationGain = self.elevationGain
         workout.programId = self.programId
         workout.programWorkoutDay = self.programWorkoutDay
         workout.challengeId = self.challengeId

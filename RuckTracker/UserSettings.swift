@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import Supabase
 
+@MainActor
 class UserSettings: ObservableObject {
     static let shared = UserSettings()
     

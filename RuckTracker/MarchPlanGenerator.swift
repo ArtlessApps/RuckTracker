@@ -85,6 +85,7 @@ enum MarchPlanGenerator {
         let weeks: [LocalProgramWeek]
     }
     
+    @MainActor
     static func generatePlan(for settings: UserSettings) -> GeneratedPlan {
         let catalog = MarchSessionDescriptor.catalog()
         
@@ -206,6 +207,7 @@ enum MarchPlanGenerator {
     
     // MARK: - Helpers
     
+    @MainActor
     private static func difficulty(for settings: UserSettings) -> String {
         switch settings.experienceLevel {
         case .beginner: return "beginner"

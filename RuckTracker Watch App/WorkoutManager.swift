@@ -64,9 +64,16 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     
     // Barometric altimeter for precise elevation tracking
     private let altimeter = CMAltimeter()
-    private var lastAltitude: Double?                    // Last recorded altitude (meters)
+    private var altitudeBaseline: Double?                // Settled reference altitude (meters)
+    private var lastAltitudeTimestamp: Date?             // For velocity-based sanity check
     private var totalElevationGainMeters: Double = 0     // Cumulative elevation gain
-    private let altitudeFilterThreshold: Double = 0.5    // Minimum change to count (meters) - more sensitive than iPhone
+    // Threshold applied to accumulated change from the baseline, not per-callback delta.
+    // CMAltimeter can fire many times/second, so per-delta thresholds filter out real gain.
+    private let altitudeFilterThreshold: Double = 0.3    // ~1 foot; filters sensor noise
+    // Physically impossible to climb faster than ~5 m/s even sprinting stairs. This guards
+    // against the documented Apple bug where relativeAltitude spikes during/after HKWorkoutSession
+    // pause (offsets from 1.5 m to 1000 m still present in watchOS 11.5 — FB7972487).
+    private let maxReasonableClimbRateMetersPerSecond: Double = 5.0
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -182,33 +189,31 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
     }
     
     func togglePause() {
-        isPaused.toggle()
-        
         if isPaused {
-            pauseWorkout()
-        } else {
             resumeWorkout()
+        } else {
+            pauseWorkout()
         }
     }
     
     func pauseWorkout() {
-        guard !isPaused else { return } // Prevent double pause
+        guard !isPaused else { return }
         
-        // Add current elapsed time to paused time before pausing
-        // Use manual start time for consistency with immediate timer
         if let manualStartTime = manualStartTime {
             pausedTime += Date().timeIntervalSince(manualStartTime)
         }
         
         isPaused = true
         session?.pause()
+        // Nil the baseline now so the first reading after resume re-establishes a clean
+        // reference, discarding the spike Apple's bug injects during pause (FB7972487).
+        resetAltitudeBaselineForResume()
         print("⏸️ Workout paused")
     }
     
     func resumeWorkout() {
-        guard isPaused else { return } // Prevent resume when not paused
+        guard isPaused else { return }
         
-        // Reset manual start time for resumed session
         manualStartTime = Date()
         startTime = manualStartTime
         
@@ -281,6 +286,16 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                 }
                 
                 print("✅ HealthKit collection successful, finishing workout...")
+                
+                // Save elevation as HealthKit metadata so it appears in Health/Fitness apps.
+                // Apple's mechanism for hiking elevation: HKMetadataKeyElevationAscended.
+                let elevationMeters = self.finalElevationGain / 3.28084
+                let elevationQuantity = HKQuantity(unit: .meter(), doubleValue: elevationMeters)
+                let elevationMetadata: [String: Any] = [
+                    HKMetadataKeyElevationAscended: elevationQuantity
+                ]
+                builder.addMetadata(elevationMetadata) { _, _ in }
+                
                 builder.finishWorkout { workout, error in
                     DispatchQueue.main.async {
                         if let error = error {
@@ -290,9 +305,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                         } else if let workout = workout {
                             print("✅ Workout saved to HealthKit with Apple's calculations")
                             if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
-                                print("📊 HealthKit stats: \(String(format: "%.2f", distance)) mi, \(Int(self.finalCalories)) cal")
+                                print("📊 HealthKit stats: \(String(format: "%.2f", distance)) mi, \(Int(self.finalCalories)) cal, \(Int(self.finalElevationGain)) ft elevation")
                             }
-                            // Clear any previous save errors
                             self.errorManager.clearError()
                         } else {
                             print("❌ HealthKit finish returned no workout and no error")
@@ -300,7 +314,6 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
                             self.errorManager.handleError(healthKitError, context: "Workout Finish")
                         }
                         
-                        // Clean up session after everything is done
                         self.session?.end()
                         self.resetWorkout()
                     }
@@ -326,7 +339,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         }
         
         // Reset elevation tracking
-        lastAltitude = nil
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
         totalElevationGainMeters = 0
         elevationGain = 0
         
@@ -341,24 +355,59 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
             // Only track when workout is active and not paused
             guard self.isActive && !self.isPaused else { return }
             
-            let currentAltitude = data.relativeAltitude.doubleValue // meters from start
+            let currentAltitude = data.relativeAltitude.doubleValue
+            let now = Date()
             
-            if let previousAltitude = self.lastAltitude {
-                let altitudeChange = currentAltitude - previousAltitude
-                
-                // Only count uphill movement above threshold
-                if altitudeChange > self.altitudeFilterThreshold {
-                    self.totalElevationGainMeters += altitudeChange
-                    // Convert to feet for display
-                    self.elevationGain = self.totalElevationGainMeters * 3.28084
-                    print("⛰️ Elevation: +\(String(format: "%.1f", altitudeChange))m, Total: \(Int(self.elevationGain)) ft")
+            // Velocity sanity check — guards against Apple's documented relativeAltitude
+            // spike bug when HKWorkoutSession is paused (FB7972487, still present watchOS 11.5).
+            if let lastTimestamp = self.lastAltitudeTimestamp,
+               let baseline = self.altitudeBaseline {
+                let elapsed = now.timeIntervalSince(lastTimestamp)
+                if elapsed > 0 {
+                    let climbRate = abs(currentAltitude - baseline) / elapsed
+                    if climbRate > self.maxReasonableClimbRateMetersPerSecond {
+                        // Physically impossible — almost certainly a post-pause spike.
+                        // Reset baseline to this reading and discard the delta.
+                        print("⚠️ Altimeter spike rejected (\(String(format: "%.1f", climbRate)) m/s) — resetting baseline")
+                        self.altitudeBaseline = currentAltitude
+                        self.lastAltitudeTimestamp = now
+                        return
+                    }
                 }
             }
             
-            self.lastAltitude = currentAltitude
+            self.lastAltitudeTimestamp = now
+            
+            guard let baseline = self.altitudeBaseline else {
+                // First reading — establish baseline
+                self.altitudeBaseline = currentAltitude
+                return
+            }
+            
+            let delta = currentAltitude - baseline
+            
+            if delta > self.altitudeFilterThreshold {
+                // Moved uphill enough relative to the baseline — count the gain
+                self.totalElevationGainMeters += delta
+                self.elevationGain = self.totalElevationGainMeters * 3.28084
+                self.altitudeBaseline = currentAltitude
+                print("⛰️ Elevation: +\(String(format: "%.1f", delta))m, Total: \(Int(self.elevationGain)) ft")
+            } else if delta < -self.altitudeFilterThreshold {
+                // Moved downhill past the noise floor — shift baseline down without counting gain
+                self.altitudeBaseline = currentAltitude
+            }
+            // If |delta| < threshold, ignore (sensor noise) and keep baseline where it is
         }
         
         print("✅ Started barometric altimeter for elevation tracking")
+    }
+    
+    // Call on pause: nils the baseline so that after resume the first reading
+    // re-establishes a clean reference, discarding any spike from the Apple bug.
+    private func resetAltitudeBaselineForResume() {
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        print("⛰️ Altitude baseline reset for resume")
     }
     
     private func stopAltimeterTracking() {
@@ -687,7 +736,8 @@ class WorkoutManager: NSObject, ObservableObject, HKWorkoutSessionDelegate, HKLi
         isHealthKitReady = false
         
         // Reset altimeter tracking
-        lastAltitude = nil
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
         totalElevationGainMeters = 0
         
         // Clean up HealthKit objects
