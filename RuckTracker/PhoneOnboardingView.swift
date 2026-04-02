@@ -238,6 +238,40 @@ struct WelcomeCoachStep: View {
 
 // MARK: - Profile Setup Step
 
+/// Two-option control with readable inactive labels on dark onboarding cards (replaces `SegmentedPickerStyle`).
+private struct OnboardingUnitSegmentControl<Option: Hashable>: View {
+    @Binding var selection: Option
+    let options: [Option]
+    let label: (Option) -> String
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(options, id: \.self) { option in
+                let selected = selection == option
+                Button {
+                    selection = option
+                } label: {
+                    Text(label(option))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(selected ? AppColors.textOnLight : AppColors.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(selected ? Color.white : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .frame(width: 128)
+        .background(AppColors.overlayWhiteMedium)
+        .cornerRadius(10)
+    }
+}
+
 struct ProfileSetupStep: View {
     @ObservedObject var userSettings: UserSettings
     var nextAction: () -> Void
@@ -269,13 +303,11 @@ struct ProfileSetupStep: View {
                         Text("Weight")
                             .foregroundColor(AppColors.textSecondary)
                         Spacer()
-                        Picker("Weight Unit", selection: $userSettings.preferredWeightUnit) {
-                            ForEach(UserSettings.WeightUnit.allCases, id: \.self) { unit in
-                                Text(unit.rawValue).tag(unit)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 120)
+                        OnboardingUnitSegmentControl(
+                            selection: $userSettings.preferredWeightUnit,
+                            options: Array(UserSettings.WeightUnit.allCases),
+                            label: { $0.rawValue }
+                        )
                     }
                     .padding()
                     .background(AppColors.overlayWhite)
@@ -286,13 +318,11 @@ struct ProfileSetupStep: View {
                         Text("Distance")
                             .foregroundColor(AppColors.textSecondary)
                         Spacer()
-                        Picker("Distance Unit", selection: $userSettings.preferredDistanceUnit) {
-                            ForEach(UserSettings.DistanceUnit.allCases, id: \.self) { unit in
-                                Text(unit.rawValue).tag(unit)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 120)
+                        OnboardingUnitSegmentControl(
+                            selection: $userSettings.preferredDistanceUnit,
+                            options: Array(UserSettings.DistanceUnit.allCases),
+                            label: { $0.rawValue }
+                        )
                     }
                     .padding()
                     .background(AppColors.overlayWhite)
@@ -310,6 +340,8 @@ struct ProfileSetupStep: View {
                             .keyboardType(.decimalPad)
                             .font(.title2)
                             .fontWeight(.semibold)
+                            .foregroundColor(AppColors.textPrimary)
+                            .tint(AppColors.primary)
                             .multilineTextAlignment(.center)
                             .frame(width: 100)
                         
@@ -338,6 +370,8 @@ struct ProfileSetupStep: View {
                             .keyboardType(.decimalPad)
                             .font(.title2)
                             .fontWeight(.semibold)
+                            .foregroundColor(AppColors.textPrimary)
+                            .tint(AppColors.primary)
                             .multilineTextAlignment(.center)
                             .frame(width: 100)
                         
@@ -1322,11 +1356,9 @@ struct ProUpsellStep: View {
                     Task {
                         if let product = selectedProduct {
                             do {
-                                // Tag purchase with current user's UUID if signed in
                                 let userToken = CommunityService.shared.currentProfile?.id
                                 let transaction = try await storeManager.purchase(product, appAccountToken: userToken)
                                 if let transaction = transaction {
-                                    // Purchase successful - record in user_subscriptions
                                     PremiumManager.shared.handleSuccessfulPurchase(transaction: transaction)
                                     onSubscribe()
                                 }
@@ -1334,7 +1366,6 @@ struct ProUpsellStep: View {
                                 // Error handled by StoreKitManager
                             }
                         } else {
-                            // No product selected, try to load
                             await storeManager.loadProducts()
                             selectedProduct = storeManager.recommendedSubscription
                         }

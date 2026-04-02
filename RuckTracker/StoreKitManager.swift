@@ -25,6 +25,8 @@ class StoreKitManager: NSObject, ObservableObject {
     private var updateListenerTask: Task<Void, Error>?
     private var isCheckingStatus = false
     private var lastStatusCheck: Date = Date.distantPast
+    /// After `finish()`, `currentEntitlements` can be momentarily empty on device; avoid clearing a subscription we just applied.
+    private var subscriptionStateGraceUntil: Date = .distantPast
     
     enum SubscriptionStatus {
         case notSubscribed
@@ -62,14 +64,13 @@ class StoreKitManager: NSObject, ObservableObject {
                 yearlySubscriptionID
             ])
             
-            DispatchQueue.main.async {
-                self.availableSubscriptions = products.filter {
-                    $0.type == .autoRenewable
-                }.sorted { $0.price < $1.price }
-            }
-            print("✅ Loaded \(products.count) products")
+            // Synchronous assignment so await loadProducts() callers see products immediately.
+            availableSubscriptions = products.filter {
+                $0.type == .autoRenewable
+            }.sorted { $0.price < $1.price }
+            print("🛒 Loaded \(availableSubscriptions.count) subscriptions")
         } catch {
-            print("❌ Failed to load products: \(error)")
+            print("🛒 ❌ Failed to load products: \(error)")
             handlePurchaseError(.productLoadFailed(error))
         }
     }
@@ -84,7 +85,6 @@ class StoreKitManager: NSObject, ObservableObject {
         defer { isLoading = false }
         
         do {
-            // Build purchase options
             var options: Set<Product.PurchaseOption> = []
             if let token = appAccountToken {
                 options.insert(.appAccountToken(token))
@@ -97,30 +97,31 @@ class StoreKitManager: NSObject, ObservableObject {
             case .success(let verification):
                 let transaction = try checkVerified(verification) as StoreKit.Transaction
                 
-                // The transaction is verified. Deliver content to the user.
-                await updateCustomerProductStatus()
+                applyVerifiedSubscriptionTransaction(transaction)
+                await transaction.finish()
                 
-                // Show post-purchase prompt for anonymous users
                 await showPostPurchasePromptIfNeeded()
                 
-                // Always finish a transaction.
-                await transaction.finish()
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 750_000_000)
+                    await self.updateCustomerProductStatus(bypassDebounce: true)
+                }
                 
                 return transaction
                 
             case .userCancelled:
-                print("🚫 User cancelled purchase")
+                print("🛒 User cancelled purchase")
                 return nil
                 
             case .pending:
-                print("⏳ Purchase pending approval")
+                print("🛒 Purchase pending approval")
                 return nil
                 
             @unknown default:
                 return nil
             }
         } catch {
-            print("❌ Purchase failed: \(error)")
+            print("🛒 ❌ Purchase failed: \(error)")
             handlePurchaseError(.purchaseFailed(error))
             throw error
         }
@@ -136,98 +137,60 @@ class StoreKitManager: NSObject, ObservableObject {
             for await result in StoreKit.Transaction.currentEntitlements {
                 let transaction = try checkVerified(result)
                 
-                // Only match subscription products tagged with this user's UUID
                 guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID else {
                     continue
                 }
                 guard transaction.appAccountToken == userId else {
-                    print("🔍 Found entitlement for different user (token: \(transaction.appAccountToken?.uuidString ?? "none"))")
                     continue
                 }
                 
-                // Verify it's still active
                 if let expirationDate = transaction.expirationDate, expirationDate > Date() {
-                    print("✅ Found active entitlement for user \(userId): \(transaction.productID), expires \(expirationDate)")
                     return transaction
                 } else if transaction.expirationDate == nil {
-                    // Non-expiring (shouldn't happen for subscriptions, but handle it)
-                    print("✅ Found non-expiring entitlement for user \(userId)")
                     return transaction
                 }
             }
         } catch {
-            print("❌ Failed to check entitlements for user \(userId): \(error)")
+            print("🛒 ❌ Failed to check entitlements for user \(userId): \(error)")
         }
-        
-        print("🔍 No active entitlement found for user \(userId)")
         return nil
     }
     
     // MARK: - Subscription Status
     
     func checkSubscriptionStatus() async {
-        // Prevent multiple simultaneous status checks
-        guard !isCheckingStatus else { 
-            print("🔄 Subscription status check already in progress, skipping...")
-            return 
-        }
+        guard !isCheckingStatus else { return }
         isCheckingStatus = true
         defer { isCheckingStatus = false }
-        
-        print("🔍 Checking subscription status...")
         // Don't set to loading to avoid triggering PremiumManager updates
         // subscriptionStatus = .loading
         
         do {
             for await result in StoreKit.Transaction.currentEntitlements {
                 let transaction = try checkVerified(result)
-                print("🔍 Found transaction: \(transaction.productID), type: \(transaction.productType), purchase date: \(transaction.purchaseDate)")
                 
                 if transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID {
-                    print("🔍 Processing subscription transaction: \(transaction.productID)")
-                    
-                    // Check if this is a test transaction (sandbox environment)
-                    #if DEBUG
-                    if transaction.environment == .sandbox {
-                        print("⚠️ Found sandbox/test subscription - this should not be active in production")
-                        // In debug mode, we might want to ignore test subscriptions
-                        // Uncomment the next line to ignore sandbox subscriptions in debug
-                        // continue
-                    }
-                    #endif
-                    
-                    // Check if subscription is active
                     if let expirationDate = transaction.expirationDate {
-                        print("🔍 Subscription expires: \(expirationDate), current date: \(Date())")
                         if expirationDate > Date() {
                             subscriptionStatus = .subscribed(expiry: expirationDate)
-                            print("✅ Active subscription found - setting to subscribed")
-                            
-                            // Find the current product
                             currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
                         } else {
                             subscriptionStatus = .expired
-                            print("❌ Subscription expired")
                         }
                     } else {
-                        // Non-consumable or active subscription
                         subscriptionStatus = .subscribed(expiry: Date.distantFuture)
-                        print("✅ Non-consumable subscription found - setting to subscribed")
                     }
-                    
-                    print("✅ Subscription status updated: \(subscriptionStatus)")
                     return
-                } else {
-                    print("🔍 Ignoring non-subscription transaction: \(transaction.productID)")
                 }
             }
             
-            // No active subscription found
-            print("🔍 No subscription transactions found - setting to notSubscribed")
-            subscriptionStatus = .notSubscribed
-            
+            if Date() < subscriptionStateGraceUntil {
+                // Entitlements can lag briefly after finish(); keep the state we applied.
+            } else {
+                subscriptionStatus = .notSubscribed
+            }
         } catch {
-            print("❌ Failed to check subscription status: \(error)")
+            print("🛒 ❌ Failed to check subscription status: \(error)")
             subscriptionStatus = .notSubscribed
         }
     }
@@ -240,10 +203,9 @@ class StoreKitManager: NSObject, ObservableObject {
         
         do {
             try await AppStore.sync()
-            await updateCustomerProductStatus()
-            print("✅ Purchases restored")
+            await updateCustomerProductStatus(bypassDebounce: true)
         } catch {
-            print("❌ Failed to restore purchases: \(error)")
+            print("🛒 ❌ Failed to restore purchases: \(error)")
             handlePurchaseError(.restoreFailed(error))
         }
     }
@@ -255,30 +217,54 @@ class StoreKitManager: NSObject, ObservableObject {
             for await result in StoreKit.Transaction.updates {
                 do {
                     let transaction = try self.checkVerified(result) as StoreKit.Transaction
-                    await self.updateCustomerProductStatus()
+                    await self.updateCustomerProductStatus(bypassDebounce: true)
                     await transaction.finish()
                 } catch {
-                    print("❌ Transaction update failed: \(error)")
+                    print("🛒 ❌ Transaction update failed: \(error)")
                 }
             }
         }
     }
     
-    private func updateCustomerProductStatus() async {
-        // Debounce status checks to prevent rapid successive calls
-        let now = Date()
-        let timeSinceLastCheck = now.timeIntervalSince(lastStatusCheck)
-        
-        // Only check if it's been at least 1 second since last check
-        guard timeSinceLastCheck >= 1.0 else {
-            print("🔄 Debouncing subscription status check (last check was \(String(format: "%.1f", timeSinceLastCheck))s ago)")
+    /// Updates `subscriptionStatus` from a verified transaction without waiting on
+    /// `Transaction.currentEntitlements` (avoids production timing races after `purchase()`).
+    private func applyVerifiedSubscriptionTransaction(_ transaction: StoreKit.Transaction) {
+        guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID else {
             return
         }
+        if transaction.revocationDate != nil {
+            subscriptionStatus = .notSubscribed
+            currentSubscription = nil
+            return
+        }
+        if let expirationDate = transaction.expirationDate {
+            if expirationDate > Date() {
+                subscriptionStatus = .subscribed(expiry: expirationDate)
+                currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+                subscriptionStateGraceUntil = Date().addingTimeInterval(20)
+            } else {
+                subscriptionStatus = .expired
+                currentSubscription = nil
+            }
+        } else {
+            subscriptionStatus = .subscribed(expiry: .distantFuture)
+            currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+            subscriptionStateGraceUntil = Date().addingTimeInterval(20)
+        }
+    }
+    
+    /// - Parameter bypassDebounce: Use after purchase, restore, or `Transaction.updates` so we never
+    ///   drop a refresh when checkout completes within the debounce window (common on device).
+    private func updateCustomerProductStatus(bypassDebounce: Bool = false) async {
+        if !bypassDebounce {
+            let timeSinceLastCheck = Date().timeIntervalSince(lastStatusCheck)
+            guard timeSinceLastCheck >= 1.0 else { return }
+        }
         
-        lastStatusCheck = now
+        lastStatusCheck = Date()
         await checkSubscriptionStatus()
         
-        // Note: Removed notification posting since PremiumManager already listens to 
+        // Note: Removed notification posting since PremiumManager already listens to
         // subscriptionStatus changes directly via @Published property
     }
     

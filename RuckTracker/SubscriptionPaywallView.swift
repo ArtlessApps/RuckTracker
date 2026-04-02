@@ -57,7 +57,6 @@ struct SubscriptionPaywallView: View {
                 if storeManager.availableSubscriptions.isEmpty {
                     await storeManager.loadProducts()
                 }
-                // Pre-select recommended subscription
                 selectedProduct = storeManager.recommendedSubscription
             }
             .alert("Purchase Error", isPresented: $storeManager.showingPurchaseError) {
@@ -235,23 +234,13 @@ struct SubscriptionPaywallView: View {
                 Button {
                     Task {
                         do {
-                            // Tag purchase with current user's UUID for per-user subscription tracking
                             let userToken = CommunityService.shared.currentProfile?.id
                             let transaction = try await storeManager.purchase(selectedProduct, appAccountToken: userToken)
                             if let transaction = transaction {
-                                // Purchase successful - record in user_subscriptions + grant premium
                                 premiumManager.handleSuccessfulPurchase(transaction: transaction)
-                                
-                                // Dismiss the paywall
-                                // Use both methods to ensure dismissal works regardless of how
-                                // the paywall was presented (via $premiumManager.showingPaywall 
-                                // or via a local @State variable)
                                 premiumManager.dismissPaywall()
                                 dismiss()
-                                
-                                // Add a small delay to ensure the post-purchase prompt
-                                // is shown after the paywall is fully dismissed
-                                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+                                try? await Task.sleep(nanoseconds: 300_000_000)
                             }
                         } catch {
                             // Error handling is done in StoreKitManager
