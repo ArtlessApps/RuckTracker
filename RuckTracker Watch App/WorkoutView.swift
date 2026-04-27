@@ -41,8 +41,8 @@ struct WorkoutView: View {
                     RuckStatRow(
                         value: String(format: "%.2f",
                             userSettings.preferredDistanceUnit == .miles
-                                ? workoutManager.distance * 0.000621371
-                                : workoutManager.distance / 1000),
+                                ? workoutManager.distance
+                                : workoutManager.distance * 1.60934),
                         label: userSettings.preferredDistanceUnit.rawValue.uppercased(),
                         valueSize: 26,
                         valueColor: .white,
