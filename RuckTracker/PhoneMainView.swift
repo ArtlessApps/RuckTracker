@@ -143,7 +143,6 @@ struct ImprovedPhoneMainView: View {
         .sheet(isPresented: $showingGlobalLeaderboard) {
             NavigationView {
                 GlobalLeaderboardView()
-                    .environmentObject(premiumManager)
             }
         }
         
@@ -198,6 +197,7 @@ struct ImprovedPhoneMainView: View {
                 
                 // Section 1: The Hero
                 HeroRuckButton {
+                    guard premiumManager.checkAccess(to: .basicTracking, context: .workoutStart) else { return }
                     selectedWorkoutWeight = UserSettings.shared.defaultRuckWeight
                     showingWeightSelector = true
                 }
@@ -366,8 +366,8 @@ struct ImprovedPhoneMainView: View {
     }
     
     private var rankingsTileSubtitle: String {
-        guard premiumManager.isPremiumUser else {
-            return "PRO Membership Required"
+        if !premiumManager.isPremiumUser {
+            return "View Global Rankings"
         }
         
         if globalRanks.isEmpty {
@@ -614,6 +614,7 @@ extension ImprovedPhoneMainView {
     }
     
     fileprivate func startPlannedWorkout(_ scheduled: ScheduledWorkout) {
+        guard premiumManager.checkAccess(to: .basicTracking, context: .workoutStart) else { return }
         guard let workoutIdString = scheduled.workoutID,
               let _ = UUID(uuidString: workoutIdString),
               let programIdString = userSettings.activeProgramID,

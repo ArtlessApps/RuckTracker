@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ActiveWorkoutFullScreenView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @StateObject private var premiumManager = PremiumManager.shared
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -88,11 +89,26 @@ struct ActiveWorkoutFullScreenView: View {
                     
                     // Heart Rate (if available)
                     if workoutManager.heartRate > 0 {
-                        WorkoutMetricView(
-                            value: "\(Int(workoutManager.heartRate))",
-                            label: "bpm",
-                            color: AppColors.textPrimary
-                        )
+                        VStack(spacing: 8) {
+                            WorkoutMetricView(
+                                value: "\(Int(workoutManager.heartRate))",
+                                label: "bpm",
+                                color: AppColors.textPrimary
+                            )
+                            
+                            if premiumManager.isPremiumUser,
+                               let zone = workoutManager.currentHeartRateZone {
+                                Text(HeartRateZoneCalculator.displayLabel(for: zone))
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(HeartRateZoneCalculator.color(for: zone))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        Capsule()
+                                            .fill(HeartRateZoneCalculator.color(for: zone).opacity(0.2))
+                                    )
+                            }
+                        }
                     }
                 }
                 

@@ -8,7 +8,7 @@ Planned features that are **not yet implemented**. These are listed in the `Prem
 
 ## Smart Audio Coaching
 
-**Status:** Skeleton code exists, not integrated  
+**Status:** Deferred past MARCH v3.0 (revenue unlock + HR zones ship first). Skeleton code exists, not integrated.  
 **Premium feature key:** `.audioCoaching`  
 **File:** `RuckTracker/AudioCoach.swift`
 
@@ -34,28 +34,20 @@ Planned features that are **not yet implemented**. These are listed in the `Prem
 
 ## Heart Rate Zones
 
-**Status:** Data model exists, no user-facing feature  
+**Status:** Shipped on iPhone (v3.0) — active workout zone chip + post-workout time-in-zone summary for Pro users  
 **Premium feature key:** `.heartRateZones`  
-**Files:** `RuckTracker/Models/Program.swift`, `RuckTracker/WorkflowModels.swift`, `RuckTracker Watch App/WorkoutManager.swift`
+**Files:** `RuckTracker/HeartRateZoneCalculator.swift`, `RuckTracker/WorkoutManager.swift`, `RuckTracker/ActiveWorkoutFullScreenView.swift`, `RuckTracker/PhonePostWorkoutSummaryView.swift`
 
 ### What exists today
 - `HeartRateZone` enum with 5 zones: Recovery, Aerobic, Threshold, Anaerobic, Neuromuscular
-- `HeartRateData` struct with `timeInZones` dictionary
-- `WorkoutParameters.targetHeartRateZone` and `WorkoutTargetMetrics.heartRate` fields in workout models
+- iPhone: real-time zone display during workout, time-in-zone on post-workout summary (Pro)
 - Watch app computes a `heartRateZone` string from current heart rate for HealthKit metadata tagging
 
-### What's missing
-- [ ] No user-facing UI displays heart rate zones during a workout
-- [ ] No zone-based coaching or alerts ("You're in Zone 4, slow down")
-- [ ] No premium gate (`checkAccess(.heartRateZones)`) is called anywhere
-- [ ] No post-workout zone breakdown or time-in-zone visualization
-- [ ] Zone thresholds are hardcoded in the Watch app — not personalized by age/max HR
-
-### Implementation notes
-- Add a real-time HR zone indicator to the active workout view
-- Add time-in-zone breakdown to workout summary
-- Personalize zone thresholds based on user age or max HR setting
-- Gate behind `PremiumFeature.heartRateZones`
+### What's still missing
+- [ ] Zone-based coaching or alerts ("You're in Zone 4, slow down")
+- [ ] Persist time-in-zone to Core Data workout records
+- [ ] Personalize zone thresholds based on user age or max HR setting
+- [ ] Audio coaching integration (deferred)
 
 ---
 
@@ -89,5 +81,5 @@ Planned features that are **not yet implemented**. These are listed in the `Prem
 | Feature | Enum exists | Code exists | UI exists | Gate wired | Shipped |
 |---------|:-----------:|:-----------:|:---------:|:----------:|:-------:|
 | Audio Coaching | ✅ | Partial | ❌ | ❌ | ❌ |
-| Heart Rate Zones | ✅ | Partial | ❌ | ❌ | ❌ |
+| Heart Rate Zones | ✅ | Partial | ✅ | ✅ | ✅ (iPhone) |
 | Interval Timers | ✅ | ❌ | ❌ | ❌ | ❌ |

@@ -8,6 +8,7 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Published Properties
     @Published var subscriptionStatus: SubscriptionStatus = .notSubscribed
+    @Published var isInIntroductoryOffer: Bool = false
     @Published var availableSubscriptions: [Product] = []
     @Published var isLoading = false
     @Published var purchaseError: PurchaseError?
@@ -172,13 +173,13 @@ class StoreKitManager: NSObject, ObservableObject {
                 if transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID {
                     if let expirationDate = transaction.expirationDate {
                         if expirationDate > Date() {
-                            subscriptionStatus = .subscribed(expiry: expirationDate)
-                            currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+                            applyActiveSubscription(from: transaction, expiry: expirationDate)
                         } else {
+                            clearSubscriptionState()
                             subscriptionStatus = .expired
                         }
                     } else {
-                        subscriptionStatus = .subscribed(expiry: Date.distantFuture)
+                        applyActiveSubscription(from: transaction, expiry: Date.distantFuture)
                     }
                     return
                 }
@@ -187,10 +188,12 @@ class StoreKitManager: NSObject, ObservableObject {
             if Date() < subscriptionStateGraceUntil {
                 // Entitlements can lag briefly after finish(); keep the state we applied.
             } else {
+                clearSubscriptionState()
                 subscriptionStatus = .notSubscribed
             }
         } catch {
             print("🛒 ❌ Failed to check subscription status: \(error)")
+            clearSubscriptionState()
             subscriptionStatus = .notSubscribed
         }
     }
@@ -233,24 +236,33 @@ class StoreKitManager: NSObject, ObservableObject {
             return
         }
         if transaction.revocationDate != nil {
+            clearSubscriptionState()
             subscriptionStatus = .notSubscribed
-            currentSubscription = nil
             return
         }
         if let expirationDate = transaction.expirationDate {
             if expirationDate > Date() {
-                subscriptionStatus = .subscribed(expiry: expirationDate)
-                currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+                applyActiveSubscription(from: transaction, expiry: expirationDate)
                 subscriptionStateGraceUntil = Date().addingTimeInterval(20)
             } else {
+                clearSubscriptionState()
                 subscriptionStatus = .expired
-                currentSubscription = nil
             }
         } else {
-            subscriptionStatus = .subscribed(expiry: .distantFuture)
-            currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+            applyActiveSubscription(from: transaction, expiry: .distantFuture)
             subscriptionStateGraceUntil = Date().addingTimeInterval(20)
         }
+    }
+    
+    private func applyActiveSubscription(from transaction: StoreKit.Transaction, expiry: Date) {
+        subscriptionStatus = .subscribed(expiry: expiry)
+        currentSubscription = availableSubscriptions.first { $0.id == transaction.productID }
+        isInIntroductoryOffer = transaction.offerType == .introductory
+    }
+    
+    private func clearSubscriptionState() {
+        currentSubscription = nil
+        isInIntroductoryOffer = false
     }
     
     /// - Parameter bypassDebounce: Use after purchase, restore, or `Transaction.updates` so we never

@@ -358,19 +358,17 @@ class PremiumManager: ObservableObject {
         print("🔐 After sign-out: \(isPremiumUser ? "Premium (anonymous StoreKit)" : "Free")")
     }
     
+    // MARK: - Workout Access (v3.0 revenue model)
+    
+    /// GPS tracking requires Pro or an active subscription (including introductory free trial).
+    var canStartWorkout: Bool {
+        isPremiumUser
+    }
+    
     // MARK: - Free Trial Logic
     
     var isInFreeTrial: Bool {
-        // This would be determined by StoreKit's subscription status
-        // For now, simple check based on subscription status
-        switch storeKitManager.subscriptionStatus {
-        case .subscribed(let expiry):
-            // If subscribed for less than 7 days, likely in trial
-            let trialEnd = Date().addingTimeInterval(-7 * 24 * 60 * 60) // 7 days ago
-            return expiry > Date() && expiry > trialEnd
-        default:
-            return false
-        }
+        isPremiumUser && storeKitManager.isInIntroductoryOffer
     }
     
     var freeTrialDaysRemaining: Int? {
@@ -420,11 +418,11 @@ enum PremiumFeature {
         case .trainingPrograms, .weeklyChallenges, .planExecution,
              .audioCoaching, .heartRateZones, .intervalTimers,
              .advancedAnalytics, .achievementSystem, .exportData,
-             .globalLeaderboards, .proBadges:
+             .globalLeaderboards, .proBadges, .basicTracking:
             return true
             
-        // Free features
-        case .basicTracking, .clubAccess, .localLeaderboards, .standardShareCard, .enhancedShareCard:
+        // Free features (community remains accessible after trial)
+        case .clubAccess, .localLeaderboards, .standardShareCard, .enhancedShareCard:
             return false
         }
     }
@@ -543,7 +541,7 @@ enum PremiumFeature {
     /// Category for grouping in UI
     var category: FeatureCategory {
         switch self {
-        case .trainingPrograms, .weeklyChallenges, .planExecution:
+        case .trainingPrograms, .weeklyChallenges, .planExecution, .basicTracking:
             return .training
         case .audioCoaching, .heartRateZones, .intervalTimers:
             return .coaching
@@ -553,7 +551,7 @@ enum PremiumFeature {
             return .competition
         case .enhancedShareCard, .standardShareCard:
             return .sharing
-        case .basicTracking, .clubAccess, .localLeaderboards:
+        case .clubAccess, .localLeaderboards:
             return .free
         }
     }

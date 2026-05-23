@@ -55,7 +55,7 @@ struct FreeTrialBanner: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                     
-                    Text("7-day free trial, then $4.99/month")
+                    Text("\(AppStoreConfiguration.introductoryTrialDays)-day free trial, then $4.99/month")
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.8))
                 }

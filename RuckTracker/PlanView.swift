@@ -44,7 +44,7 @@ struct PlanView: View {
             SubscriptionPaywallView(
                 context: .planGeneration,
                 onMaybeLater: {
-                    // User chose free version - they stay on plan view but can't start workouts
+                    // User skipped subscription - they stay on plan view but can't start workouts without Pro/trial
                 }
             )
         }

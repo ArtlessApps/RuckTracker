@@ -223,6 +223,67 @@ class CommunityService: ObservableObject {
         print("✅ User signed out - all local state cleared")
     }
     
+    /// Permanently delete the current user's account and all associated data.
+    ///
+    /// Required by Apple App Store guideline 5.1.1(v).  This calls the
+    /// `delete_user_account` Postgres RPC (see `docs/DELETE_ACCOUNT_FUNCTION.sql`)
+    /// which runs server-side as `SECURITY DEFINER`, removes every row owned by
+    /// the user across all tables, fully deletes any clubs they founded, and
+    /// finally deletes the row in `auth.users`.  After the RPC succeeds we
+    /// clear the local Keychain session and reset every singleton's state.
+    ///
+    /// Note about App Store subscriptions: subscription receipts live on the
+    /// Apple ID, NOT on our server.  Removing the user's `user_subscriptions`
+    /// row does not cancel an active subscription — the user must do that
+    /// from Settings ▸ Apple ID ▸ Subscriptions.  The UI surfaces this
+    /// disclosure before the user confirms deletion.
+    func deleteAccount() async throws {
+        guard supabase.auth.currentUser != nil else {
+            throw CommunityError.notAuthenticated
+        }
+        
+        print("🗑️ [DELETE] Starting account deletion")
+        
+        // Run the server-side cascade + auth.users delete.
+        do {
+            try await supabase
+                .rpc("delete_user_account")
+                .execute()
+            print("🗑️ [DELETE] ✅ Server-side data + auth row deleted")
+        } catch {
+            print("🗑️ [DELETE] ❌ RPC failed: \(error)")
+            throw CommunityError.accountDeletionFailed(error.localizedDescription)
+        }
+        
+        // Sign out locally to clear the persisted Keychain session.  Once the
+        // auth user is gone the refresh token is invalid; signOut may throw,
+        // but that's fine — we just want the local state cleared.
+        do {
+            try await supabase.auth.signOut()
+        } catch {
+            print("🗑️ [DELETE] signOut after deletion threw (expected if token already invalid): \(error)")
+        }
+        
+        // Mirror signOut() — wipe every @Published collection so no stale
+        // data from the deleted user can leak into the UI.
+        currentProfile = nil
+        myClubs = []
+        clubFeed = []
+        weeklyLeaderboard = []
+        globalLeaderboard = []
+        clubEvents = []
+        currentEventRSVPs = []
+        eventComments = []
+        clubMembers = []
+        nearbyClubs = []
+        errorMessage = nil
+        
+        UserSettings.shared.switchToAnonymous()
+        PremiumManager.shared.resetPremiumStatusForSignOut()
+        
+        print("🗑️ [DELETE] ✅ Account deletion complete — local state cleared")
+    }
+    
     /// Load the current user's profile
     func loadCurrentProfile() async throws {
         guard let userId = supabase.auth.currentUser?.id else {
@@ -2071,6 +2132,7 @@ enum CommunityError: Error, LocalizedError {
     case duplicateUsername
     case clubNotFound
     case geocodingFailed
+    case accountDeletionFailed(String)
     
     var errorDescription: String? {
         switch self {
@@ -2100,6 +2162,8 @@ enum CommunityError: Error, LocalizedError {
             return "No club found with that code. Check the code and try again, or use 'Find a Club' to search by zipcode."
         case .geocodingFailed:
             return "Could not find location for that ZIP code"
+        case .accountDeletionFailed(let message):
+            return "Account deletion failed: \(message)"
         }
     }
 }

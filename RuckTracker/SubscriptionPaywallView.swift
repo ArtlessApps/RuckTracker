@@ -19,6 +19,7 @@ struct SubscriptionPaywallView: View {
         case settings             // From settings menu
         case featureUpsell        // Generic feature upsell
         case profileUpgrade       // From profile screen
+        case workoutStart         // Starting a ruck without active subscription
     }
     
     var body: some View {
@@ -44,7 +45,7 @@ struct SubscriptionPaywallView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Show close button for non-blocking contexts
-                if context != .onboarding && context != .planGeneration {
+                if context != .onboarding && context != .planGeneration && context != .workoutStart {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Later") {
                             handleMaybeLater()
@@ -117,6 +118,8 @@ struct SubscriptionPaywallView: View {
             return "Upgrade to MARCH Pro"
         case .settings, .featureUpsell, .profileUpgrade:
             return "Upgrade to MARCH Pro"
+        case .workoutStart:
+            return "Start Your First Ruck"
         }
     }
     
@@ -134,6 +137,8 @@ struct SubscriptionPaywallView: View {
             return "Get the complete rucking training experience"
         case .profileUpgrade:
             return "Take your rucking to the next level with Pro features"
+        case .workoutStart:
+            return "RuckWell charges $4.99/month for solo tracking. MARCH includes GPS tracking, clubs, leaderboards, and community — same price."
         }
     }
     
@@ -254,7 +259,7 @@ struct SubscriptionPaywallView: View {
                                 .scaleEffect(0.8)
                         }
                         
-                        Text("Start Free Trial")
+                        Text(primaryCTATitle)
                             .font(.headline)
                             .fontWeight(.semibold)
                     }
@@ -266,21 +271,25 @@ struct SubscriptionPaywallView: View {
                 }
                 .disabled(storeManager.isLoading)
                 
-                Text("Free for 7 days, then \(selectedProduct.localizedPrice) \(selectedProduct.subscriptionPeriodDescription.lowercased()). Cancel anytime.")
+                Text("Free for \(AppStoreConfiguration.introductoryTrialDays) days, then \(selectedProduct.localizedPrice) \(selectedProduct.subscriptionPeriodDescription.lowercased()). Cancel anytime.")
                     .font(.caption)
                     .foregroundColor(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
             
-            // "Maybe Later" / Use Free Version button
-            Button {
-                handleMaybeLater()
-            } label: {
-                Text(maybeLaterText)
-                    .font(.subheadline)
-                    .foregroundColor(AppColors.textSecondary)
+            if context == .workoutStart {
+                workoutStartTrialReminder
+            } else {
+                // Dismiss without subscribing (community browse only; tracking requires Pro)
+                Button {
+                    handleMaybeLater()
+                } label: {
+                    Text(maybeLaterText)
+                        .font(.subheadline)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .disabled(storeManager.isLoading)
             }
-            .disabled(storeManager.isLoading)
             
             Button("Restore Purchases") {
                 Task {
@@ -304,11 +313,33 @@ struct SubscriptionPaywallView: View {
         }
     }
     
+    private var primaryCTATitle: String {
+        switch context {
+        case .workoutStart, .planGeneration:
+            return "Try It Free for \(AppStoreConfiguration.introductoryTrialDays) Days"
+        default:
+            return "Start Free Trial"
+        }
+    }
+    
+    private var workoutStartTrialReminder: some View {
+        VStack(spacing: 6) {
+            Text("Try it free for \(AppStoreConfiguration.introductoryTrialDays) days")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(AppColors.primary)
+            
+            Text("Full GPS tracking during your trial. No charge until day \(AppStoreConfiguration.introductoryTrialDays + 1). Cancel anytime in Settings.")
+                .font(.caption)
+                .foregroundColor(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 8)
+    }
+    
     private var maybeLaterText: String {
         switch context {
-        case .planGeneration:
-            return "Use Free Version"
-        case .onboarding:
+        case .onboarding, .planGeneration:
             return "Maybe Later"
         default:
             return "Not Now"

@@ -1341,7 +1341,7 @@ struct ProUpsellStep: View {
                         Text("$4.99/month or $39.99/year")
                             .font(.headline)
                             .foregroundColor(AppColors.textPrimary)
-                        Text("7-day free trial included")
+                        Text("\(AppStoreConfiguration.introductoryTrialDays)-day free trial included")
                             .font(.caption)
                             .foregroundColor(AppColors.primary)
                     }
@@ -1377,7 +1377,7 @@ struct ProUpsellStep: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
                         }
-                        Text("Start Free Trial")
+                        Text("Try It Free for \(AppStoreConfiguration.introductoryTrialDays) Days")
                             .font(.headline)
                             .fontWeight(.semibold)
                     }
@@ -1391,7 +1391,7 @@ struct ProUpsellStep: View {
                 
                 // Trial info
                 if let product = selectedProduct {
-                    Text("Free for 7 days, then \(product.localizedPrice) \(product.subscriptionPeriodDescription.lowercased()). Cancel anytime.")
+                    Text("Free for \(AppStoreConfiguration.introductoryTrialDays) days, then \(product.localizedPrice) \(product.subscriptionPeriodDescription.lowercased()). Cancel anytime.")
                         .font(.caption)
                         .foregroundColor(AppColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -1401,7 +1401,7 @@ struct ProUpsellStep: View {
                 Button {
                     onMaybeLater()
                 } label: {
-                    Text("Use Free Version")
+                    Text("Maybe Later")
                         .font(.subheadline)
                         .foregroundColor(AppColors.textSecondary)
                 }

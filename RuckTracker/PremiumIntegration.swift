@@ -338,9 +338,12 @@ struct AppStoreConfiguration {
     static let monthlySubscriptionID = "com.artless.rucktracker.premium.monthly"
     static let yearlySubscriptionID = "com.artless.rucktracker.premium.yearly"
     
+    /// Introductory free trial length — must match App Store Connect introductory offer.
+    static let introductoryTrialDays = 14
+    
     // Current pricing
-    // Monthly: $4.99/month with 7-day free trial
-    // Yearly: $39.99/year (33% savings) with 7-day free trial
+    // Monthly: $4.99/month with 14-day free trial
+    // Yearly: $39.99/year (33% savings) with 14-day free trial
     
     /*
     App Store Connect Setup Checklist:
@@ -355,14 +358,14 @@ struct AppStoreConfiguration {
        - Reference Name: MARCH Premium Monthly
        - Duration: 1 Month
        - Price: $4.99 USD
-       - Free Trial: 7 days
+       - Free Trial: 14 days
        
     3. Create Yearly Subscription:
        - Product ID: com.artless.rucktracker.premium.yearly
        - Reference Name: MARCH Premium Yearly
        - Duration: 1 Year
        - Price: $39.99 USD
-       - Free Trial: 7 days
+       - Free Trial: 14 days
        
     4. Set up Subscription Group:
        - Add both subscriptions to the same group

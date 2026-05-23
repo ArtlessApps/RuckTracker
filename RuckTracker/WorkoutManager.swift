@@ -26,6 +26,8 @@ class WorkoutManager: NSObject, ObservableObject {
     @Published var distance: Double = 0
     @Published var calories: Double = 0
     @Published var currentHeartRate: Double = 0
+    @Published var currentHeartRateZone: HeartRateZone?
+    @Published var timeInZones: [HeartRateZone: TimeInterval] = [:]
     @Published var elevationGain: Double = 0 // Total elevation gain in feet
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
     
@@ -36,6 +38,7 @@ class WorkoutManager: NSObject, ObservableObject {
     @Published var finalCalories: Double = 0
     @Published var finalRuckWeight: Double = 0
     @Published var finalElevationGain: Double = 0
+    @Published var finalTimeInZones: [HeartRateZone: TimeInterval] = [:]
     
     // MARK: - Private Properties
     
@@ -73,6 +76,10 @@ class WorkoutManager: NSObject, ObservableObject {
     private var lastDistanceUpdateTime: Date?
     private var lastDistanceValue: Double = 0
     private var lastCalorieUpdate: TimeInterval = 0
+    
+    // Heart rate zone accumulation
+    private var lastRecordedHeartRateZone: HeartRateZone?
+    private var lastZoneUpdateDate: Date?
     
     // MARK: - Computed Properties
     var hours: Int { Int(elapsedTime) / 3600 }
@@ -146,6 +153,11 @@ class WorkoutManager: NSObject, ObservableObject {
     
     // MARK: - Workout Control
     func startWorkout(weight: Double) {
+        guard PremiumManager.shared.canStartWorkout else {
+            PremiumManager.shared.showPaywall(context: .workoutStart)
+            return
+        }
+        
         let startMsg = "\n🏋️‍♀️ ===== STARTING WORKOUT (HKWorkoutSession) ====="
         print(startMsg)
         DebugLogger.shared.log(startMsg)
@@ -172,6 +184,10 @@ class WorkoutManager: NSObject, ObservableObject {
         totalGPSDistance = 0
         calories = 0
         currentHeartRate = 0
+        currentHeartRateZone = nil
+        timeInZones = [:]
+        lastRecordedHeartRateZone = nil
+        lastZoneUpdateDate = nil
         elevationGain = 0
         totalElevationGainMeters = 0
         healthKitProvidingDistance = false
@@ -267,6 +283,8 @@ class WorkoutManager: NSObject, ObservableObject {
         finalCalories = calories
         finalRuckWeight = ruckWeight
         finalElevationGain = elevationGain
+        flushHeartRateZoneTime()
+        finalTimeInZones = timeInZones
         
         let statsMsg = "📊 Final stats: \(String(format: "%.2f", distance)) mi, \(Int(calories)) cal, \(Int(elevationGain)) ft elev"
         print(statsMsg)
@@ -684,6 +702,10 @@ class WorkoutManager: NSObject, ObservableObject {
         calories = 0
         startDate = nil
         currentHeartRate = 0
+        currentHeartRateZone = nil
+        timeInZones = [:]
+        lastRecordedHeartRateZone = nil
+        lastZoneUpdateDate = nil
         lastCalorieUpdate = 0
         elevationGain = 0
         totalElevationGainMeters = 0
@@ -737,6 +759,31 @@ class WorkoutManager: NSObject, ObservableObject {
         finalCalories = 0
         finalRuckWeight = 0
         finalElevationGain = 0
+        finalTimeInZones = [:]
+    }
+    
+    private func updateHeartRateZoneTracking(bpm: Double) {
+        guard let zone = HeartRateZoneCalculator.zone(for: bpm) else { return }
+        let now = Date()
+        
+        if let previousZone = lastRecordedHeartRateZone, let lastUpdate = lastZoneUpdateDate {
+            let elapsed = now.timeIntervalSince(lastUpdate)
+            if elapsed > 0, elapsed < 30 {
+                timeInZones[previousZone, default: 0] += elapsed
+            }
+        }
+        
+        currentHeartRateZone = zone
+        lastRecordedHeartRateZone = zone
+        lastZoneUpdateDate = now
+    }
+    
+    private func flushHeartRateZoneTime() {
+        guard let zone = lastRecordedHeartRateZone, let lastUpdate = lastZoneUpdateDate else { return }
+        let elapsed = Date().timeIntervalSince(lastUpdate)
+        if elapsed > 0, elapsed < 30 {
+            timeInZones[zone, default: 0] += elapsed
+        }
     }
     
     // MARK: - Utility
@@ -798,6 +845,7 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
                 switch quantityType {
                 case HKQuantityType.quantityType(forIdentifier: .heartRate):
                     if let heartRateValue = statistics?.mostRecentQuantity()?.doubleValue(for: HKUnit.count().unitDivided(by: .minute())) {
+                        self.updateHeartRateZoneTracking(bpm: heartRateValue)
                         self.currentHeartRate = heartRateValue
                     }
                     

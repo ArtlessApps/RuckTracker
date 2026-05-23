@@ -5,6 +5,7 @@ import SwiftUI
 
 struct PhonePostWorkoutSummaryView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @StateObject private var premiumManager = PremiumManager.shared
     @ObservedObject private var userSettings = UserSettings.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showingAnalytics = false
@@ -97,6 +98,10 @@ struct PhonePostWorkoutSummaryView: View {
                         value: "\(Int(finalCalories))",
                         unit: "kcal"
                     )
+                    
+                    if premiumManager.isPremiumUser {
+                        heartRateZoneSummary
+                    }
                 }
                 
                 Spacer()
@@ -162,6 +167,40 @@ struct PhonePostWorkoutSummaryView: View {
         .sheet(isPresented: $showingShare) {
             WorkoutShareSheet(data: shareData)
                 .environmentObject(WorkoutDataManager.shared)
+        }
+    }
+    
+    // MARK: - Heart Rate Zones
+    
+    @ViewBuilder
+    private var heartRateZoneSummary: some View {
+        let zones = workoutManager.finalTimeInZones
+            .filter { $0.value >= 30 }
+            .sorted { $0.value > $1.value }
+        
+        if !zones.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("HEART RATE ZONES")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(AppColors.textSecondary)
+                    .tracking(1)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 8)
+                
+                ForEach(Array(zones), id: \.key) { zone, duration in
+                    HStack {
+                        Text(zone.rawValue)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(HeartRateZoneCalculator.color(for: zone))
+                        Spacer()
+                        Text(HeartRateZoneCalculator.formattedDuration(duration))
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .padding(.horizontal, 40)
+                }
+            }
+            .padding(.bottom, 8)
         }
     }
     

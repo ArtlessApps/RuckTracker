@@ -6,7 +6,7 @@
 //  Displays worldwide rankings across multiple metrics:
 //  - Distance (weekly), Tonnage (all-time), Elevation (monthly), Consistency (30 days)
 //
-//  Gated behind PRO subscription with blur overlay for free users.
+//  Browse is free for all signed-in users (v3.0); tracking requires Pro.
 //
 
 import SwiftUI
@@ -27,48 +27,36 @@ struct RankingsTabView: View {
 
 struct GlobalLeaderboardView: View {
     @StateObject private var communityService = CommunityService.shared
-    @EnvironmentObject var premiumManager: PremiumManager
     @State private var selectedType: GlobalLeaderboardType = .distance
     @State private var entries: [GlobalLeaderboardEntry] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isSignedOut = false
-    @State private var showingPaywall = false
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                // Type selector (horizontal scrollable capsules)
-                leaderboardTypePicker
-                
-                // Content area
-                ZStack {
-                    if isSignedOut {
-                        signedOutView
-                    } else if isLoading {
-                        loadingView
-                    } else if let error = errorMessage {
-                        errorView(message: error)
-                    } else if entries.isEmpty {
-                        emptyView
-                    } else {
-                        leaderboardList
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+        VStack(spacing: 0) {
+            // Type selector (horizontal scrollable capsules)
+            leaderboardTypePicker
             
-            // PRO Gate overlay — top level so it covers ALL content states
-            if !premiumManager.isPremiumUser && !isSignedOut {
-                proGateOverlay
+            // Content area
+            ZStack {
+                if isSignedOut {
+                    signedOutView
+                } else if isLoading {
+                    loadingView
+                } else if let error = errorMessage {
+                    errorView(message: error)
+                } else if entries.isEmpty {
+                    emptyView
+                } else {
+                    leaderboardList
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(AppColors.backgroundGradient)
         .task(id: selectedType) {
             await loadLeaderboard()
-        }
-        .sheet(isPresented: $showingPaywall) {
-            SubscriptionPaywallView(context: .featureUpsell)
         }
     }
     
@@ -116,7 +104,7 @@ struct GlobalLeaderboardView: View {
                 .cornerRadius(16)
                 .padding(.horizontal)
             }
-            .padding(.bottom, 100) // Extra space for overlay
+            .padding(.bottom, 100)
         }
     }
     
@@ -143,77 +131,6 @@ struct GlobalLeaderboardView: View {
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding(.vertical, 20)
-    }
-    
-    // MARK: - PRO Gate Overlay
-    
-    private var proGateOverlay: some View {
-        ZStack {
-            // Blur effect over the list
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .blur(radius: 6)
-                .ignoresSafeArea()
-            
-            // Lock and CTA
-            VStack(spacing: 20) {
-                // Lock icon
-                ZStack {
-                    Circle()
-                        .fill(AppColors.primary.opacity(0.1))
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(AppColors.primary)
-                }
-                
-                VStack(spacing: 8) {
-                    Text("Global Rankings")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
-                    
-                    Text("See how you stack up against ruckers worldwide")
-                        .font(.system(size: 15))
-                        .foregroundColor(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                }
-                
-                // CTA Button
-                Button(action: { showingPaywall = true }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 16))
-                        Text("Unlock Global Rankings")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                    .foregroundColor(AppColors.textOnLight)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(AppColors.primaryGradient)
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 32)
-                
-                // PRO badge
-                HStack(spacing: 4) {
-                    Image(systemName: "crown.fill")
-                        .font(.caption2)
-                    Text("PRO FEATURE")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                }
-                .foregroundColor(AppColors.primary)
-            }
-            .padding(.vertical, 40)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(AppColors.surface)
-                    .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
-            )
-            .padding(.horizontal, 24)
-        }
     }
     
     // MARK: - Signed-Out State

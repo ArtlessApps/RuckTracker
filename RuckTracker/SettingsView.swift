@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showingDebugLogs = false
     @State private var showingLogoutAlert = false
     @State private var showingAuth = false
+    @State private var showingDeleteAccount = false
     
     var body: some View {
         NavigationView {
@@ -89,6 +90,11 @@ struct SettingsView: View {
             .sheet(isPresented: $showingAuth) {
                 AuthenticationView(onLoginSuccess: {
                     tabSelection.selectedTab = .ruck
+                    dismiss()
+                })
+            }
+            .sheet(isPresented: $showingDeleteAccount) {
+                DeleteAccountSheet(onDeleted: {
                     dismiss()
                 })
             }
@@ -222,6 +228,27 @@ struct SettingsView: View {
                         .foregroundColor(.red)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
+                    }
+                    
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    // Delete Account — required by Apple App Store guideline
+                    // 5.1.1(v).  Tapping opens a dedicated sheet with full
+                    // disclosure and a typed-confirmation step.
+                    Button(action: {
+                        showingDeleteAccount = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash")
+                                .font(.system(size: 14))
+                            Text("Delete Account")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.red.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                     }
                 }
                 .padding()
@@ -702,6 +729,249 @@ struct PermissionRow: View {
     }
 }
 
+// MARK: - Delete Account Sheet
+
+/// Permanent account deletion flow.
+///
+/// Apple App Store guideline 5.1.1(v) requires every app that supports
+/// account creation to also offer in-app account deletion.  This sheet
+/// shows the user exactly what will be deleted, discloses that App Store
+/// subscriptions live on the Apple ID and must be cancelled separately,
+/// and requires the user to type "DELETE" before the destructive action
+/// becomes enabled — preventing accidental deletions while still keeping
+/// the flow entirely self-service.
+struct DeleteAccountSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var communityService = CommunityService.shared
+    
+    /// Called after the account has been successfully deleted, so the
+    /// caller (Settings) can dismiss itself and return to a logged-out
+    /// state.
+    let onDeleted: () -> Void
+    
+    @State private var confirmationText: String = ""
+    @State private var isDeleting = false
+    @State private var errorMessage: String?
+    
+    private let confirmationKeyword = "DELETE"
+    
+    private var isConfirmationValid: Bool {
+        confirmationText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased() == confirmationKeyword
+    }
+    
+    private var canDelete: Bool {
+        isConfirmationValid && !isDeleting
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                AppColors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        headerSection
+                        whatWillBeDeletedSection
+                        subscriptionDisclosureSection
+                        confirmationFieldSection
+                        
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 4)
+                        }
+                        
+                        deleteButton
+                        
+                        Spacer(minLength: 40)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Delete Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(AppColors.textPrimary)
+                    .disabled(isDeleting)
+                }
+            }
+            .interactiveDismissDisabled(isDeleting)
+        }
+    }
+    
+    // MARK: Sections
+    
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 36))
+                .foregroundColor(.red)
+            
+            Text("Delete Your Account")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(AppColors.textPrimary)
+            
+            Text("This will permanently delete your MARCH account and all of your data. This action cannot be undone.")
+                .font(.subheadline)
+                .foregroundColor(AppColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
+    private var whatWillBeDeletedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("What will be deleted")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            DeleteAccountBulletRow(icon: "person.fill", text: "Your profile, username, and avatar")
+            DeleteAccountBulletRow(icon: "list.bullet.rectangle", text: "All your posts, comments, and likes")
+            DeleteAccountBulletRow(icon: "calendar", text: "Your events and RSVPs")
+            DeleteAccountBulletRow(icon: "trophy.fill", text: "Your leaderboard entries and badges")
+            DeleteAccountBulletRow(icon: "person.3.fill", text: "Your club memberships")
+            DeleteAccountBulletRow(icon: "flag.fill", text: "Any clubs you founded (and all of their data)")
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(AppColors.surface)
+        )
+    }
+    
+    private var subscriptionDisclosureSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundColor(.orange)
+                Text("About your subscription")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(AppColors.textPrimary)
+            }
+            
+            Text("App Store subscriptions are managed by Apple and are NOT cancelled when you delete your account. To cancel, open the iOS Settings app, tap your name at the top, then tap Subscriptions.")
+                .font(.caption)
+                .foregroundColor(AppColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.orange.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+        )
+    }
+    
+    private var confirmationFieldSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Type DELETE to confirm")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(AppColors.textSecondary)
+                .textCase(.uppercase)
+            
+            TextField("DELETE", text: $confirmationText)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .foregroundColor(AppColors.textPrimary)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppColors.surface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            isConfirmationValid ? Color.red.opacity(0.6) : AppColors.textSecondary.opacity(0.25),
+                            lineWidth: 1
+                        )
+                )
+                .disabled(isDeleting)
+        }
+    }
+    
+    private var deleteButton: some View {
+        Button(action: deleteAccount) {
+            HStack {
+                if isDeleting {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "trash.fill")
+                }
+                Text(isDeleting ? "Deleting…" : "Permanently Delete My Account")
+                    .fontWeight(.semibold)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(canDelete ? Color.red : Color.red.opacity(0.3))
+            .foregroundColor(.white)
+            .cornerRadius(12)
+        }
+        .disabled(!canDelete)
+    }
+    
+    // MARK: Action
+    
+    private func deleteAccount() {
+        Task {
+            isDeleting = true
+            errorMessage = nil
+            do {
+                try await communityService.deleteAccount()
+                isDeleting = false
+                onDeleted()
+                dismiss()
+            } catch {
+                isDeleting = false
+                errorMessage = error.localizedDescription
+                print("❌ Account deletion failed: \(error)")
+            }
+        }
+    }
+}
+
+private struct DeleteAccountBulletRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .frame(width: 20)
+                .foregroundColor(.red.opacity(0.85))
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(AppColors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            Spacer(minLength: 0)
+        }
+    }
+}
+
 #Preview {
     SettingsView()
+}
+
+#Preview("Delete Account Sheet") {
+    DeleteAccountSheet(onDeleted: {})
 }

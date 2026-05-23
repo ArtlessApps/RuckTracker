@@ -33,8 +33,8 @@ This guide will help you set up local testing for your RuckTracker in-app purcha
 3. **Test the subscription flow** by tapping upgrade buttons
 
 #### Available Test Products
-- **Monthly Subscription**: $4.99/month with 7-day free trial
-- **Yearly Subscription**: $39.99/year with 7-day free trial
+- **Monthly Subscription**: $4.99/month with 14-day free trial
+- **Yearly Subscription**: $39.99/year with 14-day free trial
 
 ### 4. StoreKit Testing Features
 
@@ -125,13 +125,13 @@ Once local testing is complete:
 ### Monthly Subscription
 - **Product ID**: `com.artless.rucktracker.premium.monthly`
 - **Price**: $4.99/month
-- **Free Trial**: 7 days
+- **Free Trial**: 14 days
 - **Duration**: 1 month
 
 ### Yearly Subscription
 - **Product ID**: `com.artless.rucktracker.premium.yearly`
 - **Price**: $39.99/year
-- **Free Trial**: 7 days
+- **Free Trial**: 14 days
 - **Duration**: 1 year
 - **Savings**: ~33% compared to monthly
 
