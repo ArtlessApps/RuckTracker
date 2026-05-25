@@ -3,7 +3,7 @@ import Foundation
 /// Builds short universal links for sharing workouts.
 struct ShareLinkBuilder {
     /// Base host for universal links. Update to match the deployed domain.
-    static let host = "theruckworkout.com"
+    static let host = "marchrucking.com"
     
     /// Build a universal link pointing to a workout share code.
     /// The `workoutURI` should be the Core Data object URI; it will be base64 encoded.

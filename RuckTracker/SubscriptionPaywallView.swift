@@ -571,7 +571,7 @@ struct PrivacyPolicyView: View {
                 - Manage HealthKit permissions in iOS Settings
                 - Contact us for data questions
                 
-                Contact: privacy@theruckworkout.com
+                Contact: hello@artless.app
                 """)
                 .padding()
             }

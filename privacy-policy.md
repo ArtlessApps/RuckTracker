@@ -88,7 +88,7 @@ You have the right to:
 
 For questions about this Privacy Policy or RuckTracker's privacy practices:
 
-**Email:** support@rucktracker.app  
+**Email:** hello@artless.app  
 **App Store:** Search "RuckTracker" and use "Report a Problem"
 
 ## Technical Details
