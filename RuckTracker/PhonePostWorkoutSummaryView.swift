@@ -168,6 +168,14 @@ struct PhonePostWorkoutSummaryView: View {
             WorkoutShareSheet(data: shareData)
                 .environmentObject(WorkoutDataManager.shared)
         }
+        .onAppear {
+            // Delay so the summary is fully visible before the system dialog appears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                ReviewManager.shared.considerRequestingReview(
+                    totalWorkouts: WorkoutDataManager.shared.totalWorkouts
+                )
+            }
+        }
     }
     
     // MARK: - Heart Rate Zones
