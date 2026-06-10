@@ -10,6 +10,8 @@
 //
 
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 // MARK: - Main TRIBE Tab View
 
@@ -1245,80 +1247,28 @@ struct AuthenticationView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
-    
+
+    // ── Apple sign-in ─────────────────────────────────────────────────
+    @State private var appleNonce    = ""
+    @State private var appleUsername = ""
+    @State private var needsUsername = false   // true after Apple sign-in for a new user
+
     /// Optional callback for when login/signup is successful (used by onboarding to skip flow)
     var onLoginSuccess: (() -> Void)?
-    
+
     var body: some View {
         NavigationView {
             ZStack {
                 AppColors.backgroundGradient
                     .ignoresSafeArea()
-                
-                VStack(spacing: 24) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Email")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        TextField("your@email.com", text: $email)
-                            .textFieldStyle(.roundedBorder)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .keyboardType(.emailAddress)
-                            .textContentType(.emailAddress)
-                        
-                        Text("Password")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
-                            .textContentType(isSignUp ? .newPassword : .password)
-                        
-                        if isSignUp {
-                            Text("Username")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(AppColors.textSecondary)
-                            
-                            TextField("Your name", text: $username)
-                                .textFieldStyle(.roundedBorder)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled(true)
-                        }
-                    }
-                    .padding()
-                    
-                    if let error = errorMessage {
-                        Text(error)
-                            .foregroundColor(AppColors.accentWarm)
-                            .font(.system(size: 14))
-                            .padding(.horizontal)
-                    }
-                    
-                    Button(action: { authenticate() }) {
-                        if isLoading {
-                            ProgressView()
-                                .tint(AppColors.textOnLight)
-                        } else {
-                            Text(isSignUp ? "Create Account" : "Sign In")
-                        }
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(isLoading || !isFormValid)
-                    .padding(.horizontal)
-                    
-                    Button(action: { isSignUp.toggle() }) {
-                        Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                            .font(.system(size: 14))
-                            .foregroundColor(AppColors.primary)
-                    }
-                    
-                    Spacer()
+
+                if needsUsername {
+                    usernamePickerView
+                } else {
+                    mainFormView
                 }
-                .padding(.top)
             }
-            .navigationTitle(isSignUp ? "Create Account" : "Sign In")
+            .navigationTitle(needsUsername ? "One last thing" : (isSignUp ? "Create Account" : "Sign In"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1328,6 +1278,164 @@ struct AuthenticationView: View {
                     .foregroundColor(AppColors.primary)
                 }
             }
+        }
+    }
+
+    // MARK: - Main form (Apple button + email/password)
+
+    private var mainFormView: some View {
+        VStack(spacing: 24) {
+
+            // ── Apple button ──────────────────────────────────────────
+            SignInWithAppleButton(isSignUp ? .continue : .signIn) { request in
+                let nonce  = makeNonce()
+                appleNonce = nonce
+                request.requestedScopes = [.fullName, .email]
+                request.nonce           = sha256(nonce)
+            } onCompletion: { result in
+                Task { await handleAppleResult(result) }
+            }
+            .signInWithAppleButtonStyle(.white)
+            .frame(height: 50)
+            .cornerRadius(12)
+            .disabled(isLoading)
+            .padding(.horizontal)
+            .padding(.top)
+
+            // ── Divider ───────────────────────────────────────────────
+            HStack {
+                Rectangle()
+                    .frame(height: 0.5)
+                    .foregroundColor(AppColors.textSecondary.opacity(0.4))
+                    .padding(.leading)
+                Text("or")
+                    .font(.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(.horizontal, 8)
+                Rectangle()
+                    .frame(height: 0.5)
+                    .foregroundColor(AppColors.textSecondary.opacity(0.4))
+                    .padding(.trailing)
+            }
+
+            // ── Email/password form ───────────────────────────────────
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Email")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+
+                TextField("your@email.com", text: $email)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+
+                Text("Password")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+
+                SecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(isSignUp ? .newPassword : .password)
+
+                if isSignUp {
+                    Text("Username")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(AppColors.textSecondary)
+
+                    TextField("Your name", text: $username)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                }
+            }
+            .padding(.horizontal)
+
+            if let error = errorMessage {
+                Text(error)
+                    .foregroundColor(AppColors.accentWarm)
+                    .font(.system(size: 14))
+                    .padding(.horizontal)
+            }
+
+            Button(action: { authenticate() }) {
+                if isLoading {
+                    ProgressView()
+                        .tint(AppColors.textOnLight)
+                } else {
+                    Text(isSignUp ? "Create Account" : "Sign In")
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(isLoading || !isFormValid)
+            .padding(.horizontal)
+
+            Button(action: { isSignUp.toggle() }) {
+                Text(isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
+                    .font(.system(size: 14))
+                    .foregroundColor(AppColors.primary)
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Username picker (Apple new user)
+
+    private var usernamePickerView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 12) {
+                Text("Pick a username for the leaderboard.")
+                    .font(.subheadline)
+                    .foregroundColor(AppColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 30)
+
+            Spacer().frame(height: 32)
+
+            TextField("Username", text: $appleUsername)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 30)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 30)
+                    .padding(.top, 8)
+            }
+
+            Spacer()
+
+            Button {
+                Task { await confirmAppleUsername() }
+            } label: {
+                HStack(spacing: 8) {
+                    if isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: AppColors.textOnLight))
+                            .scaleEffect(0.85)
+                    }
+                    Text("Let's go")
+                        .bold()
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(AppColors.primary)
+                .foregroundColor(AppColors.textOnLight)
+                .cornerRadius(12)
+            }
+            .disabled(isLoading || appleUsername.trimmingCharacters(in: .whitespaces).isEmpty)
+            .opacity(appleUsername.trimmingCharacters(in: .whitespaces).isEmpty ? 0.55 : 1.0)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 30)
         }
     }
     
@@ -1396,6 +1504,79 @@ struct AuthenticationView: View {
         // Not a full RFC validator by design.
         let pattern = #"^[A-Z0-9a-z._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
         return email.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    // MARK: - Apple sign-in
+
+    private func handleAppleResult(_ result: Result<ASAuthorization, Error>) async {
+        isLoading    = true
+        errorMessage = nil
+
+        switch result {
+        case .success(let authorization):
+            guard
+                let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                let tokenData  = credential.identityToken,
+                let idToken    = String(data: tokenData, encoding: .utf8)
+            else {
+                errorMessage = "Apple sign-in failed. Please try again."
+                isLoading    = false
+                return
+            }
+
+            do {
+                let newUser = try await CommunityService.shared.signInWithApple(
+                    idToken:  idToken,
+                    nonce:    appleNonce,
+                    email:    credential.email,
+                    fullName: credential.fullName
+                )
+
+                if newUser {
+                    needsUsername = true
+                    isLoading     = false
+                } else {
+                    onLoginSuccess?()
+                    dismiss()
+                }
+            } catch {
+                errorMessage = error.localizedDescription
+                isLoading    = false
+            }
+
+        case .failure(let error):
+            let authError = error as? ASAuthorizationError
+            if authError?.code != .canceled {
+                errorMessage = error.localizedDescription
+            }
+            isLoading = false
+        }
+    }
+
+    private func confirmAppleUsername() async {
+        isLoading    = true
+        errorMessage = nil
+        do {
+            try await CommunityService.shared.setUsernameAfterAppleSignIn(appleUsername)
+            onLoginSuccess?()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+            isLoading    = false
+        }
+    }
+
+    // MARK: - Nonce helpers
+
+    private func makeNonce(length: Int = 32) -> String {
+        var bytes = [UInt8](repeating: 0, count: length)
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return bytes.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private func sha256(_ input: String) -> String {
+        let hashed = SHA256.hash(data: Data(input.utf8))
+        return hashed.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
 

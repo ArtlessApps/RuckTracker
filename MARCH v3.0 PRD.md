@@ -3,7 +3,14 @@
 
 **Supersedes:** PRD v2.0 "Tribe Command"
 **Date:** May 2026
+**Last updated:** June 9, 2026
 **Status:** Active
+
+### Changelog — June 9, 2026
+- **Onboarding:** Added Step 10 (Profile Creation) after payment; Permissions moved to Step 11 (12 steps total)
+- **Auth:** Sign in with Apple on onboarding profile step and login sheet; `CommunityService+Apple.swift` extension
+- **Settings:** Removed debug logs and onboarding status; app version reads from bundle
+- **Copy:** "Already have an account? Sign in" on onboarding welcome
 
 ---
 
@@ -56,6 +63,8 @@ After 7 days, subscription required for all tracking features. Community feature
 - Matches the competitor model users already recognize
 
 **Onboarding implication:** Make sure new users ruck within the first 3 days. A trial that expires before the user has experienced a single workout is dead churn. Onboarding should push toward a first ruck immediately.
+
+**Account creation implication:** Payment (Step 9) works without an account — users can start a trial anonymously. Profile creation (Step 10) is shown immediately after payment while motivation is highest. Users who skip profile creation can still use tracking, but leaderboards and club identity require an account. Sign in with Apple is the primary path; email/password is the fallback.
 
 ### What's Behind the Paywall
 
@@ -149,7 +158,7 @@ These features are already coded. They just need to be connected.
 |---|---|
 | Sauna/cold plunge tracking | RuckWell's wellness angle, not MARCH's identity |
 | Nutrition/macro tracking | Different product category entirely |
-| No-account mode | MARCH's community requires accounts by design |
+| No-account mode | Payment works without login, but leaderboard/club identity requires an account — profile creation is prompted post-payment (Step 10), not before |
 | Android app | Large effort. Revisit after iOS revenue is proven. |
 
 ---
@@ -296,4 +305,66 @@ These features are MARCH's moat. RuckWell cannot copy them without rebuilding th
 
 ---
 
-*PRD v3.0 — Supersedes v2.0 "Tribe Command" — May 2026*
+## 10. Onboarding Flow (Updated June 9, 2026)
+
+Onboarding is a 12-step flow (Steps 0–11). Payment comes before account creation by design — users commit to the trial first, then are prompted to create a profile while motivation is highest.
+
+### Step Map
+
+| Step | Screen | Purpose |
+|---|---|---|
+| 0–8 | Personalization questions | Program recommendation, preferences |
+| 9 | Pro Upsell (`ProUpsellStep`) | 7-day trial / subscription — **works without an account** |
+| 10 | Profile Creation (`ProfileCreationStep`) | **New.** Post-payment signup — Apple or email/password |
+| 11 | Permissions (`PermissionsStep`) | HealthKit permissions → `hasCompletedOnboarding = true` |
+
+### Profile Creation (Step 10)
+
+Shown immediately after payment. Two signup paths:
+
+1. **Continue with Apple** (primary) — one tap, no password. Supabase email confirmation is disabled; session is instant.
+2. **Email + password** (fallback) — username, email, password (6+ chars).
+
+**Apple flow:**
+- New Apple user → lightweight username picker ("One last thing") → advance to Step 11
+- Returning Apple user → skip straight to Step 11
+- User dismisses Apple sheet → no error shown (`.canceled` is ignored)
+
+**Skip:** "Skip for now" advances to permissions without creating an account. Tracking works; leaderboard identity does not.
+
+**Copy:** Welcome screen link reads "Already have an account? Sign in" (opens `AuthenticationView` sheet).
+
+### Returning Users (`AuthenticationView`)
+
+The login sheet (opened from onboarding welcome or Settings) now includes the same Apple Sign In button above the email/password form. This covers users who originally signed up with Apple and reinstall — they may not have a password.
+
+- Apple button + "or" divider + email/password form
+- New Apple users in this context → username picker → dismiss on success
+- Returning Apple users → dismiss immediately
+
+### Implementation
+
+| File | Role |
+|---|---|
+| `ProfileCreationStep.swift` | Step 10 UI — Apple button, email form, username picker phase |
+| `CommunityService+Apple.swift` | `signInWithApple()`, `setUsernameAfterAppleSignIn()` |
+| `PhoneOnboardingView.swift` | 12-step flow, progress bar, step wiring |
+| `CommunityTribeView.swift` | `AuthenticationView` with Apple Sign In |
+
+**Requirements:** Sign In with Apple capability enabled in `RuckTracker.entitlements`. Supabase Apple provider configured. Email confirmation disabled in Supabase for instant signup.
+
+---
+
+## 11. Settings & Production Polish (Updated June 9, 2026)
+
+Settings cleaned up for production release:
+
+| Change | Rationale |
+|---|---|
+| Removed "View Debug Logs" | Debug tooling — not for end users |
+| Removed "Onboarding Status" | Internal state — not user-facing |
+| App version reads from bundle | Was hardcoded as `1.0`; now displays `MARKETING_VERSION (BUILD)` from Info.plist (e.g. `3.7 (1)`) |
+
+---
+
+*PRD v3.0 — Supersedes v2.0 "Tribe Command" — May 2026 — Updated June 9, 2026*

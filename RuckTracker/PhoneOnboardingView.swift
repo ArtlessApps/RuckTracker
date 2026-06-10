@@ -26,7 +26,7 @@ struct PhoneOnboardingView: View {
             VStack {
                 // Progress Bar
                 HStack(spacing: 4) {
-                    ForEach(0..<11) { index in
+                    ForEach(0..<12) { index in
                         Capsule()
                             .fill(index <= currentStep ? AppColors.primary : AppColors.accentWarm.opacity(0.3))
                             .frame(height: 4)
@@ -105,14 +105,22 @@ struct PhoneOnboardingView: View {
                         onMaybeLater: { nextStepWithFeedback() }
                     )
                     .tag(9)
-                    
-                    // Step 10: The Buy-in (Permissions)
+
+                    // Step 10: Profile Creation (post-payment signup)
+                    // User just paid, so they are motivated to finish this.
+                    // Email confirmation is disabled in Supabase, so it's instant.
+                    ProfileCreationStep(
+                        nextAction: { nextStepWithFeedback() }
+                    )
+                    .tag(10)
+
+                    // Step 11: The Buy-in (Permissions)
                     PermissionsStep(
                         healthManager: healthManager, 
                         workoutManager: workoutManager, 
                         onComplete: { hasCompletedOnboarding = true }
                     )
-                    .tag(10)
+                    .tag(11)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentStep)
@@ -222,10 +230,10 @@ struct WelcomeCoachStep: View {
                 .padding(.bottom, 20)
             } else {
                 Button(action: onLogin) {
-                    Text("Existing User? ")
+                    Text("Already have an account? ")
                         .foregroundColor(AppColors.textSecondary)
                     +
-                    Text("Login")
+                    Text("Sign in")
                         .foregroundColor(AppColors.primary)
                         .fontWeight(.semibold)
                 }
