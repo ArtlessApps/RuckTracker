@@ -20,7 +20,6 @@ struct SettingsView: View {
     @State private var showingResetAlert = false
     @State private var showingValidationError = false
     @State private var validationMessage = ""
-    @State private var showingDebugLogs = false
     @State private var showingLogoutAlert = false
     @State private var showingAuth = false
     @State private var showingDeleteAccount = false
@@ -54,9 +53,6 @@ struct SettingsView: View {
                         // MARK: - App Info Section
                         aboutSection
                         
-                        // MARK: - Debug Section
-                        debugSection
-                        
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
@@ -83,9 +79,6 @@ struct SettingsView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
                 }
-            }
-            .sheet(isPresented: $showingDebugLogs) {
-                DebugLogViewer()
             }
             .sheet(isPresented: $showingAuth) {
                 AuthenticationView(onLoginSuccess: {
@@ -581,25 +574,12 @@ struct SettingsView: View {
                 .foregroundColor(AppColors.textSecondary)
                 .textCase(.uppercase)
             
-            VStack(spacing: 12) {
-                HStack {
-                    Text("App Version")
-                        .foregroundColor(AppColors.textPrimary)
-                    Spacer()
-                    Text("1.0")
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                
-                Divider()
-                    .background(AppColors.textSecondary.opacity(0.3))
-                
-                HStack {
-                    Text("Onboarding Status")
-                        .foregroundColor(AppColors.textPrimary)
-                    Spacer()
-                    Text(userSettings.hasCompletedOnboarding ? "Completed" : "Pending")
-                        .foregroundColor(AppColors.textSecondary)
-                }
+            HStack {
+                Text("App Version")
+                    .foregroundColor(AppColors.textPrimary)
+                Spacer()
+                Text(appVersionText)
+                    .foregroundColor(AppColors.textSecondary)
             }
             .padding()
             .background(
@@ -610,37 +590,10 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Debug Section
-    
-    private var debugSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Debug")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(AppColors.textSecondary)
-                .textCase(.uppercase)
-            
-            Button(action: {
-                showingDebugLogs = true
-            }) {
-                HStack {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .foregroundColor(AppColors.textPrimary)
-                    Text("View Debug Logs")
-                        .foregroundColor(AppColors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(AppColors.surface)
-                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
-                )
-            }
-        }
+    private var appVersionText: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+        return "\(version) (\(build))"
     }
     
     // MARK: - Sign Out
