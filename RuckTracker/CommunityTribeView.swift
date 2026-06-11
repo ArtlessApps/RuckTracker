@@ -1288,6 +1288,7 @@ struct AuthenticationView: View {
 
             // ── Apple button ──────────────────────────────────────────
             SignInWithAppleButton(isSignUp ? .continue : .signIn) { request in
+                isLoading  = true
                 let nonce  = makeNonce()
                 appleNonce = nonce
                 request.requestedScopes = [.fullName, .email]
@@ -1331,6 +1332,12 @@ struct AuthenticationView: View {
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
 
+                if !email.isEmpty && !isValidEmail(email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()) {
+                    Text("Please enter a valid email address (e.g. you@example.com).")
+                        .font(.system(size: 12))
+                        .foregroundColor(AppColors.accentWarm)
+                }
+
                 Text("Password")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppColors.textSecondary)
@@ -1344,10 +1351,23 @@ struct AuthenticationView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(AppColors.textSecondary)
 
-                    TextField("Your name", text: $username)
+                    TextField("Choose a username", text: $username)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
+
+                    if !username.isEmpty {
+                        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.contains(" ") {
+                            Text("Username can't contain spaces.")
+                                .font(.system(size: 12))
+                                .foregroundColor(AppColors.accentWarm)
+                        } else if trimmed.count > 20 {
+                            Text("Username must be 20 characters or fewer (\(trimmed.count)/20).")
+                                .font(.system(size: 12))
+                                .foregroundColor(AppColors.accentWarm)
+                        }
+                    }
                 }
             }
             .padding(.horizontal)
@@ -1447,6 +1467,8 @@ struct AuthenticationView: View {
             return isValidEmail(normalizedEmail)
                 && !password.isEmpty
                 && !trimmedUsername.isEmpty
+                && !trimmedUsername.contains(" ")
+                && trimmedUsername.count <= 20
         } else {
             return isValidEmail(normalizedEmail) && !password.isEmpty
         }
@@ -1487,6 +1509,10 @@ struct AuthenticationView: View {
     }
 
     private func mapAuthError(_ error: Error) -> String {
+        if let communityError = error as? CommunityError {
+            return communityError.localizedDescription
+        }
+
         let message = error.localizedDescription
 
         // Supabase/GoTrue often returns: `Email address "..." is invalid`
@@ -1496,7 +1522,7 @@ struct AuthenticationView: View {
             return "Supabase rejected this email. For signup, use a real email address you can receive (avoid placeholder/test domains like example.com/test.com) and make sure there are no spaces."
         }
 
-        return message
+        return CommunityError.fromSignUpError(error).localizedDescription
     }
 
     private func isValidEmail(_ email: String) -> Bool {

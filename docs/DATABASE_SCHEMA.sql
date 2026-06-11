@@ -119,7 +119,6 @@ CREATE TABLE public.post_likes (
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   username text NOT NULL UNIQUE,
-  display_name text,
   avatar_url text,
   bio text,
   location text,

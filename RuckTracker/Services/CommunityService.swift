@@ -123,6 +123,12 @@ class CommunityService: ObservableObject {
             let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
 
+            if let available = try? await isUsernameAvailable(trimmedUsername) {
+                guard available else { throw CommunityError.duplicateUsername }
+            } else {
+                print("⚠️ Username availability check skipped (is_username_available RPC may not be deployed yet)")
+            }
+
             // Create auth user
             let response = try await supabase.auth.signUp(
                 email: normalizedEmail,
@@ -149,22 +155,22 @@ class CommunityService: ObservableObject {
             
         } catch {
             print("❌ Sign up failed: \(error)")
-            if let communityError = error as? CommunityError {
-                throw communityError
-            }
-            
-            // Check for duplicate username error (PostgreSQL unique violation on username column)
-            let errorMessage = error.localizedDescription.lowercased()
-            if errorMessage.contains("duplicate") ||
-               errorMessage.contains("23505") ||
-               errorMessage.contains("unique") {
-                if errorMessage.contains("username") || errorMessage.contains("profiles_username") {
-                    throw CommunityError.duplicateUsername
-                }
-            }
-            
-            throw CommunityError.authenticationFailed(error.localizedDescription)
+            throw CommunityError.fromSignUpError(error)
         }
+    }
+
+    /// Returns true when no profile row uses this username yet.
+    /// Uses a SECURITY DEFINER RPC so anonymous signup flows can check availability.
+    func isUsernameAvailable(_ username: String) async throws -> Bool {
+        let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        let available: Bool = try await supabase
+            .rpc("is_username_available", params: IsUsernameAvailableParams(p_username: trimmed))
+            .execute()
+            .value
+
+        return available
     }
     
     /// Sign in existing user
@@ -1093,7 +1099,11 @@ class CommunityService: ObservableObject {
         let p_club_id: UUID
         let p_limit: Int
     }
-    
+
+    private struct IsUsernameAvailableParams: Encodable {
+        let p_username: String
+    }
+
     // MARK: - Global Leaderboards (PRO Feature)
     
     @Published var globalLeaderboard: [GlobalLeaderboardEntry] = []
@@ -2130,6 +2140,7 @@ enum CommunityError: Error, LocalizedError {
     case waiverRequired
     case duplicateInviteCode
     case duplicateUsername
+    case duplicateEmail
     case clubNotFound
     case geocodingFailed
     case accountDeletionFailed(String)
@@ -2139,7 +2150,7 @@ enum CommunityError: Error, LocalizedError {
         case .notAuthenticated:
             return "You must be signed in to perform this action"
         case .authenticationFailed(let message):
-            return "Authentication failed: \(message)"
+            return message
         case .emailConfirmationRequired:
             return "Account created. Please check your email to confirm your account, then sign in."
         case .networkError(let message):
@@ -2157,7 +2168,9 @@ enum CommunityError: Error, LocalizedError {
         case .duplicateInviteCode:
             return "This invite code is already taken. Please choose a different one."
         case .duplicateUsername:
-            return "This username is already taken. Please choose a different one."
+            return "This username is already taken. Please choose another one."
+        case .duplicateEmail:
+            return "An account with this email already exists. Try signing in instead."
         case .clubNotFound:
             return "No club found with that code. Check the code and try again, or use 'Find a Club' to search by zipcode."
         case .geocodingFailed:
@@ -2165,6 +2178,57 @@ enum CommunityError: Error, LocalizedError {
         case .accountDeletionFailed(let message):
             return "Account deletion failed: \(message)"
         }
+    }
+
+    /// Maps Supabase Auth / Postgres errors from signup flows to user-friendly cases.
+    static func fromSignUpError(_ error: Error) -> CommunityError {
+        if let communityError = error as? CommunityError {
+            return communityError
+        }
+
+        let combined = collectErrorText(error).lowercased()
+
+        if isDuplicateUsername(combined) {
+            return .duplicateUsername
+        }
+        if isDuplicateEmail(combined) {
+            return .duplicateEmail
+        }
+
+        return .authenticationFailed(error.localizedDescription)
+    }
+
+    private static func collectErrorText(_ error: Error) -> String {
+        var parts = [error.localizedDescription, String(describing: error)]
+        var current: Error? = error
+        while let underlying = (current as NSError?)?.userInfo[NSUnderlyingErrorKey] as? Error {
+            parts.append(underlying.localizedDescription)
+            parts.append(String(describing: underlying))
+            current = underlying
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func isDuplicateUsername(_ text: String) -> Bool {
+        // Supabase Auth hides Postgres trigger failures behind this generic message.
+        if text.contains("database error saving new user") {
+            return true
+        }
+
+        let uniqueViolation = text.contains("23505")
+            || text.contains("duplicate key")
+            || (text.contains("unique") && text.contains("constraint"))
+        let usernameField = text.contains("username") || text.contains("profiles_username")
+        return uniqueViolation && usernameField
+    }
+
+    private static func isDuplicateEmail(_ text: String) -> Bool {
+        text.contains("user already registered")
+            || text.contains("user_already_exists")
+            || text.contains("email already")
+            || text.contains("already been registered")
+            || text.contains("email address is already")
+            || (text.contains("duplicate") && text.contains("email"))
     }
 }
 

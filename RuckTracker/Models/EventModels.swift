@@ -106,7 +106,6 @@ struct ClubEvent: Codable, Identifiable {
     
     // Joined data (from RPC)
     var creatorUsername: String?
-    var creatorDisplayName: String?
     var rsvpCount: Int?
     var totalDeclaredWeight: Int?
     
@@ -125,7 +124,6 @@ struct ClubEvent: Codable, Identifiable {
         case waterRequirements = "water_requirements"
         case createdAt = "created_at"
         case creatorUsername = "creator_username"
-        case creatorDisplayName = "creator_display_name"
         case rsvpCount = "rsvp_count"
         case totalDeclaredWeight = "total_declared_weight"
     }

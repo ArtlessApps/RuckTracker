@@ -33,7 +33,7 @@ extension CommunityService {
 
         // Hand the token to Supabase. It verifies it with Apple's servers,
         // then creates or restores the user's session automatically.
-        try await supabase.auth.signInWithIdToken(
+        try await supabaseClient.auth.signInWithIdToken(
             credentials: .init(
                 provider: .apple,
                 idToken: idToken,
@@ -41,14 +41,14 @@ extension CommunityService {
             )
         )
 
-        print("✅ [Apple] Supabase session created — user: \(supabase.auth.currentUser?.id.uuidString ?? "unknown")")
+        print("✅ [Apple] Supabase session created — user: \(supabaseClient.auth.currentUser?.id.uuidString ?? "unknown")")
 
         // Try loading their profile. A brand-new Apple user may not have one yet
         // if the DB trigger hasn't fired, so we allow this to fail silently.
         try? await loadCurrentProfile()
 
         // Wire up UserSettings and Premium to this user's account
-        if let userId = supabase.auth.currentUser?.id {
+        if let userId = supabaseClient.auth.currentUser?.id {
             await UserSettings.shared.switchToUser(userId)
             PremiumManager.shared.evaluatePremiumForNewUser()
         }
@@ -63,7 +63,7 @@ extension CommunityService {
     /// We use `upsert` rather than `update` because the DB trigger may not
     /// have created the profile row yet when Apple sign-in is fast.
     func setUsernameAfterAppleSignIn(_ username: String) async throws {
-        guard let userId = supabase.auth.currentUser?.id else {
+        guard let userId = supabaseClient.auth.currentUser?.id else {
             throw CommunityError.notAuthenticated
         }
 
@@ -73,11 +73,19 @@ extension CommunityService {
             throw CommunityError.authenticationFailed("Username cannot be blank.")
         }
 
-        // Upsert: creates the row if missing, updates it if it already exists
-        try await supabase
-            .from("profiles")
-            .upsert(["id": userId.uuidString, "username": trimmed])
-            .execute()
+        if let available = try? await isUsernameAvailable(trimmed), !available {
+            throw CommunityError.duplicateUsername
+        }
+
+        do {
+            // Upsert: creates the row if missing, updates it if it already exists
+            try await supabaseClient
+                .from("profiles")
+                .upsert(["id": userId.uuidString, "username": trimmed])
+                .execute()
+        } catch {
+            throw CommunityError.fromSignUpError(error)
+        }
 
         // Reload so currentProfile reflects the new username everywhere in the app
         try await loadCurrentProfile()

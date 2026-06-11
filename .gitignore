@@ -1,1 +1,4 @@
 march-website/
+
+# Apple App Store Connect auth keys
+*.p8
