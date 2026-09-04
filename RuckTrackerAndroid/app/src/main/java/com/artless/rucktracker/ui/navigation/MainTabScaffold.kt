@@ -48,6 +48,7 @@ import com.artless.rucktracker.ui.you.YouScreen
 @Composable
 fun MainTabScaffold(
     onStartRuck: () -> Unit,
+    onOpenPrograms: () -> Unit = {},
     viewModel: MainTabViewModel = hiltViewModel(),
     ruckViewModel: RuckTabViewModel = hiltViewModel()
 ) {
@@ -58,6 +59,7 @@ fun MainTabScaffold(
         when (selectedTab) {
             MainTab.RUCK -> RuckTabScreen(
                 onStartRuck = onStartRuck,
+                onOpenPrograms = onOpenPrograms,
                 onSelectTab = viewModel::selectTab,
                 viewModel = ruckViewModel
             )

@@ -29,6 +29,7 @@ import com.artless.rucktracker.ui.theme.MarchDimens
 fun RuckTabScreen(
     modifier: Modifier = Modifier,
     onStartRuck: () -> Unit,
+    onOpenPrograms: () -> Unit = {},
     onSelectTab: (MainTab) -> Unit = {},
     viewModel: RuckTabViewModel = hiltViewModel()
 ) {
@@ -77,7 +78,7 @@ fun RuckTabScreen(
             subtitle = "${state.programCount} available",
             icon = Icons.AutoMirrored.Filled.ListAlt,
             accent = MarchColors.AccentWarm,
-            onClick = { onSelectTab(MainTab.PLAN) }
+            onClick = onOpenPrograms
         )
         Spacer(Modifier.height(MarchDimens.TileGap))
         DashboardTile(

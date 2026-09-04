@@ -13,6 +13,7 @@ import com.artless.rucktracker.ui.auth.AppGateState
 import com.artless.rucktracker.ui.auth.AuthScreen
 import com.artless.rucktracker.ui.auth.AuthViewModel
 import com.artless.rucktracker.ui.onboarding.OnboardingScreen
+import com.artless.rucktracker.ui.programs.ProgramsCatalogScreen
 import com.artless.rucktracker.ui.splash.SplashScreen
 import com.artless.rucktracker.ui.workout.ActiveWorkoutScreen
 import com.artless.rucktracker.ui.workout.PostWorkoutSummaryScreen
@@ -24,6 +25,7 @@ private object Routes {
     const val AUTH = "auth"
     const val ONBOARDING = "onboarding"
     const val MAIN = "main"
+    const val PROGRAMS = "programs"
     const val START_RUCK = "start_ruck"
     const val ACTIVE_WORKOUT = "active_workout"
     const val POST_WORKOUT = "post_workout"
@@ -67,7 +69,15 @@ fun AppNav(navController: NavHostController = rememberNavController()) {
                 }
             })
         }
-        composable(Routes.MAIN) { MainTabScaffold(onStartRuck = { navController.navigate(Routes.START_RUCK) }) }
+        composable(Routes.MAIN) {
+            MainTabScaffold(
+                onStartRuck = { navController.navigate(Routes.START_RUCK) },
+                onOpenPrograms = { navController.navigate(Routes.PROGRAMS) }
+            )
+        }
+        composable(Routes.PROGRAMS) {
+            ProgramsCatalogScreen(onBack = { navController.popBackStack() })
+        }
         composable(Routes.START_RUCK) {
             StartRuckScreen(
                 viewModel = workoutViewModel,
