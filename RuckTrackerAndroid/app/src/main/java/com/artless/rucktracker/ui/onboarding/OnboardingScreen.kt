@@ -100,7 +100,7 @@ fun OnboardingScreen(
                     modifier = Modifier.weight(1f)
                 )
                 if (pagerState.currentPage < LastPage) {
-                    MarchCompactButton(text = "Skip", onClick = onComplete)
+                    MarchCompactButton(text = "Skip", onClick = { viewModel.skip(onComplete) })
                 }
             }
 

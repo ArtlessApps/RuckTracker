@@ -98,8 +98,16 @@ class UserSettingsRepository @Inject constructor(
             prefs[Keys.RUCKING_GOAL] = updated.ruckingGoal.name
             prefs[Keys.EXPERIENCE_LEVEL] = updated.experienceLevel.name
             prefs[Keys.TRAINING_DAYS] = updated.preferredTrainingDays.joinToString(",")
-            updated.activeProgramId?.let { prefs[Keys.ACTIVE_PROGRAM_ID] = it }
-            updated.targetEventDate?.let { prefs[Keys.TARGET_EVENT_DATE] = it }
+            if (updated.activeProgramId != null) {
+                prefs[Keys.ACTIVE_PROGRAM_ID] = updated.activeProgramId
+            } else {
+                prefs.remove(Keys.ACTIVE_PROGRAM_ID)
+            }
+            if (updated.targetEventDate != null) {
+                prefs[Keys.TARGET_EVENT_DATE] = updated.targetEventDate
+            } else {
+                prefs.remove(Keys.TARGET_EVENT_DATE)
+            }
             prefs[Keys.BASELINE_PACE] = updated.baselinePaceMinutesPerMile
             prefs[Keys.BASELINE_DISTANCE] = updated.baselineLongestDistanceMiles
             prefs[Keys.HAS_HILL_ACCESS] = updated.hasHillAccess
@@ -128,8 +136,16 @@ class UserSettingsRepository @Inject constructor(
             prefs[Keys.RUCKING_GOAL] = state.ruckingGoal.name
             prefs[Keys.EXPERIENCE_LEVEL] = state.experienceLevel.name
             prefs[Keys.TRAINING_DAYS] = state.preferredTrainingDays.joinToString(",")
-            state.activeProgramId?.let { prefs[Keys.ACTIVE_PROGRAM_ID] = it }
-            state.targetEventDate?.let { prefs[Keys.TARGET_EVENT_DATE] = it }
+            if (state.activeProgramId != null) {
+                prefs[Keys.ACTIVE_PROGRAM_ID] = state.activeProgramId
+            } else {
+                prefs.remove(Keys.ACTIVE_PROGRAM_ID)
+            }
+            if (state.targetEventDate != null) {
+                prefs[Keys.TARGET_EVENT_DATE] = state.targetEventDate
+            } else {
+                prefs.remove(Keys.TARGET_EVENT_DATE)
+            }
             prefs[Keys.BASELINE_PACE] = state.baselinePaceMinutesPerMile
             prefs[Keys.BASELINE_DISTANCE] = state.baselineLongestDistanceMiles
             prefs[Keys.HAS_HILL_ACCESS] = state.hasHillAccess

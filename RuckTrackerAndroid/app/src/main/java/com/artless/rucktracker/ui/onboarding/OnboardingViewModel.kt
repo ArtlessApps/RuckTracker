@@ -10,6 +10,7 @@ import com.artless.rucktracker.data.model.RuckingGoal
 import com.artless.rucktracker.data.remote.AuthRepository
 import com.artless.rucktracker.data.remote.PreferencesRepository
 import com.artless.rucktracker.data.settings.UserSettingsRepository
+import com.artless.rucktracker.domain.MarchPlanGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -47,6 +48,27 @@ class OnboardingViewModel @Inject constructor(
     fun setEventDate() { /* optional */ }
     fun updateTrainingDays(days: List<Int>) { state = state.copy(trainingDays = days) }
 
+    /**
+     * Skip onboarding without generating a plan — matches iOS Skip behavior.
+     * Plan tab stays empty until the user builds a plan.
+     */
+    fun skip(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            userSettingsRepository.update { current ->
+                current.copy(
+                    hasCompletedOnboarding = true,
+                    activeProgramId = null
+                )
+            }
+            persistRemote()
+            onComplete()
+        }
+    }
+
+    /**
+     * Finish onboarding and activate the personalized MARCH plan — matches iOS
+     * `calculateRecommendation` + `activeProgramID` assignment.
+     */
     fun complete(onComplete: () -> Unit) {
         viewModelScope.launch {
             userSettingsRepository.update { current ->
@@ -60,19 +82,23 @@ class OnboardingViewModel @Inject constructor(
                     hasHillAccess = state.hasHills,
                     hasStairsAccess = state.hasStairs,
                     preferredTrainingDays = state.trainingDays,
-                    hasCompletedOnboarding = true
+                    hasCompletedOnboarding = true,
+                    activeProgramId = MarchPlanGenerator.PROGRAM_ID
                 )
             }
-            userSettingsRepository.setOnboardingComplete(true)
-            authRepository.currentUserId?.let { userId ->
-                runCatching {
-                    preferencesRepository.savePreferences(
-                        userId,
-                        userSettingsRepository.settings.first()
-                    )
-                }
-            }
+            persistRemote()
             onComplete()
+        }
+    }
+
+    private suspend fun persistRemote() {
+        authRepository.currentUserId?.let { userId ->
+            runCatching {
+                preferencesRepository.savePreferences(
+                    userId,
+                    userSettingsRepository.settings.first()
+                )
+            }
         }
     }
 }

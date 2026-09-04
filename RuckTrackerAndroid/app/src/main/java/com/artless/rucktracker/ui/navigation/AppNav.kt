@@ -64,6 +64,7 @@ fun AppNav(navController: NavHostController = rememberNavController()) {
         composable(Routes.AUTH) { AuthScreen(viewModel = authViewModel) }
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onComplete = {
+                authViewModel.markOnboardingFinished()
                 navController.navigate(Routes.MAIN) {
                     popUpTo(0) { inclusive = true }
                 }
@@ -72,7 +73,8 @@ fun AppNav(navController: NavHostController = rememberNavController()) {
         composable(Routes.MAIN) {
             MainTabScaffold(
                 onStartRuck = { navController.navigate(Routes.START_RUCK) },
-                onOpenPrograms = { navController.navigate(Routes.PROGRAMS) }
+                onOpenPrograms = { navController.navigate(Routes.PROGRAMS) },
+                onBuildPlan = authViewModel::returnToOnboarding
             )
         }
         composable(Routes.PROGRAMS) {

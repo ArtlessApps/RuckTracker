@@ -32,11 +32,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.artless.rucktracker.data.model.MainTab
 import com.artless.rucktracker.ui.components.marchPressable
 import com.artless.rucktracker.ui.plan.PlanScreen
+import com.artless.rucktracker.ui.plan.PlanViewModel
 import com.artless.rucktracker.ui.premium.PaywallScreen
 import com.artless.rucktracker.ui.rankings.RankingsScreen
 import com.artless.rucktracker.ui.ruck.RuckTabScreen
@@ -49,11 +51,17 @@ import com.artless.rucktracker.ui.you.YouScreen
 fun MainTabScaffold(
     onStartRuck: () -> Unit,
     onOpenPrograms: () -> Unit = {},
+    onBuildPlan: () -> Unit = {},
     viewModel: MainTabViewModel = hiltViewModel(),
-    ruckViewModel: RuckTabViewModel = hiltViewModel()
+    ruckViewModel: RuckTabViewModel = hiltViewModel(),
+    planViewModel: PlanViewModel = hiltViewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val showPaywall by ruckViewModel.showPaywall.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        planViewModel.requestOnboarding.collect { onBuildPlan() }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
@@ -63,7 +71,7 @@ fun MainTabScaffold(
                 onSelectTab = viewModel::selectTab,
                 viewModel = ruckViewModel
             )
-            MainTab.PLAN -> PlanScreen()
+            MainTab.PLAN -> PlanScreen(viewModel = planViewModel)
             MainTab.TRIBE -> TribeScreen()
             MainTab.RANKINGS -> RankingsScreen()
             MainTab.YOU -> YouScreen()

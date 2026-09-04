@@ -45,22 +45,25 @@ import java.util.Locale
 fun PlanScreen(modifier: Modifier = Modifier, viewModel: PlanViewModel = hiltViewModel()) {
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val goal by viewModel.goal.collectAsStateWithLifecycle()
+    val hasPlan by viewModel.hasPlan.collectAsStateWithLifecycle()
 
     MarchScreen(modifier = modifier) {
         MarchScreenHeader(
             eyebrow = "This week",
             title = "My Plan",
-            subtitle = goal.ifBlank { "Build your base" }
+            subtitle = if (hasPlan) goal.ifBlank { "Your schedule" } else "Build your base"
         )
 
         Spacer(Modifier.height(20.dp))
 
-        if (sessions.isEmpty()) {
+        if (!hasPlan) {
             MarchEmptyState(
                 icon = Icons.Filled.CalendarMonth,
                 title = "No plan yet",
-                message = "Finish onboarding and MARCH will build a week-by-week schedule around your goal.",
-                accent = MarchColors.TileBlue
+                message = "Build your personalized plan to see your scheduled workouts here.",
+                accent = MarchColors.TileBlue,
+                actionLabel = "Build My Plan",
+                onAction = viewModel::buildMyPlan
             )
             return@MarchScreen
         }

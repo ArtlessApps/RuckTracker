@@ -112,6 +112,20 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    /** Call after onboarding skip/complete so the gate advances to main. */
+    fun markOnboardingFinished() {
+        viewModelScope.launch {
+            val userId = repository.currentUserId
+            val profile = userId?.let { runCatching { repository.fetchProfile(it) }.getOrNull() }
+            _gateState.value = AppGateState.Ready(profile)
+        }
+    }
+
+    /** Matches iOS Plan "Build My Plan" / "Switch Goal" — reopens onboarding. */
+    fun returnToOnboarding() {
+        _gateState.value = AppGateState.NeedsOnboarding
+    }
+
     private suspend fun performSignOut() {
         val userId = repository.currentUserId
         if (userId != null) {

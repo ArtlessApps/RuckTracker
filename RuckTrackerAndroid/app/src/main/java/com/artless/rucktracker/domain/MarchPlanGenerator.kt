@@ -20,6 +20,10 @@ data class GeneratedPlan(
 )
 
 object MarchPlanGenerator {
+    /** Matches iOS `MarchPlanGenerator.programId` — set only after onboarding builds a plan. */
+    const val PROGRAM_ID = "aaaa1111-2222-3333-4444-555555555555"
+    const val PROGRAM_TITLE = "MARCH Personalized Plan"
+
     fun generatePlan(settings: UserSettingsState): GeneratedPlan {
         val weeks = (1..4).map { week ->
             settings.preferredTrainingDays.map { day ->

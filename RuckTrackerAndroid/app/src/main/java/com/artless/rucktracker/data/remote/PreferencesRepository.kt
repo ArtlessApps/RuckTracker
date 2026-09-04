@@ -11,6 +11,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -62,8 +63,16 @@ class PreferencesRepository @Inject constructor(private val client: SupabaseClie
                     "preferred_training_days",
                     JsonArray(settings.preferredTrainingDays.map { JsonPrimitive(it) })
                 )
-                settings.activeProgramId?.let { put("active_program_id", it) }
-                settings.targetEventDate?.let { put("target_event_date", it.toString()) }
+                if (settings.activeProgramId != null) {
+                    put("active_program_id", settings.activeProgramId)
+                } else {
+                    put("active_program_id", JsonNull)
+                }
+                if (settings.targetEventDate != null) {
+                    put("target_event_date", settings.targetEventDate.toString())
+                } else {
+                    put("target_event_date", JsonNull)
+                }
                 put("baseline_pace_minutes_per_mile", settings.baselinePaceMinutesPerMile)
                 put("baseline_longest_distance_miles", settings.baselineLongestDistanceMiles)
                 put("has_hill_access", settings.hasHillAccess)
