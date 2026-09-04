@@ -115,7 +115,7 @@ Use club: _______________  Join code: _______________
 
 ### Signed in, no clubs
 - [ ] Join by code works
-- [ ] Create club works (name, description)
+- [ ] Create club works (name, description, public/private, zipcode location)
 - [ ] Waiver flow on join (if applicable)
 
 ### Signed in, has clubs

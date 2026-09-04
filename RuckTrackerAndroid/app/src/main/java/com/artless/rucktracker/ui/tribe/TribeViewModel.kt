@@ -77,12 +77,26 @@ class TribeViewModel @Inject constructor(
         }
     }
 
-    fun createClub(name: String, description: String) {
+    fun createClub(
+        name: String,
+        description: String,
+        isPrivate: Boolean,
+        zipcode: String?,
+        customJoinCode: String? = null
+    ) {
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
-            val code = UUID.randomUUID().toString().take(6).uppercase()
+            val trimmedCustom = customJoinCode?.trim()?.uppercase().orEmpty()
+            val code = trimmedCustom.ifEmpty { UUID.randomUUID().toString().take(6).uppercase() }
             runCatching {
-                clubRepository.createClub(name, description, isPrivate = false, zipcode = null, createdBy = userId, joinCode = code)
+                clubRepository.createClub(
+                    name = name.trim(),
+                    description = description.trim(),
+                    isPrivate = isPrivate,
+                    zipcode = zipcode?.trim()?.takeIf { it.isNotEmpty() },
+                    createdBy = userId,
+                    joinCode = code
+                )
             }.onSuccess { refresh() }
                 .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
         }

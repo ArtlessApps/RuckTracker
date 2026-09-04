@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -103,6 +104,9 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
     var showCreate by remember { mutableStateOf(false) }
     var clubName by remember { mutableStateOf("") }
     var clubDescription by remember { mutableStateOf("") }
+    var isPrivate by remember { mutableStateOf(false) }
+    var zipcode by remember { mutableStateOf("") }
+    var customInviteCode by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -158,12 +162,71 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                 MarchTextField(
                     value = clubDescription,
                     onValueChange = { clubDescription = it },
-                    label = "Description"
+                    label = "Description (optional)",
+                    singleLine = false
                 )
-                Spacer(Modifier.height(14.dp))
+                Spacer(modifier.height(16.dp))
+                Text(
+                    text = "Visibility",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MarchColors.TextSecondary
+                )
+                Spacer(modifier.height(8.dp))
+                MarchSegmentedControl(
+                    options = listOf("Public", "Private"),
+                    selectedIndex = if (isPrivate) 1 else 0,
+                    onSelect = { isPrivate = it == 1 }
+                )
+                Spacer(modifier.height(6.dp))
+                Text(
+                    text = if (isPrivate) {
+                        "Only visible with invite code"
+                    } else {
+                        "Visible in club search"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MarchColors.TextSecondary
+                )
+                if (isPrivate) {
+                    Spacer(modifier.height(12.dp))
+                    MarchTextField(
+                        value = customInviteCode,
+                        onValueChange = { customInviteCode = it.uppercase() },
+                        label = "Custom invite code (optional)"
+                    )
+                    Spacer(modifier.height(6.dp))
+                    Text(
+                        text = "Leave blank to auto-generate. Custom codes must be unique.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MarchColors.TextSecondary
+                    )
+                }
+                Spacer(modifier.height(12.dp))
+                MarchTextField(
+                    value = zipcode,
+                    onValueChange = { zipcode = it.filter { ch -> ch.isDigit() }.take(10) },
+                    label = "Location (zipcode)",
+                    keyboardType = KeyboardType.Number,
+                    leadingIcon = Icons.Filled.LocationOn
+                )
+                Spacer(modifier.height(6.dp))
+                Text(
+                    text = "Helps nearby ruckers find your club",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MarchColors.TextSecondary
+                )
+                Spacer(modifier.height(14.dp))
                 MarchPrimaryButton(
                     text = "Create Club",
-                    onClick = { viewModel.createClub(clubName, clubDescription) },
+                    onClick = {
+                        viewModel.createClub(
+                            name = clubName,
+                            description = clubDescription,
+                            isPrivate = isPrivate,
+                            zipcode = zipcode,
+                            customJoinCode = customInviteCode.takeIf { isPrivate && it.isNotBlank() }
+                        )
+                    },
                     enabled = clubName.isNotBlank(),
                     height = 50.dp
                 )
@@ -174,7 +237,16 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
         MarchGhostButton(
             text = if (showCreate) "Cancel" else "Create a Club",
             accent = if (showCreate) MarchColors.TextSecondary else MarchColors.Primary,
-            onClick = { showCreate = !showCreate }
+            onClick = {
+                showCreate = !showCreate
+                if (!showCreate) {
+                    clubName = ""
+                    clubDescription = ""
+                    isPrivate = false
+                    zipcode = ""
+                    customInviteCode = ""
+                }
+            }
         )
 
         state.error?.let {
