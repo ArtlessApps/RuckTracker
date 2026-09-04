@@ -1,0 +1,562 @@
+[
+  {
+    "id": "en-w1-d1-ruck-001",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1, Day 1: Base Building\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\nWelcome to Endurance! This program will take you from solid rucker to distance machine. We're building weekly mileage to 25+ miles. Start steady.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d2-rest-001",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d3-ruck-002",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1, Day 3: Midweek Volume\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nBuilding your weekly volume. Focus on maintaining consistent pace throughout.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d4-rest-002",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d5-ruck-003",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 1, Day 5: Speed Work\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nShorter distance, faster pace. Building different energy systems to support your endurance.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d6-rest-003",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Prepare for your long ruck tomorrow.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w1-d7-ruck-004",
+    "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 1, Day 7: Long Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYour first long ruck! Take it easy, focus on time on feet. Week 1 total: 15 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d1-ruck-005",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2, Day 1: Volume Increase\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding distance across all rucks this week. Your body is adapting to the volume.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d2-rest-004",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d3-ruck-006",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.50",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2, Day 3: Midweek Builder\n\n\u2022 Distance: 4.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nHalf mile more than last week. You're building capacity!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d4-rest-005",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d5-ruck-007",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 2, Day 5: Tempo Ruck\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nFaster pace today. Push yourself while maintaining good form.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d6-rest-006",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w2-d7-ruck-008",
+    "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 2, Day 7: Long Ruck - 6 Miles!\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Easy (18 min/mile)\n\nFirst 6-miler! Bring water and snacks. Week 2 total: 17.5 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d1-ruck-009",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3, Day 1: Progressive Load\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding 3 lbs this week to 28 lbs. Same volume, more weight. This is how endurance athletes get strong.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d2-rest-007",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d3-ruck-010",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3, Day 3: Midweek Push\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\n5 miles midweek! You're getting stronger with heavier weight.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d4-rest-008",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d5-ruck-011",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 3, Day 5: Tempo Session\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nBuilding speed with heavier weight. This develops your aerobic engine.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d6-rest-009",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w3-d7-ruck-012",
+    "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "7.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 3, Day 7: Long Ruck - 7 Miles!\n\n\u2022 Distance: 7 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into higher mileage! Over 2 hours on feet. Week 3 total: 20 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d1-ruck-013",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4, Day 1: Consolidation\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nLetting your body adapt before the next big push. Maintaining volume while solidifying gains.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d2-rest-010",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d3-ruck-014",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4, Day 3: Steady State\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nMaintaining consistent work. Your body is becoming an endurance machine.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d4-rest-011",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d5-ruck-015",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "15.00",
+    "instructions": "Week 4, Day 5: Speed Work\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Fast (15 min/mile)\n\nPushing the pace! This should feel challenging. Building your speed floor.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d6-rest-012",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w4-d7-ruck-016",
+    "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 4, Day 7: Long Ruck - 8 Miles!\n\n\u2022 Distance: 8 miles\n\u2022 Pace: Easy (18 min/mile)\n\nBreaking into serious distance! Fuel during the ruck. Week 4 total: 20 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d1-ruck-017",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5, Day 1: Long Ruck Focus\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nAdding to 30 lbs! You're getting seriously strong. Time to push the long ruck boundaries.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d2-rest-013",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d3-ruck-018",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5, Day 3: Midweek Volume\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\n6 miles is becoming routine for you! This is what volume building looks like.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d4-rest-014",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d5-ruck-019",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 5, Day 5: Recovery Ruck\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Moderate (16 min/mile)\n\nShorter distance before the big weekend long ruck. Keep the legs fresh.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d6-rest-015",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Prepare for 9 miles tomorrow!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w5-d7-ruck-020",
+    "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "9.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 5, Day 7: Long Ruck - 9 Miles!\n\n\u2022 Distance: 9 miles\n\u2022 Pace: Easy (18 min/mile)\n\nNearly double-digit miles! Fuel early and often. Week 5 total: 24 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d1-ruck-021",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6, Day 1: Peak Volume\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nPeak volume week! This is where endurance champions are made. Highest weekly mileage of the program.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d2-rest-016",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Critical recovery this week!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d3-ruck-022",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6, Day 3: Midweek Grind\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nStay strong. Mental toughness is what separates endurance athletes.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d4-rest-017",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d5-ruck-023",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 6, Day 5: Tempo Work\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\nKeeping the legs fresh with pace work between long efforts.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d6-rest-018",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Tomorrow is BIG. 10 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w6-d7-ruck-024",
+    "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 6, Day 7: DOUBLE DIGITS - 10 Mile Ruck!\n\n\u2022 Distance: 10 miles\n\u2022 Pace: Easy (18 min/mile)\n\nYOU DID IT! Double-digit miles! This is a HUGE milestone. Fuel every 45 minutes. Week 6 total: 26 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d1-ruck-025",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7, Day 1: Peak Load\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFinal weight increase to 32 lbs. You're an endurance machine now. Testing your limits.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d2-rest-019",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d3-ruck-026",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7, Day 3: Heavy Midweek\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFeeling the heavier weight? You're adapting. Trust the process.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d4-rest-020",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d5-ruck-027",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 7, Day 5: Recovery Ruck\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Moderate (16 min/mile)\n\nKeeping it shorter before the weekend long ruck.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d6-rest-021",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Rest up for another 10-miler!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w7-d7-ruck-028",
+    "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+    "day_number": 7,
+    "workout_type": "ruck",
+    "distance_miles": "10.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 7, Day 7: Long Ruck - 10 Miles!\n\n\u2022 Distance: 10 miles\n\u2022 Pace: Easy (18 min/mile)\n\n10 miles at the heaviest weight. Proving your durability. Week 7 total: 25 miles!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d1-ruck-029",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8, Day 1: Taper & Test\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\nFinal week! Tapering volume to peak for your final test. Legs should feel fresh and strong.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d2-rest-022",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d3-ruck-030",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8, Day 3: Pre-Test Shakeout\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\nStay loose. Moderate effort. Save your energy for the final test.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d4-rest-023",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Get ready for your final test!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d5-ruck-031",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "12.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 8, Day 5: FINAL TEST - 12 Mile Ruck!\n\n\u2022 Distance: 12 miles\n\u2022 Pace: Easy (18 min/mile)\n\nThis is your graduation ruck! 12 miles at 30 lbs. Fuel every 30-45 min, stay hydrated. You have trained for this. GO GET IT.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d6-rest-024",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - You did it! Recover and celebrate.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "en-w8-d7-rest-025",
+    "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "PROGRAM COMPLETE!\n\nYou finished Endurance! In 8 weeks you:\n\u2022 Built to 12-mile rucks\n\u2022 Hit 26+ miles in a single week\n\u2022 Went from 25 lbs to 32 lbs\n\u2022 Total: 170+ miles rucked\n\nYou have SERIOUS endurance. Ready for Marathon Ruck Prep?",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  }
+]

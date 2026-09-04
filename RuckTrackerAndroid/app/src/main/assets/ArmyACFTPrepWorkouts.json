@@ -1,0 +1,382 @@
+[
+  {
+    "id": "acft-w1-d1-ruck-001",
+    "week_id": "d2bbaef4-6536-4267-a83f-601f82910a1b",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 1: Foundation - Baseline Fitness Test\n\n\u2022 Distance: 3 miles\n\nWelcome to Army ACFT Prep! Training for the 12K ruck event and overall combat readiness.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w1-d2-rest-001",
+    "week_id": "d2bbaef4-6536-4267-a83f-601f82910a1b",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w3-d7-rest-012",
+    "week_id": "c0451935-31de-40d5-97e6-853d34aa1e8d",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 3: 13 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d1-ruck-010",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4: Strength Phase - Adding Deadlifts\n\n\u2022 Distance: 4 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d2-rest-013",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d3-ruck-011",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "16.00",
+    "instructions": "Deadlift + Ruck\n\n\u2022 Distance: 3.5 miles\n\u2022 PT: Deadlift practice (3x max deadlift)",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d4-rest-014",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d5-ruck-012",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "7.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck\n\n\u2022 Distance: 7 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d6-rest-015",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w4-d7-rest-016",
+    "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 4: 14.5 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d1-ruck-013",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5: Ruck & Run - Combined Cardio Work\n\n\u2022 Distance: 5 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d2-rest-017",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d3-ruck-014",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "2-Mile Run + 4 Mile Ruck\n\n\u2022 Run 2 miles fast\n\u2022 Ruck 4 miles at 30 lbs\n\u2022 Combined cardio training",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d4-rest-018",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d5-ruck-015",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "8.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Long Ruck - 8 Miles\n\n\u2022 Distance: 8 miles\n\n12K is 7.5 miles - you're ready!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d6-rest-019",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w5-d7-rest-020",
+    "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 5: 17 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d1-ruck-016",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6: Integration Week\n\n\u2022 Distance: 5 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d2-rest-021",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d3-ruck-017",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Full ACFT Practice\n\n\u2022 Distance: 4 miles\n\u2022 PT: Complete ACFT circuit",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d4-rest-022",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d5-ruck-018",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "9.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Peak Long Ruck\n\n\u2022 Distance: 9 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d6-rest-023",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w6-d7-rest-024",
+    "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 6: 18 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d1-ruck-019",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7: Test Prep - Standards Practice\n\n\u2022 Distance: 4 miles",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d2-rest-025",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d3-ruck-020",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "12K Practice\n\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Under 2 hours\n\nOfficial ACFT ruck distance!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d4-rest-026",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d5-ruck-021",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Tempo Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Fast pace practice",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d6-rest-027",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w7-d7-rest-028",
+    "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 7: 12 miles total",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d1-ruck-022",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8: Final Test - ACFT Simulation\n\n\u2022 Distance: 3 miles\n\nTaper week! Staying sharp.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d2-rest-029",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d3-ruck-023",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Sharpener\n\n\u2022 Distance: 4 miles\n\nFinal confidence builder!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d4-rest-030",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d5-ruck-024",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "7.50",
+    "target_pace_minutes": "15.00",
+    "instructions": "FINAL ACFT 12K TEST!\n\n\u2022 Distance: 7.5 miles (12K)\n\u2022 Goal: Sub-2 hour time\n\nGive it everything you've got!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d6-rest-031",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "acft-w8-d7-rest-032",
+    "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "PROGRAM COMPLETE! \ud83c\udf89\n\nYou're ACFT ready! In 8 weeks you:\n\u2022 Built to 35 lbs\n\u2022 Trained for 12K ruck\n\u2022 Practiced all ACFT events\n\u2022 Total: 95+ miles\n\nGo ace that ACFT!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  }
+]

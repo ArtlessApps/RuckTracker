@@ -1,0 +1,10 @@
+[
+  {"id": "ch-001", "name": "Pace Pusher", "description": "Hit a 15:00/mile pace this week.", "duration_days": 7, "focus_area": "speed", "is_active": true},
+  {"id": "ch-002", "name": "Distance Master", "description": "Log maximum weekly distance.", "duration_days": 7, "focus_area": "distance", "is_active": true},
+  {"id": "ch-003", "name": "Distance Week", "description": "Complete 3 rucks this week.", "duration_days": 7, "focus_area": "consistency", "is_active": true},
+  {"id": "ch-004", "name": "Tactical Ready", "description": "Ruck with 35+ lbs.", "duration_days": 7, "focus_area": "load", "is_active": true},
+  {"id": "ch-005", "name": "Load Carrier", "description": "Build tonnage through the week.", "duration_days": 7, "focus_area": "tonnage", "is_active": true},
+  {"id": "ch-006", "name": "Active Recovery", "description": "Light rucks for recovery.", "duration_days": 7, "focus_area": "recovery", "is_active": true},
+  {"id": "ch-007", "name": "Speed Week", "description": "Focus on pace improvement.", "duration_days": 7, "focus_area": "speed", "is_active": true},
+  {"id": "ch-008", "name": "Power Week", "description": "Heavy load focus.", "duration_days": 7, "focus_area": "load", "is_active": true}
+]

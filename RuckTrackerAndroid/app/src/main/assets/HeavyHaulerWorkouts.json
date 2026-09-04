@@ -1,0 +1,562 @@
+[
+  {
+    "id": "hh-w1-d1-ruck-001",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1, Day 1: Base Strength - Load Baseline\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 30 lbs\n\nWelcome to Heavy Hauler! This program will build you into a load-bearing machine. Today we establish your baseline under moderate weight. Focus on posture: shoulders back, hips under the pack, core tight.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d2-rest-001",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Recovery is critical for strength adaptation. Foam roll your shoulders and hips.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d3-ruck-002",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "2.50",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 1, Day 3: Short Strength Ruck\n\n\u2022 Distance: 2.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 30 lbs\n\nShorter distance today. Focus on how the weight sits on your frame. Adjust your straps until the load feels locked in.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d4-rest-002",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d5-ruck-003",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 1, Day 5: Long Base Ruck\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\u2022 Weight: 30 lbs\n\nYour longest ruck this week. Slow it down and focus on endurance under load. Bring water. Week 1 total: 9.5 miles.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d6-rest-003",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w1-d7-rest-004",
+    "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 1 complete! 9.5 miles at 30 lbs. The foundation is set.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d1-ruck-004",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2, Day 1: Building Strength\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 32 lbs\n\nAdding 2 lbs this week. Small increments, big results over time. Notice how your body is already adapting.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d2-rest-005",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d3-ruck-005",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 2, Day 3: Midweek Load Work\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 32 lbs\n\nConsistent work under load. Your shoulders and traps are getting stronger every session.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d4-rest-006",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d5-ruck-006",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.50",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 2, Day 5: Long Ruck\n\n\u2022 Distance: 4.5 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\u2022 Weight: 32 lbs\n\nPushing the distance with the new weight. You're building serious load-bearing capacity.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d6-rest-007",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w2-d7-rest-008",
+    "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 2 done! 11 miles at 32 lbs. Strength is building.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d1-ruck-007",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3, Day 1: Heavy Introduction\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 35 lbs\n\nBig jump to 35 lbs. This is where real strength training begins. Keep the distance moderate while your body adapts.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d2-rest-009",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Extra important with heavier loads.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d3-ruck-008",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 3, Day 3: Volume Under Load\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 35 lbs\n\nAdding a 4th ruck day this week. Building work capacity under heavy weight.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d4-rest-010",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d5-ruck-009",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 3, Day 5: Tempo Under Load\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 35 lbs\n\nFaster pace with heavy weight. This builds the power you'll need for heavier loads ahead.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d6-ruck-010",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 6,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 3, Day 6: Long Heavy Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\u2022 Weight: 35 lbs\n\nFirst 5-miler at 35 lbs! Take it easy and prove you can handle the distance under load.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w3-d7-rest-011",
+    "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 3 complete! 14.5 miles at 35 lbs. You're getting strong!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d1-ruck-011",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 4, Day 1: Consolidation\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 35 lbs\n\nSame weight, letting your body fully adapt before the power phase. Notice how 35 lbs feels lighter than when you started?",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d2-rest-012",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d3-ruck-012",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 4, Day 3: Tempo Ruck\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 35 lbs\n\nMoving faster with 35 lbs. Building the engine that will carry 45+.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d4-rest-013",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d5-ruck-013",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 4, Day 5: Long Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\u2022 Weight: 35 lbs\n\n5 miles at 35 lbs should feel manageable now. Base phase is complete after this week!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d6-rest-014",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w4-d7-rest-015",
+    "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Base Strength phase COMPLETE! 12 miles at 35 lbs. Power phase starts next week.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d1-ruck-014",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 5, Day 1: Power Phase Begins\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 38 lbs\n\nWelcome to the power phase! Heavier weight, faster pace, shorter distances. This builds explosive strength under load.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d2-rest-016",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Critical recovery with heavier loads.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d3-ruck-015",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "2.00",
+    "target_pace_minutes": "15.00",
+    "instructions": "Week 5, Day 3: Heavy Intervals\n\n\u2022 Distance: 2 miles\n\u2022 Pace: Fast (15 min/mile)\n\u2022 Weight: 38 lbs\n\nShort and intense. Push the pace hard for 2 miles. This is pure power work - like heavy deadlifts for rucking.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d4-rest-017",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d5-ruck-016",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 5, Day 5: Sustained Load\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 38 lbs\n\nLonger effort at the new weight. Proving your body can handle 38 lbs over distance.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d6-ruck-017",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 6,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 5, Day 6: Power Finish\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 38 lbs\n\n4th ruck this week! Finishing strong with a fast-paced effort.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w5-d7-rest-018",
+    "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 5 done! 12 miles at 38 lbs. Power phase is clicking.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d1-ruck-018",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.50",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 6, Day 1: Heavy Load Training\n\n\u2022 Distance: 3.5 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 40 lbs\n\n40 pounds! You're officially in heavy territory. This weight would have crushed you 5 weeks ago.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d2-rest-019",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Listen to your body at these loads.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d3-ruck-019",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 6, Day 3: Heavy Tempo\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 40 lbs\n\nMaintaining speed with 40 lbs. Your legs are developing serious power.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d4-rest-020",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d5-ruck-020",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "5.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 6, Day 5: Heavy Long Ruck\n\n\u2022 Distance: 5 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 40 lbs\n\n5 miles at 40 lbs. This is what strength looks like. Bring water and fuel properly.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d6-rest-021",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w6-d7-rest-022",
+    "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 6 complete! 11.5 miles at 40 lbs. Peak load is next.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d1-ruck-021",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7, Day 1: Peak Load\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 45 lbs\n\n45 POUNDS. This is the standard. GORUCK dry weight. You are hauling serious iron. Respect the weight, trust your training.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d2-rest-023",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - At 45 lbs, recovery is non-negotiable. Sleep well, eat well.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d3-ruck-022",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "16.00",
+    "instructions": "Week 7, Day 3: Heavy Power Ruck\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Brisk (16 min/mile)\n\u2022 Weight: 45 lbs\n\nFast and heavy. Your body has been forged for this. Push the pace and own the weight.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d4-rest-024",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d5-ruck-023",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 7, Day 5: Sustained Heavy Effort\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 45 lbs\n\nKeeping it moderate before the peak long ruck tomorrow.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d6-ruck-024",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 6,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "18.00",
+    "instructions": "Week 7, Day 6: Peak Heavy Long Ruck\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Comfortable (18 min/mile)\n\u2022 Weight: 45 lbs\n\n6 miles at 45 lbs. This is the peak of the program. Almost 2 hours under max load. CRUSH IT.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w7-d7-rest-025",
+    "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Week 7 complete! 16 miles at 45 lbs. Peak week DESTROYED. One more to go!",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d1-ruck-025",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 1,
+    "workout_type": "ruck",
+    "distance_miles": "3.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8, Day 1: Test Week\n\n\u2022 Distance: 3 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 45 lbs\n\nFinal week. Light opener to stay sharp before your final test. You've earned this.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d2-rest-026",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 2,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d3-ruck-026",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 3,
+    "workout_type": "ruck",
+    "distance_miles": "4.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8, Day 3: Pre-Test Shakeout\n\n\u2022 Distance: 4 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 45 lbs\n\nStay loose. Moderate effort. Save it for the final test.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d4-rest-027",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 4,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - Recover. Hydrate. Tomorrow you prove it.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d5-ruck-027",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 5,
+    "workout_type": "ruck",
+    "distance_miles": "6.00",
+    "target_pace_minutes": "17.00",
+    "instructions": "Week 8, Day 5: FINAL TEST - 6 Mile Heavy Ruck\n\n\u2022 Distance: 6 miles\n\u2022 Pace: Steady (17 min/mile)\n\u2022 Weight: 45+ lbs\n\nThis is it. 6 miles at 45 lbs at a 17 min/mile pace. Show yourself what 8 weeks of forging has built. You ARE a Heavy Hauler.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d6-rest-028",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 6,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "Rest Day - You did it! Recover and celebrate.",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  },
+  {
+    "id": "hh-w8-d7-rest-029",
+    "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+    "day_number": 7,
+    "workout_type": "rest",
+    "distance_miles": null,
+    "target_pace_minutes": null,
+    "instructions": "PROGRAM COMPLETE!\n\nYou finished Heavy Hauler! In 8 weeks you:\n\u2022 Went from 30 lbs to 45+ lbs\n\u2022 Built to 6-mile heavy rucks\n\u2022 Developed serious load-bearing strength\n\u2022 Total: 100+ miles under heavy load\n\nYou are FORGED. Ready for GORUCK Heavy/Tough?",
+    "created_at": "2025-10-10 12:00:00.000000+00"
+  }
+]

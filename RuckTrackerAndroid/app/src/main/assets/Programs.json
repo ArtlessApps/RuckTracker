@@ -1,0 +1,436 @@
+[
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "title": "Foundation Builder",
+    "description": "The perfect starting point. Build your rucking engine from scratch.",
+    "difficulty": "beginner",
+    "category": "fitness",
+    "durationWeeks": 6,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 1,
+    "weeks": [
+      {
+        "week_id": "f0ad36ad-a96f-417b-a83f-228dec50255e",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "4293a591-b8e2-4310-a828-a6dbc28e1f4f",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "3ecb8cac-9acd-49ae-8558-e77bbc44c992",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "fe1e95b4-bc95-4df9-8650-f9f4e3814cb8",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "1f069ada-879f-4480-986e-2878adebb3f7",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "0aa9e7ea-8336-4557-9567-d2e8b89914f5",
+        "week_number": 6,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "title": "Pace Pusher",
+    "description": "Master the 15:00/mile standard. Speed work and threshold training.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 6,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 2,
+    "weeks": [
+      {
+        "week_id": "b1000001-b100-4b10-8b10-b10000000001",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "b1000002-b200-4b20-8b20-b20000000002",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "b1000003-b300-4b30-8b30-b30000000003",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "b1000004-b400-4b40-8b40-b40000000004",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "b1000005-b500-4b50-8b50-b50000000005",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "b1000006-b600-4b60-8b60-b60000000006",
+        "week_number": 6,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    "title": "Heavy Hauler",
+    "description": "Forged in iron. Get comfortable under heavy loads (45lb+).",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 3,
+    "weeks": [
+      {
+        "week_id": "c1000001-c100-4c10-8c10-c10000000001",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000002-c200-4c20-8c20-c20000000002",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000003-c300-4c30-8c30-c30000000003",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000004-c400-4c40-8c40-c40000000004",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000005-c500-4c50-8c50-c50000000005",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000006-c600-4c60-8c60-c60000000006",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000007-c700-4c70-8c70-c70000000007",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "c1000008-c800-4c80-8c80-c80000000008",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "44444444-4444-4444-4444-444444444444",
+    "title": "Endurance",
+    "description": "Go further. Volume building for long-distance durability.",
+    "difficulty": "intermediate",
+    "category": "fitness",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 4,
+    "weeks": [
+      {
+        "week_id": "61f1fd07-61de-41cb-a64c-178165fd1994",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "f56f0e8b-5345-4487-86a5-1abe6c5ab085",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "1993213d-439d-4772-b61d-6717aad1b9cf",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "9825853d-28e6-49e5-8f3e-f409c5695e7a",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "5c7d5111-e874-4428-a955-400682be09d9",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "b078833e-7803-41d7-b5b5-cfbe33ea432c",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "4e626ca3-212d-4b89-bbb9-954dce99ecbd",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "045cf3f9-ba0e-4f25-a563-cf322a0ea940",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "title": "GORUCK Selection",
+    "description": "The ultimate test. 8 weeks of mental and physical hardening.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 5,
+    "weeks": [
+      {
+        "week_id": "0bcc24f5-e0e6-44e6-b02e-fe06aca75199",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "12cc0a08-c2e5-4056-a81c-cca9889c4259",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "3513e25f-85e1-474c-88d1-c2333e372ee4",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "1b105209-79f5-4dd5-95a2-382291aa009f",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "7e58200a-e0d5-4dd6-a1d2-22ee16286604",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "6d0716ad-da3e-4cbe-86c2-065f825d0e52",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "22c965a5-fe5a-44f6-bcd1-243eb58169d9",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "edee4b29-4da0-4a87-bc7c-a95fc6da9239",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "66666666-6666-6666-6666-666666666666",
+    "title": "GORUCK Heavy/Tough",
+    "description": "Prepare for the 12-24 hour grind. Teamwork and suffering.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 10,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 6,
+    "weeks": [
+      {
+        "week_id": "7d591fd8-2a32-4d7b-9c92-1e557b1fedd8",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "100db1fe-b5e0-4532-88a5-d7b38e2c4ea9",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "b02e9cb9-dd0d-43c3-ab0b-945626a0d261",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "1ec9c309-18a6-4b08-bf10-cee9509a1d04",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "14b5b0fb-1ea7-44b7-afa7-4e4c2e0a3dd9",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "06f08c97-ae4f-4d9c-b4ba-0ac40166cc50",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "34c37911-d4a0-4e92-9844-d0111626f270",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "296cbc19-e321-430d-a245-b2f5125e4c3e",
+        "week_number": 8,
+        "workouts": []
+      },
+      {
+        "week_id": "ad1cd31f-8abc-4cbb-b9ab-86d2f6a72e59",
+        "week_number": 9,
+        "workouts": []
+      },
+      {
+        "week_id": "24d245c0-946f-49a1-a225-7109e681918a",
+        "week_number": 10,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "77777777-7777-7777-7777-777777777777",
+    "title": "Army ACFT",
+    "description": "Max your score. Specific prep for the Army Combat Fitness Test.",
+    "difficulty": "intermediate",
+    "category": "military",
+    "durationWeeks": 8,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 7,
+    "weeks": [
+      {
+        "week_id": "15e0e1fb-67ec-4e88-ada4-d92f0e4ae999",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "462a90a8-7e15-4a01-804c-07bde23ca7f2",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "c0451935-31de-40d5-97e6-853d34aa1e8d",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "7d5eb20d-893c-42ec-bf60-e8944f504e0f",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "5665c9f7-87d0-46fc-9335-c9d2fba24e57",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "e6c3f5b5-97e5-456e-bbbe-e58d9dbc8ea9",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "628b7c27-959c-426d-969c-3088658c7edf",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "bf67043e-699d-49b0-8755-bf842af6e43c",
+        "week_number": 8,
+        "workouts": []
+      }
+    ]
+  },
+  {
+    "id": "99999999-9999-9999-9999-999999999999",
+    "title": "Marathon Ruck",
+    "description": "26.2 Miles under load. Taper and build for the long haul.",
+    "difficulty": "advanced",
+    "category": "event",
+    "durationWeeks": 12,
+    "isFeatured": true,
+    "isActive": true,
+    "sortOrder": 8,
+    "weeks": [
+      {
+        "week_id": "6cddae0d-cf16-4791-8fd3-1751ac61861c",
+        "week_number": 1,
+        "workouts": []
+      },
+      {
+        "week_id": "23a2f58e-0285-4795-b38f-bace290a551e",
+        "week_number": 2,
+        "workouts": []
+      },
+      {
+        "week_id": "0d6eb4c3-d62c-438f-90d9-c5e38cc88c09",
+        "week_number": 3,
+        "workouts": []
+      },
+      {
+        "week_id": "f0ed264f-d271-47f7-845c-a178e923ebc7",
+        "week_number": 4,
+        "workouts": []
+      },
+      {
+        "week_id": "0b7e645d-a47f-4993-9b3e-56340fba1b7f",
+        "week_number": 5,
+        "workouts": []
+      },
+      {
+        "week_id": "17c3a77f-01b0-4e0f-9f1e-fb9935c42163",
+        "week_number": 6,
+        "workouts": []
+      },
+      {
+        "week_id": "ac9d0fb9-ba33-4bda-b7ea-c46a18db7bc9",
+        "week_number": 7,
+        "workouts": []
+      },
+      {
+        "week_id": "f3b8116e-6442-48b4-b1c1-4628cdae32d0",
+        "week_number": 8,
+        "workouts": []
+      },
+      {
+        "week_id": "799073be-3e14-42af-9c92-af9ccbd7dab0",
+        "week_number": 9,
+        "workouts": []
+      },
+      {
+        "week_id": "bd77347e-1d83-42fe-9c44-3275ac040305",
+        "week_number": 10,
+        "workouts": []
+      },
+      {
+        "week_id": "bad836d1-7079-4e16-8ac6-f49d05cb6c06",
+        "week_number": 11,
+        "workouts": []
+      },
+      {
+        "week_id": "4d8da9b8-69a0-46c5-9335-096da7acaba8",
+        "week_number": 12,
+        "workouts": []
+      }
+    ]
+  }
+]
