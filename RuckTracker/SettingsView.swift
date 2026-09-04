@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showingLogoutAlert = false
     @State private var showingAuth = false
     @State private var showingDeleteAccount = false
+    @State private var showingFeedback = false
     
     var body: some View {
         NavigationView {
@@ -90,6 +91,9 @@ struct SettingsView: View {
                 DeleteAccountSheet(onDeleted: {
                     dismiss()
                 })
+            }
+            .sheet(isPresented: $showingFeedback) {
+                FeedbackView(source: .settings)
             }
             .alert("Reset Settings", isPresented: $showingResetAlert) {
                 Button("Reset", role: .destructive) {
@@ -587,6 +591,28 @@ struct SettingsView: View {
                     .fill(AppColors.surface)
                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
             )
+
+            Button(action: {
+                showingFeedback = true
+            }) {
+                HStack {
+                    Image(systemName: "envelope")
+                        .foregroundColor(AppColors.primary)
+                    Text("Send Feedback")
+                        .foregroundColor(AppColors.textPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AppColors.surface)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 2)
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
     

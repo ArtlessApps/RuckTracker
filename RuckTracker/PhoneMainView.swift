@@ -12,6 +12,7 @@ struct ImprovedPhoneMainView: View {
     @ObservedObject private var userSettings = UserSettings.shared
     @ObservedObject private var programService = LocalProgramService.shared
     @StateObject private var communityService = CommunityService.shared
+    @ObservedObject private var reviewManager = ReviewManager.shared
     
     // MARK: - State
     @State private var upcomingWorkouts: [ScheduledWorkout] = []
@@ -96,7 +97,11 @@ struct ImprovedPhoneMainView: View {
         .sheet(isPresented: $premiumManager.showingPaywall) {
             SubscriptionPaywallView(context: premiumManager.paywallContext)
         }
-        .sheet(isPresented: $workoutManager.showingPostWorkoutSummary) {
+        .sheet(isPresented: $workoutManager.showingPostWorkoutSummary, onDismiss: {
+            ReviewManager.shared.considerRequestingReview(
+                totalWorkouts: workoutDataManager.totalWorkouts
+            )
+        }) {
             PhonePostWorkoutSummaryView(
                 finalElapsedTime: workoutManager.finalElapsedTime,
                 finalDistance: workoutManager.finalDistance,
@@ -105,6 +110,12 @@ struct ImprovedPhoneMainView: View {
                 finalElevationGain: workoutManager.finalElevationGain
             )
             .environmentObject(workoutManager)
+        }
+        .sheet(isPresented: $reviewManager.showingSentimentGate) {
+            SentimentGateView()
+        }
+        .sheet(isPresented: $reviewManager.showingFeedbackForm) {
+            FeedbackView(source: reviewManager.feedbackSource)
         }
         .sheet(isPresented: $showingActiveWorkout) {
             ActiveWorkoutFullScreenView()
