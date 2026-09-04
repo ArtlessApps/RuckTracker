@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -91,6 +92,30 @@ fun TribeScreen(modifier: Modifier = Modifier, viewModel: TribeViewModel = hiltV
                 MarchScreenHeader(eyebrow = "Community", title = "Tribe")
                 Spacer(Modifier.height(20.dp))
                 ClubDiscovery(state = state, viewModel = viewModel)
+            }
+
+            state.overlay == ClubOverlay.Members -> {
+                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                Spacer(Modifier.height(12.dp))
+                ClubMembersPanel(state = state, viewModel = viewModel)
+            }
+
+            state.overlay == ClubOverlay.Settings -> {
+                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                Spacer(Modifier.height(12.dp))
+                ClubSettingsPanel(state = state, viewModel = viewModel)
+            }
+
+            state.overlay == ClubOverlay.CreateEvent -> {
+                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                Spacer(Modifier.height(12.dp))
+                CreateEventPanel(state = state, viewModel = viewModel)
+            }
+
+            state.overlay == ClubOverlay.EventDetail -> {
+                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                Spacer(Modifier.height(12.dp))
+                EventDetailPanel(state = state, viewModel = viewModel)
             }
 
             else -> ClubDetail(state = state, viewModel = viewModel)
@@ -165,19 +190,19 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                     label = "Description (optional)",
                     singleLine = false
                 )
-                Spacer(modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
                 Text(
                     text = "Visibility",
                     style = MaterialTheme.typography.labelLarge,
                     color = MarchColors.TextSecondary
                 )
-                Spacer(modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
                 MarchSegmentedControl(
                     options = listOf("Public", "Private"),
                     selectedIndex = if (isPrivate) 1 else 0,
                     onSelect = { isPrivate = it == 1 }
                 )
-                Spacer(modifier.height(6.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = if (isPrivate) {
                         "Only visible with invite code"
@@ -188,20 +213,20 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                     color = MarchColors.TextSecondary
                 )
                 if (isPrivate) {
-                    Spacer(modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
                     MarchTextField(
                         value = customInviteCode,
                         onValueChange = { customInviteCode = it.uppercase() },
                         label = "Custom invite code (optional)"
                     )
-                    Spacer(modifier.height(6.dp))
+                    Spacer(Modifier.height(6.dp))
                     Text(
                         text = "Leave blank to auto-generate. Custom codes must be unique.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MarchColors.TextSecondary
                     )
                 }
-                Spacer(modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
                 MarchTextField(
                     value = zipcode,
                     onValueChange = { zipcode = it.filter { ch -> ch.isDigit() }.take(10) },
@@ -209,13 +234,13 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                     keyboardType = KeyboardType.Number,
                     leadingIcon = Icons.Filled.LocationOn
                 )
-                Spacer(modifier.height(6.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = "Helps nearby ruckers find your club",
                     style = MaterialTheme.typography.bodySmall,
                     color = MarchColors.TextSecondary
                 )
-                Spacer(modifier.height(14.dp))
+                Spacer(Modifier.height(14.dp))
                 MarchPrimaryButton(
                     text = "Create Club",
                     onClick = {
@@ -228,6 +253,7 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                         )
                     },
                     enabled = clubName.isNotBlank(),
+                    loading = state.isCreatingClub,
                     height = 50.dp
                 )
             }
@@ -262,39 +288,37 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
 private fun ColumnScope.ClubDetail(state: TribeUiState, viewModel: TribeViewModel) {
     val club = state.selectedClub ?: return
     var tab by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        MarchIconButton(
-            icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            onClick = viewModel::clearSelectedClub,
-            contentDescription = "Back to clubs"
-        )
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = club.name,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MarchColors.TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = "${club.memberCount} member${if (club.memberCount == 1) "" else "s"}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MarchColors.TextSecondary
-            )
-        }
-    }
+    ClubDetailHeader(
+        club = club,
+        role = state.userRole,
+        onBack = viewModel::clearSelectedClub,
+        onMembers = { viewModel.showOverlay(ClubOverlay.Members) },
+        onSettings = { viewModel.showOverlay(ClubOverlay.Settings) },
+        onInvite = { shareInvite(context, club) },
+        onCopyCode = { copyJoinCode(context, club.joinCode) },
+        onLeave = viewModel::leaveClub
+    )
 
     Spacer(Modifier.height(16.dp))
 
     MarchPill(text = "Code ${club.joinCode}", accent = MarchColors.Primary)
 
+    state.successMessage?.let {
+        Spacer(Modifier.height(12.dp))
+        MarchInlineMessage(text = it)
+    }
+    state.error?.let {
+        Spacer(Modifier.height(12.dp))
+        MarchInlineMessage(text = it)
+    }
+
     Spacer(Modifier.height(18.dp))
 
+    // Match iOS: Events / Feed / Leaderboard
     MarchSegmentedControl(
-        options = listOf("Feed", "Board", "Events"),
+        options = listOf("Events", "Feed", "Board"),
         selectedIndex = tab,
         onSelect = { tab = it }
     )
@@ -303,9 +327,15 @@ private fun ColumnScope.ClubDetail(state: TribeUiState, viewModel: TribeViewMode
 
     val listModifier = Modifier.weight(1f)
     when (tab) {
-        0 -> FeedTab(state.feedPosts, viewModel::toggleLike, listModifier)
-        1 -> ClubLeaderboardTab(state.leaderboard, listModifier)
-        else -> EventsTab(state.events, listModifier)
+        0 -> EventsTab(
+            events = state.events,
+            canCreate = state.userRole.canCreateEvents,
+            onCreate = { viewModel.showOverlay(ClubOverlay.CreateEvent) },
+            onOpen = viewModel::openEvent,
+            modifier = listModifier
+        )
+        1 -> FeedTab(state.feedPosts, viewModel::toggleLike, listModifier)
+        else -> ClubLeaderboardTab(state.leaderboard, listModifier)
     }
 }
 
@@ -504,64 +534,91 @@ private fun ClubLeaderboardTab(entries: List<LeaderboardEntry>, modifier: Modifi
 }
 
 @Composable
-private fun EventsTab(events: List<ClubEvent>, modifier: Modifier = Modifier) {
-    if (events.isEmpty()) {
-        MarchEmptyState(
-            icon = Icons.Filled.CalendarMonth,
-            title = "No events scheduled",
-            message = "Club events and group rucks will appear here.",
-            accent = MarchColors.TileBlue,
-            modifier = modifier
-        )
-        return
-    }
+private fun EventsTab(
+    events: List<ClubEvent>,
+    canCreate: Boolean,
+    onCreate: () -> Unit,
+    onOpen: (ClubEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        if (canCreate) {
+            MarchPrimaryButton(
+                text = "Create Event",
+                onClick = onCreate,
+                height = 48.dp
+            )
+            Spacer(Modifier.height(14.dp))
+        }
 
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
-    ) {
-        items(events, key = { it.id }) { event ->
-            MarchCard(contentPadding = 16.dp) {
-                Row(verticalAlignment = Alignment.Top) {
-                    CircleIcon(
-                        icon = Icons.Filled.CalendarMonth,
-                        accent = MarchColors.TileBlue,
-                        size = 42.dp,
-                        iconSize = 19.dp
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = event.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MarchColors.TextPrimary
+        if (events.isEmpty()) {
+            MarchEmptyState(
+                icon = Icons.Filled.CalendarMonth,
+                title = "No events scheduled",
+                message = if (canCreate) {
+                    "Plan a group ruck and your crew can RSVP here."
+                } else {
+                    "Club events and group rucks will appear here."
+                },
+                accent = MarchColors.TileBlue,
+                modifier = Modifier.weight(1f)
+            )
+            return
+        }
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+        ) {
+            items(events, key = { it.id }) { event ->
+                MarchCard(onClick = { onOpen(event) }, contentPadding = 16.dp) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        CircleIcon(
+                            icon = Icons.Filled.CalendarMonth,
+                            accent = MarchColors.TileBlue,
+                            size = 42.dp,
+                            iconSize = 19.dp
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = event.startTime.take(16).replace('T', ' '),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MarchColors.Primary
-                        )
-                        event.addressText?.takeIf { it.isNotBlank() }?.let { address ->
-                            Spacer(Modifier.height(6.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Filled.LocationOn,
-                                    contentDescription = null,
-                                    tint = MarchColors.TextSecondary,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(Modifier.width(5.dp))
-                                Text(
-                                    text = address,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MarchColors.TextSecondary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = event.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MarchColors.TextPrimary
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = event.startTime.take(16).replace('T', ' '),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MarchColors.Primary
+                            )
+                            event.addressText?.takeIf { it.isNotBlank() }?.let { address ->
+                                Spacer(Modifier.height(6.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocationOn,
+                                        contentDescription = null,
+                                        tint = MarchColors.TextSecondary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(Modifier.width(5.dp))
+                                    Text(
+                                        text = address,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MarchColors.TextSecondary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MarchColors.TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }

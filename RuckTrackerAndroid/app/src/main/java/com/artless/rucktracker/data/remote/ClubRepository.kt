@@ -7,11 +7,19 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.random.Random
+
+@Serializable
+private data class RoleRow(val role: String)
+
+@Serializable
+private data class EventIdRow(val id: String)
 
 @Singleton
 class ClubRepository @Inject constructor(private val client: SupabaseClient) {
@@ -81,7 +89,7 @@ class ClubRepository @Inject constructor(private val client: SupabaseClient) {
             .select(columns = Columns.list("role")) {
                 filter { eq("club_id", clubId); eq("user_id", userId) }
             }
-            .decodeSingleOrNull<Map<String, String>>()?.get("role")
+            .decodeSingleOrNull<RoleRow>()?.role
 
     suspend fun loadClubMembers(clubId: String): List<ClubMember> =
         client.postgrest.from("club_members")
@@ -119,18 +127,73 @@ class ClubRepository @Inject constructor(private val client: SupabaseClient) {
             }
         ).decodeList()
 
-    suspend fun deleteClub(clubId: String) {
-        client.postgrest.from("clubs").delete { filter { eq("id", clubId) } }
-    }
-
-    suspend fun updateClub(clubId: String, name: String, description: String, isPrivate: Boolean, zipcode: String?) {
+    suspend fun updateClub(
+        clubId: String,
+        name: String,
+        description: String,
+        isPrivate: Boolean,
+        zipcode: String?
+    ): Club {
         client.postgrest.from("clubs")
             .update(buildJsonObject {
                 put("name", name)
                 put("description", description)
                 put("is_private", isPrivate)
-                zipcode?.let { put("zipcode", it) }
+                put("zipcode", zipcode)
             }) { filter { eq("id", clubId) } }
+        return getClub(clubId) ?: error("Club not found after update")
+    }
+
+    suspend fun regenerateJoinCode(clubId: String, clubName: String): String {
+        val prefix = clubName.take(3).uppercase().replace(" ", "")
+        val newCode = "$prefix-${Random.nextInt(1000, 9999)}"
+        client.postgrest.from("clubs")
+            .update(buildJsonObject { put("join_code", newCode) }) {
+                filter { eq("id", clubId) }
+            }
+        return newCode
+    }
+
+    suspend fun transferFoundership(clubId: String, currentFounderId: String, newFounderId: String) {
+        client.postgrest.from("club_members")
+            .update(buildJsonObject { put("role", "founder") }) {
+                filter { eq("club_id", clubId); eq("user_id", newFounderId) }
+            }
+        client.postgrest.from("club_members")
+            .update(buildJsonObject { put("role", "leader") }) {
+                filter { eq("club_id", clubId); eq("user_id", currentFounderId) }
+            }
+        client.postgrest.from("clubs")
+            .update(buildJsonObject { put("created_by", newFounderId) }) {
+                filter { eq("id", clubId) }
+            }
+    }
+
+    /** Cascading delete matching iOS CommunityService.deleteClub. */
+    suspend fun deleteClub(clubId: String) {
+        client.postgrest.from("club_posts")
+            .delete { filter { eq("club_id", clubId) } }
+
+        val events = client.postgrest.from("club_events")
+            .select(columns = Columns.list("id")) { filter { eq("club_id", clubId) } }
+            .decodeList<EventIdRow>()
+
+        events.forEach { event ->
+            client.postgrest.from("event_rsvps")
+                .delete { filter { eq("event_id", event.id) } }
+        }
+
+        client.postgrest.from("club_events")
+            .delete { filter { eq("club_id", clubId) } }
+
+        client.postgrest.from("leaderboard_entries")
+            .delete { filter { eq("club_id", clubId) } }
+
+        client.postgrest.from("club_members")
+            .delete { filter { eq("club_id", clubId) } }
+
+        client.postgrest.from("clubs")
+            .delete { filter { eq("id", clubId) } }
     }
 
     suspend fun promoteToLeader(clubId: String, userId: String) {

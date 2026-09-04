@@ -69,12 +69,6 @@ enum class GlobalLeaderboardType(val tableName: String, val displayName: String)
     CONSISTENCY("global_leaderboard_consistency", "Iron Discipline")
 }
 
-enum class ClubRole(val raw: String) {
-    FOUNDER("founder"),
-    LEADER("leader"),
-    MEMBER("member")
-}
-
 enum class RsvpStatus(val raw: String) {
     GOING("going"),
     MAYBE("maybe"),
@@ -126,13 +120,46 @@ data class Club(
 )
 
 @Serializable
+data class ProfileEmbed(
+    val username: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null
+)
+
+enum class ClubRole(val value: String) {
+    FOUNDER("founder"),
+    LEADER("leader"),
+    MEMBER("member");
+
+    val displayName: String
+        get() = value.replaceFirstChar { it.uppercase() }
+
+    val canCreateEvents: Boolean get() = this == FOUNDER || this == LEADER
+    val canInviteMembers: Boolean get() = this == FOUNDER || this == LEADER
+    val canManageMembers: Boolean get() = this == FOUNDER
+    val canRemoveMembers: Boolean get() = this == FOUNDER || this == LEADER
+    val canEditClubDetails: Boolean get() = this == FOUNDER
+    val canDeleteClub: Boolean get() = this == FOUNDER
+    val canTransferOwnership: Boolean get() = this == FOUNDER
+    val canRegenerateJoinCode: Boolean get() = this == FOUNDER
+    val canLeaveClub: Boolean get() = this != FOUNDER
+
+    companion object {
+        fun from(raw: String?): ClubRole =
+            entries.find { it.value.equals(raw, ignoreCase = true) } ?: MEMBER
+    }
+}
+
+@Serializable
 data class ClubMember(
     @SerialName("user_id") val userId: String,
     @SerialName("club_id") val clubId: String,
     val role: String = "member",
-    val username: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null
-)
+    val profiles: ProfileEmbed? = null
+) {
+    val username: String? get() = profiles?.username
+    val avatarUrl: String? get() = profiles?.avatarUrl
+    val clubRole: ClubRole get() = ClubRole.from(role)
+}
 
 @Serializable
 data class ClubPost(
@@ -141,6 +168,7 @@ data class ClubPost(
     @SerialName("user_id") val userId: String,
     @SerialName("post_type") val postType: String = "workout",
     @SerialName("workout_id") val workoutId: String? = null,
+    @SerialName("event_id") val eventId: String? = null,
     @SerialName("distance_miles") val distanceMiles: Double? = null,
     @SerialName("duration_minutes") val durationMinutes: Double? = null,
     @SerialName("weight_lbs") val weightLbs: Double? = null,
@@ -148,11 +176,15 @@ data class ClubPost(
     @SerialName("elevation_gain") val elevationGain: Double? = null,
     val content: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
-    val username: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("username") private val usernameFlat: String? = null,
+    @SerialName("avatar_url") private val avatarUrlFlat: String? = null,
+    val profiles: ProfileEmbed? = null,
     @SerialName("like_count") val likeCount: Int = 0,
     @SerialName("is_liked") val isLiked: Boolean = false
-)
+) {
+    val username: String? get() = usernameFlat ?: profiles?.username
+    val avatarUrl: String? get() = avatarUrlFlat ?: profiles?.avatarUrl
+}
 
 @Serializable
 data class LeaderboardEntry(
@@ -198,9 +230,11 @@ data class EventRsvp(
     @SerialName("user_id") val userId: String,
     val status: String,
     @SerialName("declared_weight") val declaredWeight: Double? = null,
-    val username: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null
-)
+    val profiles: ProfileEmbed? = null
+) {
+    val username: String? get() = profiles?.username
+    val avatarUrl: String? get() = profiles?.avatarUrl
+}
 
 @Serializable
 data class EventComment(

@@ -4,13 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artless.rucktracker.data.model.Club
 import com.artless.rucktracker.data.model.ClubEvent
+import com.artless.rucktracker.data.model.ClubMember
 import com.artless.rucktracker.data.model.ClubPost
+import com.artless.rucktracker.data.model.ClubRole
+import com.artless.rucktracker.data.model.EventRsvp
 import com.artless.rucktracker.data.model.LeaderboardEntry
 import com.artless.rucktracker.data.remote.AuthRepository
 import com.artless.rucktracker.data.remote.ClubRepository
 import com.artless.rucktracker.data.remote.EventRepository
 import com.artless.rucktracker.data.remote.FeedRepository
 import com.artless.rucktracker.data.remote.LeaderboardRepository
+import com.artless.rucktracker.service.EventNotificationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,13 +23,31 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+enum class ClubOverlay {
+    None,
+    Members,
+    Settings,
+    CreateEvent,
+    EventDetail
+}
+
 data class TribeUiState(
     val isAuthenticated: Boolean = false,
     val clubs: List<Club> = emptyList(),
     val selectedClub: Club? = null,
+    val userRole: ClubRole = ClubRole.MEMBER,
+    val currentUserId: String? = null,
     val feedPosts: List<ClubPost> = emptyList(),
     val leaderboard: List<LeaderboardEntry> = emptyList(),
     val events: List<ClubEvent> = emptyList(),
+    val members: List<ClubMember> = emptyList(),
+    val overlay: ClubOverlay = ClubOverlay.None,
+    val selectedEvent: ClubEvent? = null,
+    val eventRsvps: List<EventRsvp> = emptyList(),
+    val eventComments: List<ClubPost> = emptyList(),
+    val isCreatingClub: Boolean = false,
+    val isSaving: Boolean = false,
+    val successMessage: String? = null,
     val error: String? = null
 )
 
@@ -35,7 +57,8 @@ class TribeViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
     private val feedRepository: FeedRepository,
     private val leaderboardRepository: LeaderboardRepository,
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    private val notificationService: EventNotificationService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TribeUiState())
@@ -51,28 +74,67 @@ class TribeViewModel @Inject constructor(
                 return@launch
             }
             val clubs = runCatching { clubRepository.loadMyClubs(userId) }.getOrDefault(emptyList())
-            _uiState.value = _uiState.value.copy(isAuthenticated = true, clubs = clubs, error = null)
+            val selectedId = _uiState.value.selectedClub?.id
+            val selected = clubs.find { it.id == selectedId }
+            _uiState.value = _uiState.value.copy(
+                isAuthenticated = true,
+                currentUserId = userId,
+                clubs = clubs,
+                selectedClub = selected,
+                error = null
+            )
+            selected?.let { openClubData(it, userId) }
         }
     }
 
     fun selectClub(club: Club) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(selectedClub = club)
-            loadFeed(club.id)
-            loadLeaderboard(club.id)
-            loadEvents()
+            val userId = authRepository.currentUserId ?: return@launch
+            _uiState.value = _uiState.value.copy(
+                selectedClub = club,
+                overlay = ClubOverlay.None,
+                selectedEvent = null,
+                error = null,
+                successMessage = null
+            )
+            openClubData(club, userId)
         }
     }
 
     fun clearSelectedClub() {
-        _uiState.value = _uiState.value.copy(selectedClub = null)
+        _uiState.value = _uiState.value.copy(
+            selectedClub = null,
+            overlay = ClubOverlay.None,
+            selectedEvent = null,
+            members = emptyList(),
+            feedPosts = emptyList(),
+            leaderboard = emptyList(),
+            events = emptyList(),
+            userRole = ClubRole.MEMBER
+        )
+    }
+
+    fun showOverlay(overlay: ClubOverlay) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(overlay = overlay, error = null, successMessage = null)
+            if (overlay == ClubOverlay.Members) loadMembers()
+        }
+    }
+
+    fun dismissOverlay() {
+        _uiState.value = _uiState.value.copy(
+            overlay = ClubOverlay.None,
+            selectedEvent = null,
+            eventRsvps = emptyList(),
+            eventComments = emptyList()
+        )
     }
 
     fun joinClub(code: String) {
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
             runCatching { clubRepository.joinClubWithCode(code.trim(), userId) }
-                .onSuccess { refresh() }
+                .onSuccess { club -> selectClub(club) }
                 .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
         }
     }
@@ -84,8 +146,10 @@ class TribeViewModel @Inject constructor(
         zipcode: String?,
         customJoinCode: String? = null
     ) {
+        if (_uiState.value.isCreatingClub) return
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
+            _uiState.value = _uiState.value.copy(isCreatingClub = true, error = null)
             val trimmedCustom = customJoinCode?.trim()?.uppercase().orEmpty()
             val code = trimmedCustom.ifEmpty { UUID.randomUUID().toString().take(6).uppercase() }
             runCatching {
@@ -97,25 +161,297 @@ class TribeViewModel @Inject constructor(
                     createdBy = userId,
                     joinCode = code
                 )
-            }.onSuccess { refresh() }
-                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+            }.onSuccess { club ->
+                val clubs = runCatching { clubRepository.loadMyClubs(userId) }.getOrDefault(emptyList())
+                val created = clubs.find { it.id == club.id } ?: club
+                _uiState.value = _uiState.value.copy(
+                    isAuthenticated = true,
+                    currentUserId = userId,
+                    clubs = clubs,
+                    selectedClub = created,
+                    isCreatingClub = false,
+                    error = null
+                )
+                openClubData(created, userId)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(
+                    isCreatingClub = false,
+                    error = it.message
+                )
+            }
         }
     }
 
     fun toggleLike(postId: String) {
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
-            runCatching { feedRepository.likePost(postId, userId) }
+            val post = _uiState.value.feedPosts.find { it.id == postId }
+            runCatching {
+                if (post?.isLiked == true) feedRepository.unlikePost(postId, userId)
+                else feedRepository.likePost(postId, userId)
+            }
             _uiState.value.selectedClub?.let { loadFeed(it.id) }
         }
     }
 
-    fun loadEvents() {
+    fun leaveClub() {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            val userId = authRepository.currentUserId ?: return@launch
+            if (!_uiState.value.userRole.canLeaveClub) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Transfer ownership before leaving as founder"
+                )
+                return@launch
+            }
+            runCatching { clubRepository.leaveClub(club.id, userId) }
+                .onSuccess {
+                    clearSelectedClub()
+                    refresh()
+                }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun loadMembers() {
         viewModelScope.launch {
             val clubId = _uiState.value.selectedClub?.id ?: return@launch
-            val events = runCatching { eventRepository.loadClubEvents(clubId) }.getOrDefault(emptyList())
-            _uiState.value = _uiState.value.copy(events = events)
+            val members = runCatching { clubRepository.loadClubMembers(clubId) }.getOrDefault(emptyList())
+            _uiState.value = _uiState.value.copy(members = members)
         }
+    }
+
+    fun promoteMember(userId: String) {
+        viewModelScope.launch {
+            val clubId = _uiState.value.selectedClub?.id ?: return@launch
+            runCatching { clubRepository.promoteToLeader(clubId, userId) }
+                .onSuccess { loadMembers() }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun demoteMember(userId: String) {
+        viewModelScope.launch {
+            val clubId = _uiState.value.selectedClub?.id ?: return@launch
+            runCatching { clubRepository.demoteToMember(clubId, userId) }
+                .onSuccess { loadMembers() }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun removeMember(userId: String) {
+        viewModelScope.launch {
+            val clubId = _uiState.value.selectedClub?.id ?: return@launch
+            runCatching { clubRepository.removeMember(clubId, userId) }
+                .onSuccess {
+                    loadMembers()
+                    refreshSelectedClub()
+                }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun saveClubSettings(
+        name: String,
+        description: String,
+        isPrivate: Boolean,
+        zipcode: String?
+    ) {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            if (!_uiState.value.userRole.canEditClubDetails) return@launch
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            runCatching {
+                clubRepository.updateClub(
+                    clubId = club.id,
+                    name = name.trim(),
+                    description = description.trim(),
+                    isPrivate = isPrivate,
+                    zipcode = zipcode?.trim()?.takeIf { it.isNotEmpty() }
+                )
+            }.onSuccess { updated ->
+                _uiState.value = _uiState.value.copy(
+                    selectedClub = updated,
+                    isSaving = false,
+                    successMessage = "Club updated",
+                    overlay = ClubOverlay.None
+                )
+                refresh()
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isSaving = false, error = it.message)
+            }
+        }
+    }
+
+    fun regenerateJoinCode() {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            if (!_uiState.value.userRole.canRegenerateJoinCode) return@launch
+            runCatching { clubRepository.regenerateJoinCode(club.id, club.name) }
+                .onSuccess { code ->
+                    val refreshed = clubRepository.getClub(club.id) ?: club.copy(joinCode = code)
+                    _uiState.value = _uiState.value.copy(
+                        selectedClub = refreshed,
+                        successMessage = "New join code: $code"
+                    )
+                    refresh()
+                }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun transferOwnership(newFounderId: String) {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            val userId = authRepository.currentUserId ?: return@launch
+            if (!_uiState.value.userRole.canTransferOwnership) return@launch
+            runCatching {
+                clubRepository.transferFoundership(club.id, userId, newFounderId)
+            }.onSuccess {
+                _uiState.value = _uiState.value.copy(
+                    overlay = ClubOverlay.None,
+                    successMessage = "Ownership transferred"
+                )
+                openClubData(club, userId)
+                refresh()
+            }.onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun deleteClub() {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            if (!_uiState.value.userRole.canDeleteClub) return@launch
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            runCatching { clubRepository.deleteClub(club.id) }
+                .onSuccess {
+                    clearSelectedClub()
+                    _uiState.value = _uiState.value.copy(isSaving = false)
+                    refresh()
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(isSaving = false, error = it.message)
+                }
+        }
+    }
+
+    fun createEvent(
+        title: String,
+        description: String?,
+        startTimeIso: String,
+        address: String?
+    ) {
+        viewModelScope.launch {
+            val club = _uiState.value.selectedClub ?: return@launch
+            val userId = authRepository.currentUserId ?: return@launch
+            if (!_uiState.value.userRole.canCreateEvents) return@launch
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null)
+            runCatching {
+                eventRepository.createEvent(
+                    clubId = club.id,
+                    createdBy = userId,
+                    title = title.trim(),
+                    description = description?.trim()?.takeIf { it.isNotEmpty() },
+                    startTime = startTimeIso,
+                    lat = null,
+                    lon = null,
+                    address = address?.trim()?.takeIf { it.isNotEmpty() }
+                )
+            }.onSuccess { event ->
+                loadEvents()
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    overlay = ClubOverlay.EventDetail,
+                    selectedEvent = event
+                )
+                loadEventDetail(event.id)
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isSaving = false, error = it.message)
+            }
+        }
+    }
+
+    fun openEvent(event: ClubEvent) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                overlay = ClubOverlay.EventDetail,
+                selectedEvent = event,
+                error = null
+            )
+            loadEventDetail(event.id)
+        }
+    }
+
+    fun rsvpToEvent(status: String, declaredWeight: Double?) {
+        viewModelScope.launch {
+            val event = _uiState.value.selectedEvent ?: return@launch
+            val userId = authRepository.currentUserId ?: return@launch
+            runCatching {
+                eventRepository.rsvpToEvent(event.id, userId, status, declaredWeight)
+            }.onSuccess {
+                if (status == "going") {
+                    notificationService.scheduleEventReminder(
+                        event.id,
+                        event.title,
+                        System.currentTimeMillis() + 3_600_000
+                    )
+                }
+                loadEventDetail(event.id)
+            }.onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun postEventComment(content: String) {
+        viewModelScope.launch {
+            val event = _uiState.value.selectedEvent ?: return@launch
+            val club = _uiState.value.selectedClub ?: return@launch
+            val userId = authRepository.currentUserId ?: return@launch
+            val trimmed = content.trim()
+            if (trimmed.isEmpty()) return@launch
+            runCatching {
+                feedRepository.postEventComment(event.id, club.id, userId, trimmed)
+            }.onSuccess { loadEventDetail(event.id) }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun deleteEvent() {
+        viewModelScope.launch {
+            val event = _uiState.value.selectedEvent ?: return@launch
+            if (!_uiState.value.userRole.canCreateEvents) return@launch
+            runCatching { eventRepository.deleteEvent(event.id) }
+                .onSuccess {
+                    loadEvents()
+                    dismissOverlay()
+                }
+                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+        }
+    }
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+    }
+
+    fun reportError(message: String) {
+        _uiState.value = _uiState.value.copy(error = message)
+    }
+
+    fun promptSignIn() {}
+
+    private suspend fun openClubData(club: Club, userId: String) {
+        val role = ClubRole.from(
+            runCatching { clubRepository.getUserRole(club.id, userId) }.getOrNull()
+        )
+        _uiState.value = _uiState.value.copy(userRole = role, currentUserId = userId)
+        loadFeed(club.id)
+        loadLeaderboard(club.id)
+        loadEvents()
+    }
+
+    private suspend fun refreshSelectedClub() {
+        val clubId = _uiState.value.selectedClub?.id ?: return
+        val club = runCatching { clubRepository.getClub(clubId) }.getOrNull() ?: return
+        _uiState.value = _uiState.value.copy(selectedClub = club)
     }
 
     private suspend fun loadFeed(clubId: String) {
@@ -128,5 +464,15 @@ class TribeViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(leaderboard = board)
     }
 
-    fun promptSignIn() {}
+    private suspend fun loadEvents() {
+        val clubId = _uiState.value.selectedClub?.id ?: return
+        val events = runCatching { eventRepository.loadClubEvents(clubId) }.getOrDefault(emptyList())
+        _uiState.value = _uiState.value.copy(events = events)
+    }
+
+    private suspend fun loadEventDetail(eventId: String) {
+        val rsvps = runCatching { eventRepository.loadEventRsvps(eventId) }.getOrDefault(emptyList())
+        val comments = runCatching { feedRepository.loadEventComments(eventId) }.getOrDefault(emptyList())
+        _uiState.value = _uiState.value.copy(eventRsvps = rsvps, eventComments = comments)
+    }
 }
