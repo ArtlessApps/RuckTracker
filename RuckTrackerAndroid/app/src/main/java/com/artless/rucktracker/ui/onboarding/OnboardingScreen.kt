@@ -43,7 +43,6 @@ import com.artless.rucktracker.data.model.RuckingGoal
 import com.artless.rucktracker.ui.components.CircleIcon
 import com.artless.rucktracker.ui.components.MarchBackground
 import com.artless.rucktracker.ui.components.MarchCard
-import com.artless.rucktracker.ui.components.MarchChevron
 import com.artless.rucktracker.ui.components.MarchCompactButton
 import com.artless.rucktracker.ui.components.MarchDayToggle
 import com.artless.rucktracker.ui.components.MarchFieldLabel
@@ -210,8 +209,6 @@ private fun WelcomeStep(onContinue: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MarchChevron(size = 88.dp)
-        Spacer(Modifier.height(24.dp))
         MarchWordmark()
         Spacer(Modifier.height(10.dp))
         Text(
@@ -566,8 +563,6 @@ private fun CompleteStep(onComplete: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(40.dp))
-        MarchChevron(size = 76.dp)
-        Spacer(Modifier.height(28.dp))
         Text(
             text = "You're all set",
             style = MaterialTheme.typography.headlineLarge,

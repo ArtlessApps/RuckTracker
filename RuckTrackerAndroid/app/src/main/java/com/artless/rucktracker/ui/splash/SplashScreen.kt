@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artless.rucktracker.ui.components.MarchBackground
-import com.artless.rucktracker.ui.components.MarchChevron
 import com.artless.rucktracker.ui.components.MarchWordmark
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchType
@@ -49,16 +48,6 @@ fun SplashScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            MarchChevron(
-                size = 84.dp,
-                color = MarchColors.Primary,
-                modifier = Modifier.graphicsLayer {
-                    val scale = 0.85f + 0.15f * progress
-                    scaleX = scale
-                    scaleY = scale
-                }
-            )
-            Spacer(Modifier.height(20.dp))
             MarchWordmark()
             Spacer(Modifier.height(10.dp))
             Text(

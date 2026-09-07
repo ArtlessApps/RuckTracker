@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -46,7 +45,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -410,31 +408,6 @@ fun StatusBadge(
             .background(accent.copy(alpha = 0.16f))
             .padding(horizontal = 9.dp, vertical = 5.dp)
     )
-}
-
-/**
- * The MARCH chevron mark, drawn from the same path as the launcher icon so the
- * in-app brand and the home-screen icon stay identical.
- */
-@Composable
-fun MarchChevron(
-    modifier: Modifier = Modifier,
-    size: Dp = 72.dp,
-    color: Color = MarchColors.Primary
-) {
-    Canvas(modifier = modifier.size(size)) {
-        val unit = this.size.minDimension / 108f
-        val mark = Path().apply {
-            moveTo(54f * unit, 24f * unit)
-            lineTo(78f * unit, 84f * unit)
-            lineTo(64f * unit, 84f * unit)
-            lineTo(54f * unit, 58f * unit)
-            lineTo(44f * unit, 84f * unit)
-            lineTo(30f * unit, 84f * unit)
-            close()
-        }
-        drawPath(mark, color)
-    }
 }
 
 /** The MARCH wordmark with brand tracking. */
