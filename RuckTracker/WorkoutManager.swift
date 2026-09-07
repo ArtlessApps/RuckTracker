@@ -59,11 +59,16 @@ class WorkoutManager: NSObject, ObservableObject {
     private var lastLocation: CLLocation?
     private var totalGPSDistance: Double = 0
     
-    // Barometric altimeter for precise elevation tracking
+    // Barometric altimeter for precise elevation tracking (GPS altitude is fallback)
     private let altimeter = CMAltimeter()
-    private var lastAltitude: Double?
+    private var usingBarometricAltimeter = false
+    private var altitudeBaseline: Double?                // Settled reference altitude (meters)
+    private var lastAltitudeTimestamp: Date?             // For velocity-based sanity check
+    private var lastGPSAltitude: Double?                 // GPS fallback previous sample
     private var totalElevationGainMeters: Double = 0
-    private let altitudeFilterThreshold: Double = 1.0 // meters
+    private let baroFilterThreshold: Double = 0.3        // ~1 foot; filters barometer noise
+    private let gpsFilterThreshold: Double = 1.5         // meters; GPS altitude is noisier
+    private let maxReasonableClimbRateMetersPerSecond: Double = 5.0
     
     // Timer
     private var startDate: Date?
@@ -190,6 +195,7 @@ class WorkoutManager: NSObject, ObservableObject {
         lastZoneUpdateDate = nil
         elevationGain = 0
         totalElevationGainMeters = 0
+        usingBarometricAltimeter = false
         healthKitProvidingDistance = false
         healthKitProvidingCalories = false
         lastCalorieUpdate = 0
@@ -197,7 +203,9 @@ class WorkoutManager: NSObject, ObservableObject {
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
-        lastAltitude = nil
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        lastGPSAltitude = nil
         
         // Reset movement detection
         lastDistanceUpdateTime = nil
@@ -215,7 +223,7 @@ class WorkoutManager: NSObject, ObservableObject {
         DebugLogger.shared.log(trackMsg)
         startLocationTracking()
         
-        // Start barometric altimeter for elevation
+        // Start barometric altimeter for elevation (GPS altitude used if unavailable)
         startAltimeterTracking()
         
         // 2. Start HKWorkoutSession (may take 1-2 seconds to initialize)
@@ -249,6 +257,9 @@ class WorkoutManager: NSObject, ObservableObject {
         isPaused = true
         session?.pause()
         locationManager.stopUpdatingLocation()
+        // Nil the baseline so the first reading after resume re-establishes a clean
+        // reference, discarding pause/resume altimeter spikes (FB7972487).
+        resetAltitudeBaselineForResume()
         
         let msg = "⏸️ Workout paused"
         print(msg)
@@ -512,13 +523,17 @@ class WorkoutManager: NSObject, ObservableObject {
     // MARK: - Barometric Altimeter
     private func startAltimeterTracking() {
         guard CMAltimeter.isRelativeAltitudeAvailable() else {
-            let msg = "⚠️ Barometric altimeter not available on this device"
+            usingBarometricAltimeter = false
+            let msg = "⚠️ Barometric altimeter not available — using GPS altitude fallback"
             print(msg)
             DebugLogger.shared.log(msg)
             return
         }
         
-        lastAltitude = nil
+        usingBarometricAltimeter = true
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        lastGPSAltitude = nil
         totalElevationGainMeters = 0
         elevationGain = 0
         
@@ -534,21 +549,7 @@ class WorkoutManager: NSObject, ObservableObject {
             guard self.isActive && !self.isPaused else { return }
             
             let currentAltitude = data.relativeAltitude.doubleValue // meters from start
-            
-            if let previousAltitude = self.lastAltitude {
-                let altitudeChange = currentAltitude - previousAltitude
-                
-                // Only count significant uphill changes
-                if altitudeChange > self.altitudeFilterThreshold {
-                    self.totalElevationGainMeters += altitudeChange
-                    self.elevationGain = self.totalElevationGainMeters * 3.28084
-                    let elevMsg = "⛰️ Elevation: +\(String(format: "%.1f", altitudeChange))m | Total: \(Int(self.elevationGain)) ft"
-                    print(elevMsg)
-                    DebugLogger.shared.log(elevMsg)
-                }
-            }
-            
-            self.lastAltitude = currentAltitude
+            self.applyAltitudeSample(currentAltitude, filterThreshold: self.baroFilterThreshold)
         }
         
         let msg = "✅ Started barometric altimeter for elevation tracking"
@@ -556,8 +557,60 @@ class WorkoutManager: NSObject, ObservableObject {
         DebugLogger.shared.log(msg)
     }
     
+    /// Shared elevation-gain logic for barometer and GPS altitude samples.
+    private func applyAltitudeSample(_ currentAltitude: Double, filterThreshold: Double) {
+        let now = Date()
+        
+        // Velocity sanity check — rejects physically impossible spikes
+        if let lastTimestamp = lastAltitudeTimestamp,
+           let baseline = altitudeBaseline {
+            let elapsed = now.timeIntervalSince(lastTimestamp)
+            if elapsed > 0 {
+                let climbRate = abs(currentAltitude - baseline) / elapsed
+                if climbRate > maxReasonableClimbRateMetersPerSecond {
+                    let msg = "⚠️ Altimeter spike rejected (\(String(format: "%.1f", climbRate)) m/s) — resetting baseline"
+                    print(msg)
+                    DebugLogger.shared.log(msg)
+                    altitudeBaseline = currentAltitude
+                    lastAltitudeTimestamp = now
+                    return
+                }
+            }
+        }
+        
+        lastAltitudeTimestamp = now
+        
+        guard let baseline = altitudeBaseline else {
+            altitudeBaseline = currentAltitude
+            return
+        }
+        
+        let delta = currentAltitude - baseline
+        
+        if delta > filterThreshold {
+            totalElevationGainMeters += delta
+            elevationGain = totalElevationGainMeters * 3.28084
+            altitudeBaseline = currentAltitude
+            let elevMsg = "⛰️ Elevation: +\(String(format: "%.1f", delta))m | Total: \(Int(elevationGain)) ft"
+            print(elevMsg)
+            DebugLogger.shared.log(elevMsg)
+        } else if delta < -filterThreshold {
+            // Descending past noise floor — shift baseline down without counting gain
+            altitudeBaseline = currentAltitude
+        }
+    }
+    
+    private func resetAltitudeBaselineForResume() {
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        lastGPSAltitude = nil
+        print("⛰️ Altitude baseline reset for resume")
+    }
+    
     private func stopAltimeterTracking() {
-        altimeter.stopRelativeAltitudeUpdates()
+        if usingBarometricAltimeter {
+            altimeter.stopRelativeAltitudeUpdates()
+        }
         let msg = "🛑 Stopped altimeter. Final elevation: \(Int(elevationGain)) ft"
         print(msg)
         DebugLogger.shared.log(msg)
@@ -715,7 +768,10 @@ class WorkoutManager: NSObject, ObservableObject {
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
-        lastAltitude = nil
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        lastGPSAltitude = nil
+        usingBarometricAltimeter = false
         
         // Reset movement detection
         lastDistanceUpdateTime = nil
@@ -742,7 +798,10 @@ class WorkoutManager: NSObject, ObservableObject {
         // Reset location tracking
         startLocation = nil
         lastLocation = nil
-        lastAltitude = nil
+        altitudeBaseline = nil
+        lastAltitudeTimestamp = nil
+        lastGPSAltitude = nil
+        usingBarometricAltimeter = false
         
         // Reset movement detection
         lastDistanceUpdateTime = nil
@@ -914,6 +973,9 @@ extension WorkoutManager: CLLocationManagerDelegate {
                 if self.startLocation == nil {
                     self.startLocation = location
                     self.lastLocation = location
+                    if !self.usingBarometricAltimeter {
+                        self.accumulateGPSElevation(from: location)
+                    }
                     let msg = "📍 GPS: First location acquired | Accuracy: \(String(format: "%.1f", location.horizontalAccuracy))m"
                     print(msg)
                     DebugLogger.shared.log(msg)
@@ -946,8 +1008,32 @@ extension WorkoutManager: CLLocationManagerDelegate {
                         self.lastLocation = location
                     }
                 }
+                
+                // GPS altitude fallback when barometer is unavailable
+                if !self.usingBarometricAltimeter {
+                    self.accumulateGPSElevation(from: location)
+                }
             }
         }
+    }
+    
+    /// GPS altitude fallback — noisier than barometer, so uses a higher threshold
+    /// and requires reasonable vertical accuracy when available.
+    private func accumulateGPSElevation(from location: CLLocation) {
+        // verticalAccuracy < 0 means altitude is invalid
+        guard location.verticalAccuracy >= 0, location.verticalAccuracy < 25.0 else { return }
+        
+        let altitude = location.altitude
+        if lastGPSAltitude == nil {
+            lastGPSAltitude = altitude
+            if altitudeBaseline == nil {
+                altitudeBaseline = altitude
+                lastAltitudeTimestamp = Date()
+            }
+            return
+        }
+        lastGPSAltitude = altitude
+        applyAltitudeSample(altitude, filterThreshold: gpsFilterThreshold)
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

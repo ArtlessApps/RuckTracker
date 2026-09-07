@@ -171,10 +171,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
     
-    private func saveTransferData(_ transferData: WorkoutTransferData) -> Bool {
+    private func saveTransferData(_ transferData: WorkoutTransferData) -> UUID? {
         guard let workoutDataManager = workoutDataManager else {
             print("❌ No WorkoutDataManager available to save workout")
-            return false
+            return nil
         }
         
         let existingWorkouts = workoutDataManager.workouts.filter { workout in
@@ -185,10 +185,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
         
         guard existingWorkouts.isEmpty else {
             print("📱 Workout already exists, skipping duplicate")
-            return false
+            return nil
         }
         
-        workoutDataManager.saveWorkout(
+        let workoutId = workoutDataManager.saveWorkout(
             date: transferData.date,
             duration: transferData.duration,
             distance: transferData.distance,
@@ -197,15 +197,53 @@ extension WatchConnectivityManager: WCSessionDelegate {
             heartRate: transferData.heartRate,
             elevationGain: transferData.elevationGain
         )
-        return true
+        return workoutId
+    }
+    
+    /// Push a newly received Watch workout to the global leaderboard and club feeds.
+    /// Only used for live single-workout transfers (not bulk historical sync), because
+    /// `update_global_leaderboard_entry` always attributes to the current week.
+    private func shareWatchWorkoutToCommunity(_ transferData: WorkoutTransferData, workoutId: UUID) {
+        Task { @MainActor in
+            let community = CommunityService.shared
+            guard community.currentProfile != nil else {
+                print("⚠️ Not authenticated — skipping community share for Watch workout")
+                return
+            }
+            
+            await community.updateGlobalLeaderboard(
+                distance: transferData.distance,
+                elevation: transferData.elevationGain,
+                weight: transferData.ruckWeight
+            )
+            
+            for club in community.myClubs {
+                do {
+                    try await community.postWorkout(
+                        clubId: club.id,
+                        distance: transferData.distance,
+                        duration: Int(transferData.duration / 60),
+                        weight: transferData.ruckWeight,
+                        calories: Int(transferData.calories),
+                        elevationGain: transferData.elevationGain,
+                        caption: nil,
+                        workoutId: workoutId
+                    )
+                    print("✅ Posted Watch workout to club: \(club.name)")
+                } catch {
+                    print("❌ Failed to post Watch workout to \(club.name): \(error)")
+                }
+            }
+        }
     }
     
     private func handleReceivedWorkoutData(_ data: Data) {
         do {
             let transferData = try JSONDecoder().decode(WorkoutTransferData.self, from: data)
-            if saveTransferData(transferData) {
-                print("📱 Received and saved workout from watch: \(transferData.date.formatted())")
+            if let workoutId = saveTransferData(transferData) {
+                print("📱 Received and saved workout from watch: \(transferData.date.formatted()) (elev=\(Int(transferData.elevationGain)) ft)")
                 lastSyncDate = Date()
+                shareWatchWorkoutToCommunity(transferData, workoutId: workoutId)
             }
         } catch {
             print("❌ Failed to decode workout data from watch: \(error.localizedDescription)")
@@ -215,8 +253,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
     private func handleReceivedAllWorkouts(_ data: Data) {
         do {
             let allWorkouts = try JSONDecoder().decode([WorkoutTransferData].self, from: data)
-            let savedCount = allWorkouts.filter { saveTransferData($0) }.count
-            print("📱 Received and saved \(savedCount) workouts from watch")
+            // Local save only — do not push historical bulk sync to the current-week leaderboard
+            let savedCount = allWorkouts.filter { saveTransferData($0) != nil }.count
+            print("📱 Received and saved \(savedCount) workouts from watch (local only)")
             if savedCount > 0 { lastSyncDate = Date() }
         } catch {
             print("❌ Failed to decode all workouts data from watch: \(error.localizedDescription)")

@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
 
+    <!-- Barometer used for elevation gain; not required so GPS fallback still works -->
+    <uses-feature android:name="android.hardware.sensor.barometer" android:required="false" />
+
     <application
         android:name=".MarchApplication"
         android:allowBackup="true"

@@ -62,6 +62,10 @@ class WorkoutShareService @Inject constructor(
     private val clubRepository: ClubRepository,
     private val authRepository: AuthRepository
 ) {
+    /**
+     * Always updates the global leaderboard (even with no clubs).
+     * Posts the workout to each club in [clubIds] when non-empty.
+     */
     suspend fun shareWorkoutToCommunity(
         workout: WorkoutEntity,
         clubIds: List<String>

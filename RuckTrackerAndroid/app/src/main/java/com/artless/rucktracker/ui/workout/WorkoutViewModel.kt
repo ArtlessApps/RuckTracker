@@ -2,8 +2,14 @@ package com.artless.rucktracker.ui.workout
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.artless.rucktracker.data.CalorieCalculator
@@ -59,6 +65,8 @@ class WorkoutViewModel @Inject constructor(
 
     private val app = application
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
+    private val sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val pressureSensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
     private val _state = MutableStateFlow(ActiveWorkoutState())
     val state: StateFlow<ActiveWorkoutState> = _state.asStateFlow()
@@ -74,6 +82,21 @@ class WorkoutViewModel @Inject constructor(
     private var timerJob: Job? = null
     private val routePoints = mutableListOf<RoutePointEntity>()
 
+    // Barometer elevation (preferred). Falls back to GPS altitude when unavailable.
+    private var usingBarometer = false
+    private var elevationGainMeters = 0.0
+    private var altitudeBaselineMeters: Double? = null
+    private var lastAltitudeTimestampMs: Long = 0L
+    private var lastGpsAltitudeMeters: Double? = null
+
+    companion object {
+        private const val BARO_FILTER_THRESHOLD_M = 0.3
+        private const val GPS_FILTER_THRESHOLD_M = 1.5
+        private const val MAX_CLIMB_RATE_M_PER_S = 5.0
+        private const val MAX_GPS_VERTICAL_ACCURACY_M = 25.0
+        private const val METERS_TO_FEET = 3.28084
+    }
+
     suspend fun loadDefaults(): Pair<Double, Double> {
         val settings = userSettingsRepository.settings.first()
         return settings.bodyWeight to settings.defaultRuckWeight
@@ -86,6 +109,7 @@ class WorkoutViewModel @Inject constructor(
         this.bodyWeightLbs = bodyWeightLbs
         lastLocation = null
         routePoints.clear()
+        resetElevationTracking()
         val workoutId = UUID.randomUUID().toString()
         _state.value = ActiveWorkoutState(isActive = true, ruckWeightLbs = ruckWeightLbs, workoutId = workoutId)
 
@@ -97,14 +121,25 @@ class WorkoutViewModel @Inject constructor(
             .setMinUpdateDistanceMeters(5f)
             .build()
         fusedLocationClient.requestLocationUpdates(request, locationCallback, app.mainLooper)
+        startBarometerTracking()
         startTimer()
     }
 
-    fun pause() { _state.value = _state.value.copy(isPaused = true) }
-    fun resume() { _state.value = _state.value.copy(isPaused = false) }
+    fun pause() {
+        _state.value = _state.value.copy(isPaused = true)
+        // Clear baseline so the first reading after resume re-establishes a clean reference
+        altitudeBaselineMeters = null
+        lastAltitudeTimestampMs = 0L
+        lastGpsAltitudeMeters = null
+    }
+
+    fun resume() {
+        _state.value = _state.value.copy(isPaused = false)
+    }
 
     fun end() {
         timerJob?.cancel()
+        stopBarometerTracking()
         fusedLocationClient.removeLocationUpdates(locationCallback)
         app.startService(Intent(app, WorkoutTrackingService::class.java).apply {
             action = WorkoutTrackingService.ACTION_STOP
@@ -123,38 +158,127 @@ class WorkoutViewModel @Inject constructor(
         )
         viewModelScope.launch {
             workoutRepository.saveWorkout(entity, routePoints.toList())
+            // Always update global leaderboard; post to clubs when available
             val clubIds = workoutShareService.getUserClubIds()
-            if (clubIds.isNotEmpty()) {
-                workoutShareService.shareWorkoutToCommunity(entity, clubIds)
-            }
+            workoutShareService.shareWorkoutToCommunity(entity, clubIds)
             userSettingsRepository.incrementWorkoutCountForReview()
             val count = userSettingsRepository.getWorkoutCountForReview()
             _showReviewPrompt.value = reviewManager.shouldShowReviewPrompt(count)
             _completedWorkout.value = CompletedWorkout(entity)
         }
         _state.value = ActiveWorkoutState()
+        resetElevationTracking()
     }
 
     fun clearCompletedWorkout() { _completedWorkout.value = null }
 
+    private fun resetElevationTracking() {
+        usingBarometer = false
+        elevationGainMeters = 0.0
+        altitudeBaselineMeters = null
+        lastAltitudeTimestampMs = 0L
+        lastGpsAltitudeMeters = null
+    }
+
+    private fun startBarometerTracking() {
+        val sensor = pressureSensor ?: return
+        // Keep usingBarometer=false until the first pressure sample arrives so GPS
+        // altitude can fill in if the sensor is slow or fails to deliver.
+        sensorManager.registerListener(
+            pressureListener,
+            sensor,
+            SensorManager.SENSOR_DELAY_UI
+        )
+    }
+
+    private fun stopBarometerTracking() {
+        sensorManager.unregisterListener(pressureListener)
+    }
+
+    private val pressureListener = object : SensorEventListener {
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+
+        override fun onSensorChanged(event: SensorEvent?) {
+            val pressureHpa = event?.values?.firstOrNull() ?: return
+            val current = _state.value
+            if (!current.isActive || current.isPaused) return
+
+            if (!usingBarometer) {
+                usingBarometer = true
+                // Switch sources — discard any GPS baseline so barometer starts clean
+                altitudeBaselineMeters = null
+                lastAltitudeTimestampMs = 0L
+                lastGpsAltitudeMeters = null
+            }
+
+            // Relative altitude from standard atmosphere — only deltas matter for gain
+            val altitudeMeters = SensorManager.getAltitude(
+                SensorManager.PRESSURE_STANDARD_ATMOSPHERE,
+                pressureHpa
+            ).toDouble()
+            applyAltitudeSample(altitudeMeters, BARO_FILTER_THRESHOLD_M)
+        }
+    }
+
+    private fun applyAltitudeSample(currentAltitudeMeters: Double, filterThresholdMeters: Double) {
+        val now = System.currentTimeMillis()
+        val baseline = altitudeBaselineMeters
+        if (baseline == null) {
+            altitudeBaselineMeters = currentAltitudeMeters
+            lastAltitudeTimestampMs = now
+            return
+        }
+
+        val elapsedSec = (now - lastAltitudeTimestampMs) / 1000.0
+        if (elapsedSec > 0) {
+            val climbRate = kotlin.math.abs(currentAltitudeMeters - baseline) / elapsedSec
+            if (climbRate > MAX_CLIMB_RATE_M_PER_S) {
+                // Physically impossible spike — reset baseline, discard
+                altitudeBaselineMeters = currentAltitudeMeters
+                lastAltitudeTimestampMs = now
+                return
+            }
+        }
+        lastAltitudeTimestampMs = now
+
+        val delta = currentAltitudeMeters - baseline
+        when {
+            delta > filterThresholdMeters -> {
+                elevationGainMeters += delta
+                altitudeBaselineMeters = currentAltitudeMeters
+                _state.value = _state.value.copy(
+                    elevationGain = elevationGainMeters * METERS_TO_FEET
+                )
+            }
+            delta < -filterThresholdMeters -> {
+                // Descending — shift baseline down without counting gain
+                altitudeBaselineMeters = currentAltitudeMeters
+            }
+        }
+    }
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val newLocation = result.lastLocation ?: return
-            if (_state.value.isPaused) { lastLocation = newLocation; return }
+            if (_state.value.isPaused) {
+                lastLocation = newLocation
+                lastGpsAltitudeMeters = null
+                return
+            }
             val previous = lastLocation
-            var elevationDelta = 0.0
             if (previous != null) {
                 val meters = previous.distanceTo(newLocation)
                 val additionalMiles = meters * 0.000621371
-                if (newLocation.hasAltitude() && previous.hasAltitude()) {
-                    val elevMeters = newLocation.altitude - previous.altitude
-                    if (elevMeters > 0) elevationDelta = elevMeters * 3.28084
-                }
                 _state.value = _state.value.copy(
-                    distanceMiles = _state.value.distanceMiles + additionalMiles,
-                    elevationGain = _state.value.elevationGain + elevationDelta
+                    distanceMiles = _state.value.distanceMiles + additionalMiles
                 )
             }
+
+            // GPS altitude only when barometer is unavailable
+            if (!usingBarometer) {
+                accumulateGpsElevation(newLocation)
+            }
+
             routePoints.add(
                 RoutePointEntity(
                     workoutId = _state.value.workoutId,
@@ -165,6 +289,23 @@ class WorkoutViewModel @Inject constructor(
             )
             lastLocation = newLocation
         }
+    }
+
+    private fun accumulateGpsElevation(location: Location) {
+        if (!location.hasAltitude()) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val verticalAccuracy = location.verticalAccuracyMeters
+            if (verticalAccuracy > 0 && verticalAccuracy > MAX_GPS_VERTICAL_ACCURACY_M) return
+        }
+
+        val previousAlt = lastGpsAltitudeMeters
+        lastGpsAltitudeMeters = location.altitude
+        if (previousAlt == null) {
+            altitudeBaselineMeters = location.altitude
+            lastAltitudeTimestampMs = System.currentTimeMillis()
+            return
+        }
+        applyAltitudeSample(location.altitude, GPS_FILTER_THRESHOLD_M)
     }
 
     private fun startTimer() {
@@ -191,6 +332,7 @@ class WorkoutViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        stopBarometerTracking()
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
