@@ -39,6 +39,7 @@ import com.artless.rucktracker.ui.components.MarchEmptyState
 import com.artless.rucktracker.ui.components.MarchScreen
 import com.artless.rucktracker.ui.components.MarchScreenHeader
 import com.artless.rucktracker.ui.components.RankMedallion
+import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import java.util.Locale
@@ -87,7 +88,7 @@ fun RankingsScreen(modifier: Modifier = Modifier, viewModel: RankingsViewModel =
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+            contentPadding = tabBarContentPadding()
         ) {
             itemsIndexed(entries) { index, entry ->
                 LeaderRow(

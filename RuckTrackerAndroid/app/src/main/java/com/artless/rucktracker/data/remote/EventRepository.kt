@@ -58,12 +58,13 @@ class EventRepository @Inject constructor(private val client: SupabaseClient) {
         client.postgrest.from("club_events").delete { filter { eq("id", eventId) } }
     }
 
-    suspend fun rsvpToEvent(eventId: String, userId: String, status: String, declaredWeight: Double?) {
+    suspend fun rsvpToEvent(eventId: String, userId: String, status: String, declaredWeight: Int?) {
         val existing = getUserRsvp(eventId, userId)
         val payload = buildJsonObject {
             put("event_id", eventId)
             put("user_id", userId)
             put("status", status)
+            // Column is integer — Doubles like 45.0 cause "invalid input syntax for type integer"
             declaredWeight?.let { put("declared_weight", it) }
         }
         if (existing != null) {

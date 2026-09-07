@@ -36,6 +36,7 @@ import com.artless.rucktracker.ui.components.MarchScreen
 import com.artless.rucktracker.ui.components.MarchScreenHeader
 import com.artless.rucktracker.ui.components.MetricBlock
 import com.artless.rucktracker.ui.components.SectionHeader
+import com.artless.rucktracker.ui.components.tabBarBottomInset
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import com.artless.rucktracker.ui.theme.MarchType
@@ -78,7 +79,7 @@ fun PlanScreen(modifier: Modifier = Modifier, viewModel: PlanViewModel = hiltVie
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(MarchDimens.CardGap),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                bottom = MarchDimens.TabBarClearance
+                bottom = tabBarBottomInset()
             )
         ) {
             items(sessions) { session ->

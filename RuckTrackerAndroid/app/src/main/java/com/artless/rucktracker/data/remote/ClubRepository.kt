@@ -10,6 +10,7 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -99,10 +100,15 @@ class ClubRepository @Inject constructor(private val client: SupabaseClient) {
             .decodeList()
 
     suspend fun signWaiver(clubId: String, userId: String, contact: EmergencyContact) {
+        // Match iOS: ISO-8601 timestamp + jsonb object (not a double-encoded string)
+        val signedAt = java.time.Instant.now().toString()
         client.postgrest.from("club_members")
             .update(buildJsonObject {
-                put("waiver_signed_at", "now()")
-                put("emergency_contact_json", Json.encodeToString(EmergencyContact.serializer(), contact))
+                put("waiver_signed_at", signedAt)
+                put(
+                    "emergency_contact_json",
+                    Json.encodeToJsonElement(EmergencyContact.serializer(), contact)
+                )
             }) {
                 filter { eq("club_id", clubId); eq("user_id", userId) }
             }

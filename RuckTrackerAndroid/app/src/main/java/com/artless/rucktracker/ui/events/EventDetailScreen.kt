@@ -41,9 +41,14 @@ fun EventDetailScreen(
         Text(event.startTime, color = MarchColors.Primary, modifier = Modifier.padding(top = 8.dp))
         event.addressText?.let { Text(it, color = MarchColors.TextSecondary) }
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(declaredWeight, { declaredWeight = it }, label = { Text("Declared weight (lbs)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            declaredWeight,
+            { declaredWeight = it.filter { ch -> ch.isDigit() } },
+            label = { Text("Declared weight (lbs)") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(Modifier.height(8.dp))
-        Button(onClick = { viewModel.rsvp(event.id, "going", declaredWeight.toDoubleOrNull()) }, modifier = Modifier.fillMaxWidth()) { Text("Going") }
+        Button(onClick = { viewModel.rsvp(event.id, "going", declaredWeight.toIntOrNull()) }, modifier = Modifier.fillMaxWidth()) { Text("Going") }
         OutlinedButton(onClick = { viewModel.rsvp(event.id, "maybe", null) }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) { Text("Maybe") }
         OutlinedButton(onClick = { viewModel.rsvp(event.id, "out", null) }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) { Text("Out") }
         Spacer(Modifier.height(16.dp))

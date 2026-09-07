@@ -7,6 +7,7 @@ import com.artless.rucktracker.data.model.ClubEvent
 import com.artless.rucktracker.data.model.ClubMember
 import com.artless.rucktracker.data.model.ClubPost
 import com.artless.rucktracker.data.model.ClubRole
+import com.artless.rucktracker.data.model.EmergencyContact
 import com.artless.rucktracker.data.model.EventRsvp
 import com.artless.rucktracker.data.model.LeaderboardEntry
 import com.artless.rucktracker.data.remote.AuthRepository
@@ -46,6 +47,10 @@ data class TribeUiState(
     val eventRsvps: List<EventRsvp> = emptyList(),
     val eventComments: List<ClubPost> = emptyList(),
     val isCreatingClub: Boolean = false,
+    val isJoiningClub: Boolean = false,
+    val isSigningWaiver: Boolean = false,
+    /** Club joined but awaiting waiver signature (iOS JoinClubView pendingClub*). */
+    val pendingWaiverClub: Club? = null,
     val isSaving: Boolean = false,
     val successMessage: String? = null,
     val error: String? = null
@@ -131,11 +136,75 @@ class TribeViewModel @Inject constructor(
     }
 
     fun joinClub(code: String) {
+        if (_uiState.value.isJoiningClub) return
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
-            runCatching { clubRepository.joinClubWithCode(code.trim(), userId) }
-                .onSuccess { club -> selectClub(club) }
-                .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+            val trimmed = code.trim()
+            if (trimmed.isEmpty()) return@launch
+            _uiState.value = _uiState.value.copy(isJoiningClub = true, error = null)
+            // iOS: join first (insert membership), then show waiver sheet
+            runCatching { clubRepository.joinClubWithCode(trimmed, userId) }
+                .onSuccess { club ->
+                    val clubs = runCatching { clubRepository.loadMyClubs(userId) }.getOrDefault(emptyList())
+                    _uiState.value = _uiState.value.copy(
+                        isJoiningClub = false,
+                        clubs = clubs,
+                        pendingWaiverClub = club,
+                        error = null
+                    )
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isJoiningClub = false,
+                        error = it.message
+                    )
+                }
+        }
+    }
+
+    fun signPendingWaiver(contact: EmergencyContact) {
+        if (_uiState.value.isSigningWaiver) return
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId ?: return@launch
+            val club = _uiState.value.pendingWaiverClub ?: return@launch
+            _uiState.value = _uiState.value.copy(isSigningWaiver = true, error = null)
+            runCatching { clubRepository.signWaiver(club.id, userId, contact) }
+                .onSuccess {
+                    val clubs = runCatching { clubRepository.loadMyClubs(userId) }.getOrDefault(emptyList())
+                    val joined = clubs.find { it.id == club.id } ?: club
+                    _uiState.value = _uiState.value.copy(
+                        isSigningWaiver = false,
+                        pendingWaiverClub = null,
+                        clubs = clubs,
+                        selectedClub = joined,
+                        error = null
+                    )
+                    openClubData(joined, userId)
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isSigningWaiver = false,
+                        error = it.message
+                    )
+                }
+        }
+    }
+
+    /** iOS Cancel: dismiss waiver sheet; membership already exists, refresh club list. */
+    fun dismissPendingWaiver() {
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId
+            val clubs = if (userId != null) {
+                runCatching { clubRepository.loadMyClubs(userId) }.getOrDefault(_uiState.value.clubs)
+            } else {
+                _uiState.value.clubs
+            }
+            _uiState.value = _uiState.value.copy(
+                pendingWaiverClub = null,
+                isSigningWaiver = false,
+                clubs = clubs,
+                error = null
+            )
         }
     }
 
@@ -382,13 +451,12 @@ class TribeViewModel @Inject constructor(
         }
     }
 
-    fun rsvpToEvent(status: String, declaredWeight: Double?) {
+    fun rsvpToEvent(status: String, declaredWeight: Int?) {
         viewModelScope.launch {
             val event = _uiState.value.selectedEvent ?: return@launch
             val userId = authRepository.currentUserId ?: return@launch
             runCatching {
                 eventRepository.rsvpToEvent(event.id, userId, status, declaredWeight)
-            }.onSuccess {
                 if (status == "going") {
                     notificationService.scheduleEventReminder(
                         event.id,
@@ -396,6 +464,7 @@ class TribeViewModel @Inject constructor(
                         System.currentTimeMillis() + 3_600_000
                     )
                 }
+            }.onSuccess {
                 loadEventDetail(event.id)
             }.onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
         }

@@ -48,6 +48,8 @@ import com.artless.rucktracker.ui.components.MarchScreenHeader
 import com.artless.rucktracker.ui.components.MarchSecondaryButton
 import com.artless.rucktracker.ui.components.MarchSegmentedControl
 import com.artless.rucktracker.ui.components.StatTile
+import com.artless.rucktracker.ui.components.tabBarBottomInset
+import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import java.text.SimpleDateFormat
@@ -156,7 +158,7 @@ private fun HistorySection(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+        contentPadding = tabBarContentPadding()
     ) {
         items(workouts, key = { it.id }) { workout ->
             WorkoutRow(
@@ -271,6 +273,6 @@ private fun SettingsSection(
             accent = MarchColors.DestructiveRed,
             onClick = onDeleteAccount
         )
-        Spacer(Modifier.height(MarchDimens.TabBarClearance))
+        Spacer(Modifier.height(tabBarBottomInset()))
     }
 }

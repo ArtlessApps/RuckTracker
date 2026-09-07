@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -58,6 +57,8 @@ import com.artless.rucktracker.ui.components.MarchPrimaryButton
 import com.artless.rucktracker.ui.components.MarchSegmentedControl
 import com.artless.rucktracker.ui.components.MarchTextField
 import com.artless.rucktracker.ui.components.SectionHeader
+import com.artless.rucktracker.ui.components.tabBarBottomInset
+import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import java.time.LocalDate
@@ -195,7 +196,7 @@ fun ColumnScope.ClubMembersPanel(state: TribeUiState, viewModel: TribeViewModel)
     LazyColumn(
         modifier = Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+        contentPadding = tabBarContentPadding()
     ) {
         listOf(
             "Founders" to state.members.filter { it.clubRole == ClubRole.FOUNDER },
@@ -425,7 +426,7 @@ fun ColumnScope.ClubSettingsPanel(state: TribeUiState, viewModel: TribeViewModel
                 onClick = { confirmDelete = true }
             )
         }
-        Spacer(Modifier.height(MarchDimens.TabBarClearance))
+        Spacer(Modifier.height(tabBarBottomInset()))
     }
 
     if (confirmRegen) {
@@ -568,7 +569,7 @@ fun ColumnScope.CreateEventPanel(state: TribeUiState, viewModel: TribeViewModel)
                 height = 50.dp
             )
         }
-        Spacer(Modifier.height(MarchDimens.TabBarClearance))
+        Spacer(Modifier.height(tabBarBottomInset()))
     }
 }
 
@@ -611,14 +612,14 @@ fun ColumnScope.EventDetailPanel(state: TribeUiState, viewModel: TribeViewModel)
         MarchCard(contentPadding = 18.dp) {
             MarchTextField(
                 value = weight,
-                onValueChange = { weight = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                onValueChange = { weight = it.filter { ch -> ch.isDigit() } },
                 label = "Declared weight (lbs)",
-                keyboardType = KeyboardType.Decimal
+                keyboardType = KeyboardType.Number
             )
             Spacer(Modifier.height(12.dp))
             MarchPrimaryButton(
                 text = "I'm In",
-                onClick = { viewModel.rsvpToEvent("going", weight.toDoubleOrNull()) },
+                onClick = { viewModel.rsvpToEvent("going", weight.toIntOrNull()) },
                 height = 46.dp
             )
             Spacer(Modifier.height(8.dp))
@@ -682,7 +683,7 @@ fun ColumnScope.EventDetailPanel(state: TribeUiState, viewModel: TribeViewModel)
                 onClick = { confirmDelete = true }
             )
         }
-        Spacer(Modifier.height(MarchDimens.TabBarClearance))
+        Spacer(Modifier.height(tabBarBottomInset()))
     }
 
     if (confirmDelete) {
@@ -718,7 +719,7 @@ private fun AttendeeRow(rsvp: EventRsvp) {
                 style = MaterialTheme.typography.labelLarge
             )
             rsvp.declaredWeight?.let {
-                Text(" · ${it.toInt()} lb", color = MarchColors.TextSecondary)
+                Text(" · $it lb", color = MarchColors.TextSecondary)
             }
         }
     }

@@ -14,11 +14,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +56,30 @@ import androidx.compose.ui.unit.dp
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import com.artless.rucktracker.ui.theme.MarchType
+
+/**
+ * Bottom inset so content clears the floating tab bar **and** the system
+ * navigation gesture/button bar. Prefer this over [MarchDimens.TabBarClearance]
+ * alone whenever laying out CTAs or list bottoms under [MainTabScaffold].
+ */
+@Composable
+fun tabBarBottomInset(): Dp {
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    return MarchDimens.TabBarClearance + navBottom
+}
+
+/** PaddingValues with only the bottom set to [tabBarBottomInset]. */
+@Composable
+fun tabBarContentPadding(
+    start: Dp = 0.dp,
+    top: Dp = 0.dp,
+    end: Dp = 0.dp
+): PaddingValues = PaddingValues(
+    start = start,
+    top = top,
+    end = end,
+    bottom = tabBarBottomInset()
+)
 
 /**
  * Adds a spring-loaded press scale plus click handling, with no Material ripple.
@@ -130,9 +158,10 @@ fun MarchBackground(
 fun MarchScrollScreen(
     modifier: Modifier = Modifier,
     horizontalPadding: Dp = MarchDimens.ScreenPadding,
-    bottomPadding: Dp = MarchDimens.TabBarClearance,
+    bottomPadding: Dp? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val resolvedBottom = bottomPadding ?: tabBarBottomInset()
     MarchBackground(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -142,7 +171,7 @@ fun MarchScrollScreen(
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = horizontalPadding)
-                .padding(top = 12.dp, bottom = bottomPadding),
+                .padding(top = 12.dp, bottom = resolvedBottom),
             content = content
         )
     }

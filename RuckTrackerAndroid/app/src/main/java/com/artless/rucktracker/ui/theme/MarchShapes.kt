@@ -38,8 +38,12 @@ object MarchDimens {
     /** Standard full-width button height. */
     val ButtonHeight = 56.dp
 
-    /** Bottom scroll clearance so content clears the tab bar. */
-    val TabBarClearance = 104.dp
+    /**
+     * Floating tab capsule + its outer vertical padding (66 + 14*2) plus a small
+     * gap so CTAs don't sit flush against the bar. Does **not** include system
+     * navigation-bar insets — use [com.artless.rucktracker.ui.components.tabBarBottomInset].
+     */
+    val TabBarClearance = 110.dp
 
     val IconBadge = 40.dp
 }

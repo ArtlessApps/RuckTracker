@@ -5,10 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Favorite
@@ -54,7 +52,6 @@ import com.artless.rucktracker.ui.components.CircleIcon
 import com.artless.rucktracker.ui.components.MarchCard
 import com.artless.rucktracker.ui.components.MarchEmptyState
 import com.artless.rucktracker.ui.components.MarchGhostButton
-import com.artless.rucktracker.ui.components.MarchIconButton
 import com.artless.rucktracker.ui.components.MarchInlineMessage
 import com.artless.rucktracker.ui.components.MarchPill
 import com.artless.rucktracker.ui.components.MarchPrimaryButton
@@ -65,6 +62,8 @@ import com.artless.rucktracker.ui.components.MarchTextField
 import com.artless.rucktracker.ui.components.RankMedallion
 import com.artless.rucktracker.ui.components.SectionHeader
 import com.artless.rucktracker.ui.components.marchPressable
+import com.artless.rucktracker.ui.components.tabBarBottomInset
+import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
 import java.util.Locale
@@ -72,53 +71,67 @@ import java.util.Locale
 @Composable
 fun TribeScreen(modifier: Modifier = Modifier, viewModel: TribeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pendingWaiver = state.pendingWaiverClub
 
-    MarchScreen(modifier = modifier) {
-        when {
-            !state.isAuthenticated -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                MarchEmptyState(
-                    icon = Icons.Filled.Groups,
-                    title = "Rucking is better together",
-                    message = "Sign in to join a club, share your rucks and climb your tribe's leaderboard.",
-                    accent = MarchColors.TileGold,
-                    actionLabel = "Sign In",
-                    onAction = viewModel::promptSignIn,
-                    modifier = Modifier.weight(1f)
-                )
+    if (pendingWaiver != null) {
+        // Full-screen waiver matching iOS sheet — membership already inserted
+        Box(modifier = modifier.fillMaxSize()) {
+            WaiverOnboardingSheet(
+                clubName = pendingWaiver.name,
+                isSubmitting = state.isSigningWaiver,
+                error = state.error,
+                onSign = viewModel::signPendingWaiver,
+                onDismiss = viewModel::dismissPendingWaiver
+            )
+        }
+    } else {
+        MarchScreen(modifier = modifier) {
+            when {
+                !state.isAuthenticated -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    MarchEmptyState(
+                        icon = Icons.Filled.Groups,
+                        title = "Rucking is better together",
+                        message = "Sign in to join a club, share your rucks and climb your tribe's leaderboard.",
+                        accent = MarchColors.TileGold,
+                        actionLabel = "Sign In",
+                        onAction = viewModel::promptSignIn,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                state.selectedClub == null -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    Spacer(Modifier.height(20.dp))
+                    ClubDiscovery(state = state, viewModel = viewModel)
+                }
+
+                state.overlay == ClubOverlay.Members -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    Spacer(Modifier.height(12.dp))
+                    ClubMembersPanel(state = state, viewModel = viewModel)
+                }
+
+                state.overlay == ClubOverlay.Settings -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    Spacer(Modifier.height(12.dp))
+                    ClubSettingsPanel(state = state, viewModel = viewModel)
+                }
+
+                state.overlay == ClubOverlay.CreateEvent -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    Spacer(Modifier.height(12.dp))
+                    CreateEventPanel(state = state, viewModel = viewModel)
+                }
+
+                state.overlay == ClubOverlay.EventDetail -> {
+                    MarchScreenHeader(eyebrow = "Community", title = "Tribe")
+                    Spacer(Modifier.height(12.dp))
+                    EventDetailPanel(state = state, viewModel = viewModel)
+                }
+
+                else -> ClubDetail(state = state, viewModel = viewModel)
             }
-
-            state.selectedClub == null -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                Spacer(Modifier.height(20.dp))
-                ClubDiscovery(state = state, viewModel = viewModel)
-            }
-
-            state.overlay == ClubOverlay.Members -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                Spacer(Modifier.height(12.dp))
-                ClubMembersPanel(state = state, viewModel = viewModel)
-            }
-
-            state.overlay == ClubOverlay.Settings -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                Spacer(Modifier.height(12.dp))
-                ClubSettingsPanel(state = state, viewModel = viewModel)
-            }
-
-            state.overlay == ClubOverlay.CreateEvent -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                Spacer(Modifier.height(12.dp))
-                CreateEventPanel(state = state, viewModel = viewModel)
-            }
-
-            state.overlay == ClubOverlay.EventDetail -> {
-                MarchScreenHeader(eyebrow = "Community", title = "Tribe")
-                Spacer(Modifier.height(12.dp))
-                EventDetailPanel(state = state, viewModel = viewModel)
-            }
-
-            else -> ClubDetail(state = state, viewModel = viewModel)
         }
     }
 }
@@ -168,6 +181,7 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                 text = "Join Club",
                 onClick = { viewModel.joinClub(joinCode) },
                 enabled = joinCode.isNotBlank(),
+                loading = state.isJoiningClub,
                 height = 50.dp
             )
         }
@@ -236,7 +250,7 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Helps nearby ruckers find your club",
+                    text = "Helps nearby clubs and members find you",
                     style = MaterialTheme.typography.bodySmall,
                     color = MarchColors.TextSecondary
                 )
@@ -280,7 +294,7 @@ private fun ColumnScope.ClubDiscovery(state: TribeUiState, viewModel: TribeViewM
             MarchInlineMessage(text = it)
         }
 
-        Spacer(Modifier.height(MarchDimens.TabBarClearance))
+        Spacer(Modifier.height(tabBarBottomInset()))
     }
 }
 
@@ -394,7 +408,7 @@ private fun FeedTab(
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+        contentPadding = tabBarContentPadding()
     ) {
         items(posts, key = { it.id }) { post ->
             FeedPostCard(post = post, onLike = { onLike(post.id) })
@@ -500,7 +514,7 @@ private fun ClubLeaderboardTab(entries: List<LeaderboardEntry>, modifier: Modifi
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+        contentPadding = tabBarContentPadding()
     ) {
         items(entries, key = { it.userId }) { entry ->
             MarchCard(contentPadding = 14.dp) {
@@ -569,7 +583,7 @@ private fun EventsTab(
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = MarchDimens.TabBarClearance)
+            contentPadding = tabBarContentPadding()
         ) {
             items(events, key = { it.id }) { event ->
                 MarchCard(onClick = { onOpen(event) }, contentPadding = 16.dp) {

@@ -37,7 +37,7 @@ class EventDetailViewModel @Inject constructor(
         }
     }
 
-    fun rsvp(eventId: String, status: String, declaredWeight: Double?) {
+    fun rsvp(eventId: String, status: String, declaredWeight: Int?) {
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
             eventRepository.rsvpToEvent(eventId, userId, status, declaredWeight)

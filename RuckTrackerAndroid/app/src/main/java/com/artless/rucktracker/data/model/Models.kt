@@ -111,8 +111,9 @@ data class Club(
     val name: String,
     val description: String? = null,
     @SerialName("join_code") val joinCode: String,
-    @SerialName("created_by") val createdBy: String,
+    @SerialName("created_by") val createdBy: String? = null,
     @SerialName("is_private") val isPrivate: Boolean = false,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
     val zipcode: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
@@ -219,7 +220,7 @@ data class ClubEvent(
     @SerialName("location_long") val locationLong: Double? = null,
     @SerialName("address_text") val addressText: String? = null,
     @SerialName("meeting_point_description") val meetingPointDescription: String? = null,
-    @SerialName("required_weight") val requiredWeight: Double? = null,
+    @SerialName("required_weight") val requiredWeight: Int? = null,
     @SerialName("water_requirements") val waterRequirements: String? = null
 )
 
@@ -229,7 +230,7 @@ data class EventRsvp(
     @SerialName("event_id") val eventId: String,
     @SerialName("user_id") val userId: String,
     val status: String,
-    @SerialName("declared_weight") val declaredWeight: Double? = null,
+    @SerialName("declared_weight") val declaredWeight: Int? = null,
     val profiles: ProfileEmbed? = null
 ) {
     val username: String? get() = profiles?.username
