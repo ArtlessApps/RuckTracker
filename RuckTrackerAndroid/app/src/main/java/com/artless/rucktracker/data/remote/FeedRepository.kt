@@ -8,6 +8,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.roundToInt
 
 @Singleton
 class FeedRepository @Inject constructor(private val client: SupabaseClient) {
@@ -40,7 +41,8 @@ class FeedRepository @Inject constructor(private val client: SupabaseClient) {
                 put("distance_miles", distanceMiles)
                 put("duration_minutes", durationMinutes)
                 put("weight_lbs", weightLbs)
-                put("calories", calories)
+                // club_posts.calories is integer; fractional values cause Postgres BadRequest
+                put("calories", calories.roundToInt())
                 put("elevation_gain", elevationGain)
             })
         client.postgrest.rpc(

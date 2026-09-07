@@ -36,18 +36,58 @@ fun AppNav(navController: NavHostController = rememberNavController()) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val workoutViewModel: WorkoutViewModel = hiltViewModel()
     val gateState by authViewModel.gateState.collectAsStateWithLifecycle()
+    val workoutState by workoutViewModel.state.collectAsStateWithLifecycle()
     val completedWorkout by workoutViewModel.completedWorkout.collectAsStateWithLifecycle()
 
     LaunchedEffect(gateState) {
-        val destination = when (gateState) {
-            AppGateState.Loading -> Routes.SPLASH
-            AppGateState.SignedOut -> Routes.AUTH
-            AppGateState.NeedsOnboarding -> Routes.ONBOARDING
-            is AppGateState.Ready -> Routes.MAIN
+        when (gateState) {
+            AppGateState.Loading -> {
+                navController.navigate(Routes.SPLASH) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            AppGateState.SignedOut -> {
+                navController.navigate(Routes.AUTH) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            AppGateState.NeedsOnboarding -> {
+                navController.navigate(Routes.ONBOARDING) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            is AppGateState.Ready -> {
+                val current = navController.currentDestination?.route
+                val onAuthFlow = current == null ||
+                    current == Routes.SPLASH ||
+                    current == Routes.AUTH ||
+                    current == Routes.ONBOARDING
+                if (onAuthFlow) {
+                    val destination = if (workoutViewModel.state.value.isActive) {
+                        Routes.ACTIVE_WORKOUT
+                    } else {
+                        Routes.MAIN
+                    }
+                    navController.navigate(destination) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
         }
-        navController.navigate(destination) {
-            popUpTo(0) { inclusive = true }
-            launchSingleTop = true
+    }
+
+    // After Activity recreation / unlock, put the user back on the live ruck screen.
+    LaunchedEffect(workoutState.isActive, gateState) {
+        if (gateState !is AppGateState.Ready || !workoutState.isActive) return@LaunchedEffect
+        val current = navController.currentDestination?.route
+        if (current != Routes.ACTIVE_WORKOUT && current != Routes.POST_WORKOUT) {
+            navController.navigate(Routes.ACTIVE_WORKOUT) {
+                launchSingleTop = true
+            }
         }
     }
 
