@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Share
@@ -122,7 +123,7 @@ fun YouScreen(modifier: Modifier = Modifier, viewModel: YouViewModel = hiltViewM
         if (selectedSection == 0) {
             HistorySection(
                 workouts = workouts,
-                onShare = viewModel::shareWorkout,
+                onShare = { viewModel.shareWorkout(context, it) },
                 onDelete = viewModel::deleteWorkout,
                 modifier = Modifier.weight(1f)
             )
@@ -130,6 +131,7 @@ fun YouScreen(modifier: Modifier = Modifier, viewModel: YouViewModel = hiltViewM
             SettingsSection(
                 settings = settings,
                 onExport = { viewModel.exportAndShare(context) },
+                onSendFeedback = { viewModel.sendFeedback(context) },
                 onSignOut = viewModel::signOut,
                 onDeleteAccount = viewModel::deleteAccount,
                 modifier = Modifier.weight(1f)
@@ -226,6 +228,7 @@ private fun WorkoutRow(
 private fun SettingsSection(
     settings: UserSettingsState,
     onExport: () -> Unit,
+    onSendFeedback: () -> Unit,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier
@@ -259,6 +262,12 @@ private fun SettingsSection(
             text = "Export CSV",
             icon = Icons.Filled.Download,
             onClick = onExport
+        )
+        Spacer(Modifier.height(10.dp))
+        MarchSecondaryButton(
+            text = "Send Feedback",
+            icon = Icons.Filled.Email,
+            onClick = onSendFeedback
         )
         Spacer(Modifier.height(10.dp))
         MarchGhostButton(

@@ -1,5 +1,6 @@
 package com.artless.rucktracker.share
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -7,6 +8,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.util.Log
 import androidx.core.content.FileProvider
 import com.artless.rucktracker.data.local.WorkoutEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -55,19 +57,42 @@ class ShareCardRenderer @Inject constructor(
         return bitmap
     }
 
-    fun shareWorkout(workout: WorkoutEntity, username: String?) {
+    /**
+     * @param launchContext Activity context preferred (e.g. LocalContext). Falls back to
+     * application context with NEW_TASK if none is provided.
+     */
+    fun shareWorkout(
+        workout: WorkoutEntity,
+        username: String?,
+        launchContext: Context = context
+    ) {
         val bitmap = renderWorkoutCard(workout, username)
-        val cacheDir = File(context.cacheDir, "share")
-        cacheDir.mkdirs()
-        val file = File(cacheDir, "march_workout_${workout.id}.png")
-        FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_TEXT, "Just finished a ruck with MARCH!")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            val cacheDir = File(context.cacheDir, "share")
+            cacheDir.mkdirs()
+            val file = File(cacheDir, "march_workout_${workout.id}.png")
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_TEXT, "Just finished a ruck with MARCH!")
+                clipData = ClipData.newUri(context.contentResolver, "MARCH workout", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(intent, "Share your ruck").apply {
+                // ApplicationContext requires NEW_TASK; harmless on Activity contexts too.
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            launchContext.startActivity(chooser)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to share workout card", e)
+        } finally {
+            bitmap.recycle()
         }
-        context.startActivity(Intent.createChooser(intent, "Share your ruck"))
+    }
+
+    private companion object {
+        const val TAG = "ShareCardRenderer"
     }
 }

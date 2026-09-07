@@ -5,6 +5,10 @@ import com.artless.rucktracker.data.local.RoutePointEntity
 import com.artless.rucktracker.data.local.WorkoutDao
 import com.artless.rucktracker.data.local.WorkoutEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,13 +47,25 @@ class WorkoutRepository @Inject constructor(
         totalElevation = workoutDao.getTotalElevation()
     )
 
+    /**
+     * Builds a CSV of all workouts. Uses [Flow.first] — Room Flows never complete,
+     * so [Flow.collect] would hang forever and the Export CSV button would appear dead.
+     */
     suspend fun exportCsv(): String {
-        val header = "Date,Duration (min),Distance (mi),Calories,Ruck Weight (lb),Elevation (ft)\n"
+        val header = "Date,Time,Duration (min),Distance (mi),Calories,Ruck Weight (lb),Heart Rate (bpm),Elevation (ft)\n"
         val rows = StringBuilder(header)
-        var workouts: List<WorkoutEntity> = emptyList()
-        getAllWorkouts().collect { workouts = it; return@collect }
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.US)
+        // One-shot read; do not collect() — Room Flow stays open indefinitely.
+        val workouts = getAllWorkouts().first()
         workouts.forEach { w ->
-            rows.append("${w.date},${w.duration / 60},${w.distance},${w.calories},${w.ruckWeight},${w.elevationGain}\n")
+            val date = Date(w.date)
+            rows.append(
+                "${dateFormat.format(date)},${timeFormat.format(date)}," +
+                    String.format(Locale.US, "%.2f", w.duration / 60.0) + "," +
+                    String.format(Locale.US, "%.2f", w.distance) + "," +
+                    "${w.calories.toInt()},${w.ruckWeight.toInt()},${w.heartRate.toInt()},${w.elevationGain.toInt()}\n"
+            )
         }
         return rows.toString()
     }
