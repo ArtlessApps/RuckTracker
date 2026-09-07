@@ -32,6 +32,8 @@ class FeedRepository @Inject constructor(private val client: SupabaseClient) {
         calories: Double,
         elevationGain: Double
     ) {
+        // club_posts.duration_minutes and calories are integers; fractional JSON
+        // values are rejected by Postgres (same BadRequest that crashed End).
         client.postgrest.from("club_posts")
             .insert(buildJsonObject {
                 put("club_id", clubId)
@@ -39,9 +41,8 @@ class FeedRepository @Inject constructor(private val client: SupabaseClient) {
                 put("post_type", "workout")
                 put("workout_id", workoutId)
                 put("distance_miles", distanceMiles)
-                put("duration_minutes", durationMinutes)
+                put("duration_minutes", durationMinutes.roundToInt())
                 put("weight_lbs", weightLbs)
-                // club_posts.calories is integer; fractional values cause Postgres BadRequest
                 put("calories", calories.roundToInt())
                 put("elevation_gain", elevationGain)
             })

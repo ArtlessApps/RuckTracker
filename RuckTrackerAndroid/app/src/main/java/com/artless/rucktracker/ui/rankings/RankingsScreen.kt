@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,13 +42,14 @@ import com.artless.rucktracker.ui.components.MarchScreenHeader
 import com.artless.rucktracker.ui.components.RankMedallion
 import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
-import com.artless.rucktracker.ui.theme.MarchDimens
 import java.util.Locale
 
 @Composable
 fun RankingsScreen(modifier: Modifier = Modifier, viewModel: RankingsViewModel = hiltViewModel()) {
     val entries by viewModel.entries.collectAsStateWithLifecycle()
     val selectedType by viewModel.selectedType.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     MarchScreen(modifier = modifier) {
         MarchScreenHeader(

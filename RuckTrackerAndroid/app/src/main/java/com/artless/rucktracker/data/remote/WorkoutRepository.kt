@@ -65,6 +65,7 @@ class WorkoutShareService @Inject constructor(
     /**
      * Always updates the global leaderboard (even with no clubs).
      * Posts the workout to each club in [clubIds] when non-empty.
+     * Club failures are isolated so one club cannot block the others / global update.
      */
     suspend fun shareWorkoutToCommunity(
         workout: WorkoutEntity,
@@ -72,23 +73,31 @@ class WorkoutShareService @Inject constructor(
     ) {
         val userId = authRepository.currentUserId ?: return
         val tonnage = workout.distance * workout.ruckWeight
-        leaderboardRepository.updateGlobalLeaderboard(
-            userId = userId,
-            distance = workout.distance,
-            elevation = workout.elevationGain,
-            tonnage = tonnage
-        )
-        clubIds.forEach { clubId ->
-            feedRepository.postWorkout(
-                clubId = clubId,
+        runCatching {
+            leaderboardRepository.updateGlobalLeaderboard(
                 userId = userId,
-                workoutId = workout.id,
-                distanceMiles = workout.distance,
-                durationMinutes = workout.duration / 60.0,
-                weightLbs = workout.ruckWeight,
-                calories = workout.calories,
-                elevationGain = workout.elevationGain
+                distance = workout.distance,
+                elevation = workout.elevationGain,
+                tonnage = tonnage
             )
+        }.onFailure {
+            android.util.Log.e("WorkoutShare", "Global leaderboard update failed", it)
+        }
+        clubIds.forEach { clubId ->
+            runCatching {
+                feedRepository.postWorkout(
+                    clubId = clubId,
+                    userId = userId,
+                    workoutId = workout.id,
+                    distanceMiles = workout.distance,
+                    durationMinutes = workout.duration / 60.0,
+                    weightLbs = workout.ruckWeight,
+                    calories = workout.calories,
+                    elevationGain = workout.elevationGain
+                )
+            }.onFailure {
+                android.util.Log.e("WorkoutShare", "Failed to post workout to club $clubId", it)
+            }
         }
     }
 

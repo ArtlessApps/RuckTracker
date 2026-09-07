@@ -254,12 +254,31 @@ class TribeViewModel @Inject constructor(
     fun toggleLike(postId: String) {
         viewModelScope.launch {
             val userId = authRepository.currentUserId ?: return@launch
-            val post = _uiState.value.feedPosts.find { it.id == postId }
+            val posts = _uiState.value.feedPosts
+            val index = posts.indexOfFirst { it.id == postId }
+            if (index < 0) return@launch
+            val post = posts[index]
+            // get_club_feed does not return is_liked — keep optimistic local state like iOS
+            val liked = post.isLiked
+            val updated = post.copy(
+                isLiked = !liked,
+                likeCount = (post.likeCount + if (liked) -1 else 1).coerceAtLeast(0)
+            )
+            _uiState.value = _uiState.value.copy(
+                feedPosts = posts.toMutableList().also { it[index] = updated }
+            )
             runCatching {
-                if (post?.isLiked == true) feedRepository.unlikePost(postId, userId)
+                if (liked) feedRepository.unlikePost(postId, userId)
                 else feedRepository.likePost(postId, userId)
+            }.onFailure {
+                // Roll back optimistic update; keep like_count from server on next refresh
+                _uiState.value = _uiState.value.copy(
+                    feedPosts = _uiState.value.feedPosts.toMutableList().also { list ->
+                        val i = list.indexOfFirst { it.id == postId }
+                        if (i >= 0) list[i] = post
+                    }
+                )
             }
-            _uiState.value.selectedClub?.let { loadFeed(it.id) }
         }
     }
 

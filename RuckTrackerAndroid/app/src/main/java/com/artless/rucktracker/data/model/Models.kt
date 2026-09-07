@@ -177,14 +177,17 @@ data class ClubPost(
     @SerialName("elevation_gain") val elevationGain: Double? = null,
     val content: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
+    // get_club_feed returns author_*; nested selects / embeds may use username / profiles
+    @SerialName("author_username") private val authorUsername: String? = null,
+    @SerialName("author_avatar_url") private val authorAvatarUrl: String? = null,
     @SerialName("username") private val usernameFlat: String? = null,
     @SerialName("avatar_url") private val avatarUrlFlat: String? = null,
     val profiles: ProfileEmbed? = null,
     @SerialName("like_count") val likeCount: Int = 0,
     @SerialName("is_liked") val isLiked: Boolean = false
 ) {
-    val username: String? get() = usernameFlat ?: profiles?.username
-    val avatarUrl: String? get() = avatarUrlFlat ?: profiles?.avatarUrl
+    val username: String? get() = authorUsername ?: usernameFlat ?: profiles?.username
+    val avatarUrl: String? get() = authorAvatarUrl ?: avatarUrlFlat ?: profiles?.avatarUrl
 }
 
 @Serializable

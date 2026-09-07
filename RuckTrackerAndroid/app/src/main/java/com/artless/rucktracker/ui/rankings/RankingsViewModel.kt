@@ -23,14 +23,15 @@ class RankingsViewModel @Inject constructor(
     private val _entries = MutableStateFlow<List<GlobalLeaderboardEntry>>(emptyList())
     val entries: StateFlow<List<GlobalLeaderboardEntry>> = _entries.asStateFlow()
 
-    init { load() }
+    init { refresh() }
 
     fun selectType(type: GlobalLeaderboardType) {
         _selectedType.value = type
-        load()
+        refresh()
     }
 
-    private fun load() {
+    /** Reload current board — call when Rankings tab becomes visible after a ruck. */
+    fun refresh() {
         viewModelScope.launch {
             _entries.value = runCatching {
                 leaderboardRepository.fetchGlobalLeaderboard(_selectedType.value)

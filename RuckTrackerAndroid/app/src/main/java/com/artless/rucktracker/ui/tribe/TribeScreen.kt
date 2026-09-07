@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +73,9 @@ import java.util.Locale
 fun TribeScreen(modifier: Modifier = Modifier, viewModel: TribeViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val pendingWaiver = state.pendingWaiverClub
+
+    // Reload feed / club LB when returning to Tribe after a ruck
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     if (pendingWaiver != null) {
         // Full-screen waiver matching iOS sheet — membership already inserted
@@ -445,11 +449,14 @@ private fun FeedPostCard(post: ClubPost, onLike: () -> Unit) {
             LikeButton(count = post.likeCount, liked = post.isLiked, onClick = onLike)
         }
 
-        if (post.distanceMiles != null || post.weightLbs != null) {
+        if (post.distanceMiles != null || post.weightLbs != null || post.calories != null) {
             Spacer(Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 post.distanceMiles?.let {
                     MetricChip(String.format(Locale.US, "%.2f mi", it))
+                }
+                post.calories?.let {
+                    MetricChip("${it.toInt()} cal")
                 }
                 post.weightLbs?.let {
                     MetricChip("${it.toInt()} lb")
