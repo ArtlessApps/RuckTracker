@@ -9,3 +9,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Signing — never commit the upload key or its credentials
+keystore.properties
+*.jks
+*.keystore
