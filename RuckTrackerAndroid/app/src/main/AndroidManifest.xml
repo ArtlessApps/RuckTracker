@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
 
+    <!-- Health Connect provider app on Android 13 and below -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <!-- Barometer used for elevation gain; not required so GPS fallback still works -->
     <uses-feature android:name="android.hardware.sensor.barometer" android:required="false" />
 
@@ -38,6 +43,28 @@
                 <data android:scheme="rucktracker" android:host="share" />
             </intent-filter>
         </activity>
+
+        <!-- Health Connect privacy rationale (Android 13 and below) -->
+        <activity
+            android:name=".health.PermissionsRationaleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RuckTracker">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Health Connect privacy rationale (Android 14+) -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".health.PermissionsRationaleActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".service.WorkoutTrackingService"

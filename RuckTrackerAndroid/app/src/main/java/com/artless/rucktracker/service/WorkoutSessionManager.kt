@@ -70,6 +70,8 @@ class WorkoutSessionManager @Inject constructor(
     private var lastLocation: Location? = null
     private var timerJob: Job? = null
     private val routePoints = mutableListOf<RoutePointEntity>()
+    private var heartRateSum = 0.0
+    private var heartRateSamples = 0
 
     private var usingBarometer = false
     private var elevationGainMeters = 0.0
@@ -94,6 +96,7 @@ class WorkoutSessionManager @Inject constructor(
         lastLocation = null
         routePoints.clear()
         resetElevationTracking()
+        resetHeartRate()
         val workoutId = UUID.randomUUID().toString()
         _state.value = ActiveWorkoutState(
             isActive = true,
@@ -154,12 +157,13 @@ class WorkoutSessionManager @Inject constructor(
             distance = finalState.distanceMiles,
             calories = finalState.calories,
             ruckWeight = finalState.ruckWeightLbs,
-            heartRate = finalState.heartRate,
+            heartRate = if (heartRateSamples > 0) heartRateSum / heartRateSamples else 0.0,
             elevationGain = finalState.elevationGain
         )
         val pointsSnapshot = routePoints.toList()
         _state.value = ActiveWorkoutState()
         resetElevationTracking()
+        resetHeartRate()
         routePoints.clear()
 
         scope.launch {
@@ -320,6 +324,11 @@ class WorkoutSessionManager @Inject constructor(
         applyAltitudeSample(location.altitude, GPS_FILTER_THRESHOLD_M)
     }
 
+    private fun resetHeartRate() {
+        heartRateSum = 0.0
+        heartRateSamples = 0
+    }
+
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = scope.launch {
@@ -335,8 +344,14 @@ class WorkoutSessionManager @Inject constructor(
                     timeMinutes = newElapsed / 60.0,
                     distanceMiles = current.distanceMiles
                 )
-                val hr = healthConnectManager.getLatestHeartRate() ?: current.heartRate
-                _state.value = current.copy(
+                val latestHr = healthConnectManager.getLatestHeartRate()
+                if (!_state.value.isActive) break
+                if (latestHr != null) {
+                    heartRateSum += latestHr
+                    heartRateSamples++
+                }
+                val hr = latestHr ?: current.heartRate
+                _state.value = _state.value.copy(
                     elapsedSeconds = newElapsed,
                     calories = calories,
                     heartRate = hr

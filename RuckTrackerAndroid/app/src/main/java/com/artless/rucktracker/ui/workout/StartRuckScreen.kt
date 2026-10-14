@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import com.artless.rucktracker.ui.components.MarchScreenHeader
 import com.artless.rucktracker.ui.components.MarchTextField
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
+import kotlinx.coroutines.launch
 
 private val LoadPresets = listOf(10, 20, 30, 45)
 
@@ -56,10 +58,30 @@ fun StartRuckScreen(viewModel: WorkoutViewModel, onStarted: () -> Unit, onBack: 
         ruckWeightText = ruck.toString()
     }
 
+    val scope = rememberCoroutineScope()
+
+    // Heart rate is optional: the ruck starts whether or not the user grants it.
+    val heartRateLauncher = rememberLauncherForActivityResult(
+        contract = remember { viewModel.heartRatePermissionContract() }
+    ) {
+        startWorkout(viewModel, bodyWeightText, ruckWeightText, onStarted)
+    }
+
+    fun proceed() {
+        scope.launch {
+            if (viewModel.shouldPromptForHeartRate()) {
+                viewModel.markHeartRatePrompted()
+                heartRateLauncher.launch(viewModel.heartRatePermissions)
+            } else {
+                startWorkout(viewModel, bodyWeightText, ruckWeightText, onStarted)
+            }
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) startWorkout(viewModel, bodyWeightText, ruckWeightText, onStarted)
+        if (granted) proceed()
         else permissionDenied = true
     }
 
@@ -135,7 +157,7 @@ fun StartRuckScreen(viewModel: WorkoutViewModel, onStarted: () -> Unit, onBack: 
                         context,
                         Manifest.permission.ACCESS_FINE_LOCATION
                     ) == PackageManager.PERMISSION_GRANTED
-                    if (granted) startWorkout(viewModel, bodyWeightText, ruckWeightText, onStarted)
+                    if (granted) proceed()
                     else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 }
             )

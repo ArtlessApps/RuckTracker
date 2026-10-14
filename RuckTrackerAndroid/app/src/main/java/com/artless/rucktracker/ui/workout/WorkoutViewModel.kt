@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.artless.rucktracker.data.local.WorkoutEntity
 import com.artless.rucktracker.data.settings.UserSettingsRepository
 import com.artless.rucktracker.domain.PremiumManager
+import com.artless.rucktracker.health.HealthConnectManager
 import com.artless.rucktracker.service.WorkoutSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,8 @@ data class CompletedWorkout(val entity: WorkoutEntity)
 class WorkoutViewModel @Inject constructor(
     private val sessionManager: WorkoutSessionManager,
     private val userSettingsRepository: UserSettingsRepository,
-    private val premiumManager: PremiumManager
+    private val premiumManager: PremiumManager,
+    private val healthConnectManager: HealthConnectManager
 ) : ViewModel() {
 
     val state: StateFlow<ActiveWorkoutState> = sessionManager.state
@@ -42,6 +44,14 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun canStartWorkout(): Boolean = premiumManager.canStartWorkout()
+
+    val heartRatePermissions: Set<String> = healthConnectManager.permissions
+
+    fun heartRatePermissionContract() = healthConnectManager.requestPermissionsContract()
+
+    suspend fun shouldPromptForHeartRate(): Boolean = healthConnectManager.shouldPromptForPermissions()
+
+    fun markHeartRatePrompted() = healthConnectManager.markPrompted()
 
     fun start(bodyWeightLbs: Double, ruckWeightLbs: Double) {
         sessionManager.start(bodyWeightLbs, ruckWeightLbs)

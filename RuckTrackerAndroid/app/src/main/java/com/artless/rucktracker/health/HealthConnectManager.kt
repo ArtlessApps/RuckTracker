@@ -1,7 +1,10 @@
 package com.artless.rucktracker.health
 
 import android.content.Context
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -10,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 @Singleton
 class HealthConnectManager @Inject constructor(
@@ -19,19 +23,57 @@ class HealthConnectManager @Inject constructor(
         HealthPermission.getReadPermission(HeartRateRecord::class)
     )
 
-    suspend fun isAvailable(): Boolean =
+    private val prefs = context.getSharedPreferences("health_connect", Context.MODE_PRIVATE)
+
+    fun isAvailable(): Boolean =
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
 
+    fun requestPermissionsContract(): ActivityResultContract<Set<String>, Set<String>> =
+        PermissionController.createRequestPermissionResultContract()
+
+    suspend fun hasPermissions(): Boolean {
+        if (!isAvailable()) return false
+        return try {
+            HealthConnectClient.getOrCreate(context).permissionController
+                .getGrantedPermissions()
+                .containsAll(permissions)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not check Health Connect permissions", e)
+            false
+        }
+    }
+
+    /** Heart rate is optional, so we only prompt once; users can grant it later in Health Connect. */
+    suspend fun shouldPromptForPermissions(): Boolean =
+        isAvailable() && !prefs.getBoolean(KEY_PROMPTED, false) && !hasPermissions()
+
+    fun markPrompted() {
+        prefs.edit().putBoolean(KEY_PROMPTED, true).apply()
+    }
+
     suspend fun getLatestHeartRate(): Double? {
-        if (!isAvailable()) return null
-        val client = HealthConnectClient.getOrCreate(context)
-        val now = Instant.now()
-        val response = client.readRecords(
-            ReadRecordsRequest(
-                recordType = HeartRateRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(now.minusSeconds(30), now)
+        if (!hasPermissions()) return null
+        return try {
+            val now = Instant.now()
+            val response = HealthConnectClient.getOrCreate(context).readRecords(
+                ReadRecordsRequest(
+                    recordType = HeartRateRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(now.minusSeconds(30), now)
+                )
             )
-        )
-        return response.records.lastOrNull()?.samples?.lastOrNull()?.beatsPerMinute?.toDouble()
+            response.records.lastOrNull()?.samples?.lastOrNull()?.beatsPerMinute?.toDouble()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Heart rate read failed", e)
+            null
+        }
+    }
+
+    companion object {
+        private const val TAG = "HealthConnectManager"
+        private const val KEY_PROMPTED = "heart_rate_prompted"
     }
 }
