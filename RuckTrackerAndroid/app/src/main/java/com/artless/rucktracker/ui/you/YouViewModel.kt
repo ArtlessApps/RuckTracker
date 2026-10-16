@@ -10,6 +10,7 @@ import com.artless.rucktracker.data.remote.WorkoutStats
 import com.artless.rucktracker.data.settings.UserSettingsRepository
 import com.artless.rucktracker.data.settings.UserSettingsState
 import com.artless.rucktracker.domain.FeedbackSupport
+import com.artless.rucktracker.health.HealthConnectManager
 import com.artless.rucktracker.share.ShareCardRenderer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +27,8 @@ class YouViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val shareCardRenderer: ShareCardRenderer,
-    private val feedbackSupport: FeedbackSupport
+    private val feedbackSupport: FeedbackSupport,
+    private val healthConnectManager: HealthConnectManager
 ) : ViewModel() {
 
     val workouts: StateFlow<List<WorkoutEntity>> = workoutRepository.getAllWorkouts()
@@ -38,8 +40,26 @@ class YouViewModel @Inject constructor(
     private val _stats = kotlinx.coroutines.flow.MutableStateFlow(WorkoutStats(0, 0.0, 0.0, 0.0))
     val stats: StateFlow<WorkoutStats> = _stats
 
+    private val _heartRateConnected = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val heartRateConnected: StateFlow<Boolean> = _heartRateConnected
+
+    val heartRatePermissions: Set<String> = healthConnectManager.permissions
+
     init {
         refreshStats()
+    }
+
+    fun heartRatePermissionContract() = healthConnectManager.requestPermissionsContract()
+
+    fun isHealthConnectAvailable(): Boolean = healthConnectManager.isAvailable()
+
+    fun healthConnectSettingsIntent() = healthConnectManager.settingsIntent()
+
+    /** Re-checked on resume, since users can grant or revoke access in the Health Connect app. */
+    fun refreshHeartRateConnected() {
+        viewModelScope.launch {
+            _heartRateConnected.value = healthConnectManager.hasPermissions()
+        }
     }
 
     fun refreshStats() {

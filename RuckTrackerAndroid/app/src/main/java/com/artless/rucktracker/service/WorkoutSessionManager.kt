@@ -344,17 +344,18 @@ class WorkoutSessionManager @Inject constructor(
                     timeMinutes = newElapsed / 60.0,
                     distanceMiles = current.distanceMiles
                 )
-                val latestHr = healthConnectManager.getLatestHeartRate()
+                val hrConnected = healthConnectManager.hasPermissions()
+                val latestHr = if (hrConnected) healthConnectManager.getLatestHeartRate() else null
                 if (!_state.value.isActive) break
                 if (latestHr != null) {
                     heartRateSum += latestHr
                     heartRateSamples++
                 }
-                val hr = latestHr ?: current.heartRate
                 _state.value = _state.value.copy(
                     elapsedSeconds = newElapsed,
                     calories = calories,
-                    heartRate = hr
+                    heartRate = latestHr ?: 0.0,
+                    heartRateConnected = hrConnected
                 )
             }
         }

@@ -1,6 +1,7 @@
 package com.artless.rucktracker.health
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
@@ -53,8 +54,11 @@ class HealthConnectManager @Inject constructor(
         prefs.edit().putBoolean(KEY_PROMPTED, true).apply()
     }
 
+    /** Opens Health Connect's own permission screen, for users who already denied the in-app prompt. */
+    fun settingsIntent(): Intent = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+
+    /** Callers check [hasPermissions] first; returns null when no wearable has written a recent sample. */
     suspend fun getLatestHeartRate(): Double? {
-        if (!hasPermissions()) return null
         return try {
             val now = Instant.now()
             val response = HealthConnectClient.getOrCreate(context).readRecords(

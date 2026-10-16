@@ -131,15 +131,13 @@ fun PostWorkoutSummaryScreen(viewModel: WorkoutViewModel, onDone: () -> Unit) {
                         accent = MarchColors.TilePurple
                     )
                 }
-                if (workout.heartRate > 0) {
-                    MarchDivider()
-                    MarchDetailRow(
-                        label = "Average heart rate",
-                        value = "${workout.heartRate.toInt()} bpm",
-                        icon = Icons.Filled.Favorite,
-                        accent = MarchColors.DestructiveRed
-                    )
-                }
+                MarchDivider()
+                MarchDetailRow(
+                    label = "Average heart rate",
+                    value = if (workout.heartRate > 0) "${workout.heartRate.toInt()} bpm" else "-- bpm",
+                    icon = Icons.Filled.Favorite,
+                    accent = MarchColors.DestructiveRed
+                )
             }
 
             Spacer(Modifier.height(MarchDimens.SectionGap))

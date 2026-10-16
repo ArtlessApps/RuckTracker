@@ -21,6 +21,7 @@ data class ActiveWorkoutState(
     val ruckWeightLbs: Double = 20.0,
     val elevationGain: Double = 0.0,
     val heartRate: Double = 0.0,
+    val heartRateConnected: Boolean = false,
     val workoutId: String = UUID.randomUUID().toString()
 )
 
@@ -52,6 +53,10 @@ class WorkoutViewModel @Inject constructor(
     suspend fun shouldPromptForHeartRate(): Boolean = healthConnectManager.shouldPromptForPermissions()
 
     fun markHeartRatePrompted() = healthConnectManager.markPrompted()
+
+    fun isHealthConnectAvailable(): Boolean = healthConnectManager.isAvailable()
+
+    fun healthConnectSettingsIntent() = healthConnectManager.settingsIntent()
 
     fun start(bodyWeightLbs: Double, ruckWeightLbs: Double) {
         sessionManager.start(bodyWeightLbs, ruckWeightLbs)

@@ -1,5 +1,6 @@
 package com.artless.rucktracker.ui.workout
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -36,11 +38,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.artless.rucktracker.ui.components.MarchBackground
 import com.artless.rucktracker.ui.components.StatTile
@@ -58,6 +62,17 @@ fun ActiveWorkoutScreen(viewModel: WorkoutViewModel, onEnded: () -> Unit) {
         targetValue = if (paused) MarchColors.PauseOrange else MarchColors.Primary,
         label = "sessionAccent"
     )
+
+    val context = LocalContext.current
+    // If the user already declined the system prompt, Health Connect won't show it again,
+    // so fall back to its own permission screen.
+    val heartRateLauncher = rememberLauncherForActivityResult(
+        contract = remember { viewModel.heartRatePermissionContract() }
+    ) { granted ->
+        if (!granted.containsAll(viewModel.heartRatePermissions)) {
+            runCatching { context.startActivity(viewModel.healthConnectSettingsIntent()) }
+        }
+    }
 
     MarchBackground {
         Column(
@@ -138,6 +153,16 @@ fun ActiveWorkoutScreen(viewModel: WorkoutViewModel, onEnded: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
             }
+            Spacer(Modifier.height(MarchDimens.CardGap))
+            HeartRateTile(
+                heartRate = state.heartRate,
+                connected = state.heartRateConnected,
+                onConnect = {
+                    if (viewModel.isHealthConnectAvailable()) {
+                        heartRateLauncher.launch(viewModel.heartRatePermissions)
+                    }
+                }
+            )
 
             Spacer(Modifier.height(36.dp))
 
@@ -168,6 +193,37 @@ fun ActiveWorkoutScreen(viewModel: WorkoutViewModel, onEnded: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+/**
+ * Live heart rate from Health Connect. Always visible so users (and reviewers) can see
+ * what the permission is for, with a tap-to-connect prompt when it hasn't been granted.
+ */
+@Composable
+private fun HeartRateTile(heartRate: Double, connected: Boolean, onConnect: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        StatTile(
+            label = "Heart rate",
+            value = if (heartRate > 0) heartRate.toInt().toString() else "--",
+            unit = "bpm",
+            icon = Icons.Filled.Favorite,
+            accent = MarchColors.DestructiveRed,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (connected) Modifier else Modifier.marchPressable(onClick = onConnect))
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = when {
+                !connected -> "Tap to connect Health Connect for live heart rate"
+                heartRate > 0 -> "Live from Health Connect"
+                else -> "Waiting for a watch or heart rate strap via Health Connect"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MarchColors.TextSecondary,
+            modifier = Modifier.padding(start = 4.dp)
+        )
     }
 }
 

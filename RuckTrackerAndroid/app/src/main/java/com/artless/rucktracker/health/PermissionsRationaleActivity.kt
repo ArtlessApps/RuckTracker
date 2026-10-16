@@ -90,7 +90,7 @@ class PermissionsRationaleActivity : ComponentActivity() {
 
         val RationaleLines = listOf(
             "MARCH reads heart rate from Health Connect only while a ruck you started is in progress. It never reads your heart rate history or reads in the background.",
-            "Your average heart rate is shown on the workout summary and included when you export your workouts to CSV, so you can see how hard each ruck was against your pack weight and pace.",
+            "Your live heart rate is shown on the active ruck screen, and your average heart rate on the workout summary and included when you export your workouts to CSV, so you can see how hard each ruck was against your pack weight and pace.",
             "Heart rate is stored only on this device with your workout. It is not uploaded to our servers, shared with clubs or other users, sold, or used for advertising.",
             "MARCH does not write any data to Health Connect. You can revoke access at any time in the Health Connect app."
         )

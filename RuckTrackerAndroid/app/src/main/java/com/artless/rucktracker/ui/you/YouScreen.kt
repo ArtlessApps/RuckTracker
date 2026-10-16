@@ -1,5 +1,6 @@
 package com.artless.rucktracker.ui.you
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Share
@@ -34,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.artless.rucktracker.data.local.WorkoutEntity
 import com.artless.rucktracker.data.settings.UserSettingsState
@@ -50,6 +54,7 @@ import com.artless.rucktracker.ui.components.MarchSecondaryButton
 import com.artless.rucktracker.ui.components.MarchSegmentedControl
 import com.artless.rucktracker.ui.components.StatTile
 import com.artless.rucktracker.ui.components.tabBarBottomInset
+import com.artless.rucktracker.ui.components.marchPressable
 import com.artless.rucktracker.ui.components.tabBarContentPadding
 import com.artless.rucktracker.ui.theme.MarchColors
 import com.artless.rucktracker.ui.theme.MarchDimens
@@ -64,6 +69,22 @@ fun YouScreen(modifier: Modifier = Modifier, viewModel: YouViewModel = hiltViewM
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var selectedSection by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
+    val heartRateConnected by viewModel.heartRateConnected.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshHeartRateConnected()
+        onPauseOrDispose { }
+    }
+
+    // Health Connect won't re-show a prompt the user already declined, so fall back to its settings.
+    val heartRateLauncher = rememberLauncherForActivityResult(
+        contract = remember { viewModel.heartRatePermissionContract() }
+    ) { granted ->
+        if (!granted.containsAll(viewModel.heartRatePermissions)) {
+            runCatching { context.startActivity(viewModel.healthConnectSettingsIntent()) }
+        }
+        viewModel.refreshHeartRateConnected()
+    }
 
     MarchScreen(modifier = modifier) {
         MarchScreenHeader(
@@ -130,6 +151,15 @@ fun YouScreen(modifier: Modifier = Modifier, viewModel: YouViewModel = hiltViewM
         } else {
             SettingsSection(
                 settings = settings,
+                heartRateConnected = heartRateConnected,
+                onHeartRateClick = {
+                    if (!viewModel.isHealthConnectAvailable()) return@SettingsSection
+                    if (heartRateConnected) {
+                        runCatching { context.startActivity(viewModel.healthConnectSettingsIntent()) }
+                    } else {
+                        heartRateLauncher.launch(viewModel.heartRatePermissions)
+                    }
+                },
                 onExport = { viewModel.exportAndShare(context) },
                 onSendFeedback = { viewModel.sendFeedback(context) },
                 onSignOut = viewModel::signOut,
@@ -227,6 +257,8 @@ private fun WorkoutRow(
 @Composable
 private fun SettingsSection(
     settings: UserSettingsState,
+    heartRateConnected: Boolean,
+    onHeartRateClick: () -> Unit,
     onExport: () -> Unit,
     onSendFeedback: () -> Unit,
     onSignOut: () -> Unit,
@@ -254,7 +286,21 @@ private fun SettingsSection(
                 icon = Icons.Filled.LocalFireDepartment,
                 accent = MarchColors.TileGold
             )
+            MarchDivider()
+            MarchDetailRow(
+                label = "Heart rate (Health Connect)",
+                value = if (heartRateConnected) "Connected" else "Connect",
+                icon = Icons.Filled.Favorite,
+                accent = MarchColors.DestructiveRed,
+                modifier = Modifier.marchPressable(onClick = onHeartRateClick)
+            )
         }
+        Text(
+            text = "Shows live heart rate during rucks and your average on the workout summary.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MarchColors.TextSecondary,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+        )
 
         Spacer(Modifier.height(MarchDimens.SectionGap))
 
