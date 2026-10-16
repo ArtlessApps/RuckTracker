@@ -22,11 +22,9 @@ import kotlinx.coroutines.CancellationException
 class HealthConnectManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val permissions = buildSet {
-        add(HealthPermission.getReadPermission(HeartRateRecord::class))
-        // Debug only: the demo source writes samples. Release never declares or requests this.
-        if (BuildConfig.DEBUG) add(HealthPermission.getWritePermission(HeartRateRecord::class))
-    }
+    val permissions = setOf(
+        HealthPermission.getReadPermission(HeartRateRecord::class)
+    )
 
     private val prefs = context.getSharedPreferences("health_connect", Context.MODE_PRIVATE)
 
@@ -83,6 +81,8 @@ class HealthConnectManager @Inject constructor(
     /**
      * Debug builds only: stands in for a wearable by writing one heart rate sample to
      * Health Connect, so the live tile and summary can be tested without a watch.
+     * The write permission is never requested in-app (so the prompt matches release);
+     * grant it with `adb shell pm grant com.artless.rucktracker android.permission.health.WRITE_HEART_RATE`.
      */
     suspend fun writeDemoHeartRate(bpm: Long) {
         if (!BuildConfig.DEBUG) return
