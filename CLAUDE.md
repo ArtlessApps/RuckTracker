@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**MARCH** (bundle: `com.artless.rucktracker`) is an iOS fitness app for rucking clubs. It has two targets: the main iPhone app (`RuckTracker`) and an Apple Watch companion app (`RuckTracker Watch App`). There is also a companion Next.js marketing website in `march-website/`.
+**MARCH** (bundle: `Artless.RuckTracker`; Watch: `Artless.RuckTracker.watchkitapp`) is an iOS fitness app for rucking clubs. It has two targets: the main iPhone app (`RuckTracker`) and an Apple Watch companion app (`RuckTracker Watch App`). There is also a companion Next.js marketing website in `march-website/`.
 
 ## Building the iOS App
 
