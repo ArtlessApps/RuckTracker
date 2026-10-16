@@ -17,6 +17,7 @@ import com.artless.rucktracker.data.remote.WorkoutRepository
 import com.artless.rucktracker.data.remote.WorkoutShareService
 import com.artless.rucktracker.data.settings.UserSettingsRepository
 import com.artless.rucktracker.domain.ReviewManager
+import com.artless.rucktracker.BuildConfig
 import com.artless.rucktracker.health.HealthConnectManager
 import com.artless.rucktracker.ui.workout.ActiveWorkoutState
 import com.artless.rucktracker.ui.workout.CompletedWorkout
@@ -324,6 +325,13 @@ class WorkoutSessionManager @Inject constructor(
         applyAltitudeSample(location.altitude, GPS_FILTER_THRESHOLD_M)
     }
 
+    /** Debug demo curve: warms up from ~90 bpm, then drifts around 125 like a steady ruck. */
+    private fun demoHeartRate(elapsedSeconds: Int): Long {
+        val warmUp = (elapsedSeconds / 120.0).coerceAtMost(1.0)
+        val drift = 6 * kotlin.math.sin(elapsedSeconds / 45.0)
+        return (90 + 35 * warmUp + drift + (-2..2).random()).toLong()
+    }
+
     private fun resetHeartRate() {
         heartRateSum = 0.0
         heartRateSamples = 0
@@ -345,6 +353,9 @@ class WorkoutSessionManager @Inject constructor(
                     distanceMiles = current.distanceMiles
                 )
                 val hrConnected = healthConnectManager.hasPermissions()
+                if (BuildConfig.DEBUG && hrConnected && newElapsed % 5 == 0) {
+                    healthConnectManager.writeDemoHeartRate(demoHeartRate(newElapsed))
+                }
                 val latestHr = if (hrConnected) healthConnectManager.getLatestHeartRate() else null
                 if (!_state.value.isActive) break
                 if (latestHr != null) {

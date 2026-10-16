@@ -3,6 +3,8 @@ package com.artless.rucktracker.health
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.artless.rucktracker.BuildConfig
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -20,9 +22,11 @@ import kotlinx.coroutines.CancellationException
 class HealthConnectManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    val permissions = setOf(
-        HealthPermission.getReadPermission(HeartRateRecord::class)
-    )
+    val permissions = buildSet {
+        add(HealthPermission.getReadPermission(HeartRateRecord::class))
+        // Debug only: the demo source writes samples. Release never declares or requests this.
+        if (BuildConfig.DEBUG) add(HealthPermission.getWritePermission(HeartRateRecord::class))
+    }
 
     private val prefs = context.getSharedPreferences("health_connect", Context.MODE_PRIVATE)
 
@@ -73,6 +77,33 @@ class HealthConnectManager @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "Heart rate read failed", e)
             null
+        }
+    }
+
+    /**
+     * Debug builds only: stands in for a wearable by writing one heart rate sample to
+     * Health Connect, so the live tile and summary can be tested without a watch.
+     */
+    suspend fun writeDemoHeartRate(bpm: Long) {
+        if (!BuildConfig.DEBUG) return
+        try {
+            val now = Instant.now()
+            HealthConnectClient.getOrCreate(context).insertRecords(
+                listOf(
+                    HeartRateRecord(
+                        startTime = now.minusSeconds(1),
+                        startZoneOffset = null,
+                        endTime = now,
+                        endZoneOffset = null,
+                        samples = listOf(HeartRateRecord.Sample(now, bpm)),
+                        metadata = Metadata()
+                    )
+                )
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Demo heart rate write failed", e)
         }
     }
 

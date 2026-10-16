@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: lets the demo heart rate source write samples so the
+     heart rate UI can be exercised (and recorded for Play review) without a wearable. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
+</manifest>
