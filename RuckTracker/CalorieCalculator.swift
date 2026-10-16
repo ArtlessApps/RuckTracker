@@ -68,6 +68,21 @@ struct CalorieCalculator {
         return min(additionalMET, 4.0) // Cap at reasonable maximum
     }
     
+    /// Extra calories from carrying the ruck, to add on top of a device's
+    /// unloaded walking/hiking calories (Apple Watch, Garmin, COROS, etc.)
+    static func additionalLoadCalories(
+        bodyWeightKg: Double,
+        ruckWeightPounds: Double,
+        timeMinutes: Double
+    ) -> Double {
+        guard ruckWeightPounds > 0, bodyWeightKg > 0 else { return 0 }
+
+        let bodyWeightPounds = bodyWeightKg * 2.20462
+        let loadPercentage = ruckWeightPounds / bodyWeightPounds
+        let additionalCaloriesPerHour = bodyWeightKg * loadPercentage * 6.0 // MET adjustment
+        return additionalCaloriesPerHour * (timeMinutes / 60.0)
+    }
+
     /// Calculate instantaneous calorie burn rate (calories per minute)
     static func calculateCurrentBurnRate(
         bodyWeightKg: Double,

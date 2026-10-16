@@ -48,6 +48,9 @@ struct SettingsView: View {
                         // MARK: - HealthKit Section
                         healthKitSection
                         
+                        // MARK: - Other Watches Section
+                        HealthImportSettingsSection()
+                        
                         // MARK: - Actions Section
                         actionsSection
                         

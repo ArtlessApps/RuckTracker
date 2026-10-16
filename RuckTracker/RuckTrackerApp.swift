@@ -1,7 +1,35 @@
 import SwiftUI
+import UserNotifications
+
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        // HealthKit background delivery requires the observer query to be set up at launch
+        HealthImportService.shared.start()
+        return true
+    }
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .list, .sound]
+    }
+    
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        _ = await HealthImportService.shared.handleNotificationResponse(response)
+    }
+}
 
 @main
 struct RuckTrackerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var healthManager = HealthManager.shared
     @StateObject private var workoutManager = WorkoutManager()
     @StateObject private var workoutDataManager = WorkoutDataManager.shared

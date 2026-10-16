@@ -206,6 +206,9 @@ struct ImprovedPhoneMainView: View {
                 // Header — Greeting + Streak
                 dashboardHeader
                 
+                // Workouts from Garmin/COROS/etc. awaiting review
+                HealthImportBanner()
+                
                 // Section 1: The Hero
                 HeroRuckButton {
                     guard premiumManager.checkAccess(to: .basicTracking, context: .workoutStart) else { return }

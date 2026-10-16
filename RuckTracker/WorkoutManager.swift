@@ -620,18 +620,11 @@ class WorkoutManager: NSObject, ObservableObject {
     /// Apple provides base walking/hiking calories. We add the extra energy cost
     /// of carrying ruck weight, matching the Watch app's calculation.
     private func adjustCaloriesForRuckWeight(baseCalories: Double) -> Double {
-        guard ruckWeight > 0 else { return baseCalories }
-        
-        let timeHours = elapsedTime / 3600.0
-        let bodyWeightKg = userSettings.bodyWeightInKg
-        let bodyWeightPounds = bodyWeightKg * 2.20462
-        
-        // Additional calories from carrying the ruck weight
-        let loadPercentage = ruckWeight / bodyWeightPounds
-        let additionalCaloriesPerHour = bodyWeightKg * loadPercentage * 6.0 // MET adjustment
-        let additionalCalories = additionalCaloriesPerHour * timeHours
-        
-        return baseCalories + additionalCalories
+        return baseCalories + CalorieCalculator.additionalLoadCalories(
+            bodyWeightKg: userSettings.bodyWeightInKg,
+            ruckWeightPounds: ruckWeight,
+            timeMinutes: elapsedTime / 60.0
+        )
     }
     
     /// Fallback calorie calculation when HealthKit isn't providing data

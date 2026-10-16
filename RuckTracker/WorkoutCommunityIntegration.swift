@@ -21,6 +21,26 @@ extension WorkoutManager {
         calories: Int,
         elevationGain: Double = 0
     ) async {
+        await Self.postWorkoutToCommunity(
+            workoutId: workoutId,
+            distance: distance,
+            duration: duration,
+            weight: weight,
+            calories: calories,
+            elevationGain: elevationGain
+        )
+    }
+
+    /// Same as shareWorkoutToClubs, usable without a WorkoutManager instance
+    /// (e.g. workouts imported from Apple Health).
+    static func postWorkoutToCommunity(
+        workoutId: UUID,
+        distance: Double,
+        duration: Int,
+        weight: Double,
+        calories: Int,
+        elevationGain: Double = 0
+    ) async {
         let communityService = CommunityService.shared
         
         // Only share if user is authenticated

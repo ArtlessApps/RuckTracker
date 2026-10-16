@@ -8,6 +8,7 @@ struct MainTabView: View {
     @EnvironmentObject var tabSelection: MainTabSelection
     
     @State private var showingSettings = false
+    @ObservedObject private var healthImport = HealthImportService.shared
     
     init() {
         // Centralize tab appearance
@@ -73,6 +74,9 @@ struct MainTabView: View {
         .background(AppColors.backgroundGradient.ignoresSafeArea())
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $healthImport.showingReview) {
+            HealthImportReviewView()
         }
     }
 }
