@@ -195,6 +195,9 @@ struct HealthImportBanner: View {
                 )
             }
             .buttonStyle(.plain)
+            .onAppear {
+                importService.requestNotificationPermissionIfNeeded()
+            }
         }
     }
 }
@@ -250,6 +253,17 @@ struct HealthImportSettingsSection: View {
                             .foregroundColor(AppColors.textSecondary)
                     }
 
+                    #if DEBUG
+                    Divider()
+                        .background(AppColors.textSecondary.opacity(0.3))
+                    
+                    Button("Add Test Watch Workout (Debug)") {
+                        Task { await importService.addDebugWatchWorkout() }
+                    }
+                    .foregroundColor(AppColors.accentWarm)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    #endif
+                    
                     if !importService.pending.isEmpty {
                         Divider()
                             .background(AppColors.textSecondary.opacity(0.3))

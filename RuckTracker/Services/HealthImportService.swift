@@ -61,7 +61,7 @@ final class HealthImportService: ObservableObject {
         didSet {
             defaults.set(isEnabled, forKey: Keys.enabled)
             if isEnabled {
-                start()
+                refresh()
                 requestNotificationPermissionIfNeeded()
             } else {
                 stop()
@@ -129,7 +129,7 @@ final class HealthImportService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in await self?.checkForNewWorkouts() }
+            Task { @MainActor in self?.refresh() }
         }
     }
 
@@ -148,8 +148,11 @@ final class HealthImportService: ObservableObject {
         // Fires once immediately, then whenever any app writes a workout
         let query = HKObserverQuery(sampleType: .workoutType(), predicate: nil) { [weak self] _, completionHandler, error in
             if let error {
+                // e.g. Health access not granted yet on first launch. A failed observer
+                // query stays dead, so drop it and let refresh() start a new one.
                 print("⌚️ [Import] Observer query error: \(error.localizedDescription)")
                 completionHandler()
+                Task { @MainActor in self?.resetObserver() }
                 return
             }
             Task { @MainActor in
@@ -170,11 +173,22 @@ final class HealthImportService: ObservableObject {
     }
 
     private func stop() {
+        resetObserver()
+        healthStore.disableBackgroundDelivery(for: .workoutType()) { _, _ in }
+    }
+    
+    private func resetObserver() {
         if let observerQuery {
             healthStore.stop(observerQuery)
         }
         observerQuery = nil
-        healthStore.disableBackgroundDelivery(for: .workoutType()) { _, _ in }
+    }
+    
+    /// Restart the observer if needed and catch up on anything missed.
+    /// Called when the app opens and after Health access is granted.
+    func refresh() {
+        start()
+        Task { await checkForNewWorkouts() }
     }
 
     // MARK: - Discovery
@@ -260,9 +274,13 @@ final class HealthImportService: ObservableObject {
     private func shouldConsider(_ workout: HKWorkout, handled: Set<UUID>) -> Bool {
         guard !handled.contains(workout.uuid) else { return false }
 
+        #if DEBUG
+        if workout.metadata?[Self.debugMetadataKey] != nil { return true }
+        #endif
+        
         let bundleId = workout.sourceRevision.source.bundleIdentifier
-        // MARCH's own iPhone and Watch workouts are already saved locally
-        if bundleId.hasPrefix("com.artless.rucktracker") { return false }
+        // MARCH's own iPhone and Watch (<app id>.watchkitapp) workouts are already saved locally
+        if let appBundleId = Bundle.main.bundleIdentifier, bundleId.hasPrefix(appBundleId) { return false }
         if !includeAppleWorkouts && bundleId.hasPrefix("com.apple.") { return false }
         return true
     }
@@ -461,7 +479,10 @@ final class HealthImportService: ObservableObject {
         return true
     }
 
-    private func requestNotificationPermissionIfNeeded() {
+    /// Asked once the user has finished onboarding and there's something to log,
+    /// so the prompt has context instead of appearing on the welcome screen.
+    func requestNotificationPermissionIfNeeded() {
+        guard UserSettings.shared.hasCompletedOnboarding else { return }
         Task {
             let center = UNUserNotificationCenter.current()
             guard await center.notificationSettings().authorizationStatus == .notDetermined else { return }
@@ -498,6 +519,41 @@ final class HealthImportService: ObservableObject {
         }
     }
 
+    // MARK: - Debug
+    
+    #if DEBUG
+    private static let debugMetadataKey = "MARCHDebugImport"
+    
+    /// Writes a walk to Apple Health that the importer treats as coming from another
+    /// watch, so the flow can be tested in the simulator without a Garmin/COROS.
+    func addDebugWatchWorkout() async {
+        let end = Date()
+        let start = end.addingTimeInterval(-48 * 60)
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = .walking
+        configuration.locationType = .outdoor
+        
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: nil)
+        do {
+            try await builder.beginCollection(at: start)
+            try await builder.addSamples([
+                HKQuantitySample(type: HKQuantityType(.distanceWalkingRunning),
+                                 quantity: HKQuantity(unit: .mile(), doubleValue: 2.4),
+                                 start: start, end: end),
+                HKQuantitySample(type: HKQuantityType(.activeEnergyBurned),
+                                 quantity: HKQuantity(unit: .kilocalorie(), doubleValue: 260),
+                                 start: start, end: end)
+            ])
+            try await builder.addMetadata([Self.debugMetadataKey: true])
+            try await builder.endCollection(at: end)
+            _ = try await builder.finishWorkout()
+            print("⌚️ [Import] Debug watch workout written to Apple Health")
+        } catch {
+            print("⌚️ [Import] Debug workout failed: \(error.localizedDescription)")
+        }
+    }
+    #endif
+    
     // MARK: - Formatting
 
     static func formatDistance(_ miles: Double) -> String {

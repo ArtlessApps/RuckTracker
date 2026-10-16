@@ -105,6 +105,9 @@ class HealthManager: ObservableObject {
                 } else {
                     print("🏥 \(self.platformName) authorization completed successfully")
                     self.checkAuthorizationStatus()
+                    #if os(iOS)
+                    Task { @MainActor in HealthImportService.shared.refresh() }
+                    #endif
                 }
             }
         }
