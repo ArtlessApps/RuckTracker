@@ -69,27 +69,20 @@ class PremiumManager: ObservableObject {
     // MARK: - Premium Status Calculation
     
     /// Recalculate `isPremiumUser` based on the current state.
-    /// - Authenticated: `hasActiveSubscription` (from DB) OR `isAmbassador`
-    /// - Anonymous: StoreKit device-level subscription
+    /// - Any user: an active StoreKit subscription on this device's Apple ID. Checked first and
+    ///   independently of Supabase, so a paying subscriber is never locked out when the profile
+    ///   or session can't load (offline, blocked network, server trouble).
+    /// - Authenticated: also `hasActiveSubscription` (from DB), a device entitlement matched to
+    ///   this user, or `isAmbassador`
     private func updatePremiumStatus() {
         let wasPremium = isPremiumUser
         let communityService = CommunityService.shared
-        
-        let newPremiumStatus: Bool
-        
-        if communityService.isAuthenticated {
-            // Per-user: database subscription record, this device's Apple ID entitlement, or ambassador
-            newPremiumStatus = hasActiveSubscription || hasDeviceEntitlement || isAmbassador
-        } else {
-            // Device-level: StoreKit entitlement
-            newPremiumStatus = storeKitManager.isSubscribed
-        }
-        
-        isPremiumUser = newPremiumStatus
-        
-        let hasSubscription = communityService.isAuthenticated
-            ? (hasActiveSubscription || hasDeviceEntitlement)
-            : storeKitManager.isSubscribed
+        let isAuthenticated = communityService.isAuthenticated
+
+        let hasSubscription = storeKitManager.isSubscribed
+            || (isAuthenticated && (hasActiveSubscription || hasDeviceEntitlement))
+
+        isPremiumUser = hasSubscription || (isAuthenticated && isAmbassador)
         
         // Expiry date
         subscriptionExpiryDate = hasSubscription ? storeKitManager.subscriptionExpiryDate : nil
@@ -105,7 +98,7 @@ class PremiumManager: ObservableObject {
         
         if wasPremium != isPremiumUser {
             print("🔐 Premium status changed: \(isPremiumUser ? "Premium" : "Free")")
-            print("🔐   Authenticated: \(communityService.isAuthenticated)")
+            print("🔐   Authenticated: \(isAuthenticated)")
             print("🔐   DB subscription: \(hasActiveSubscription)")
             print("🔐   Device entitlement: \(hasDeviceEntitlement)")
             print("🔐   Ambassador: \(isAmbassador)")
@@ -306,9 +299,10 @@ class PremiumManager: ObservableObject {
         
         if CommunityService.shared.isAuthenticated {
             await loadSubscriptionForCurrentUser()
-        } else {
-            updatePremiumStatus()
         }
+        // Always recalculate: loadSubscriptionForCurrentUser returns early when the profile
+        // couldn't load, and a StoreKit entitlement alone must still unlock.
+        updatePremiumStatus()
         
         if !isPremiumUser && !storeKitManager.showingPurchaseError {
             storeKitManager.reportNothingToRestore()
