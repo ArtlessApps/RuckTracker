@@ -46,3 +46,44 @@ Send once 3.9 is live. Update the first paragraph if it's already out.
 >
 > Thanks again for the idea,
 > Nick
+
+---
+
+# 3.9.1 (1) — Subscription Lockout Fix
+
+Fixes paying subscribers losing Pro while signed in, and Restore Purchases silently doing nothing.
+
+## Before submitting
+
+- [ ] StoreKit config: buy while signed out, then sign in. Pro stays on.
+- [ ] Second simulator, same MARCH account, no purchase: Pro comes from the database and survives relaunch.
+- [ ] Restore with no subscription shows the "No active MARCH subscription was found…" alert (paywall and onboarding).
+- [ ] TestFlight on a real device with a sandbox subscriber: relaunch several times, Pro never drops.
+
+## App Store release notes
+
+```
+Fixes an issue where some subscribers were locked out of Pro features while signed in, and where Restore Purchases didn't restore an active subscription. Thanks to everyone who reported it.
+```
+
+## Customer reply (subscription lockout, Dickson Weber)
+
+Send once 3.9.1 is submitted for review. It covers the workaround and the fix. Update the second paragraph once 3.9.1 is live.
+
+> Hi Dickson,
+>
+> I'm sorry about this. You paid for Pro and the app kept locking you out, which shouldn't happen. Thank you for reporting it. Your report let me find the bug.
+>
+> The problem is on our end, not with your subscription. Your subscription is fine with Apple. When you were signed in, MARCH sometimes failed to match it to your account, and Restore Purchases didn't fix the match. I've fixed both, and the update is with Apple for review now. It should be out in a few days.
+>
+> **Until then, this should get you back in:**
+> 1. Go to Settings in MARCH and sign out.
+> 2. Open any Pro feature and tap **Restore Purchases** on the subscription screen.
+>
+> While you're signed out, MARCH checks your Apple ID's subscription directly, so your Pro features should work. Once the update is installed, sign back in and everything carries over. Your workouts are safe either way.
+>
+> If that doesn't unlock it, check that you're signed in to the same Apple ID you subscribed with (Settings › your name › Media & Purchases). Then reply here and I'll sort it out with you directly.
+>
+> Sorry again for the hassle, and thanks for sticking with MARCH.
+>
+> Nick

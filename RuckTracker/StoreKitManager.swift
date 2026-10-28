@@ -130,31 +130,36 @@ class StoreKitManager: NSObject, ObservableObject {
     
     // MARK: - Per-User Entitlement Check
     
-    /// Check if there's an active subscription entitlement tagged with the given user UUID.
-    /// Returns the matching transaction if found. This is the per-user subscription check
-    /// that prevents one user's subscription from leaking to another user on the same device.
+    /// Find the active subscription entitlement on this device's Apple ID that best matches the user.
+    /// Preference order: tagged with `userId` → untagged (bought before sign-in or before tagging
+    /// existed) → tagged with a different account. Callers can inspect `appAccountToken` to tell
+    /// which case they got. Returning a non-matching entitlement instead of nil keeps a paying
+    /// Apple ID from being locked out (e.g. purchased anonymously, or account re-created).
     func activeEntitlement(for userId: UUID) async -> StoreKit.Transaction? {
-        do {
-            for await result in StoreKit.Transaction.currentEntitlements {
-                let transaction = try checkVerified(result)
-                
-                guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID else {
-                    continue
-                }
-                guard transaction.appAccountToken == userId else {
-                    continue
-                }
-                
-                if let expirationDate = transaction.expirationDate, expirationDate > Date() {
-                    return transaction
-                } else if transaction.expirationDate == nil {
-                    return transaction
-                }
+        var untagged: StoreKit.Transaction?
+        var otherAccount: StoreKit.Transaction?
+        
+        for await result in StoreKit.Transaction.currentEntitlements {
+            // Skip (rather than abort on) a single unverified transaction.
+            guard case .verified(let transaction) = result else { continue }
+            guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID else {
+                continue
             }
-        } catch {
-            print("🛒 ❌ Failed to check entitlements for user \(userId): \(error)")
+            guard transaction.revocationDate == nil else { continue }
+            if let expirationDate = transaction.expirationDate, expirationDate <= Date() {
+                continue
+            }
+            
+            switch transaction.appAccountToken {
+            case userId:
+                return transaction
+            case nil:
+                untagged = untagged ?? transaction
+            default:
+                otherAccount = otherAccount ?? transaction
+            }
         }
-        return nil
+        return untagged ?? otherAccount
     }
     
     // MARK: - Subscription Status
@@ -166,35 +171,36 @@ class StoreKitManager: NSObject, ObservableObject {
         // Don't set to loading to avoid triggering PremiumManager updates
         // subscriptionStatus = .loading
         
-        do {
-            for await result in StoreKit.Transaction.currentEntitlements {
-                let transaction = try checkVerified(result)
-                
-                if transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID {
-                    if let expirationDate = transaction.expirationDate {
-                        if expirationDate > Date() {
-                            applyActiveSubscription(from: transaction, expiry: expirationDate)
-                        } else {
-                            clearSubscriptionState()
-                            subscriptionStatus = .expired
-                        }
-                    } else {
-                        applyActiveSubscription(from: transaction, expiry: Date.distantFuture)
-                    }
-                    return
-                }
+        var sawExpired = false
+        for await result in StoreKit.Transaction.currentEntitlements {
+            // An unverified transaction used to throw out of the loop and mark the user as
+            // not subscribed even when a valid entitlement followed it. Skip it instead.
+            guard case .verified(let transaction) = result else {
+                print("🛒 ⚠️ Skipping unverified entitlement")
+                continue
+            }
+            guard transaction.productID == monthlySubscriptionID || transaction.productID == yearlySubscriptionID,
+                  transaction.revocationDate == nil else {
+                continue
             }
             
-            if Date() < subscriptionStateGraceUntil {
-                // Entitlements can lag briefly after finish(); keep the state we applied.
+            if let expirationDate = transaction.expirationDate {
+                if expirationDate > Date() {
+                    applyActiveSubscription(from: transaction, expiry: expirationDate)
+                    return
+                }
+                sawExpired = true
             } else {
-                clearSubscriptionState()
-                subscriptionStatus = .notSubscribed
+                applyActiveSubscription(from: transaction, expiry: Date.distantFuture)
+                return
             }
-        } catch {
-            print("🛒 ❌ Failed to check subscription status: \(error)")
+        }
+        
+        if Date() < subscriptionStateGraceUntil {
+            // Entitlements can lag briefly after finish(); keep the state we applied.
+        } else {
             clearSubscriptionState()
-            subscriptionStatus = .notSubscribed
+            subscriptionStatus = sawExpired ? .expired : .notSubscribed
         }
     }
     
@@ -206,11 +212,16 @@ class StoreKitManager: NSObject, ObservableObject {
         
         do {
             try await AppStore.sync()
-            await updateCustomerProductStatus(bypassDebounce: true)
         } catch {
+            // Still re-read local entitlements below; sync can fail while they're valid.
             print("🛒 ❌ Failed to restore purchases: \(error)")
             handlePurchaseError(.restoreFailed(error))
         }
+        await updateCustomerProductStatus(bypassDebounce: true)
+    }
+    
+    func reportNothingToRestore() {
+        handlePurchaseError(.nothingToRestore)
     }
     
     // MARK: - StoreKit Transaction Updates
@@ -315,10 +326,8 @@ class StoreKitManager: NSObject, ObservableObject {
     // MARK: - Error Handling
     
     private func handlePurchaseError(_ error: PurchaseError) {
-        DispatchQueue.main.async {
-            self.purchaseError = error
-            self.showingPurchaseError = true
-        }
+        purchaseError = error
+        showingPurchaseError = true
     }
     
     // MARK: - Convenience Properties
@@ -369,6 +378,7 @@ enum PurchaseError: LocalizedError {
     case productLoadFailed(Error)
     case purchaseFailed(Error)
     case restoreFailed(Error)
+    case nothingToRestore
     case subscriptionExpired
     case networkError
     
@@ -380,6 +390,8 @@ enum PurchaseError: LocalizedError {
             return "Purchase failed. Please try again or contact support if the problem persists."
         case .restoreFailed:
             return "Failed to restore purchases. Please try again."
+        case .nothingToRestore:
+            return "No active MARCH subscription was found for the Apple ID signed in to this device. If you subscribed with a different Apple ID, sign in to it in Settings › App Store and try again."
         case .subscriptionExpired:
             return "Your subscription has expired. Please renew to continue accessing premium features."
         case .networkError:

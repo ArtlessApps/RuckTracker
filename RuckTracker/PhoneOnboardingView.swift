@@ -1418,12 +1418,7 @@ struct ProUpsellStep: View {
                 // Restore purchases
                 Button {
                     Task {
-                        await storeManager.restorePurchases()
-                        if let userId = CommunityService.shared.currentProfile?.id,
-                           let entitlement = await storeManager.activeEntitlement(for: userId) {
-                            PremiumManager.shared.handleSuccessfulPurchase(transaction: entitlement)
-                            onSubscribe()
-                        } else if !CommunityService.shared.isAuthenticated && storeManager.isSubscribed {
+                        if await PremiumManager.shared.restorePurchases() {
                             onSubscribe()
                         }
                     }
@@ -1447,6 +1442,11 @@ struct ProUpsellStep: View {
                 await storeManager.loadProducts()
             }
             selectedProduct = storeManager.recommendedSubscription
+        }
+        .alert("Purchase Error", isPresented: $storeManager.showingPurchaseError) {
+            Button("OK") { }
+        } message: {
+            Text(storeManager.purchaseError?.localizedDescription ?? "Unknown error")
         }
     }
 }

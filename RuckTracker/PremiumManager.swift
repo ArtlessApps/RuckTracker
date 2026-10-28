@@ -37,6 +37,10 @@ class PremiumManager: ObservableObject {
     /// Loaded from `user_subscriptions` on sign-in; set on purchase; cleared on sign-out.
     private(set) var hasActiveSubscription = false
     
+    /// Whether the Apple ID on this device currently holds an active MARCH subscription,
+    /// regardless of which account it was tagged with. A paying Apple ID is never locked out.
+    private(set) var hasDeviceEntitlement = false
+    
     private let storeKitManager = StoreKitManager.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -74,8 +78,8 @@ class PremiumManager: ObservableObject {
         let newPremiumStatus: Bool
         
         if communityService.isAuthenticated {
-            // Per-user: database subscription record + ambassador
-            newPremiumStatus = hasActiveSubscription || isAmbassador
+            // Per-user: database subscription record, this device's Apple ID entitlement, or ambassador
+            newPremiumStatus = hasActiveSubscription || hasDeviceEntitlement || isAmbassador
         } else {
             // Device-level: StoreKit entitlement
             newPremiumStatus = storeKitManager.isSubscribed
@@ -83,17 +87,15 @@ class PremiumManager: ObservableObject {
         
         isPremiumUser = newPremiumStatus
         
+        let hasSubscription = communityService.isAuthenticated
+            ? (hasActiveSubscription || hasDeviceEntitlement)
+            : storeKitManager.isSubscribed
+        
         // Expiry date
-        if hasActiveSubscription {
-            subscriptionExpiryDate = storeKitManager.subscriptionExpiryDate
-        } else if !communityService.isAuthenticated && storeKitManager.isSubscribed {
-            subscriptionExpiryDate = storeKitManager.subscriptionExpiryDate
-        } else {
-            subscriptionExpiryDate = nil
-        }
+        subscriptionExpiryDate = hasSubscription ? storeKitManager.subscriptionExpiryDate : nil
         
         // Premium source
-        if hasActiveSubscription || (!communityService.isAuthenticated && storeKitManager.isSubscribed) {
+        if hasSubscription {
             premiumSource = .subscription
         } else if isAmbassador {
             premiumSource = .ambassador
@@ -105,6 +107,7 @@ class PremiumManager: ObservableObject {
             print("🔐 Premium status changed: \(isPremiumUser ? "Premium" : "Free")")
             print("🔐   Authenticated: \(communityService.isAuthenticated)")
             print("🔐   DB subscription: \(hasActiveSubscription)")
+            print("🔐   Device entitlement: \(hasDeviceEntitlement)")
             print("🔐   Ambassador: \(isAmbassador)")
             print("🔐   StoreKit subscribed: \(storeKitManager.isSubscribed)")
             print("🔐   Source: \(premiumSource)")
@@ -115,13 +118,11 @@ class PremiumManager: ObservableObject {
     private func handleSubscriptionStatusChange() {
         let communityService = CommunityService.shared
         
-        if communityService.isAuthenticated && hasActiveSubscription && premiumSource == .subscription {
-            // Detect subscription expiry for authenticated user
-            if !storeKitManager.isSubscribed {
-                print("🔐 StoreKit reports expired - checking user's entitlement")
-                Task {
-                    await verifyAndSyncSubscription()
-                }
+        if communityService.isAuthenticated {
+            // Re-read this device's entitlement (picks up renewals, restores, and expiries),
+            // then reconcile the database if it no longer has a valid subscription.
+            Task {
+                await verifyAndSyncSubscription()
             }
         }
         
@@ -174,6 +175,7 @@ class PremiumManager: ObservableObject {
     func evaluatePremiumForNewUser() {
         // Reset all user-level state
         hasActiveSubscription = false
+        hasDeviceEntitlement = false
         isAmbassador = false
         updatePremiumStatus()
         
@@ -193,65 +195,96 @@ class PremiumManager: ObservableObject {
             return
         }
         
+        // 1. StoreKit: does this device's Apple ID have an active subscription?
+        //    Checked before the database so a network failure can't hide a paid entitlement.
+        let entitlement = await storeKitManager.activeEntitlement(for: userId)
+        hasDeviceEntitlement = entitlement != nil
+        updatePremiumStatus()
+        
         do {
-            // 1. Check the database for an active subscription record
+            // 2. Database: the cross-device source of truth
             let dbSubscription = try await communityService.getActiveSubscription()
+            hasActiveSubscription = dbSubscription != nil
             
-            // 2. Verify against StoreKit: does this user have a tagged entitlement?
-            let storeKitEntitlement = await storeKitManager.activeEntitlement(for: userId)
-            
-            if dbSubscription != nil {
-                if storeKitEntitlement != nil {
-                    // DB says active, StoreKit confirms - all good
-                    hasActiveSubscription = true
-                    print("🔐 Subscription verified: DB ✓ StoreKit ✓")
-                } else {
-                    // DB says active but StoreKit doesn't confirm on this device.
-                    // Could be: purchased on another device, or expired.
-                    // Trust the DB (it's the cross-device source of truth).
-                    hasActiveSubscription = true
-                    print("🔐 Subscription from DB (not verified on this device - may be from another device)")
-                }
-            } else if let entitlement = storeKitEntitlement {
-                // StoreKit has an entitlement for this user but DB doesn't know about it.
-                // This can happen if the DB write failed on purchase. Reconcile it now.
-                hasActiveSubscription = true
-                let subType = entitlement.productID.contains("yearly") ? "yearly" : "monthly"
-                try await communityService.recordSubscription(
-                    type: subType,
-                    appleTransactionId: String(entitlement.id),
-                    expiresAt: entitlement.expirationDate
-                )
-                print("🔐 Reconciled: StoreKit entitlement written to DB")
+            if let entitlement {
+                await reconcileDatabase(with: entitlement, userId: userId, dbSubscription: dbSubscription)
+            } else if dbSubscription != nil {
+                // Purchased on another device (or another Apple ID) - trust the DB.
+                print("🔐 Subscription from DB (no entitlement on this device)")
             } else {
-                // No subscription anywhere
-                hasActiveSubscription = false
                 print("🔐 No active subscription for user \(userId)")
             }
-            
-            updatePremiumStatus()
-            
         } catch {
             print("❌ Failed to load subscription: \(error)")
             // Fall back to profile is_premium as last resort
             hasActiveSubscription = communityService.currentProfile?.isPremium ?? false
-            updatePremiumStatus()
+        }
+        
+        updatePremiumStatus()
+    }
+    
+    /// Write a device entitlement to `user_subscriptions` when the DB is missing it or has a stale
+    /// expiry (e.g. a trial that has since renewed). Entitlements tagged to a *different* MARCH
+    /// account still unlock this device but aren't copied to this account's cross-device record.
+    private func reconcileDatabase(with entitlement: StoreKit.Transaction, userId: UUID, dbSubscription: UserSubscription?) async {
+        guard entitlement.appAccountToken == nil || entitlement.appAccountToken == userId else {
+            print("🔐 Device entitlement belongs to another account - unlocking this device only")
+            return
+        }
+        
+        if let dbSubscription {
+            var dbIsCurrent = true
+            if let dbExpiry = dbSubscription.expiresAt, let storeKitExpiry = entitlement.expirationDate {
+                dbIsCurrent = dbExpiry >= storeKitExpiry
+            }
+            if dbIsCurrent {
+                print("🔐 Subscription verified: DB ✓ StoreKit ✓")
+                return
+            }
+        }
+        
+        do {
+            let subType = entitlement.productID.contains("yearly") ? "yearly" : "monthly"
+            try await CommunityService.shared.recordSubscription(
+                type: subType,
+                appleTransactionId: String(entitlement.id),
+                expiresAt: entitlement.expirationDate
+            )
+            hasActiveSubscription = true
+            print("🔐 Reconciled: StoreKit entitlement written to DB")
+        } catch {
+            print("❌ Failed to reconcile subscription in database: \(error)")
         }
     }
     
-    /// Verify the current user's subscription against StoreKit and expire if needed.
+    /// Re-check this device's entitlement and expire the DB record only when there is no
+    /// entitlement here AND the DB record's own expiry has passed. A missing entitlement alone
+    /// is not evidence of expiry - the subscription may live on another device or Apple ID.
     private func verifyAndSyncSubscription() async {
         let communityService = CommunityService.shared
         
         guard let userId = communityService.currentProfile?.id else { return }
         
         let entitlement = await storeKitManager.activeEntitlement(for: userId)
+        hasDeviceEntitlement = entitlement != nil
         
-        if entitlement == nil && hasActiveSubscription && premiumSource == .subscription {
-            // Subscription expired on this device
+        if let entitlement {
+            // Fill in a missing DB record (e.g. restored or bought before sign-in). Stale expiries
+            // on an existing record are refreshed by `loadSubscriptionForCurrentUser` on launch.
+            if !hasActiveSubscription {
+                do {
+                    let dbSubscription = try await communityService.getActiveSubscription()
+                    hasActiveSubscription = dbSubscription != nil
+                    await reconcileDatabase(with: entitlement, userId: userId, dbSubscription: dbSubscription)
+                } catch {
+                    print("❌ Failed to load subscription for reconcile: \(error)")
+                }
+            }
+        } else if hasActiveSubscription,
+                  let dbSubscription = try? await communityService.getActiveSubscription(),
+                  let expiresAt = dbSubscription.expiresAt,
+                  expiresAt < Date() {
             hasActiveSubscription = false
-            updatePremiumStatus()
-            
             do {
                 try await communityService.expireSubscription()
                 print("🔐 Subscription expired and synced to database")
@@ -259,6 +292,28 @@ class PremiumManager: ObservableObject {
                 print("❌ Failed to expire subscription in database: \(error)")
             }
         }
+        
+        updatePremiumStatus()
+    }
+    
+    // MARK: - Restore Purchases
+    
+    /// Sync with the App Store and re-evaluate premium. Returns whether the user is now premium.
+    /// Shows an explanatory alert (via StoreKitManager) when nothing was found.
+    @discardableResult
+    func restorePurchases() async -> Bool {
+        await storeKitManager.restorePurchases()
+        
+        if CommunityService.shared.isAuthenticated {
+            await loadSubscriptionForCurrentUser()
+        } else {
+            updatePremiumStatus()
+        }
+        
+        if !isPremiumUser && !storeKitManager.showingPurchaseError {
+            storeKitManager.reportNothingToRestore()
+        }
+        return isPremiumUser
     }
     
     // MARK: - Ambassador System
@@ -353,6 +408,7 @@ class PremiumManager: ObservableObject {
     func resetPremiumStatusForSignOut() {
         print("🔐 Sign out - resetting all user-level premium state")
         hasActiveSubscription = false
+        hasDeviceEntitlement = false
         isAmbassador = false
         updatePremiumStatus()
         print("🔐 After sign-out: \(isPremiumUser ? "Premium (anonymous StoreKit)" : "Free")")

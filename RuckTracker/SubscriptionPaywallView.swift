@@ -293,15 +293,7 @@ struct SubscriptionPaywallView: View {
             
             Button("Restore Purchases") {
                 Task {
-                    await storeManager.restorePurchases()
-                    // Check if restored entitlements include one for the current user
-                    if let userId = CommunityService.shared.currentProfile?.id,
-                       let entitlement = await storeManager.activeEntitlement(for: userId) {
-                        premiumManager.handleSuccessfulPurchase(transaction: entitlement)
-                        premiumManager.dismissPaywall()
-                        dismiss()
-                    } else if !CommunityService.shared.isAuthenticated && storeManager.isSubscribed {
-                        // Anonymous user - any active entitlement counts
+                    if await premiumManager.restorePurchases() {
                         premiumManager.dismissPaywall()
                         dismiss()
                     }
